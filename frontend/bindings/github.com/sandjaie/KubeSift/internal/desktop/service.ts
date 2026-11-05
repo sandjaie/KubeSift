@@ -5,6 +5,25 @@
 // @ts-ignore: Unused imports
 import { Call as $Call, CancellablePromise as $CancellablePromise } from "@wailsio/runtime";
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
+import * as config$0 from "../config/models.js";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
+import * as model$0 from "../model/models.js";
+
+export function CloseConnection(ref: model$0.ConnectionRef): $CancellablePromise<void> {
+    return $Call.ByID(2991465249, ref);
+}
+
+export function LoadContexts(paths: string[] | null): $CancellablePromise<config$0.ContextSummary[] | null> {
+    return $Call.ByID(3544806431, paths);
+}
+
+export function OpenConnection(name: string): $CancellablePromise<model$0.ConnectionRef> {
+    return $Call.ByID(2624622699, name);
+}
+
 export function Ping(): $CancellablePromise<string> {
     return $Call.ByID(1602976539);
 }
