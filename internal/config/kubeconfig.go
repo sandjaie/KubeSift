@@ -1,3 +1,9 @@
+/*
+Purpose: Read Kubernetes configuration without changing it or executing credentials.
+Used by: The desktop source picker, connection manager and helper review.
+Responsibilities: Resolve named contexts, preserve Kubernetes extensions and return private configuration snapshots.
+Important: A preview is not permission to execute a helper; resolved configurations stay in Go.
+*/
 // Package config loads read-only Kubernetes configuration without executing credentials.
 package config
 

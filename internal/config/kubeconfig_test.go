@@ -1,3 +1,9 @@
+/*
+Purpose: Check configuration compatibility and connection targeting safeguards.
+Used by: The Go unit suite and review gates.
+Responsibilities: Exercise synthetic sources, stale previews, anonymous contexts and cancellation of in-flight requests.
+Important: Only temporary fixtures and loopback HTTP servers are used; no real cluster is queried.
+*/
 package config_test
 
 import (

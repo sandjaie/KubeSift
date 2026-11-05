@@ -1,7 +1,8 @@
 #!/bin/sh
 set -eu
 cd "$(dirname "$0")/.."
-test -z "$(gofmt -l main.go internal)"
+python3 scripts/source-descriptions.py check
+test -z "$(gofmt -l cmd internal tests)"
 go test ./...
 go vet ./...
 npm test

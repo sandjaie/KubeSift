@@ -1,3 +1,9 @@
+/*
+Purpose: Define the identities and safe messages shared by Go services.
+Used by: Connection, trust, session and desktop packages.
+Responsibilities: Carry explicit connection generations, resource targets, session references and event envelopes.
+Important: Never put credential values or raw helper output into a public error or event.
+*/
 // Package model defines immutable target identities shared by domain services.
 package model
 

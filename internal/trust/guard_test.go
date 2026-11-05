@@ -1,3 +1,9 @@
+/*
+Purpose: Prove representative helper trust and refresh safeguards.
+Used by: The Go unit suite and review gates.
+Responsibilities: Check preview safety, persisted approval, changed configuration, revocation and the HTTP 401 regression.
+Important: Use synthetic credentials and an injected runner; do not invoke a real provider helper.
+*/
 package trust
 
 import (

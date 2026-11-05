@@ -9,7 +9,8 @@
     "lint": "npm run lint --workspace frontend",
     "typecheck": "npm run typecheck --workspace frontend",
     "build": "npm run build --workspace frontend",
-    "prepare": "husky"
+    "prepare": "husky",
+    "bindings": "wails3 task bindings"
   },
   "devDependencies": {
     "husky": "9.1.7",

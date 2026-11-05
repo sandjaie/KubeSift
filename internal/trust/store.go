@@ -1,3 +1,9 @@
+/*
+Purpose: Remember credential-helper approvals in protected local files.
+Used by: The helper trust guard and trust settings.
+Responsibilities: Read a strict versioned schema and atomically save owner-only approvals with protected fingerprints.
+Important: Do not persist helper arguments, environment values, tokens or certificate keys.
+*/
 // Package trust owns reviewed helper approvals and the actual execution boundary.
 package trust
 

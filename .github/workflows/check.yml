@@ -14,6 +14,6 @@ jobs:
           cache: npm
       - run: npm ci
       - run: go install github.com/wailsapp/wails/v3/cmd/wails3@v3.1.0
-      - run: wails3 generate bindings -ts -i
+      - run: wails3 task bindings
       - run: npm run build
       - run: scripts/check.sh

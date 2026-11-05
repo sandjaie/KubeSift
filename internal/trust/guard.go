@@ -1,3 +1,9 @@
+/*
+Purpose: Check trust at the exact moment a credential helper starts.
+Used by: Connection authentication, stream startup and desktop helper review.
+Responsibilities: Resolve executable identity, redact previews, consume preview IDs and run a bounded cancellable protocol exchange.
+Important: Native client-go refresh stays disabled; revocation and process start share the same authorization lock.
+*/
 package trust
 
 import (

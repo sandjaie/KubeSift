@@ -1,3 +1,9 @@
+/*
+Purpose: Provide a synthetic Kubernetes credential helper for local validation.
+Used by: Opt-in integration and packaged helper checks.
+Responsibilities: Read an ignored local fixture credential and emit short-lived ExecCredential JSON with optional failure modes.
+Important: Never use provider credentials, print tokens to diagnostics or pass credentials in command-line arguments.
+*/
 // Synthetic helper reads only explicitly configured local fixture state.
 package main
 

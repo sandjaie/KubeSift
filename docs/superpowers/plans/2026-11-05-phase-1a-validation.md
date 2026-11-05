@@ -49,7 +49,7 @@ These files are future deliverables, not files created by this planning change. 
 
 | Files | Responsibility |
 | --- | --- |
-| `main.go`, `go.mod`, `go.sum`, `Taskfile.yml`, `build/` | Desktop entry point and pinned build |
+| `cmd/kubesift/main.go`, `internal/desktop/assets/assets.go`, `go.mod`, `go.sum`, `Taskfile.yml` (discovery), `build/` | Desktop entry point and pinned build |
 | `package.json`, `package-lock.json`, `frontend/package.json`, `frontend/vite.config.ts`, `frontend/tsconfig.json`, `frontend/eslint.config.js` | npm workspace, frontend build/test/lint/typecheck |
 | `frontend/index.html`, `frontend/src/main.tsx`, `frontend/src/App.tsx`, `frontend/src/styles.css` | Minimal validation UI |
 | `internal/model/types.go` | Shared domain identifiers and event/error shapes |
@@ -62,7 +62,7 @@ These files are future deliverables, not files created by this planning change. 
 | `internal/desktop/service.go`, `internal/desktop/app.go` | Wails translation, event bridge and lifecycle wiring |
 | `frontend/src/bridge.ts`, `frontend/src/state.ts`, `frontend/src/state.test.ts`, `frontend/src/Terminal.tsx` | Typed bridge, tab/session routing and terminal rendering |
 | `tests/integration/validation_test.go`, `tests/fixtures/phase1a.yaml`, `tests/fixtures/helper/main.go` | One local integration scenario, synthetic workloads and exec helper |
-| `scripts/local-clusters.sh`, `scripts/check.sh`, `scripts/check-docs.py` | Explicit test-cluster lifecycle and repeatable checks |
+| `scripts/local-clusters.sh`, `scripts/check.sh`, `scripts/check-docs.py`, `scripts/source-descriptions.py` | Explicit test-cluster lifecycle and repeatable checks |
 | `.gitignore`, `.husky/pre-commit`, `.husky/pre-push`, `.github/workflows/check.yml`, `.github/pull_request_template.md` | Hygiene, hooks and checks |
 | `.cursor/rules/ponytail-lite.mdc`, `.agents/skills/{kubesift-code-review,kubesift-code-hygiene,release-this}/SKILL.md` | Repo-specific engineering handoff |
 | `docs/validation/toolchain.html`, `docs/validation/phase-1a.html`, `docs/validation/measurements.json` | Actual environment, results and measurements |
@@ -70,6 +70,8 @@ These files are future deliverables, not files created by this planning change. 
 Add a concise `README.html` in each handwritten source directory per the engineering playbook (root, frontend/src, internal and its packages, tests/integration, tests/fixtures/helper, scripts). Do not duplicate module maps in generated bindings or dependencies. No README is required for an empty placeholder directory; do not create speculative directories.
 
 Approved visual guidance is in the [UX specification](../../ux/workflows.html). Keep this milestone minimal; full adaptive explorer/theme implementation belongs in 1B and AI in Phase 2.
+
+Execution status is kept in the short, tracked root [progress.md](../../../progress.md). Per-task scratch directories hold briefs and logs, never the shared progress file. User-directed structure/source-description changes follow [engineering](../../engineering/engineering.html#source-layout).
 
 ## Shared contract
 
