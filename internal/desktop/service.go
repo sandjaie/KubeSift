@@ -6,6 +6,10 @@ import (
 	"github.com/sandjaie/KubeSift/internal/config"
 	"github.com/sandjaie/KubeSift/internal/connection"
 	"github.com/sandjaie/KubeSift/internal/model"
+	"github.com/sandjaie/KubeSift/internal/trust"
+	"k8s.io/client-go/rest"
+	"os"
+	"path/filepath"
 	"sync"
 )
 
@@ -14,9 +18,52 @@ type Service struct {
 	snapshot    *config.Snapshot
 	snapshotID  string
 	connections *connection.Manager
+	auth        *lazyAuth
 }
 
-func NewService() *Service    { return &Service{connections: connection.NewManager(nil)} }
+type lazyAuth struct {
+	once  sync.Once
+	guard *trust.Guard
+	err   error
+}
+
+func (a *lazyAuth) get() (*trust.Guard, error) {
+	a.once.Do(func() {
+		directory, err := os.UserConfigDir()
+		if err != nil {
+			a.err = model.Fail("invalid", "Cannot locate application configuration")
+			return
+		}
+		store, err := trust.OpenStore(filepath.Join(directory, "KubeSift", "trust.json"))
+		if err != nil {
+			a.err = err
+			return
+		}
+		a.guard = trust.NewGuard(store)
+	})
+	return a.guard, a.err
+}
+func (a *lazyAuth) Check(r config.Resolved) error {
+	if !r.HasHelper() {
+		return nil
+	}
+	guard, err := a.get()
+	if err != nil {
+		return err
+	}
+	return guard.Check(r)
+}
+func (a *lazyAuth) Authenticate(ctx context.Context, r config.Resolved) (*rest.Config, error) {
+	guard, err := a.get()
+	if err != nil {
+		return nil, err
+	}
+	return guard.Authenticate(ctx, r)
+}
+func NewService() *Service {
+	auth := &lazyAuth{}
+	return &Service{connections: connection.NewManager(auth), auth: auth}
+}
 func (*Service) Ping() string { return "ready" }
 func (s *Service) LoadContexts(paths []string) ([]config.ContextSummary, error) {
 	snapshot, err := config.Load(paths)
@@ -33,19 +80,63 @@ func (s *Service) LoadContexts(paths []string) ([]config.ContextSummary, error) 
 	s.mu.Unlock()
 	return summaries, nil
 }
-func (s *Service) OpenConnection(snapshotID, name string) (model.ConnectionRef, error) {
+func (s *Service) resolve(snapshotID, name string) (config.Resolved, error) {
 	s.mu.Lock()
 	snapshot := s.snapshot
 	valid := snapshotID != "" && snapshotID == s.snapshotID
 	s.mu.Unlock()
 	if snapshot == nil || !valid {
-		return model.ConnectionRef{}, model.Fail("invalid", "Load a configuration first")
+		return config.Resolved{}, model.Fail("stale_target", "Reload configuration; preview was replaced")
 	}
-	resolved, err := snapshot.Resolve(name)
-	if err != nil {
-		return model.ConnectionRef{}, err
-	}
-	return s.connections.Open(context.Background(), resolved)
+	return snapshot.Resolve(name)
 }
 func (s *Service) CloseConnection(ref model.ConnectionRef) error { return s.connections.Close(ref) }
 func (s *Service) ServiceShutdown() error                        { s.connections.CloseAll(); return nil }
+
+func (s *Service) OpenConnection(snapshotID, name string) (model.ConnectionRef, error) {
+	r, err := s.resolve(snapshotID, name)
+	if err != nil {
+		return model.ConnectionRef{}, err
+	}
+	return s.connections.Open(context.Background(), r)
+}
+func (s *Service) ReviewHelper(snapshotID, name string) (trust.PreviewRecord, error) {
+	r, err := s.resolve(snapshotID, name)
+	if err != nil {
+		return trust.PreviewRecord{}, err
+	}
+	guard, err := s.auth.get()
+	if err != nil {
+		return trust.PreviewRecord{}, err
+	}
+	return guard.Review(r)
+}
+func (s *Service) ApproveHelper(id, snapshotID, name string) error {
+	r, err := s.resolve(snapshotID, name)
+	if err != nil {
+		return err
+	}
+	guard, err := s.auth.get()
+	if err != nil {
+		return err
+	}
+	return guard.ApprovePreview(id, r)
+}
+func (s *Service) TrustedHelpers() ([]trust.Entry, error) {
+	guard, err := s.auth.get()
+	if err != nil {
+		return nil, err
+	}
+	return guard.Entries(), nil
+}
+func (s *Service) RevokeHelper(fingerprint string) error {
+	guard, err := s.auth.get()
+	if err != nil {
+		return err
+	}
+	if err = guard.Revoke(fingerprint); err != nil {
+		return err
+	}
+	s.connections.CloseAll()
+	return nil
+}

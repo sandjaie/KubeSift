@@ -11,6 +11,13 @@ import * as config$0 from "../config/models.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
 import * as model$0 from "../model/models.js";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
+import * as trust$0 from "../trust/models.js";
+
+export function ApproveHelper(id: string, snapshotID: string, name: string): $CancellablePromise<void> {
+    return $Call.ByID(1432231764, id, snapshotID, name);
+}
 
 export function CloseConnection(ref: model$0.ConnectionRef): $CancellablePromise<void> {
     return $Call.ByID(2991465249, ref);
@@ -26,4 +33,16 @@ export function OpenConnection(snapshotID: string, name: string): $CancellablePr
 
 export function Ping(): $CancellablePromise<string> {
     return $Call.ByID(1602976539);
+}
+
+export function ReviewHelper(snapshotID: string, name: string): $CancellablePromise<trust$0.PreviewRecord> {
+    return $Call.ByID(1179126027, snapshotID, name);
+}
+
+export function RevokeHelper(fingerprint: string): $CancellablePromise<void> {
+    return $Call.ByID(977034085, fingerprint);
+}
+
+export function TrustedHelpers(): $CancellablePromise<trust$0.Entry[] | null> {
+    return $Call.ByID(1222629415);
 }

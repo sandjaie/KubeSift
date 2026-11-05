@@ -129,6 +129,8 @@ Use a small typed error with `Code` and a safe `Message`: `invalid`, `forbidden`
 
 ## Task 3: Reviewed and revocable credential-helper trust
 
+Execution revision (2026-11-05, resumed after reporting the native refresh failure): use owned helper invocation as recorded in [D13](../../architecture/decisions.html), with native client-go exec disabled. This preserves the approved trust boundary; it adds `CredentialGate.Authenticate` and an explicit `Manager.StreamConfig` for authenticated stream starts. No request or write is automatically replayed on HTTP 401.
+
 **Files:** create `internal/trust/store.go`, `guard.go`, `guard_test.go`, `tests/fixtures/helper/main.go`; update connection/auth integration and desktop service.
 
 **Interfaces:**

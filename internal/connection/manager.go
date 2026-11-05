@@ -14,6 +14,32 @@ import (
 )
 
 type AuthGate interface{ Check(config.Resolved) error }
+
+// CredentialGate owns helper invocation; native client-go exec is never installed.
+type CredentialGate interface {
+	AuthGate
+	Authenticate(context.Context, config.Resolved) (*rest.Config, error)
+}
+type helperTransport struct {
+	gate     CredentialGate
+	resolved config.Resolved
+}
+
+func (t helperTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	cfg, err := t.gate.Authenticate(req.Context(), t.resolved)
+	if err != nil {
+		return nil, err
+	}
+	if cfg.ExecProvider != nil {
+		return nil, model.Fail("invalid", "Native credential execution is disabled")
+	}
+	native, err := rest.TransportFor(cfg)
+	if err != nil {
+		return nil, model.Fail("invalid", "Cannot create authenticated transport")
+	}
+	return native.RoundTrip(req)
+}
+
 type entry struct {
 	ref      model.ConnectionRef
 	resolved config.Resolved
@@ -41,6 +67,11 @@ func (m *Manager) Open(ctx context.Context, r config.Resolved) (model.Connection
 		return model.ConnectionRef{}, model.Fail("cancelled", "Connection cancelled")
 	}
 	if r.HasHelper() {
+		frozen, err := r.FreezeHelper()
+		if err != nil {
+			return model.ConnectionRef{}, err
+		}
+		r = frozen
 		if m.gate == nil {
 			return model.ConnectionRef{}, model.Fail("trust_required", "Review credential helper")
 		}
@@ -124,7 +155,16 @@ func (m *Manager) RESTConfig(ref model.ConnectionRef) (*rest.Config, error) {
 		return nil, err
 	}
 	cfg := e.resolved.RESTConfig()
-	native, err := rest.TransportFor(cfg)
+	var native http.RoundTripper
+	if e.resolved.HasHelper() {
+		gate, ok := m.gate.(CredentialGate)
+		if !ok {
+			return nil, model.Fail("trust_required", "Owned credential execution is required")
+		}
+		native = helperTransport{gate, e.resolved}
+	} else {
+		native, err = rest.TransportFor(cfg)
+	}
 	if err != nil {
 		return nil, model.Fail("invalid", "Cannot create authenticated transport")
 	}
@@ -176,3 +216,40 @@ type ownedBody struct {
 }
 
 func (b *ownedBody) Close() error { defer b.cleanup(); return b.ReadCloser.Close() }
+
+func (m *Manager) StreamConfig(ctx context.Context, ref model.ConnectionRef) (*rest.Config, error) {
+	e, err := m.lookup(ref)
+	if err != nil {
+		return nil, err
+	}
+	authCtx, cancel := context.WithCancel(ctx)
+	stop := context.AfterFunc(e.ctx, cancel)
+	defer func() { stop(); cancel() }()
+	cfg := e.resolved.RESTConfig()
+	if e.resolved.HasHelper() {
+		gate, ok := m.gate.(CredentialGate)
+		if !ok {
+			return nil, model.Fail("trust_required", "Owned credential execution is required")
+		}
+		cfg, err = gate.Authenticate(authCtx, e.resolved)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if cfg.ExecProvider != nil {
+		return nil, model.Fail("invalid", "Native credential execution is disabled")
+	}
+	cfg.Timeout = 0
+	cfg.Wrap(func(next http.RoundTripper) http.RoundTripper {
+		return guarded{next, func() error {
+			if _, e := m.lookup(ref); e != nil {
+				return e
+			}
+			if m.gate != nil {
+				return m.gate.Check(e.resolved)
+			}
+			return nil
+		}, e.ctx}
+	})
+	return cfg, nil
+}

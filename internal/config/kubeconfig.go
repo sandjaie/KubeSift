@@ -9,6 +9,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	api "k8s.io/client-go/tools/clientcmd/api"
 	"net/url"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -22,16 +23,39 @@ type ContextSummary struct {
 	Endpoint   string `json:"endpoint"`
 }
 type Snapshot struct {
-	raw    api.Config
-	source string
+	raw     api.Config
+	source  string
+	sources string
 }
 type Resolved struct {
-	source, name string
-	cfg          *rest.Config
+	source, name        string
+	sources, helperPath string
+	cfg                 *rest.Config
 }
 
-func (r Resolved) Source() string { return r.source }
-func (r Resolved) Name() string   { return r.name }
+func (r Resolved) Source() string        { return r.source }
+func (r Resolved) SourceDisplay() string { return r.sources }
+func (r Resolved) HelperPath() string    { return r.helperPath }
+func (r Resolved) FreezeHelper() (Resolved, error) {
+	if !r.HasHelper() {
+		return r, nil
+	}
+	path, err := exec.LookPath(r.cfg.ExecProvider.Command)
+	if err != nil {
+		return r, model.Fail("invalid", "Credential helper executable is missing")
+	}
+	path, err = filepath.Abs(path)
+	if err != nil {
+		return r, model.Fail("invalid", "Invalid helper path")
+	}
+	path, err = filepath.EvalSymlinks(path)
+	if err != nil {
+		return r, model.Fail("invalid", "Cannot resolve helper executable")
+	}
+	r.helperPath = path
+	return r, nil
+}
+func (r Resolved) Name() string { return r.name }
 func (r Resolved) RESTConfig() *rest.Config {
 	copy := rest.CopyConfig(r.cfg)
 	if copy.ExecProvider != nil {
@@ -61,7 +85,7 @@ func Load(paths []string) (*Snapshot, error) {
 		}
 	}
 	sum := sha256.Sum256([]byte(strings.Join(sources, "\x00")))
-	return &Snapshot{*raw, hex.EncodeToString(sum[:])}, nil
+	return &Snapshot{raw: *raw, source: hex.EncodeToString(sum[:]), sources: strings.Join(sources, ", ")}, nil
 }
 func (s *Snapshot) Contexts() []ContextSummary {
 	out := []ContextSummary{}
@@ -101,5 +125,5 @@ func (s *Snapshot) Resolve(name string) (Resolved, error) {
 		return Resolved{}, model.Fail("invalid", "Legacy authentication provider unsupported")
 	}
 	cfg.Timeout = 0
-	return Resolved{s.source, name, rest.CopyConfig(cfg)}, nil
+	return Resolved{source: s.source, name: name, cfg: rest.CopyConfig(cfg), sources: s.sources}, nil
 }
