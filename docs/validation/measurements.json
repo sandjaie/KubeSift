@@ -1,0 +1,35 @@
+{
+  "status": "incomplete-safety-gate",
+  "date": "2026-11-05",
+  "host": {
+    "os": "macOS 26.7.1",
+    "architecture": "arm64",
+    "cpu": "Apple M2 Pro",
+    "memoryGB": 16
+  },
+  "versions": {
+    "go": "1.27.3",
+    "node": "26.13.0",
+    "npm": "11.20.0",
+    "wails": "3.1.0",
+    "clientGo": "0.37.0"
+  },
+  "startupSamplesMs": [],
+  "terminalRoundTripSamplesMs": [],
+  "memorySamplesBytes": [],
+  "loadDurationSeconds": null,
+  "sessionCycles": null,
+  "trustProbe": {
+    "guardChecks": 1,
+    "helperInvocations": 2,
+    "revokedBeforeSecondExecution": true,
+    "expectedHelperInvocations": 1,
+    "passed": false
+  },
+  "limitations": [
+    "No Kubernetes cluster accessed.",
+    "Tasks 3\u20137 integration functionality not implemented after native exec refresh trust failure.",
+    "No startup, latency, soak or memory performance measurements performed.",
+    "Native packaged readiness confirmed by user for Task1; Finder double-click not observed."
+  ]
+}
