@@ -1,6 +1,6 @@
 # Phase 1A — desktop integration validation outline
 
-Status: proposed experiment, not executable implementation plan
+Status: historical outline; expanded by [Phase 1A specification](../specs/2026-11-05-phase-1a-validation-design.md). Not an executable implementation plan.
 Owner of phase order: [roadmap](../../roadmap/roadmap.html)
 Design dependency: [specification](../specs/2026-11-05-kubesift-design.md)
 
