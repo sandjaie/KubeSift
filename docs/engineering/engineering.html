@@ -41,7 +41,7 @@ go vet ./...</code></pre>
 <pre><code>npx vitest run
 npx eslint .
 npx tsc --noEmit</code></pre>
-<p>Once implemented, lint and the unit suites will also be enforced by git hooks. See <a href="#hooks">Hooks</a>. <code>go vet</code> and <code>tsc --noEmit</code> stay review and pull-request checks. A full typecheck on every commit costs more than it saves.</p>
+<p>Lint runs on commit, and the frontend unit suite runs on push. See <a href="#hooks">Hooks</a>. Go tests stay with the agent and with <code>scripts/check.sh</code>. <code>go vet</code> and <code>tsc --noEmit</code> stay review and pull-request checks.</p>
 <p>No coverage threshold. The frontend has no Prettier. Frontend lint is ESLint plus typescript-eslint recommended. Go formatting is <code>gofmt</code>, because the Go toolchain owns it. Planned CI runs the same lint, unit, vet and type checks for the modules that exist. Packaging, signing, notarizing, publishing, and version bumps stay in the release skill.</p>
 
 <h3 id="hooks">Hooks</h3>
@@ -49,10 +49,11 @@ npx tsc --noEmit</code></pre>
 <p><strong>pre-commit</strong> — <code>.husky/pre-commit</code> runs <code>npx lint-staged</code>.</p>
 <p><code>lint-staged</code> looks only at files already staged for this commit. For <code>*.ts</code> and <code>*.tsx</code> it runs <code>eslint --fix</code>. For <code>*.go</code> it runs <code>gofmt -w</code>. Other files are left alone. When a fixer rewrites a file, lint-staged puts that rewrite back into the index, so the commit contains the fixed code. A remaining lint error aborts the commit.</p>
 <p>This is the fast check. It does not lint the rest of the working tree, it does not typecheck, and it does not run tests. A commit of markdown, YAML, or JSON does not start ESLint or <code>gofmt</code>.</p>
-<p><strong>pre-push</strong> — <code>.husky/pre-push</code> runs the unit suites for the modules that exist: <code>go test ./...</code> and <code>npm test</code> (<code>vitest run</code>).</p>
-<p>The whole unit suite runs, not only the tests next to the files you touched. A failing test aborts the push. The hook does not modify files. The suite sits on push rather than commit so a commit stays short and a push is the moment the branch is shown to someone else.</p>
+<p><strong>pre-push</strong> — <code>.husky/pre-push</code> runs <code>npm test</code> (<code>vitest run</code>).</p>
+<p>A failing frontend test aborts the push. The hook does not modify files and does not run Go tests.</p>
 <p><strong>What neither hook does</strong></p>
 <ul>
+<li>No <code>go test</code>. The agent runs the Go tests the change needs before committing. <code>scripts/check.sh</code> and CI still run the full Go suite.</li>
 <li>No <code>commit-msg</code> hook. Conventional Commits are the agreed style. Git will not reject a message that breaks it.</li>
 <li>No <code>go vet</code> and no <code>tsc --noEmit</code>. Those run before review, and they are checkboxes on the pull request template.</li>
 <li>No coverage gate and no frontend format-on-commit. Fixture and credential-handling requirements are review rules. See the <a href="../security/security-model.html">security model</a>.</li>
@@ -141,7 +142,7 @@ npx tsc --noEmit</code></pre>
 <p>Process skills already come from the agent environment. These repo artifacts do not exist yet. Add them with the first implementation change, not during planning.</p>
 <ul>
 <li><code>.cursor/rules/ponytail-lite.mdc</code>, always on.</li>
-<li>Husky hooks, as in <a href="#hooks">Hooks</a>: <code>lint-staged</code> with <code>eslint --fix</code> and <code>gofmt -w</code> on commit, full unit suites on push.</li>
+<li>Husky hooks, as in <a href="#hooks">Hooks</a>: <code>lint-staged</code> with <code>eslint --fix</code> and <code>gofmt -w</code> on commit, <code>npm test</code> on push.</li>
 <li>A pull request template whose validation box is the Go and frontend commands, plus a post-review section that lists findings as <code>KSF-001</code> style ids.</li>
 
 <li><code>.agents/skills/</code> for <code>kubesift-code-review</code>, <code>kubesift-code-hygiene</code>, and release. Keep one canonical SKILL.md per skill; add tool-specific links only if needed.</li>
