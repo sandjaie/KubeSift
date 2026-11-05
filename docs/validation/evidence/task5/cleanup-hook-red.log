@@ -1,0 +1,4 @@
+# github.com/sandjaie/KubeSift/internal/session [github.com/sandjaie/KubeSift/internal/session.test]
+internal/session/manager_test.go:43:21: manager.OnStop undefined (type *Manager has no field or method OnStop)
+FAIL	github.com/sandjaie/KubeSift/internal/session [build failed]
+FAIL

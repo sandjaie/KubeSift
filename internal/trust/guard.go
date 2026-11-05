@@ -20,7 +20,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"sort"
 	"strings"
 	"sync"
@@ -51,8 +50,6 @@ type Guard struct {
 func NewGuard(store *Store) *Guard {
 	return &Guard{store: store, pending: map[string]pending{}, now: time.Now}
 }
-
-var flagName = regexp.MustCompile(`^--[a-zA-Z0-9-]+`)
 
 func Preview(r config.Resolved) (PreviewRecord, error) {
 	if !r.HasHelper() {
@@ -101,12 +98,8 @@ func Preview(r config.Resolved) (PreviewRecord, error) {
 	}
 	hash := sha256.Sum256(encoded)
 	p := PreviewRecord{ID: model.ID(), Fingerprint: hex.EncodeToString(hash[:]), Source: r.SourceDisplay(), Context: r.Name(), Executable: path, Args: []string{}, Env: []string{}}
-	for _, arg := range helper.Args {
-		label := "[redacted]"
-		if name := flagName.FindString(arg); name != "" {
-			label = name + " [redacted]"
-		}
-		p.Args = append(p.Args, label)
+	for range helper.Args {
+		p.Args = append(p.Args, "[redacted]")
 	}
 	for _, e := range helper.Env {
 		p.Env = append(p.Env, e.Name+"=[redacted]")

@@ -1,0 +1,36 @@
+# github.com/sandjaie/KubeSift/internal/config.test
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-1961033821/go.o) was built for newer 'macOS' version (13.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-1961033821/000027.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-1961033821/000028.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-1961033821/000029.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-1961033821/000030.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-1961033821/000031.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-1961033821/000032.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-1961033821/000033.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-1961033821/000034.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-1961033821/000035.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-1961033821/000036.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-1961033821/000037.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-1961033821/000038.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-1961033821/000039.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-1961033821/000040.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-1961033821/000041.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-1961033821/000042.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-1961033821/000043.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-1961033821/000044.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+=== RUN   TestLoadAndConnectionIdentity
+=== RUN   TestLoadAndConnectionIdentity/a
+=== RUN   TestLoadAndConnectionIdentity/b
+=== RUN   TestLoadAndConnectionIdentity/rejects-replaced-preview
+=== RUN   TestLoadAndConnectionIdentity/anonymous-context
+=== RUN   TestLoadAndConnectionIdentity/close-cancels-in-flight-request
+=== RUN   TestLoadAndConnectionIdentity/freeze-certificate-files
+--- PASS: TestLoadAndConnectionIdentity (0.07s)
+    --- PASS: TestLoadAndConnectionIdentity/a (0.01s)
+    --- PASS: TestLoadAndConnectionIdentity/b (0.01s)
+    --- PASS: TestLoadAndConnectionIdentity/rejects-replaced-preview (0.01s)
+    --- PASS: TestLoadAndConnectionIdentity/anonymous-context (0.01s)
+    --- PASS: TestLoadAndConnectionIdentity/close-cancels-in-flight-request (0.01s)
+    --- PASS: TestLoadAndConnectionIdentity/freeze-certificate-files (0.02s)
+PASS
+ok  	github.com/sandjaie/KubeSift/internal/config	1.592s

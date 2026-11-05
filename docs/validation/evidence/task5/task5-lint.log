@@ -1,0 +1,8 @@
+
+> lint
+> npm run lint --workspace frontend
+
+
+> @kubesift/frontend@0.0.0 lint
+> eslint .
+

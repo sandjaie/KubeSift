@@ -24,14 +24,17 @@ type Stats struct {
 	QueuedBytes     int    `json:"queuedBytes"`
 	InFlightBytes   int    `json:"inFlightBytes"`
 	DroppedLogBytes uint64 `json:"droppedLogBytes"`
+	EmittedLogBytes uint64 `json:"emittedLogBytes"`
 }
 type Manager struct {
-	mu       sync.Mutex
-	entries  map[string]*entry
-	closed   bool
-	emit     func(model.Event)
-	validate func(model.Target) error
-	dropped  atomic.Uint64
+	mu           sync.Mutex
+	entries      map[string]*entry
+	closed       bool
+	bridgeCredit bool
+	emit         func(model.Event)
+	validate     func(model.Target) error
+	dropped      atomic.Uint64
+	emittedLogs  atomic.Uint64
 }
 type entry struct {
 	owner                 *Manager
@@ -49,7 +52,9 @@ type entry struct {
 	ack                   chan uint64
 	start                 chan struct{}
 	activated             bool
+	bridgeCredit          bool
 	workDone, done        chan struct{}
+	cleanups              []func()
 }
 type queued struct {
 	kind string
@@ -102,6 +107,7 @@ func (m *Manager) start(parent context.Context, target model.Target, kind string
 	ctx, cancel := context.WithCancel(parent)
 	ref := model.SessionRef{ID: model.ID(), Connection: target.Connection}
 	e := &entry{owner: m, ref: ref, target: target, kind: kind, ctx: ctx, cancel: cancel, wake: make(chan struct{}, 1), space: make(chan struct{}), ack: make(chan uint64, 1), start: make(chan struct{}), workDone: make(chan struct{}), done: make(chan struct{})}
+	e.bridgeCredit = m.bridgeCredit
 	m.entries[ref.ID] = e
 	if !pending {
 		close(e.start)
@@ -135,7 +141,11 @@ func (m *Manager) start(parent context.Context, target model.Target, kind string
 		e.cancel()
 		m.mu.Lock()
 		delete(m.entries, ref.ID)
+		cleanups := e.cleanups
 		m.mu.Unlock()
+		for _, cleanup := range cleanups {
+			cleanup()
+		}
 		close(e.done)
 	}()
 	return ref, nil
@@ -163,14 +173,14 @@ func (m *Manager) Acknowledge(ref model.SessionRef, sequence uint64) error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	if sequence == 0 || e.expectedAck != sequence || e.ctx.Err() != nil {
-		return model.Fail("invalid", "Invalid terminal acknowledgement")
+		return model.Fail("invalid", "Invalid stream acknowledgement")
 	}
 	e.expectedAck = 0
 	select {
 	case e.ack <- sequence:
 		return nil
 	default:
-		return model.Fail("invalid", "Terminal acknowledgement already queued")
+		return model.Fail("invalid", "Stream acknowledgement already queued")
 	}
 }
 func validRef(ref model.SessionRef) bool {
@@ -228,7 +238,7 @@ func (m *Manager) Close()                                 { m.stopMatching(nil, 
 func (m *Manager) Stats() Stats {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	stats := Stats{Sessions: len(m.entries), DroppedLogBytes: m.dropped.Load()}
+	stats := Stats{Sessions: len(m.entries), DroppedLogBytes: m.dropped.Load(), EmittedLogBytes: m.emittedLogs.Load()}
 	for _, e := range m.entries {
 		e.mu.Lock()
 		stats.QueuedBytes += e.bytes
@@ -276,12 +286,15 @@ func (e *entry) deliver(kind string, data []byte) bool {
 	e.mu.Lock()
 	e.sequence++
 	sequence := e.sequence
-	terminal := e.kind == "terminal" && kind == "data"
+	terminal := (e.kind == "terminal" && kind == "data") || (e.bridgeCredit && (kind == "data" || kind == "snapshot" || kind == "update"))
 	if terminal {
 		e.expectedAck = sequence
 	}
 	e.inFlight = len(data)
 	e.mu.Unlock()
+	if e.kind == "logs" && kind == "data" {
+		e.owner.emittedLogs.Add(uint64(len(data)))
+	}
 	e.owner.emit(model.Event{Session: e.ref, Sequence: sequence, Kind: kind, Data: data})
 	if terminal {
 		select {
@@ -332,3 +345,21 @@ func (e *entry) dispatch() {
 		}
 	}
 }
+
+// OnStop binds a resource cleanup to the same completion that Stop waits for.
+func (m *Manager) OnStop(ref model.SessionRef, cleanup func()) error {
+	if cleanup == nil {
+		return model.Fail("invalid", "Cleanup callback required")
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	e := m.entries[ref.ID]
+	if e == nil || e.ref != ref {
+		return model.Fail("stale_target", "Session is no longer available")
+	}
+	e.cleanups = append(e.cleanups, cleanup)
+	return nil
+}
+
+// RequireBridgeAcknowledgements bounds native delivery until the renderer accepts a frame.
+func (m *Manager) RequireBridgeAcknowledgements() { m.mu.Lock(); m.bridgeCredit = true; m.mu.Unlock() }

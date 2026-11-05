@@ -16,6 +16,9 @@ import { Call as $Call, CancellablePromise as $CancellablePromise } from "@wails
 import * as config$0 from "../config/models.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
+import * as kube$0 from "../kube/models.js";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
 import * as model$0 from "../model/models.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
@@ -23,6 +26,10 @@ import * as session$0 from "../session/models.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
 import * as trust$0 from "../trust/models.js";
+
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
+import * as $models from "./models.js";
 
 export function AcknowledgeSession(ref: model$0.SessionRef, sequence: number): $CancellablePromise<void> {
     return $Call.ByID(2515936091, ref, sequence);
@@ -40,6 +47,10 @@ export function CloseConnection(ref: model$0.ConnectionRef): $CancellablePromise
     return $Call.ByID(2991465249, ref);
 }
 
+export function ListPods(ref: model$0.ConnectionRef, $namespace: string): $CancellablePromise<kube$0.PodSummary[] | null> {
+    return $Call.ByID(2659037247, ref, $namespace);
+}
+
 export function LoadContexts(paths: string[] | null): $CancellablePromise<config$0.ContextSummary[] | null> {
     return $Call.ByID(3544806431, paths);
 }
@@ -52,6 +63,10 @@ export function Ping(): $CancellablePromise<string> {
     return $Call.ByID(1602976539);
 }
 
+export function ResizeTerminal(ref: model$0.SessionRef, cols: number, rows: number): $CancellablePromise<void> {
+    return $Call.ByID(3137588067, ref, cols, rows);
+}
+
 export function ReviewHelper(snapshotID: string, name: string): $CancellablePromise<trust$0.PreviewRecord> {
     return $Call.ByID(1179126027, snapshotID, name);
 }
@@ -60,14 +75,38 @@ export function RevokeHelper(fingerprint: string): $CancellablePromise<void> {
     return $Call.ByID(977034085, fingerprint);
 }
 
+export function RuntimeStats(): $CancellablePromise<$models.RuntimeStats> {
+    return $Call.ByID(1878501160);
+}
+
 export function SessionStats(): $CancellablePromise<session$0.Stats> {
     return $Call.ByID(386574256);
+}
+
+export function StartForward(target: model$0.Target, local: number, remote: number): $CancellablePromise<kube$0.ForwardResult> {
+    return $Call.ByID(2805244466, target, local, remote);
+}
+
+export function StartLogs(target: model$0.Target, previous: boolean, tail: number): $CancellablePromise<model$0.SessionRef> {
+    return $Call.ByID(2715696862, target, previous, tail);
+}
+
+export function StartTerminal(target: model$0.Target): $CancellablePromise<model$0.SessionRef> {
+    return $Call.ByID(1336356265, target);
 }
 
 export function StopSession(ref: model$0.SessionRef): $CancellablePromise<void> {
     return $Call.ByID(4162141529, ref);
 }
 
+export function TerminalInput(ref: model$0.SessionRef, data: string | null): $CancellablePromise<void> {
+    return $Call.ByID(3461535609, ref, data);
+}
+
 export function TrustedHelpers(): $CancellablePromise<trust$0.Entry[] | null> {
     return $Call.ByID(1222629415);
+}
+
+export function WatchPods(target: model$0.Target): $CancellablePromise<model$0.SessionRef> {
+    return $Call.ByID(2188028550, target);
 }

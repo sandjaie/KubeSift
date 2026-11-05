@@ -39,11 +39,20 @@ func TestSessionCancellationAndBounds(t *testing.T) {
 				t.Fatal(err)
 			}
 			<-entered
+			cleaned := make(chan struct{})
+			if err = manager.OnStop(ref, func() { close(cleaned) }); err != nil {
+				t.Fatal(err)
+			}
 			if err = manager.Stop(ref); err != nil {
 				t.Fatal(err)
 			}
 			if err = manager.Stop(ref); err != nil {
 				t.Fatal(err)
+			}
+			select {
+			case <-cleaned:
+			default:
+				t.Fatal("owned resource cleanup did not finish")
 			}
 			select {
 			case <-exited:
@@ -60,18 +69,19 @@ func TestSessionCancellationAndBounds(t *testing.T) {
 	}
 	t.Run("bounded-flood", func(t *testing.T) {
 		blocked := make(chan struct{})
-		release := make(chan struct{})
+		firstSequence := make(chan uint64, 1)
 		truncated := make(chan struct{})
 		flooded := make(chan struct{})
 		var blockOnce, truncateOnce sync.Once
 		manager := NewManager(func(event model.Event) {
 			if event.Kind == "data" {
-				blockOnce.Do(func() { close(blocked); <-release })
+				blockOnce.Do(func() { close(blocked); firstSequence <- event.Sequence })
 			}
 			if event.Kind == "truncated" {
 				truncateOnce.Do(func() { close(truncated) })
 			}
 		})
+		manager.RequireBridgeAcknowledgements()
 		defer manager.Close()
 		ref, err := manager.Start(context.Background(), target, "logs", func(ctx context.Context, w *Writer) error {
 			chunk := make([]byte, 64<<10)
@@ -93,10 +103,12 @@ func TestSessionCancellationAndBounds(t *testing.T) {
 		}
 		<-flooded
 		stats := manager.Stats()
-		if stats.QueuedBytes > 1<<20 || stats.DroppedLogBytes == 0 {
+		if stats.QueuedBytes > 1<<20 || stats.InFlightBytes > 64<<10 || stats.DroppedLogBytes == 0 {
 			t.Fatalf("unbounded or silent flood: %+v", stats)
 		}
-		close(release)
+		if err = manager.Acknowledge(ref, <-firstSequence); err != nil {
+			t.Fatal(err)
+		}
 		select {
 		case <-truncated:
 		case <-time.After(2 * time.Second):

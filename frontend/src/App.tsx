@@ -1,38 +1,74 @@
 /*
-Purpose: Present the minimal Phase 1A desktop validation controls.
-Used by: The React entry point.
-Responsibilities: Show explicit connections and helper review while retaining independent tab and session state.
-Important: Render cluster and helper metadata as text; UI selection must not retarget backend work.
+Purpose: Present the narrow Phase 1A validation workspace.
+Used by: The React desktop entry point.
+Responsibilities: Keep explicit target controls, helper trust, independent tabs and bounded sessions visible.
+Important: Render cluster strings as text, register session routes before activation and cancel backend work before removing UI state.
 */
-import {useEffect,useState} from 'react';
-import {onSessionEvent} from './bridge';
-import {reduceEvent,type WorkspaceState} from './state';
+import {lazy,Suspense,useEffect,useRef,useState} from 'react';
 import {Service} from '../bindings/github.com/sandjaie/KubeSift/internal/desktop';
+import type {RuntimeStats} from '../bindings/github.com/sandjaie/KubeSift/internal/desktop/models';
 import type {ContextSummary} from '../bindings/github.com/sandjaie/KubeSift/internal/config';
 import type {PreviewRecord,Entry} from '../bindings/github.com/sandjaie/KubeSift/internal/trust';
-import type {ConnectionRef} from '../bindings/github.com/sandjaie/KubeSift/internal/model';
+import {acknowledge,activateSession,listenerCount,onSessionEvent,stopSession,type ConnectionRef,type SessionRef,type Target} from './bridge';
+import {reduceEvent,type SessionView,type TabState,type WorkspaceState} from './state';
+import './styles.css';
+const Terminal=lazy(()=>import('./Terminal'));
+interface ConnectionView{label:string;endpoint:string;ref:ConnectionRef}
+function message(error:unknown):string{if(error instanceof Error)return error.message.slice(0,500);if(typeof error==='object'&&error!==null&&'message'in error&&typeof error.message==='string')return error.message.slice(0,500);return 'Action failed for the selected target';}
+function same(a:ConnectionRef,b:ConnectionRef):boolean{return a.id===b.id&&a.generation===b.generation;}
 
 export default function App(){
- const [workspace,setWorkspace]=useState<WorkspaceState>({activeTab:null,tabs:{}});
- const [status,setStatus]=useState('connecting');
- const [path,setPath]=useState('');
- const [review,setReview]=useState<{preview:PreviewRecord,context:ContextSummary}|null>(null);
- const [trusted,setTrusted]=useState<Entry[]>([]);
- const [contexts,setContexts]=useState<ContextSummary[]>([]);
- const [connections,setConnections]=useState<{label:string,ref:ConnectionRef}[]>([]);
- useEffect(()=>onSessionEvent(event=>setWorkspace(current=>reduceEvent(current,event))),[]);
- useEffect(()=>{Service.Ping().then(setStatus).catch(()=>setStatus('Desktop bridge unavailable'));},[]);
- async function load(){try{setContexts((await Service.LoadContexts(path.trim()?[path.trim()]:[]))??[]);setStatus('Local configuration loaded; choose a connection explicitly');}catch{setStatus('Cannot load kubeconfig');}}
- async function open(context:ContextSummary){try{const ref=await Service.OpenConnection(context.snapshotId,context.name);setConnections(old=>[...old.filter(c=>c.ref.id!==ref.id),{label:context.name+' · '+context.namespace,ref}]);setWorkspace(current=>({...current,activeTab:ref.id,tabs:{...current.tabs,[ref.id]:{connection:ref,sessions:{}}}}));setStatus('Connection opened');}catch{setStatus('Connection unavailable. Credential helpers require review before use.');}}
- async function close(ref:ConnectionRef){try{await Service.CloseConnection(ref);setConnections(old=>old.filter(c=>c.ref.id!==ref.id));setWorkspace(current=>{const tabs={...current.tabs};delete tabs[ref.id];return {...current,tabs,activeTab:current.activeTab===ref.id?(Object.keys(tabs)[0]??null):current.activeTab};});}catch{setStatus('Connection already closed or replaced');}}
- async function reviewHelper(context:ContextSummary){try{const preview=await Service.ReviewHelper(context.snapshotId,context.name);setReview({preview,context});}catch{setStatus('Cannot review helper. Check executable availability and configuration.');}}
- async function approve(){if(!review)return;try{await Service.ApproveHelper(review.preview.id,review.context.snapshotId,review.context.name);setReview(null);setStatus('Helper approved. Open the connection explicitly.');}catch{setStatus('Helper review expired or configuration changed. Review again.');}}
- async function listTrust(){try{setTrusted((await Service.TrustedHelpers())??[]);}catch{setStatus('Cannot read trust records; connection remains blocked.');}}
- async function revoke(fingerprint:string){try{await Service.RevokeHelper(fingerprint);setConnections([]);setWorkspace({activeTab:null,tabs:{}});await listTrust();setStatus('Trust revoked; connections closed.');}catch{setStatus('Could not revoke trust.');}}
- return <main><h1>KubeSift · Phase 1A</h1><p role="status">{status}</p>
- <label>Kubeconfig path (blank uses Kubernetes defaults)<input value={path} onChange={e=>setPath(e.target.value)}/></label><button onClick={()=>void load()}>Load local configuration</button>
- <h2>Available contexts</h2><ul>{contexts.map(c=><li key={c.source+c.name}>{c.name} · {c.namespace} · {c.endpoint}<button onClick={()=>void open(c)}>Open {c.name}</button><button onClick={()=>void reviewHelper(c)}>Review helper for {c.name}</button></li>)}</ul>
- {review&&<section aria-label="Credential helper review"><h2>Credential helper review</h2><p>{review.preview.source} · {review.preview.context}</p><p>Executable: {review.preview.executable}</p><p>Arguments: {(review.preview.args??[]).join(' ')}</p><p>Environment: {(review.preview.env??[]).join(' ')}</p><p>Values are redacted. Approval trusts this executable configuration; the helper can run with your account permissions.</p><button onClick={()=>void approve()}>Approve reviewed helper</button><button onClick={()=>setReview(null)}>Cancel review</button></section>}
- <section><h2>Helper trust</h2><button onClick={()=>void listTrust()}>List approved helpers</button><p>Revoking trust closes connections.</p><ul>{trusted.map(entry=><li key={entry.fingerprint}>{entry.label}<button onClick={()=>void revoke(entry.fingerprint)}>Revoke {entry.label}</button></li>)}</ul></section>
- <h2>Explicit connections</h2><p>Active connection: {workspace.activeTab??'none'}</p><ul>{connections.map(c=><li key={c.ref.id}><button onClick={()=>setWorkspace(current=>({...current,activeTab:c.ref.id}))}>Select {c.label}</button> · generation {c.ref.generation}<button onClick={()=>void close(c.ref)}>Close {c.label}</button></li>)}</ul></main>
+ const [workspace,setWorkspace]=useState<WorkspaceState>({activeTab:null,tabs:{}});const [status,setStatus]=useState('connecting');
+ const [path,setPath]=useState('');const [contexts,setContexts]=useState<ContextSummary[]>([]);const [connections,setConnections]=useState<ConnectionView[]>([]);
+ const [review,setReview]=useState<{preview:PreviewRecord;context:ContextSummary}|null>(null);const [trusted,setTrusted]=useState<Entry[]>([]);
+ const [tail,setTail]=useState(100);const [previous,setPrevious]=useState(false);const [localPort,setLocalPort]=useState(0);const [remotePort,setRemotePort]=useState(8080);const [metrics,setMetrics]=useState<RuntimeStats|null>(null);
+ const liveConnections=useRef(new Map<string,ConnectionRef>());
+ const routes=useRef(new Map<string,{ref:SessionRef;kind:string}>());
+ const active=workspace.activeTab?workspace.tabs[workspace.activeTab]:undefined;
+ const activeIdentity=connections.find(connection=>connection.ref.id===workspace.activeTab);
+ const activeWatch=active?Object.values(active.sessions).find(session=>session.kind==='watch'&&session.resources):undefined;
+ const pods=activeWatch?.resources??active?.pods??[];const selected=pods.find(pod=>pod.name===active?.selectedPod);
+ const allSessions=Object.entries(workspace.tabs).flatMap(([tabId,tab])=>Object.values(tab.sessions).map(session=>({tabId,session})));
+
+ function patchTab(id:string,patch:Partial<TabState>){setWorkspace(current=>{const tab=current.tabs[id];return tab?{...current,tabs:{...current.tabs,[id]:{...tab,...patch}}}:current;});}
+ function sessionProblem(ref:SessionRef,error:unknown){setWorkspace(current=>{const tab=current.tabs[ref.connection.id];const session=tab?.sessions[ref.id];if(!tab||!session||!same(tab.connection,ref.connection))return current;return {...current,tabs:{...current.tabs,[ref.connection.id]:{...tab,sessions:{...tab.sessions,[ref.id]:{...session,status:'error',error:message(error)}}}}};});}
+ useEffect(()=>onSessionEvent(event=>{
+  const route=routes.current.get(event.session.id);if(!route||!same(route.ref.connection,event.session.connection))return;
+  setWorkspace(current=>reduceEvent(current,event));
+  if(route.kind!=='terminal'&&['data','snapshot','update'].includes(event.kind)){requestAnimationFrame(()=>{void acknowledge(event.session,event.sequence).catch(error=>sessionProblem(event.session,error));});}
+ }),[]);
+ useEffect(()=>{void Service.Ping().then(setStatus).catch(error=>setStatus(message(error)));},[]);
+ useEffect(()=>{let live=true;let timer:ReturnType<typeof setTimeout>;async function poll(){try{const value=await Service.RuntimeStats();if(live)setMetrics(value);}catch{/* The visible connection/session controls report operational errors. */}finally{if(live)timer=setTimeout(()=>void poll(),2000);}}void poll();return ()=>{live=false;clearTimeout(timer);};},[]);
+
+ async function load(){try{const requested=path.trim();setContexts((await Service.LoadContexts(requested?[requested]:[]))??[]);setReview(null);setStatus('Local source loaded. Open a context explicitly.');}catch(error){setStatus(message(error));}}
+ async function refresh(ref:ConnectionRef,namespace:string){try{const result=(await Service.ListPods(ref,namespace))??[];setWorkspace(current=>{const tab=current.tabs[ref.id];if(!tab||!same(tab.connection,ref)||tab.namespace!==namespace)return current;return {...current,tabs:{...current.tabs,[ref.id]:{...tab,pods:result}}};});setStatus(`Read ${result.length} Pods from ${namespace}`);}catch(error){setStatus(message(error));}}
+ async function open(context:ContextSummary){try{const ref=await Service.OpenConnection(context.snapshotId,context.name);const currentRef=liveConnections.current.get(ref.id);if(currentRef&&currentRef.generation>ref.generation)return;liveConnections.current.set(ref.id,ref);setConnections(current=>[...current.filter(item=>item.ref.id!==ref.id),{label:context.name,endpoint:context.endpoint,ref}]);for(const [id,route]of routes.current){if(route.ref.connection.id===ref.id)routes.current.delete(id);}setWorkspace(current=>({...current,activeTab:ref.id,tabs:{...current.tabs,[ref.id]:{connection:ref,namespace:context.namespace,pods:[],sessions:{}}}}));await refresh(ref,context.namespace);}catch(error){setStatus(message(error));}}
+ async function close(ref:ConnectionRef){const tab=workspace.tabs[ref.id];if(tab&&Object.keys(tab.sessions).length&&!window.confirm(`Close ${connections.find(item=>item.ref.id===ref.id)?.label??ref.id} and cancel its sessions?`))return;try{await Service.CloseConnection(ref);if(!same(liveConnections.current.get(ref.id)??ref,ref))return;liveConnections.current.delete(ref.id);for(const [id,route]of routes.current){if(same(route.ref.connection,ref))routes.current.delete(id);}setConnections(current=>current.filter(item=>item.ref.id!==ref.id));setWorkspace(current=>{const tabs={...current.tabs};delete tabs[ref.id];return {...current,tabs,activeTab:current.activeTab===ref.id?(Object.keys(tabs)[0]??null):current.activeTab};});}catch(error){setStatus(message(error));}}
+ async function reviewHelper(context:ContextSummary){try{setReview({preview:await Service.ReviewHelper(context.snapshotId,context.name),context});}catch(error){setStatus(message(error));}}
+ async function approve(){if(!review)return;try{await Service.ApproveHelper(review.preview.id,review.context.snapshotId,review.context.name);setReview(null);setStatus('Helper approved; opening the context remains explicit.');}catch(error){setStatus(message(error));}}
+ async function listTrust(){try{setTrusted((await Service.TrustedHelpers())??[]);}catch(error){setStatus(message(error));}}
+ async function revoke(fingerprint:string){try{await Service.RevokeHelper(fingerprint);liveConnections.current.clear();routes.current.clear();setConnections([]);setWorkspace({activeTab:null,tabs:{}});await listTrust();setStatus('Trust revoked and connections closed.');}catch(error){setStatus(message(error));}}
+ function target():Target|null{if(!active||!selected||!active.container)return null;return {connection:active.connection,namespace:active.namespace??'',name:selected.name,container:active.container};}
+ async function start(kind:string){if(!active)return;const captured=kind==='watch'?{connection:active.connection,namespace:active.namespace??'',name:'',container:''}:target();if(!captured){setStatus('Choose a Pod and container first.');return;}try{let ref:SessionRef;let extra='';if(kind==='watch')ref=await Service.WatchPods(captured);else if(kind==='logs')ref=await Service.StartLogs(captured,previous,tail);else if(kind==='terminal')ref=await Service.StartTerminal(captured);else{const result=await Service.StartForward(captured,localPort,remotePort);ref=result.session;extra=` · 127.0.0.1:${result.localPort} → Pod:${remotePort}`;}
+  const currentRef=liveConnections.current.get(ref.connection.id);if(!currentRef||!same(currentRef,ref.connection)){await stopSession(ref);return;}
+  const label=`${activeIdentity?.label??captured.connection.id} / ${captured.namespace}${captured.name?' / '+captured.name:''}${captured.container?' / '+captured.container:''}${extra}`;
+  routes.current.set(ref.id,{ref,kind});const view:SessionView={ref,kind,label,target:captured,history:new Uint8Array(),sequence:0,status:'starting',truncatedBytes:0};setWorkspace(current=>{const tab=current.tabs[ref.connection.id];if(!tab||!same(tab.connection,ref.connection))return current;return {...current,tabs:{...current.tabs,[ref.connection.id]:{...tab,sessions:{...tab.sessions,[ref.id]:view}}}};});if(kind!=='terminal')void activateSession(ref).catch(error=>sessionProblem(ref,error));
+ }catch(error){setStatus(message(error));}}
+ async function stop(ref:SessionRef){try{await stopSession(ref);routes.current.delete(ref.id);setWorkspace(current=>{const tab=current.tabs[ref.connection.id];if(!tab)return current;const sessions={...tab.sessions};delete sessions[ref.id];return {...current,tabs:{...current.tabs,[ref.connection.id]:{...tab,sessions}}};});}catch(error){sessionProblem(ref,error);}}
+
+ return <main><header><div><h1>KubeSift</h1><p>Phase 1A · desktop integration validation</p></div><p role="status" className="status">{status}</p></header>
+ <section><h2>Connections</h2><div className="controls"><label>Kubeconfig source<input value={path} onChange={event=>setPath(event.target.value)} placeholder="Blank uses Kubernetes defaults"/></label><button onClick={()=>void load()}>Load local source</button></div>
+ <ul className="contexts">{contexts.map(context=><li key={context.snapshotId+context.name}><span><strong>{context.name}</strong><small>{context.namespace} · {context.endpoint}</small></span><button onClick={()=>void open(context)}>Open {context.name}</button><button onClick={()=>void reviewHelper(context)}>Review helper</button></li>)}</ul>
+ <nav aria-label="Cluster tabs">{connections.map(item=><span key={item.ref.id}><button aria-pressed={workspace.activeTab===item.ref.id} onClick={()=>setWorkspace(current=>({...current,activeTab:item.ref.id}))}>{item.label} · {item.ref.id.slice(0,8)}</button><button aria-label={`Close ${item.label}`} onClick={()=>void close(item.ref)}>Close</button></span>)}</nav></section>
+ {review&&<section aria-label="Credential helper review"><h2>Credential helper review</h2><p>{review.preview.source} · {review.preview.context}</p><p>Executable: <code>{review.preview.executable}</code></p><p>Arguments: {(review.preview.args??[]).join(' ')}</p><p>Environment: {(review.preview.env??[]).join(' ')}</p><p>Values are redacted. This trusts executable configuration, not a sandbox.</p><button onClick={()=>void approve()}>Approve reviewed helper</button><button onClick={()=>setReview(null)}>Cancel review</button></section>}
+ {active&&<section><h2>{activeIdentity?.label} · generation {active.connection.generation}</h2><p>{activeIdentity?.endpoint} · connection {active.connection.id}</p><div className="controls"><label>Namespace<input value={active.namespace??''} onChange={event=>patchTab(active.connection.id,{namespace:event.target.value,pods:[],selectedPod:undefined,container:undefined})}/></label><button onClick={()=>void refresh(active.connection,active.namespace??'')}>Refresh Pods</button><button onClick={()=>void start('watch')}>Watch namespace</button>
+ <label>Pod<select value={active.selectedPod??''} onChange={event=>{const pod=pods.find(item=>item.name===event.target.value);patchTab(active.connection.id,{selectedPod:pod?.name,container:pod?.containers?.[0]});}}><option value="">Choose Pod</option>{pods.map(pod=><option key={pod.uid} value={pod.name}>{pod.name} · {pod.phase} · {pod.ready?'ready':'not ready'}</option>)}</select></label>
+ <label>Container<select value={active.container??''} onChange={event=>patchTab(active.connection.id,{container:event.target.value})}><option value="">Choose container</option>{(selected?.containers??[]).map(container=><option key={container} value={container}>{container}</option>)}</select></label></div>
+ {selected&&<p>UID: {selected.uid} · marker: {selected.marker}<br/>Annotation as text: {selected.annotation}</p>}
+ <div className="controls"><label>Initial log lines<input type="number" min="0" max="1000" value={tail} onChange={event=>setTail(Number(event.target.value))}/></label><label className="check"><input type="checkbox" checked={previous} onChange={event=>setPrevious(event.target.checked)}/>Previous container; follow disabled</label><button disabled={!selected||!active.container} onClick={()=>void start('logs')}>{previous?'Read previous logs':'Follow logs'}</button><button disabled={!selected||!active.container} onClick={()=>void start('terminal')}>Open container shell</button></div>
+ <div className="controls"><label>Local port (0 allocates)<input type="number" min="0" max="65535" value={localPort} onChange={event=>setLocalPort(Number(event.target.value))}/></label><label>Pod port<input type="number" min="1" max="65535" value={remotePort} onChange={event=>setRemotePort(Number(event.target.value))}/></label><button disabled={!selected} onClick={()=>void start('forward')}>Start loopback forward</button></div></section>}
+ <section><h2>Sessions</h2><p>Session targets stay fixed when selection or tabs change.</p><div className="sessions">{allSessions.map(({session})=><article key={session.ref.id}><h3>{session.kind} · {session.label}</h3><p>{session.status}{session.error?' · '+session.error:''}</p><button onClick={()=>void stop(session.ref)}>Stop and close</button>{session.kind==='logs'&&<><p>Dropped or trimmed: {session.truncatedBytes} bytes. Showing newest 64 KiB of the bounded history.</p><pre>{new TextDecoder().decode(session.history.subarray(-(64<<10)))}</pre></>}{session.kind==='watch'&&<ul>{(session.resources??[]).map(pod=><li key={pod.uid}>{pod.name} · {pod.phase} · {pod.marker} · {pod.annotation}</li>)}</ul>}{session.kind==='terminal'&&<Suspense fallback={<p>Loading terminal…</p>}><Terminal session={session.ref} label={session.label??session.ref.id}/></Suspense>}</article>)}</div></section>
+ <details><summary>Helper trust settings</summary><button onClick={()=>void listTrust()}>List approvals</button><p>Revoking trust closes connections.</p><ul>{trusted.map(entry=><li key={entry.fingerprint}>{entry.label}<button onClick={()=>void revoke(entry.fingerprint)}>Revoke {entry.label}</button></li>)}</ul></details>
+ <details open><summary>Validation counters</summary><pre className="metrics">{JSON.stringify({native:metrics,ui:{listeners:listenerCount(),receivedLogBytes:workspace.receivedLogBytes??0}},null,2)}</pre></details>
+ </main>;
 }

@@ -23,3 +23,10 @@ export interface SessionRef {
     "id": string;
     "connection": ConnectionRef;
 }
+
+export interface Target {
+    "connection": ConnectionRef;
+    "namespace": string;
+    "name": string;
+    "container": string;
+}

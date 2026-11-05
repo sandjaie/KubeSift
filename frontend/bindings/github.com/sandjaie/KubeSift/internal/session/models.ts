@@ -12,4 +12,5 @@ export interface Stats {
     "queuedBytes": number;
     "inFlightBytes": number;
     "droppedLogBytes": number;
+    "emittedLogBytes": number;
 }

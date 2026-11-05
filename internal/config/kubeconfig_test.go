@@ -9,6 +9,7 @@ package config_test
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"github.com/sandjaie/KubeSift/internal/config"
 	"github.com/sandjaie/KubeSift/internal/connection"
 	"github.com/sandjaie/KubeSift/internal/desktop"
@@ -174,6 +175,34 @@ contexts:
 		}
 		if err = <-done; err == nil {
 			t.Fatal("cancelled request returned success")
+		}
+	})
+
+	t.Run("freeze-certificate-files", func(t *testing.T) {
+		dir := t.TempDir()
+		ca := filepath.Join(dir, "ca.pem")
+		original := []byte("synthetic-ca-before")
+		if err := os.WriteFile(ca, original, 0600); err != nil {
+			t.Fatal(err)
+		}
+		data := bytes.Replace(fixture, []byte(`cluster: {server: "https://127.0.0.1:6443"}`), []byte(fmt.Sprintf(`cluster: {server: "https://127.0.0.1:6443", certificate-authority: %q}`, ca)), 1)
+		path := filepath.Join(dir, "config")
+		if err := os.WriteFile(path, data, 0600); err != nil {
+			t.Fatal(err)
+		}
+		snapshot, err := config.Load([]string{path})
+		if err != nil {
+			t.Fatal(err)
+		}
+		resolved, err := snapshot.Resolve("same")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err = os.WriteFile(ca, []byte("changed-ca-after-resolution"), 0600); err != nil {
+			t.Fatal(err)
+		}
+		if !bytes.Equal(resolved.RESTConfig().CAData, original) {
+			t.Fatal("resolved configuration retained a mutable certificate file")
 		}
 	})
 

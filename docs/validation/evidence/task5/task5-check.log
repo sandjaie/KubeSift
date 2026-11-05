@@ -1,0 +1,65 @@
+Source descriptions: passed
+?   	github.com/sandjaie/KubeSift/cmd/kubesift	[no test files]
+# github.com/sandjaie/KubeSift/internal/config.test
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-1081233772/go.o) was built for newer 'macOS' version (13.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-1081233772/000027.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-1081233772/000028.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-1081233772/000029.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-1081233772/000030.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-1081233772/000031.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-1081233772/000032.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-1081233772/000033.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-1081233772/000034.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-1081233772/000035.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-1081233772/000036.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-1081233772/000037.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-1081233772/000038.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-1081233772/000039.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-1081233772/000040.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-1081233772/000041.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-1081233772/000042.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-1081233772/000043.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-1081233772/000044.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ok  	github.com/sandjaie/KubeSift/internal/config	2.428s
+?   	github.com/sandjaie/KubeSift/internal/connection	[no test files]
+?   	github.com/sandjaie/KubeSift/internal/desktop	[no test files]
+?   	github.com/sandjaie/KubeSift/internal/desktop/assets	[no test files]
+?   	github.com/sandjaie/KubeSift/internal/kube	[no test files]
+?   	github.com/sandjaie/KubeSift/internal/model	[no test files]
+ok  	github.com/sandjaie/KubeSift/internal/session	(cached)
+ok  	github.com/sandjaie/KubeSift/internal/trust	0.700s
+?   	github.com/sandjaie/KubeSift/node_modules/flatted/golang/pkg/flatted	[no test files]
+?   	github.com/sandjaie/KubeSift/tests/fixtures/helper	[no test files]
+
+> test
+> npm run test --workspace frontend
+
+
+> @kubesift/frontend@0.0.0 test
+> vitest run
+
+
+ RUN  v4.1.12 /Users/sandjaie.ravi/dev/kubesift/frontend
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  14:34:02
+   Duration  598ms (transform 41ms, setup 0ms, import 339ms, tests 2ms, environment 0ms)
+
+
+> lint
+> npm run lint --workspace frontend
+
+
+> @kubesift/frontend@0.0.0 lint
+> eslint .
+
+
+> typecheck
+> npm run typecheck --workspace frontend
+
+
+> @kubesift/frontend@0.0.0 typecheck
+> tsc --noEmit
+

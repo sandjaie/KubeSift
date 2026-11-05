@@ -62,6 +62,14 @@ func TestHelperTrustLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	embedded, err := guard.Review(resolved(helper, "--embedded-fixture-secret", "secret-env", "https://127.0.0.1:6443"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(strings.Join(embedded.Args, " "), "embedded-fixture-secret") {
+		t.Fatal("argument preview disclosed a value embedded in flag-like text")
+	}
 	if calls != 0 || strings.Contains(strings.Join(preview.Args, " "), "secret-arg") {
 		t.Fatal("preview executed or disclosed arguments")
 	}

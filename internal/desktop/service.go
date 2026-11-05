@@ -11,12 +11,14 @@ import (
 	"context"
 	"github.com/sandjaie/KubeSift/internal/config"
 	"github.com/sandjaie/KubeSift/internal/connection"
+	"github.com/sandjaie/KubeSift/internal/kube"
 	"github.com/sandjaie/KubeSift/internal/model"
 	"github.com/sandjaie/KubeSift/internal/session"
 	"github.com/sandjaie/KubeSift/internal/trust"
 	"k8s.io/client-go/rest"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sync"
 )
 
@@ -26,6 +28,9 @@ type Service struct {
 	snapshotID  string
 	connections *connection.Manager
 	auth        *lazyAuth
+	kube        *kube.Service
+	ctx         context.Context
+	cancel      context.CancelFunc
 	sessions    *session.Manager
 	emit        func(model.Event)
 }
@@ -71,7 +76,8 @@ func (a *lazyAuth) Authenticate(ctx context.Context, r config.Resolved) (*rest.C
 }
 func NewService() *Service {
 	auth := &lazyAuth{}
-	s := &Service{connections: connection.NewManager(auth), auth: auth}
+	ctx, cancel := context.WithCancel(context.Background())
+	s := &Service{connections: connection.NewManager(auth), auth: auth, ctx: ctx, cancel: cancel}
 	s.sessions = session.NewManager(func(event model.Event) {
 		s.mu.Lock()
 		emit := s.emit
@@ -80,8 +86,10 @@ func NewService() *Service {
 			emit(event)
 		}
 	})
+	s.sessions.RequireBridgeAcknowledgements()
 	s.sessions.SetValidate(func(target model.Target) error { return s.connections.Validate(target.Connection) })
 	s.connections.SetCleanup(s.sessions.StopConnection)
+	s.kube = kube.NewService(s.connections, s.sessions)
 	return s
 }
 func (*Service) Ping() string { return "ready" }
@@ -111,14 +119,19 @@ func (s *Service) resolve(snapshotID, name string) (config.Resolved, error) {
 	return snapshot.Resolve(name)
 }
 func (s *Service) CloseConnection(ref model.ConnectionRef) error { return s.connections.Close(ref) }
-func (s *Service) ServiceShutdown() error                        { s.sessions.Close(); s.connections.CloseAll(); return nil }
+func (s *Service) ServiceShutdown() error {
+	s.cancel()
+	s.sessions.Close()
+	s.connections.CloseAll()
+	return nil
+}
 
 func (s *Service) OpenConnection(snapshotID, name string) (model.ConnectionRef, error) {
 	r, err := s.resolve(snapshotID, name)
 	if err != nil {
 		return model.ConnectionRef{}, err
 	}
-	return s.connections.Open(context.Background(), r)
+	return s.connections.Open(s.ctx, r)
 }
 func (s *Service) ReviewHelper(snapshotID, name string) (trust.PreviewRecord, error) {
 	r, err := s.resolve(snapshotID, name)
@@ -168,3 +181,46 @@ func (s *Service) AcknowledgeSession(ref model.SessionRef, sequence uint64) erro
 	return s.sessions.Acknowledge(ref, sequence)
 }
 func (s *Service) SessionStats() session.Stats { return s.sessions.Stats() }
+
+func (s *Service) ListPods(ref model.ConnectionRef, namespace string) ([]kube.PodSummary, error) {
+	pods, err := s.kube.Pods(s.ctx, ref, namespace)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]kube.PodSummary, 0, len(pods))
+	for _, pod := range pods {
+		result = append(result, kube.Summarize(pod))
+	}
+	return result, nil
+}
+func (s *Service) WatchPods(target model.Target) (model.SessionRef, error) {
+	return s.kube.WatchPods(s.ctx, target)
+}
+func (s *Service) StartLogs(target model.Target, previous bool, tail int64) (model.SessionRef, error) {
+	return s.kube.Logs(s.ctx, target, previous, tail)
+}
+func (s *Service) StartTerminal(target model.Target) (model.SessionRef, error) {
+	return s.kube.Exec(s.ctx, target)
+}
+func (s *Service) StartForward(target model.Target, local, remote uint16) (kube.ForwardResult, error) {
+	return s.kube.Forward(s.ctx, target, local, remote)
+}
+func (s *Service) TerminalInput(ref model.SessionRef, data []byte) error {
+	return s.kube.Input(ref, data)
+}
+func (s *Service) ResizeTerminal(ref model.SessionRef, cols, rows uint16) error {
+	return s.kube.Resize(ref, cols, rows)
+}
+
+type RuntimeStats struct {
+	Sessions   session.Stats `json:"sessions"`
+	Goroutines int           `json:"goroutines"`
+	HeapAlloc  uint64        `json:"heapAlloc"`
+	HeapSys    uint64        `json:"heapSys"`
+}
+
+func (s *Service) RuntimeStats() RuntimeStats {
+	var memory runtime.MemStats
+	runtime.ReadMemStats(&memory)
+	return RuntimeStats{s.sessions.Stats(), runtime.NumGoroutine(), memory.HeapAlloc, memory.HeapSys}
+}

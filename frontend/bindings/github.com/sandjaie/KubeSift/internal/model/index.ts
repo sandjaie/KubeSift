@@ -10,5 +10,6 @@ Important: Wails generates this glue; change Go contracts and regenerate rather 
 export type {
     ConnectionRef,
     Event,
-    SessionRef
+    SessionRef,
+    Target
 } from "./models.js";

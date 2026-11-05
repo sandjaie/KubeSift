@@ -130,6 +130,12 @@ func (s *Snapshot) Resolve(name string) (Resolved, error) {
 	if cfg.AuthProvider != nil {
 		return Resolved{}, model.Fail("invalid", "Legacy authentication provider unsupported")
 	}
+	if err := rest.LoadTLSFiles(cfg); err != nil {
+		return Resolved{}, model.Fail("invalid", "Cannot read TLS files for selected context")
+	}
+	cfg.CAFile = ""
+	cfg.CertFile = ""
+	cfg.KeyFile = ""
 	cfg.Timeout = 0
 	return Resolved{source: s.source, name: name, cfg: rest.CopyConfig(cfg), sources: s.sources}, nil
 }
