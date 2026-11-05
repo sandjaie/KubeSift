@@ -5,3 +5,15 @@ export interface ConnectionRef {
     "id": string;
     "generation": number;
 }
+
+export interface Event {
+    "session": SessionRef;
+    "sequence": number;
+    "kind": string;
+    "data": string | null;
+}
+
+export interface SessionRef {
+    "id": string;
+    "connection": ConnectionRef;
+}

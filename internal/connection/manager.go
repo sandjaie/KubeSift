@@ -1,3 +1,9 @@
+/*
+Purpose: Own Kubernetes clients for explicitly selected connections.
+Used by: The desktop adapter and Kubernetes service adapters.
+Responsibilities: Issue generations, reject stale references, bind cancellation and install owned credential transports.
+Important: Never resolve a request from the active UI tab or install client-go native exec authentication.
+*/
 // Package connection owns explicit generations and guarded Kubernetes transports.
 package connection
 
@@ -253,3 +259,5 @@ func (m *Manager) StreamConfig(ctx context.Context, ref model.ConnectionRef) (*r
 	})
 	return cfg, nil
 }
+
+func (m *Manager) Validate(ref model.ConnectionRef) error { _, err := m.lookup(ref); return err }

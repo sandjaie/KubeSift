@@ -1,3 +1,9 @@
+/*
+Purpose: Expose the narrow desktop API to the frontend.
+Used by: Generated Wails bindings and the application lifecycle.
+Responsibilities: Bind context previews, helper approvals and session controls to backend-issued identities.
+Important: Do not accept arbitrary executable text from React; stale preview IDs must fail.
+*/
 // Package desktop translates desktop calls to framework-independent services.
 package desktop
 
@@ -6,6 +12,7 @@ import (
 	"github.com/sandjaie/KubeSift/internal/config"
 	"github.com/sandjaie/KubeSift/internal/connection"
 	"github.com/sandjaie/KubeSift/internal/model"
+	"github.com/sandjaie/KubeSift/internal/session"
 	"github.com/sandjaie/KubeSift/internal/trust"
 	"k8s.io/client-go/rest"
 	"os"
@@ -19,6 +26,8 @@ type Service struct {
 	snapshotID  string
 	connections *connection.Manager
 	auth        *lazyAuth
+	sessions    *session.Manager
+	emit        func(model.Event)
 }
 
 type lazyAuth struct {
@@ -62,7 +71,18 @@ func (a *lazyAuth) Authenticate(ctx context.Context, r config.Resolved) (*rest.C
 }
 func NewService() *Service {
 	auth := &lazyAuth{}
-	return &Service{connections: connection.NewManager(auth), auth: auth}
+	s := &Service{connections: connection.NewManager(auth), auth: auth}
+	s.sessions = session.NewManager(func(event model.Event) {
+		s.mu.Lock()
+		emit := s.emit
+		s.mu.Unlock()
+		if emit != nil {
+			emit(event)
+		}
+	})
+	s.sessions.SetValidate(func(target model.Target) error { return s.connections.Validate(target.Connection) })
+	s.connections.SetCleanup(s.sessions.StopConnection)
+	return s
 }
 func (*Service) Ping() string { return "ready" }
 func (s *Service) LoadContexts(paths []string) ([]config.ContextSummary, error) {
@@ -91,7 +111,7 @@ func (s *Service) resolve(snapshotID, name string) (config.Resolved, error) {
 	return snapshot.Resolve(name)
 }
 func (s *Service) CloseConnection(ref model.ConnectionRef) error { return s.connections.Close(ref) }
-func (s *Service) ServiceShutdown() error                        { s.connections.CloseAll(); return nil }
+func (s *Service) ServiceShutdown() error                        { s.sessions.Close(); s.connections.CloseAll(); return nil }
 
 func (s *Service) OpenConnection(snapshotID, name string) (model.ConnectionRef, error) {
 	r, err := s.resolve(snapshotID, name)
@@ -140,3 +160,11 @@ func (s *Service) RevokeHelper(fingerprint string) error {
 	s.connections.CloseAll()
 	return nil
 }
+
+func (s *Service) setEmitter(emit func(model.Event))          { s.mu.Lock(); s.emit = emit; s.mu.Unlock() }
+func (s *Service) ActivateSession(ref model.SessionRef) error { return s.sessions.Activate(ref) }
+func (s *Service) StopSession(ref model.SessionRef) error     { return s.sessions.Stop(ref) }
+func (s *Service) AcknowledgeSession(ref model.SessionRef, sequence uint64) error {
+	return s.sessions.Acknowledge(ref, sequence)
+}
+func (s *Service) SessionStats() session.Stats { return s.sessions.Stats() }

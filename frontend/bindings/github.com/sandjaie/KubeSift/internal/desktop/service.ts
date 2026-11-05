@@ -13,7 +13,18 @@ import * as config$0 from "../config/models.js";
 import * as model$0 from "../model/models.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
+import * as session$0 from "../session/models.js";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
 import * as trust$0 from "../trust/models.js";
+
+export function AcknowledgeSession(ref: model$0.SessionRef, sequence: number): $CancellablePromise<void> {
+    return $Call.ByID(2515936091, ref, sequence);
+}
+
+export function ActivateSession(ref: model$0.SessionRef): $CancellablePromise<void> {
+    return $Call.ByID(186250982, ref);
+}
 
 export function ApproveHelper(id: string, snapshotID: string, name: string): $CancellablePromise<void> {
     return $Call.ByID(1432231764, id, snapshotID, name);
@@ -41,6 +52,14 @@ export function ReviewHelper(snapshotID: string, name: string): $CancellableProm
 
 export function RevokeHelper(fingerprint: string): $CancellablePromise<void> {
     return $Call.ByID(977034085, fingerprint);
+}
+
+export function SessionStats(): $CancellablePromise<session$0.Stats> {
+    return $Call.ByID(386574256);
+}
+
+export function StopSession(ref: model$0.SessionRef): $CancellablePromise<void> {
+    return $Call.ByID(4162141529, ref);
 }
 
 export function TrustedHelpers(): $CancellablePromise<trust$0.Entry[] | null> {
