@@ -5,9 +5,14 @@ import (
 	"context"
 	"github.com/sandjaie/KubeSift/internal/config"
 	"github.com/sandjaie/KubeSift/internal/connection"
+	"github.com/sandjaie/KubeSift/internal/desktop"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 func TestLoadAndConnectionIdentity(t *testing.T) {
@@ -76,4 +81,94 @@ contexts:
 			}
 		})
 	}
+	t.Run("rejects-replaced-preview", func(t *testing.T) {
+		service := desktop.NewService()
+		defer service.ServiceShutdown()
+		a := filepath.Join(t.TempDir(), "a")
+		b := filepath.Join(t.TempDir(), "b")
+		for _, path := range []string{a, b} {
+			if err := os.WriteFile(path, fixture, 0600); err != nil {
+				t.Fatal(err)
+			}
+		}
+		first, err := service.LoadContexts([]string{a})
+		if err != nil {
+			t.Fatal(err)
+		}
+		second, err := service.LoadContexts([]string{b})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := service.OpenConnection(first[0].SnapshotID, "same"); err == nil {
+			t.Fatal("stale preview opened the replacement source")
+		}
+		if _, err := service.OpenConnection(second[0].SnapshotID, "same"); err != nil {
+			t.Fatalf("current preview rejected: %v", err)
+		}
+	})
+
+	t.Run("anonymous-context", func(t *testing.T) {
+		path := filepath.Join(t.TempDir(), "anonymous")
+		data := bytes.ReplaceAll(fixture, []byte("user: fixture, "), nil)
+		if err := os.WriteFile(path, data, 0600); err != nil {
+			t.Fatal(err)
+		}
+		snapshot, err := config.Load([]string{path})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err = snapshot.Resolve("same"); err != nil {
+			t.Fatalf("anonymous context rejected: %v", err)
+		}
+	})
+	t.Run("close-cancels-in-flight-request", func(t *testing.T) {
+		started := make(chan struct{})
+		stopped := make(chan struct{})
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { close(started); <-r.Context().Done(); close(stopped) }))
+		defer server.Close()
+		callCtx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		path := filepath.Join(t.TempDir(), "local-http-fixture")
+		data := bytes.ReplaceAll(fixture, []byte("https://127.0.0.1:6443"), []byte(server.URL))
+		if err := os.WriteFile(path, data, 0600); err != nil {
+			t.Fatal(err)
+		}
+		snapshot, err := config.Load([]string{path})
+		if err != nil {
+			t.Fatal(err)
+		}
+		resolved, err := snapshot.Resolve("same")
+		if err != nil {
+			t.Fatal(err)
+		}
+		manager := connection.NewManager(nil)
+		defer manager.CloseAll()
+		ref, err := manager.Open(context.Background(), resolved)
+		if err != nil {
+			t.Fatal(err)
+		}
+		client, err := manager.Client(ref)
+		if err != nil {
+			t.Fatal(err)
+		}
+		done := make(chan error, 1)
+		go func() { _, e := client.CoreV1().Pods("ks-validation").List(callCtx, metav1.ListOptions{}); done <- e }()
+		select {
+		case <-started:
+		case <-time.After(2 * time.Second):
+			t.Fatal("request did not start")
+		}
+		if err = manager.Close(ref); err != nil {
+			t.Fatal(err)
+		}
+		select {
+		case <-stopped:
+		case <-time.After(2 * time.Second):
+			t.Fatal("connection close left network request running")
+		}
+		if err = <-done; err == nil {
+			t.Fatal("cancelled request returned success")
+		}
+	})
+
 }

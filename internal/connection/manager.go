@@ -5,6 +5,7 @@ import (
 	"context"
 	"github.com/sandjaie/KubeSift/internal/config"
 	"github.com/sandjaie/KubeSift/internal/model"
+	"io"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"net/http"
@@ -84,13 +85,23 @@ func (m *Manager) lookup(ref model.ConnectionRef) (*entry, error) {
 type guarded struct {
 	next  http.RoundTripper
 	check func() error
+	owned context.Context
 }
 
 func (g guarded) RoundTrip(req *http.Request) (*http.Response, error) {
 	if err := g.check(); err != nil {
 		return nil, err
 	}
-	return g.next.RoundTrip(req)
+	ctx, cancel := context.WithCancel(req.Context())
+	stop := context.AfterFunc(g.owned, cancel)
+	response, err := g.next.RoundTrip(req.Clone(ctx))
+	cleanup := func() { stop(); cancel() }
+	if err != nil {
+		cleanup()
+		return nil, err
+	}
+	response.Body = &ownedBody{ReadCloser: response.Body, cleanup: cleanup}
+	return response, nil
 }
 func (m *Manager) RESTConfig(ref model.ConnectionRef) (*rest.Config, error) {
 	e, err := m.lookup(ref)
@@ -117,7 +128,7 @@ func (m *Manager) RESTConfig(ref model.ConnectionRef) (*rest.Config, error) {
 	if err != nil {
 		return nil, model.Fail("invalid", "Cannot create authenticated transport")
 	}
-	safe := &rest.Config{Host: cfg.Host, APIPath: cfg.APIPath, ContentConfig: cfg.ContentConfig, UserAgent: "KubeSift-Phase1A", Timeout: 30 * time.Second, Transport: guarded{native, check}}
+	safe := &rest.Config{Host: cfg.Host, APIPath: cfg.APIPath, ContentConfig: cfg.ContentConfig, UserAgent: "KubeSift-Phase1A", Timeout: 30 * time.Second, Transport: guarded{native, check, e.ctx}}
 	return safe, nil
 }
 func (m *Manager) Client(ref model.ConnectionRef) (kubernetes.Interface, error) {
@@ -157,3 +168,11 @@ func (m *Manager) CloseAll() {
 		_ = m.Close(ref)
 	}
 }
+
+// ownedBody retains cancellation until the caller has finished a streaming response.
+type ownedBody struct {
+	io.ReadCloser
+	cleanup func()
+}
+
+func (b *ownedBody) Close() error { defer b.cleanup(); return b.ReadCloser.Close() }

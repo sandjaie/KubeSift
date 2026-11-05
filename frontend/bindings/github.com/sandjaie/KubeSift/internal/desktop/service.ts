@@ -20,8 +20,8 @@ export function LoadContexts(paths: string[] | null): $CancellablePromise<config
     return $Call.ByID(3544806431, paths);
 }
 
-export function OpenConnection(name: string): $CancellablePromise<model$0.ConnectionRef> {
-    return $Call.ByID(2624622699, name);
+export function OpenConnection(snapshotID: string, name: string): $CancellablePromise<model$0.ConnectionRef> {
+    return $Call.ByID(2624622699, snapshotID, name);
 }
 
 export function Ping(): $CancellablePromise<string> {

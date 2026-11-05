@@ -15,10 +15,11 @@ import (
 )
 
 type ContextSummary struct {
-	Source    string `json:"source"`
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
-	Endpoint  string `json:"endpoint"`
+	SnapshotID string `json:"snapshotId"`
+	Source     string `json:"source"`
+	Name       string `json:"name"`
+	Namespace  string `json:"namespace"`
+	Endpoint   string `json:"endpoint"`
 }
 type Snapshot struct {
 	raw    api.Config
@@ -79,7 +80,7 @@ func (s *Snapshot) Contexts() []ContextSummary {
 		if ns == "" {
 			ns = "default"
 		}
-		out = append(out, ContextSummary{s.source, name, ns, endpoint})
+		out = append(out, ContextSummary{Source: s.source, Name: name, Namespace: ns, Endpoint: endpoint})
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
 	return out
@@ -89,7 +90,7 @@ func (s *Snapshot) Resolve(name string) (Resolved, error) {
 	if !ok || c == nil {
 		return Resolved{}, model.Fail("invalid", "Unknown context")
 	}
-	if s.raw.Clusters[c.Cluster] == nil || s.raw.AuthInfos[c.AuthInfo] == nil {
+	if s.raw.Clusters[c.Cluster] == nil || (c.AuthInfo != "" && s.raw.AuthInfos[c.AuthInfo] == nil) {
 		return Resolved{}, model.Fail("invalid", "Unresolved context reference")
 	}
 	cfg, err := clientcmd.NewNonInteractiveClientConfig(s.raw, name, &clientcmd.ConfigOverrides{}, nil).ClientConfig()

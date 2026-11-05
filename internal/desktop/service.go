@@ -12,6 +12,7 @@ import (
 type Service struct {
 	mu          sync.Mutex
 	snapshot    *config.Snapshot
+	snapshotID  string
 	connections *connection.Manager
 }
 
@@ -24,14 +25,20 @@ func (s *Service) LoadContexts(paths []string) ([]config.ContextSummary, error) 
 	}
 	s.mu.Lock()
 	s.snapshot = snapshot
+	s.snapshotID = model.ID()
+	summaries := snapshot.Contexts()
+	for i := range summaries {
+		summaries[i].SnapshotID = s.snapshotID
+	}
 	s.mu.Unlock()
-	return snapshot.Contexts(), nil
+	return summaries, nil
 }
-func (s *Service) OpenConnection(name string) (model.ConnectionRef, error) {
+func (s *Service) OpenConnection(snapshotID, name string) (model.ConnectionRef, error) {
 	s.mu.Lock()
 	snapshot := s.snapshot
+	valid := snapshotID != "" && snapshotID == s.snapshotID
 	s.mu.Unlock()
-	if snapshot == nil {
+	if snapshot == nil || !valid {
 		return model.ConnectionRef{}, model.Fail("invalid", "Load a configuration first")
 	}
 	resolved, err := snapshot.Resolve(name)
