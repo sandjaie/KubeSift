@@ -13,6 +13,7 @@ import (
 	"github.com/sandjaie/KubeSift/internal/connection"
 	"github.com/sandjaie/KubeSift/internal/kube"
 	"github.com/sandjaie/KubeSift/internal/model"
+	"github.com/sandjaie/KubeSift/internal/operation"
 	"github.com/sandjaie/KubeSift/internal/session"
 	"github.com/sandjaie/KubeSift/internal/trust"
 	"k8s.io/client-go/rest"
@@ -20,6 +21,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"sync"
+	"time"
 )
 
 type Service struct {
@@ -29,6 +31,8 @@ type Service struct {
 	connections *connection.Manager
 	auth        *lazyAuth
 	kube        *kube.Service
+	operations  *operation.Service
+	fixtures    map[model.ConnectionRef]FixtureTarget
 	ctx         context.Context
 	cancel      context.CancelFunc
 	sessions    *session.Manager
@@ -90,6 +94,8 @@ func NewService() *Service {
 	s.sessions.SetValidate(func(target model.Target) error { return s.connections.Validate(target.Connection) })
 	s.connections.SetCleanup(s.sessions.StopConnection)
 	s.kube = kube.NewService(s.connections, s.sessions)
+	s.operations = operation.NewService(s.connections, time.Now)
+	s.fixtures = map[model.ConnectionRef]FixtureTarget{}
 	return s
 }
 func (*Service) Ping() string { return "ready" }
@@ -118,11 +124,20 @@ func (s *Service) resolve(snapshotID, name string) (config.Resolved, error) {
 	}
 	return snapshot.Resolve(name)
 }
-func (s *Service) CloseConnection(ref model.ConnectionRef) error { return s.connections.Close(ref) }
+func (s *Service) CloseConnection(ref model.ConnectionRef) error {
+	err := s.connections.Close(ref)
+	s.mu.Lock()
+	delete(s.fixtures, ref)
+	s.mu.Unlock()
+	return err
+}
 func (s *Service) ServiceShutdown() error {
 	s.cancel()
 	s.sessions.Close()
 	s.connections.CloseAll()
+	s.mu.Lock()
+	s.fixtures = map[model.ConnectionRef]FixtureTarget{}
+	s.mu.Unlock()
 	return nil
 }
 
@@ -131,7 +146,25 @@ func (s *Service) OpenConnection(snapshotID, name string) (model.ConnectionRef, 
 	if err != nil {
 		return model.ConnectionRef{}, err
 	}
-	return s.connections.Open(s.ctx, r)
+	ref, err := s.connections.Open(s.ctx, r)
+	if err != nil {
+		return model.ConnectionRef{}, err
+	}
+	fixture, fixtureErr := localFixture(r)
+	s.mu.Lock()
+	if s.connections.Validate(ref) == nil {
+		for old := range s.fixtures {
+			if old.ID == ref.ID {
+				delete(s.fixtures, old)
+			}
+		}
+		if fixtureErr == nil {
+			fixture.Target.Connection = ref
+			s.fixtures[ref] = fixture
+		}
+	}
+	s.mu.Unlock()
+	return ref, nil
 }
 func (s *Service) ReviewHelper(snapshotID, name string) (trust.PreviewRecord, error) {
 	r, err := s.resolve(snapshotID, name)
@@ -171,6 +204,9 @@ func (s *Service) RevokeHelper(fingerprint string) error {
 		return err
 	}
 	s.connections.CloseAll()
+	s.mu.Lock()
+	s.fixtures = map[model.ConnectionRef]FixtureTarget{}
+	s.mu.Unlock()
 	return nil
 }
 
@@ -224,3 +260,32 @@ func (s *Service) RuntimeStats() RuntimeStats {
 	runtime.ReadMemStats(&memory)
 	return RuntimeStats{s.sessions.Stats(), runtime.NumGoroutine(), memory.HeapAlloc, memory.HeapSys}
 }
+
+// FixtureMarker returns a backend-selected target; namespace text in the UI is irrelevant.
+func (s *Service) FixtureMarker(ref model.ConnectionRef) (FixtureTarget, error) {
+	if _, err := s.connections.RESTConfig(ref); err != nil {
+		return FixtureTarget{}, err
+	}
+	s.mu.Lock()
+	fixture, ok := s.fixtures[ref]
+	s.mu.Unlock()
+	if !ok {
+		return FixtureTarget{}, model.Fail("invalid", "Validation writes are unavailable for this connection")
+	}
+	return fixture, nil
+}
+func (s *Service) PrepareMarker(ref model.ConnectionRef, value string) (operation.Preview, error) {
+	fixture, err := s.FixtureMarker(ref)
+	if err != nil {
+		return operation.Preview{}, err
+	}
+	preview, err := s.operations.Prepare(s.ctx, fixture.Target, value)
+	if err != nil {
+		return operation.Preview{}, err
+	}
+	if preview.UID != fixture.UID {
+		return operation.Preview{}, model.Fail("stale_target", "Fixture ownership changed; reload the local configuration")
+	}
+	return preview, nil
+}
+func (s *Service) ExecuteMarker(token string) error { return s.operations.Execute(s.ctx, token) }

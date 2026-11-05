@@ -13,5 +13,6 @@ export {
 };
 
 export type {
+    FixtureTarget,
     RuntimeStats
 } from "./models.js";

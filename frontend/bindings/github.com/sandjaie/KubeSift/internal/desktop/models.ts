@@ -9,7 +9,17 @@ Important: Wails generates this glue; change Go contracts and regenerate rather 
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
+import * as model$0 from "../model/models.js";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
 import * as session$0 from "../session/models.js";
+
+export interface FixtureTarget {
+    "target": model$0.Target;
+    "cluster": string;
+    "endpoint": string;
+    "uid": string;
+}
 
 export interface RuntimeStats {
     "sessions": session$0.Stats;

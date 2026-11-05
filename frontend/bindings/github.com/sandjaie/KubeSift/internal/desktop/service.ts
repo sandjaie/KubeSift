@@ -22,6 +22,9 @@ import * as kube$0 from "../kube/models.js";
 import * as model$0 from "../model/models.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
+import * as operation$0 from "../operation/models.js";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
 import * as session$0 from "../session/models.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
@@ -47,6 +50,17 @@ export function CloseConnection(ref: model$0.ConnectionRef): $CancellablePromise
     return $Call.ByID(2991465249, ref);
 }
 
+export function ExecuteMarker(token: string): $CancellablePromise<void> {
+    return $Call.ByID(1276541632, token);
+}
+
+/**
+ * FixtureMarker returns a backend-selected target; namespace text in the UI is irrelevant.
+ */
+export function FixtureMarker(ref: model$0.ConnectionRef): $CancellablePromise<$models.FixtureTarget> {
+    return $Call.ByID(854518666, ref);
+}
+
 export function ListPods(ref: model$0.ConnectionRef, $namespace: string): $CancellablePromise<kube$0.PodSummary[] | null> {
     return $Call.ByID(2659037247, ref, $namespace);
 }
@@ -61,6 +75,10 @@ export function OpenConnection(snapshotID: string, name: string): $CancellablePr
 
 export function Ping(): $CancellablePromise<string> {
     return $Call.ByID(1602976539);
+}
+
+export function PrepareMarker(ref: model$0.ConnectionRef, value: string): $CancellablePromise<operation$0.Preview> {
+    return $Call.ByID(529151800, ref, value);
 }
 
 export function ResizeTerminal(ref: model$0.SessionRef, cols: number, rows: number): $CancellablePromise<void> {
