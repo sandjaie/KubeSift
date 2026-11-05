@@ -63,7 +63,7 @@ These files are future deliverables, not files created by this planning change. 
 | `frontend/src/bridge.ts`, `frontend/src/state.ts`, `frontend/src/state.test.ts`, `frontend/src/Terminal.tsx` | Typed bridge, tab/session routing and terminal rendering |
 | `tests/integration/validation_test.go`, `tests/fixtures/phase1a.yaml`, `tests/fixtures/helper/main.go` | One local integration scenario, synthetic workloads and exec helper |
 | `scripts/local-clusters.sh`, `scripts/check.sh`, `scripts/check-docs.py`, `scripts/source-descriptions.py` | Explicit test-cluster lifecycle and repeatable checks |
-| `.gitignore`, `.husky/pre-commit`, `.husky/pre-push`, `.github/workflows/check.yml`, `.github/pull_request_template.md` | Hygiene, hooks and checks |
+| `.gitignore`, `.husky/pre-commit`, `.github/workflows/check.yml`, `.github/pull_request_template.md` | Hygiene, hooks and checks |
 | `.cursor/rules/ponytail-lite.mdc`, `.agents/skills/{kubesift-code-review,kubesift-code-hygiene,release-this}/SKILL.md` | Repo-specific engineering handoff |
 | `docs/validation/toolchain.html`, `docs/validation/phase-1a.html`, `docs/validation/measurements.json` | Actual environment, results and measurements |
 
