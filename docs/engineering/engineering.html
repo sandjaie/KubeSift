@@ -105,6 +105,32 @@ npx tsc --noEmit</code></pre>
 <li>A deliberate shortcut that has a known ceiling gets a <code>ponytail:</code> comment naming the ceiling and the upgrade.</li>
 </ul>
 
+<h3 id="file-descriptions">Plain-English descriptions in every source file</h3>
+<p>Every project-owned <code>.go</code>, <code>.ts</code> and <code>.tsx</code> file must begin with a short description of its purpose and consumers. This includes frontend components, hooks, state, backend services, internal packages, desktop adapters, entry points, tests, fixtures, tooling and configuration written in these languages. A reader should understand why the file exists without tracing its code. A directory README does not replace this description.</p>
+<p>Use these labels in a normal top-of-file comment. Usually 4–8 short lines are enough; include additional detail only when it helps the reader:</p>
+<ul>
+<li><strong>Purpose:</strong> What this file does for KubeSift, in ordinary language. Explain the user-facing or engineering reason it exists, not just its filename or technical category.</li>
+<li><strong>Used by:</strong> The actual consuming component, package, entry point, test runner or build tool. Name a relevant repository-relative path or symbol when useful. For shared helpers, name the main consumer groups rather than maintaining an exhaustive caller list. For an entry point, explain what launches it.</li>
+<li><strong>Responsibilities:</strong> The important input, output or work it owns. Keep this concrete; do not list every function.</li>
+<li><strong>Important:</strong> Relevant side effects, ownership, cancellation/cleanup, sensitive-data handling, constraints or non-obvious failure behavior. Omit this line if there is nothing useful to add; do not repeat a security checklist in every file.</li>
+</ul>
+<p>Example shape for a TypeScript view (adapt names and claims to the actual code):</p>
+<pre><code>/**
+ * Purpose: Shows the selected Pod's details and available actions.
+ * Used by: The workspace screen when the user selects a Pod.
+ * Responsibilities: Renders supplied state and forwards user actions to the bridge.
+ * Important: Uses the supplied cluster target; it does not choose a global context.
+ */</code></pre>
+<p>Example shape for a Go session service (describe only behavior the file actually implements):</p>
+<pre><code>// Purpose: Keeps track of the live log and terminal sessions opened by the app.
+// Used by: Kubernetes adapters and the desktop service that starts and stops sessions.
+// Responsibilities: Associates each session with its cluster and exposes cancellation.
+// Important: Closing a session must stop its background work and release its resources.</code></pre>
+<p>Test files describe the behavior or regression they protect and identify the test runner as their consumer. Configuration files describe which tool reads them. Avoid vague phrases such as “handles logic” or “utility functions”; explain unfamiliar terms when needed. Do not include author names, change histories, stale timestamps, copied function signatures or comments that simply narrate the code.</p>
+<p>Keep required language directives, build tags and license notices in their valid positions; place the description immediately after them and before ordinary code. Preserve Go package/exported-symbol documentation and TypeScript API documentation where appropriate; the file description explains the whole file, while symbol comments explain the contract of that symbol.</p>
+<p>Generated project files also need a concise purpose/consumer description, their generator/source location, and a clear generated-file marker. Add descriptions through the generator template or a repeatable generation step, not manual edits that disappear on regeneration. Preserve the generator's required markers and directives. Third-party vendored code, installed dependencies and compiled bundles are outside this source-authoring rule.</p>
+<p>Update a file's description in the same change when its purpose, consumers or important behavior changes. Verify consumer names against the code. During review, check new and changed files for accurate descriptions; no dedicated test suite or additional documentation framework is required. The implementation agent should backfill existing project source files under this rule. This documentation change itself does not modify application files.</p>
+
 <h3 id="release">Release</h3>
 <p>Branch, tag, and publication steps are in <a href="gitworkflow.md">gitworkflow.md</a>.</p>
 <ul>
