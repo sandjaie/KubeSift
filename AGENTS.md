@@ -1,7 +1,7 @@
 # KubeSift repository instructions
 
 ## Planning and scope
-- Read progress.md for current task status; keep it short and update it after verified progress. Do not put the shared progress.md in per-task scratch folders.
+- Read .superpowers/progress.md for current task status; keep it short and update it after verified progress. Do not put the shared progress.md in per-task scratch folders.
 - Start at docs/index.html. Product scope, architecture, safeguards, decisions, UX and roadmap each have an owning HTML document.
 - Markdown Superpowers specifications live in docs/superpowers/specs/; detailed execution plans belong in docs/superpowers/plans/.
 - Keep requirements in their owning document and link to them; avoid duplicating instructions across files.

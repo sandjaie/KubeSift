@@ -71,7 +71,7 @@ Add a concise `README.html` in each handwritten source directory per the enginee
 
 Approved visual guidance is in the [UX specification](../../ux/workflows.html). Keep this milestone minimal; full adaptive explorer/theme implementation belongs in 1B and AI in Phase 2.
 
-Execution status is kept in the short, tracked root [progress.md](../../../progress.md). Per-task scratch directories hold briefs and logs, never the shared progress file. User-directed structure/source-description changes follow [engineering](../../engineering/engineering.html#source-layout).
+Execution status is kept in the short, tracked [.superpowers/progress.md](../../../.superpowers/progress.md). Per-task scratch directories hold briefs and logs, never the shared progress file. User-directed structure/source-description changes follow [engineering](../../engineering/engineering.html#source-layout).
 
 ## Shared contract
 

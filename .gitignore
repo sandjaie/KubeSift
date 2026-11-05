@@ -3,7 +3,7 @@ frontend/dist/
 bin/
 .local/
 .DS_Store
-.superpowers/
 .task/
 internal/desktop/assets/dist/
+.superpowers/*
 !.superpowers/progress.md
