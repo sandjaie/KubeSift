@@ -15,8 +15,7 @@
 - Do not add infrastructure to clusters for the shipped application's functionality.
 - Use synthetic test data. Keep credentials, kubeconfigs, company resource data, internal endpoints, logs and screenshots out of the repository.
 - Run meaningful checks appropriate to each change and distinguish completed validation from unrun checks.
+- Engineering practice lives in docs/engineering/engineering.html. Product scope, architecture, safeguards, and phase order stay in their owning documents.
 
 ## Git and publication
-- Use the user's personal GitHub identity. Before commits, verify repository-local author identity; before remote operations, verify remote destination and authentication account separately.
-- Do not infer the personal account from the OS username, use a company account, or change global Git identity. Ask if the intended personal account is ambiguous.
-- Do not push or publish without authorization. License is deliberately undecided; do not add a license by assumption.
+- Follow docs/engineering/gitworkflow.md.
