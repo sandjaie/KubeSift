@@ -1,11 +1,10 @@
 # Superpowers plans
 
-Status: planning only; written design awaiting review.
+The [Phase 1A specification](../specs/2026-11-05-phase-1a-validation-design.md) was approved on 2026-11-05.
 
-The [roadmap](../../roadmap/roadmap.html) owns phase sequence and dependencies. This directory owns detailed implementation tasks once the design is approved.
+- [Phase 1A implementation plan](2026-11-05-phase-1a-validation.md): detailed tasks, minimal tests and separate-session handoff; ready for review.
+- [Original validation outline](phase-1a-validation-outline.md): historical discovery notes, superseded by the approved spec and detailed plan.
 
-Use the Superpowers writing-plans skill after specification approval. Each future plan should name its approved specification, scope, dependencies, exact affected files once known, tasks, meaningful checks, acceptance evidence and stopping conditions. Plans must not duplicate the roadmap or permanent repository instructions.
+The [roadmap](../../roadmap/roadmap.html) owns phase order. This directory owns execution tasks. Future plans follow the Superpowers writing-plans workflow after the relevant design is approved. Keep scope, safeguards and permanent instructions in their owning documents and link to them.
 
-[Phase 1A validation outline](phase-1a-validation-outline.md) captures the agreed validation requirements. Detailed execution steps and dependency choices are intentionally pending. Do not treat the outline as permission to implement.
-
-No detailed plans for later milestones are generated prematurely. Their acceptance outcomes are recorded in the roadmap and product requirements.
+Implementation takes place in a separate session after plan review. Later milestones are not authorized by the Phase 1A plan.

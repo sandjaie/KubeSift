@@ -5,7 +5,7 @@ Status: draft for review; not implementation authorization
 
 ## Intent
 
-Build a local-first desktop workspace for DevOps/SRE engineers with broad Kubernetes operations in Phase 1 and evidence-backed AI investigation in Phase 2. The first user works with company OpenShift/EKS/AKS clusters; personal clusters and personal AI providers must also have full product access subject to permissions and available services.
+Build a local-first desktop workspace for DevOps/SRE engineers with broad Kubernetes operations in Phase 1 and evidence-backed AI investigation in Phase 2. Support OpenShift, EKS and AKS with configurable AI providers, subject to permissions and available services.
 
 ## Authoritative design package
 
@@ -29,11 +29,11 @@ The product approach is a broad operations client before AI, rather than a narro
 
 ## Constraints and anti-goals
 
-Follow the authoritative product and security requirements. In particular, avoid wrong-cluster operations, hidden credential-helper execution, silent external-provider fallback, unbounded streams, undocumented scope exclusions and claims of parity without evidence. The app must not install infrastructure for its own functionality. A public codebase must not contain company material.
+Follow the authoritative product and security requirements. In particular, avoid wrong-cluster operations, hidden credential-helper execution, silent external-provider fallback, unbounded streams, undocumented scope exclusions and claims of parity without evidence. The app must not install infrastructure for its own functionality.
 
 ## What is left to the builder
 
-After design review and implementation authorization, choose exact dependencies, package layout, local cluster tooling and adapter details within these boundaries. Set performance budgets from validation measurements. Do not silently decide unresolved product features, provider data policies, license or release platform coverage.
+After design review and implementation authorization, choose exact dependencies, package layout, local cluster tooling and adapter details within these boundaries. Set performance budgets from validation measurements. Do not silently decide unresolved product features, provider data policies or release platform coverage.
 
 ## Review and planning gates
 

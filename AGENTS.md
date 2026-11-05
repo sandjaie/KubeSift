@@ -11,9 +11,9 @@
 - Follow the selected architecture and docs/security/security-model.html. Keep domain services independent of the desktop bridge.
 - Use explicit connection/session/resource targets; never execute against a mutable global current context.
 - Apply cancellation, flow control and bounded buffering to long-lived sessions; verify cleanup.
-- Use disposable local clusters for development and mutation tests. Identify exact company contexts/namespaces and allowed actions before integration tests; never test permissions with trial mutations.
+- Use disposable local clusters for development and mutation tests. Identify explicit external contexts/namespaces and allowed actions before integration tests; never test permissions with trial mutations.
 - Do not add infrastructure to clusters for the shipped application's functionality.
-- Use synthetic test data. Keep credentials, kubeconfigs, company resource data, internal endpoints, logs and screenshots out of the repository.
+- Use synthetic test data; follow the security model for credential handling.
 - Run meaningful checks appropriate to each change and distinguish completed validation from unrun checks.
 - Engineering practice lives in docs/engineering/engineering.html. Product scope, architecture, safeguards, and phase order stay in their owning documents.
 

@@ -13,8 +13,8 @@ Demonstrate that the selected Wails/Go integration can support KubeSift's real a
 - Written design approved and implementation explicitly requested.
 - Select/pin toolchain and framework versions; select kind, minikube or k3d based on the host and test requirements.
 - Identify supported initial macOS version/CPU architecture and packaged-build method.
-- Create disposable local targets for mutations and failure injection. Never infer company namespace names.
-- For real authentication checks, obtain explicit contexts and read-only permissions; keep credentials and company data out of evidence artifacts.
+- Create disposable local targets for mutations and failure injection. Use explicit fixture targets.
+- For real authentication checks, obtain explicit contexts and read-only permissions; use synthetic evidence artifacts.
 
 ## Validation work packages
 
@@ -35,8 +35,8 @@ Record startup time, concurrent-stream throughput, memory growth/plateau, termin
 
 Pass requires the functional evidence above and no unresolved target-isolation, credential-disclosure or unbounded-resource failure. If transport throughput is inadequate, assess batching/flow control before adding another local transport. If integration remains unsuitable, update the architecture decision and compare alternatives before feature expansion.
 
-Local Kubernetes validates generic behavior, not OpenShift-specific APIs or all cloud authentication configurations. Record each untested environment explicitly. Company write tests and cluster-wide operations are outside this outline unless separately targeted and authorized.
+Local Kubernetes validates generic behavior, not OpenShift-specific APIs or all cloud authentication configurations. Record each untested environment explicitly. External write tests and cluster-wide operations are outside this outline unless separately targeted and authorized.
 
 ## Deliverable when executed
 
-A short validation report with tested versions/environment, synthetic fixtures, pass/fail evidence, measurements, limitations and the proceed/revise recommendation. Do not commit company outputs, kubeconfigs or secrets.
+A short validation report with tested versions/environment, synthetic fixtures, pass/fail evidence, measurements, limitations and the proceed/revise recommendation. Use synthetic evidence.

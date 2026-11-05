@@ -41,8 +41,8 @@ go vet ./...</code></pre>
 <pre><code>npx vitest run
 npx eslint .
 npx tsc --noEmit</code></pre>
-<p>Lint and the unit suites are also enforced by git hooks. See <a href="#hooks">Hooks</a>. <code>go vet</code> and <code>tsc --noEmit</code> stay review and pull-request checks. A full typecheck on every commit costs more than it saves.</p>
-<p>No coverage threshold. The frontend has no Prettier. Frontend lint is ESLint plus typescript-eslint recommended. Go formatting is <code>gofmt</code>, because the Go toolchain owns it. CI runs the same lint and unit tests for the modules that exist. Packaging, signing, notarizing, publishing, and version bumps stay in the release skill.</p>
+<p>Once implemented, lint and the unit suites will also be enforced by git hooks. See <a href="#hooks">Hooks</a>. <code>go vet</code> and <code>tsc --noEmit</code> stay review and pull-request checks. A full typecheck on every commit costs more than it saves.</p>
+<p>No coverage threshold. The frontend has no Prettier. Frontend lint is ESLint plus typescript-eslint recommended. Go formatting is <code>gofmt</code>, because the Go toolchain owns it. Planned CI runs the same lint, unit, vet and type checks for the modules that exist. Packaging, signing, notarizing, publishing, and version bumps stay in the release skill.</p>
 
 <h3 id="hooks">Hooks</h3>
 <p>Husky installs the hooks on <code>npm install</code> via the <code>prepare</code> script once the application has a <code>package.json</code>. Two hooks. Each one does one job. They are not part of the planning tree.</p>
@@ -55,16 +55,17 @@ npx tsc --noEmit</code></pre>
 <ul>
 <li>No <code>commit-msg</code> hook. Conventional Commits are the agreed style. Git will not reject a message that breaks it.</li>
 <li>No <code>go vet</code> and no <code>tsc --noEmit</code>. Those run before review, and they are checkboxes on the pull request template.</li>
-<li>No coverage gate and no frontend format-on-commit. Keeping credentials and company data out of the tree is a review rule, enforced by what is allowed in fixtures. See the <a href="../security/security-model.html">security model</a>.</li>
+<li>No coverage gate and no frontend format-on-commit. Fixture and credential-handling requirements are review rules. See the <a href="../security/security-model.html">security model</a>.</li>
 </ul>
-<p>CI runs lint and the unit suites again. Skipping a hook with <code>--no-verify</code> does not skip the pipeline. Use <code>--no-verify</code> only when you mean to, and say so.</p>
-<p>Wails screens and live kubeconfigs have no end-to-end suite. Cover those with pure helpers, injected clients, and session fakes. Say so in the pull request, and manually exercise the screen before review. Mutation checks use a disposable local cluster. Company contexts are used only after the exact context, namespace, and allowed actions are named.</p>
+<p>Once implemented, CI runs lint and the unit suites again. Skipping a hook with <code>--no-verify</code> does not skip the pipeline. Use <code>--no-verify</code> only when you mean to, and say so.</p>
+<p>No automated native Wails UI end-to-end suite is planned for Phase 1A. Use unit tests with injected clients/session fakes, explicit opt-in local-cluster integration tests, and a recorded packaged-app smoke test. These are complementary checks; mocks alone do not establish integration correctness. Mutation checks use a disposable local cluster. External contexts require an explicit context, namespace and allowed actions.</p>
 
 <h3 id="tests">Tests</h3>
+<p>Keep tests minimal and behavior-focused: representative checks for trust boundaries, targeting, cancellation and data-loss risks. Avoid exhaustive UI suites, snapshots and tests that mirror implementation. Use one opt-in local integration scenario and a short manual packaged-app checklist where appropriate. Add regression tests when a real defect justifies them.</p>
 <ul>
 <li>Go tests live in <code>*_test.go</code> beside the package they lock. Frontend tests are Vitest, next to the behavior they lock. Exact trees are fixed when the source layout is created.</li>
 <li>Write the test before the production code. If you did not see it fail, it does not count.</li>
-<li>Unit tests use synthetic fixtures. They do not talk to a live cluster, a company namespace, or a live git remote.</li>
+<li>Unit tests use synthetic fixtures. They do not talk to a live cluster or a live git remote.</li>
 <li>A milestone that needs a cluster uses a disposable local cluster and names the tool. The app installs nothing into that cluster for its own functionality.</li>
 <li>A bug fix gets a regression test at the shared function, after every caller has been traced.</li>
 </ul>
@@ -74,8 +75,8 @@ npx tsc --noEmit</code></pre>
 <li>Go owns Kubernetes clients, operational policy, and session lifecycle. Domain services stay independent of Wails. The desktop adapter translates typed requests and events and holds no business logic.</li>
 <li>TypeScript is strict and owns presentation: navigation, tables, editors, terminal rendering, confirmations, and transient UI state.</li>
 <li>Every call carries an explicit connection id, generation, and resource identity. Nothing reads a mutable global current context. The app does not change kubeconfig current-context.</li>
-<li>Validate every external document at the loader with a strict, versioned schema. Unknown keys and unknown references fail the load. User settings cannot weaken a safety control. One loader is the authority; the UI does not parse the same document with looser rules.</li>
-<li>Edit YAML and kubeconfig through a document API, so comments and key order survive. String-replace only the tokens the application owns.</li>
+<li>Validate KubeSift-owned settings and trust records with strict, versioned schemas; reject unknown keys and unresolved references. Parse kubeconfig using Kubernetes loading semantics and retain supported extensions; validate safety-sensitive fields without rejecting extensible Kubernetes resources. User settings cannot bypass mandatory safety controls. The backend loader is authoritative.</li>
+<li>Kubeconfig is read-only in Phase 1A. Later YAML editing should preserve user text/comments in the editor and use structured parsing for validation and API requests; server round-trips do not preserve comments or key order. Never use string replacement to mutate Kubernetes resources.</li>
 <li>One registry is the source of truth for a closed set. Adding a member means extending the registry, the schema, and the tests together. AI providers, when they exist, are one such set.</li>
 <li>Adapters implement one contract. Specialized OpenShift workflows are a dedicated adapter. Generic discovery stays generic. A new provider is a full adapter.</li>
 </ul>
@@ -90,7 +91,7 @@ npx tsc --noEmit</code></pre>
 <li>Review a credential helper’s resolved executable, arguments, kubeconfig source, and configured environment overrides before the first run. Prompt again when that configuration changes. Never execute a helper merely to preview an untrusted kubeconfig.</li>
 <li>Provider keys belong in the OS credential store. Resource caches are memory-only by default. Audit records store action type, target reference, time, outcome, confirmation, and provider profile id. They do not store credentials, full log payloads, or Secret values.</li>
 <li>Startup readiness is local: commands, paths, and repo shape. Opening a connection is what talks to Kubernetes. Startup does not read tokens to prove the app launched.</li>
-<li>Use synthetic fixtures. Keep kubeconfigs, company identifiers, internal URLs, exports, screenshots, logs, and API keys out of the repository.</li>
+<li>Use synthetic fixtures and follow the security model for credential handling.</li>
 <li>Phase 2 AI tools are read-only. Evidence is untrusted data. A missing or invalid provider override fails clearly. There is no silent fallback to another provider, and there are no AI write tools in that phase.</li>
 <li>KubeSift installs no agent, metrics stack, or other cluster component for its own functionality.</li>
 </ul>
@@ -116,9 +117,9 @@ npx tsc --noEmit</code></pre>
 <li><code>.cursor/rules/ponytail-lite.mdc</code>, always on.</li>
 <li>Husky hooks, as in <a href="#hooks">Hooks</a>: <code>lint-staged</code> with <code>eslint --fix</code> and <code>gofmt -w</code> on commit, full unit suites on push.</li>
 <li>A pull request template whose validation box is the Go and frontend commands, plus a post-review section that lists findings as <code>KSF-001</code> style ids.</li>
-<li><code>docs/superpowers/specs/</code> and <code>docs/superpowers/plans/</code>, which already exist.</li>
-<li><code>.agents/skills/</code> for <code>kubesift-code-review</code>, <code>kubesift-code-hygiene</code>, and release. Symlink them so every agent reads the same file.</li>
-<li>A strict schema at each trust boundary: kubeconfig and helper trust, versioned local settings, and later AI provider profiles.</li>
+
+<li><code>.agents/skills/</code> for <code>kubesift-code-review</code>, <code>kubesift-code-hygiene</code>, and release. Keep one canonical SKILL.md per skill; add tool-specific links only if needed.</li>
+<li>Strict schemas for application-owned settings/helper trust and later provider profiles; Kubernetes-compatible kubeconfig parsing with explicit helper validation.</li>
 <li>Conventional Commits, so the release skill can build a changelog without a human rewrite.</li>
 </ul>
 
@@ -151,7 +152,7 @@ npx tsc --noEmit</code></pre>
 <h3>While building</h3>
 <table>
 <tr><th>Skill</th><th>When</th><th>What it forces</th></tr>
-<tr><td><code>test-driven-development</code></td><td>Every feature, bugfix, refactor, and behavior change</td><td>Red, then green, then the smallest code. Exceptions need an explicit yes: throwaway prototype, generated code, config.</td></tr>
+<tr><td><code>test-driven-development</code></td><td>Every feature, bugfix, refactor, and behavior change</td><td>Red, then green, then the smallest code. Generated scaffolding and configuration are verified through build and behavior checks; handwritten behavior follows red/green tests.</td></tr>
 <tr><td><code>systematic-debugging</code></td><td>Any bug, red test, or surprise</td><td>Root cause before a patch. Trace every caller of the function you are about to change.</td></tr>
 <tr><td><code>subagent-driven-development</code></td><td>Executing a plan whose tasks are independent, in this session</td><td>One fresh implementer sub-agent per task, a review after each task, a whole-branch review at the end. Do not stop between tasks.</td></tr>
 <tr><td><code>executing-plans</code></td><td>The same plan, in a separate session, or when sub-agents are unavailable</td><td>Load the plan, challenge it, execute, report. Prefer subagent-driven development when sub-agents exist.</td></tr>
@@ -177,7 +178,7 @@ npx tsc --noEmit</code></pre>
 <table>
 <tr><th>Skill</th><th>When</th><th>What it forces</th></tr>
 <tr><td><code>finishing-a-development-branch</code></td><td>Tests pass and the branch needs a home</td><td>Verify, then offer merge, pull request, or cleanup. Execute the choice.</td></tr>
-<tr><td><code>release-this</code></td><td>“release”, “cut a release”, a version, or a tag</td><td>From clean up-to-date <code>develop</code>: ask minor vs patch if unspecified, changelog from conventional commits, <code>release/v*</code> pull request to <code>main</code>, annotated tag, GitHub release, back-merge. Stop when the license is undecided. Write this skill into the repo before relying on it.</td></tr>
+<tr><td><code>release-this</code></td><td>“release”, “cut a release”, a version, or a tag</td><td>From clean up-to-date <code>develop</code>: ask minor vs patch if unspecified, changelog from conventional commits, <code>release/v*</code> pull request to <code>main</code>, annotated tag, GitHub release, back-merge. Verify license and dependency notices. Write this skill into the repo before relying on it.</td></tr>
 <tr><td><code>writing-skills</code></td><td>Creating or editing a skill</td><td>The skill file is the procedure. Verify it against a real run.</td></tr>
 <tr><td><code>ponytail-debt</code></td><td>You want the ledger of <code>ponytail:</code> comments</td><td>Harvest every marked shortcut so the ceiling is visible.</td></tr>
 <tr><td><code>ponytail-gain</code></td><td>You want a before/after size check</td><td>Compact scoreboard of code removed.</td></tr>
@@ -231,10 +232,10 @@ npx tsc --noEmit</code></pre>
 <li>Container exec is an interactive session that can write. Label the target. Do not describe it as read-only.</li>
 <li>OpenShift Projects, Routes, Builds, and Operators are dedicated workflows. Generic custom resources stay on the dynamic client. Detect the APIs that are present.</li>
 <li>Metrics come from an existing Metrics API and, when the user selects one, an existing Prometheus-compatible endpoint. Never forward cluster tokens to an arbitrary discovered URL.</li>
-<li>AI starts in Phase 2: Claude first, then other adapters behind one contract. Company and personal profiles are both in scope. No company/personal feature gate, and no silent cross-provider fallback.</li>
-<li>Disposable local clusters for mutation tests. The local-cluster tool is still an open choice. Company namespaces require a named target and named actions. Do not discover permission by trying a write.</li>
+<li>AI starts in Phase 2: Claude first, then other adapters behind one contract. Profiles support an application default and per-cluster overrides, with no silent cross-provider fallback.</li>
+<li>Disposable local clusters for mutation tests. The local-cluster tool is still an open choice. External integration environments require a named target and named actions. Do not discover permission by trying a write.</li>
 <li>Do not claim Lens or K9s parity without a reviewed capability inventory and evidence.</li>
-<li>Personal GitHub account only. License intentionally undecided.</li>
+<li>Apache-2.0 licensing; repository workflow lives in gitworkflow.md.</li>
 </ul>
 <footer>2026-11-05 · Draft for review · <a href="../index.html">Planning index</a></footer>
 </main>

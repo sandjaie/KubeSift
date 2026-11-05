@@ -9,14 +9,16 @@ Branching, commits, pull requests, and publication for KubeSift. The engineering
 - The repository today has only `main`, and the commits on it are planning. Create `develop` from `main` when implementation starts. After that, feature and fix work is branched.
 - Feature and fix work merges to `develop`. Do not commit that work straight to `develop` or `main`.
 
+Documentation bootstrap exception: until implementation starts and `develop` exists, authorized planning/documentation commits may remain on `main`. This does not represent a released application. The first implementation session creates `develop` from the reviewed planning commit and uses a `feature/*` branch.
+
 ## Names
 
 - Branch prefixes: `feature/*`, `fix/*`, `release/*`, `hotfix/*`. Kebab-case. A ticket id may prefix the description.
-- GitHub rulesets reject other names. Put the restriction in a ruleset. Until that ruleset is on, the names are still mandatory.
+- These names are mandatory by repository convention. GitHub ruleset enforcement is planned, not yet verified; configure and verify a ruleset separately before claiming enforcement.
 
 ## Commits
 
-- Conventional Commits: `feat:`, `fix:`, `chore:`, `refactor:`, `docs:`, `test:`. The branch prefix and the commit type are independent.
+- Conventional Commits: `feat:`, `fix:`, `chore:`, `refactor:`, `docs:`, `test:`, `perf:`, `style:`, `ci:`. The branch prefix and the commit type are independent.
 - Git does not reject a message that breaks that style. There is no `commit-msg` hook.
 - Release notes come from commits since the last tag. `feat` → Added, `fix` → Fixed, `refactor` / `perf` / `style` → Changed, `docs` → Documentation. `chore`, `test`, and `ci` stay in the pull request commit list and stay out of the changelog body.
 
@@ -27,11 +29,11 @@ Branching, commits, pull requests, and publication for KubeSift. The engineering
 
 ## Identity and publication
 
-- Use the user's personal GitHub identity. Destination: [sandjaie/KubeSift](https://github.com/sandjaie/KubeSift).
+- Use the configured repository author and authorized GitHub account. Destination: [sandjaie/KubeSift](https://github.com/sandjaie/KubeSift).
 - Before commits, verify repository-local author identity. Before remote operations, verify remote destination and authentication account separately.
-- Do not infer the personal account from the OS username, use a company account, or change global Git identity. Ask if the intended personal account is ambiguous.
+- Do not infer identity from the OS username or change global Git identity. Confirm an ambiguous account before remote operations.
 - Do not push or publish without authorization.
-- The license is intentionally undecided. Do not add a license by assumption. Do not publish while it is undecided.
+- KubeSift is licensed under Apache-2.0; retain the root LICENSE and required third-party notices.
 - Signing, notarization, and the updater stay open until the release-readiness gate in the roadmap.
 
 ## Releases and hotfixes

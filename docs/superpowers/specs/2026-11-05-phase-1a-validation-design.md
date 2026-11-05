@@ -1,7 +1,7 @@
 # Phase 1A — desktop integration validation specification
 
 Date: 2026-11-05
-Status: draft for review; no implementation authorized in the planning chat
+Status: approved by the user on 2026-11-05; execution belongs in a separate implementation chat
 Parent: [KubeSift design](2026-11-05-kubesift-design.md)
 Sequence owner: [roadmap](../../roadmap/roadmap.html)
 
@@ -29,13 +29,13 @@ All permanent safeguards are owned by [the security model](../../security/securi
 
 ## Environment and prerequisite policy
 
-Initial validation target: this development Mac's arm64 architecture. Host inspection found macOS 26.7.1, Node and a Docker executable; Go and kind/minikube/k3d were not on PATH. This does not establish a running container engine or minimum supported macOS version. Do not publish personal absolute tool paths in reports.
+Initial validation target: this development Mac's arm64 architecture. Host inspection found macOS 26.7.1, Node and a Docker executable; Go and kind/minikube/k3d were not on PATH. This does not establish a running container engine or minimum supported macOS version.
 
 Proposed builder default: two disposable kind clusters when a compatible container runtime is available. The implementation plan must verify current official prerequisites and pin versions before installation. If kind is unsuitable, document the switch to minikube/k3d in the plan without changing the two-cluster acceptance requirement. No tooling is installed in this planning session.
 
 Use two genuinely different API servers, each containing an identically named namespace and workload. Give their synthetic responses different marker values so cross-cluster mistakes are observable. Store test kubeconfigs outside tracked paths and pass an explicit isolated kubeconfig to fixture tooling. Do not alter the user's default kubeconfig or current-context.
 
-Use only local fixtures for mutation/fault injection. Real company authentication checks require explicit user-selected contexts and read-only scope; no automatic probing of every kubeconfig context. Real OpenShift/EKS/AKS results are reported separately from local architectural validation.
+Use only local fixtures for mutation/fault injection. External authentication checks require explicit user-selected contexts and read-only scope; no automatic probing of every kubeconfig context. Real OpenShift/EKS/AKS results are reported separately from local architectural validation.
 
 ## Minimal validation interface
 
@@ -66,13 +66,13 @@ A prepared action is single-use, expires and contains target generation, resourc
 
 ## Fixture and mutation design
 
-Use synthetic Pods that generate predictable log lines, provide a shell and a simple network endpoint. Create a limited identity for denial tests, plus a permitted identity for normal tests. Choose resource/image versions and fixture implementation in the execution plan; no company images or copied manifests.
+Use synthetic Pods that generate predictable log lines, provide a shell and a simple network endpoint. Create a limited identity for denial tests, plus a permitted identity for normal tests. Choose resource/image versions and fixture implementation in the execution plan.
 
 The single write experiment updates a synthetic ConfigMap marker using a version precondition. This is enough to test review and correct target routing without implementing all Phase 1C operations. Also delete/recreate or concurrently update that ConfigMap to prove stale UID/version rejection. A UI tab switch must not affect the prepared target; a connection-generation change must invalidate it.
 
 ## Credential-helper slice
 
-Use a synthetic local exec helper to validate protocol integration, approval persistence, expiry/failure responses and re-review without relying on company credentials. It must never be executed before trust approval. Bind trust to resolved executable path, arguments and configured environment overrides as specified in the security model.
+Use a synthetic local exec helper to validate protocol integration, approval persistence, expiry/failure responses and re-review without live provider credentials. It must never be executed before trust approval. Bind trust to resolved executable path, arguments and configured environment overrides as specified in the security model.
 
 Exercise unchanged configuration, changed arguments/environment/path, revoked trust, missing executable and failed/expired authentication. Do not include resolved secret values in UI or diagnostics. Helper-config review cannot leak secrets embedded in arguments.
 
@@ -87,6 +87,10 @@ Synthetic helper success is not proof of AWS SSO/Azure/OpenShift compatibility. 
 - Switching tabs preserves sessions. Confirmed tab closure cancels owned sessions; app shutdown releases all resources. Listener removal is not sufficient evidence of cleanup.
 
 No arbitrary local command runner is exposed to React. Cluster logs/annotations are untrusted data and must not execute HTML/scripts or invoke native services.
+
+## Verification approach
+
+The user requested minimal tests on 2026-11-05. Use a small representative safety suite, one opt-in local integration scenario and a packaged-app manual checklist. Preserve the acceptance outcomes below without adding an exhaustive test matrix or a test for every implementation detail.
 
 ## Acceptance matrix
 
@@ -115,6 +119,6 @@ First assess batching, cancellation and flow control when performance is inadequ
 
 ## Deliverables for the implementation chat
 
-An approved execution plan, minimal integration source/tests/fixtures, reproducible local verification instructions and a validation report under docs/validation/ (HTML summary with synthetic machine-readable measurements as appropriate). The report must list actual versions, pass/fail/not-run cases, measured results, limitations and recommendation. No company identifiers, kubeconfigs, credentials or real logs may be committed.
+An approved execution plan, minimal integration source/tests/fixtures, reproducible local verification instructions and a validation report under docs/validation/ (HTML summary with synthetic machine-readable measurements as appropriate). The report must list actual versions, pass/fail/not-run cases, measured results, limitations and recommendation. Use synthetic evidence in the report.
 
-Before any implementation, review this specification and create the detailed Superpowers plan in this planning chat. The implementation chat should receive links to this spec, the approved plan, parent design and AGENTS.md; it should verify the checked-out commit and execute only Phase 1A. Decisions that change scope return to this planning chat rather than being silently expanded.
+The user approved this specification. Create and review its detailed Superpowers plan in this planning chat before implementation. The implementation chat should receive links to this spec, the approved plan, parent design and AGENTS.md; it should verify the checked-out commit and execute only Phase 1A. Decisions that change scope return to this planning chat rather than being silently expanded.
