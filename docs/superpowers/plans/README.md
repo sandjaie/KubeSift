@@ -8,7 +8,9 @@ The [Phase 1B UI specification](../specs/2026-11-06-phase-1b-ui-design.md) was a
 
 - [Phase 1B UI foundation implementation plan](2026-11-06-phase-1b-ui-foundation.md): six tasks, minimal verification and a separate-session implementation prompt. Merged through PR #2; see the Phase 1B validation report for actual checks and limitations.
 
-The [Phase 1C.1 specification](../specs/2026-11-06-phase-1c1-cluster-connections-design.md) is drafted for review. Its implementation plan will be written after specification approval.
+The [Phase 1C.1 specification](../specs/2026-11-06-phase-1c1-cluster-connections-design.md) was approved on 2026-11-06.
+
+- [Phase 1C.1 implementation plan](2026-11-06-phase-1c1-cluster-connections.md): seven tasks, focused tests, two-cluster validation and a post-implementation user UI UAT checklist. Implementation has not started.
 
 The [roadmap](../../roadmap/roadmap.html) owns phase order. This directory owns execution tasks. Future plans follow the Superpowers writing-plans workflow after the relevant design is approved. Keep scope, safeguards and permanent instructions in their owning documents and link to them.
 

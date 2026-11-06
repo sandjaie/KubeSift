@@ -1,6 +1,6 @@
 # Phase 1C.1 — Cluster entry and live connections
 
-**Status:** Draft for user review. The product direction is approved; this written specification needs approval before detailed implementation planning.
+**Status:** Approved by the user on 2026-11-06. The [implementation plan](../plans/2026-11-06-phase-1c1-cluster-connections.md) is prepared for a separate session.
 **Date:** 2026-11-06
 **Scope:** Planning only in this session. Implementation takes place separately.
 
@@ -158,3 +158,7 @@ Real OpenShift/EKS/AKS login behavior remains separately unverified until an exp
 After specification approval, use Superpowers writing-plans to create a detailed implementation plan. The separate implementation session builds only 1C.1, follows the source-description and minimal-test practices, and produces an HTML validation report with actual checks, screenshots, unrun environments and remaining limits. No root README progress tracking.
 
 User review should demonstrate: launch → choose A → connected and actual Pods → choose B → independent workspace → explain an auth/network failure → Retry after correction. General explorer expansion remains 1C.2/1C.3; AI remains Phase 2. Planning documents are committed directly to develop; implementation uses a feature branch and the repository review workflow.
+
+## User UAT deliverable · approved addition
+
+After implementation, create `docs/superpowers/validation/phase-1c1-ui-uat.html` using the actual screens and labels. Include concise steps, expected results, Pass/Fail/Not tested/Blocked choices and notes for cluster selection, Settings, connection/error/Retry, tab and namespace isolation, real Pod data, navigation/icons/themes/keyboard, AI toggle and cleanup. User results start as Not tested and stay separate from the agent technical report. Provide safe local prerequisites and printable results; do not ask the user to disrupt normal credentials or shared clusters. User UAT remains pending until the user records it; leave the implementation PR unmerged for that review.
