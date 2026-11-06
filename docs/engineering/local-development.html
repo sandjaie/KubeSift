@@ -92,6 +92,46 @@ kubectl --context kind-dev-local-a get nodes</code></pre>
         Missing Docker, kind, or kubectl stops the script. Running it again applies the workloads and does not delete the clusters. It
         restores the previous current context when that context still exists.
       </p>
+      <h2 id="explorer-fixtures">Phase 1C fixture expansion · planned</h2>
+      <p>
+        Use only kind-dev-local-a and kind-dev-local-b for new development and validation. The existing shop/billing inventory above is the
+        documented baseline, not a claim that the expanded fixtures have been installed. Add fixtures during the implementation session; do
+        not delete or replace existing resources to make a test pass.
+      </p>
+      <ul>
+        <li>
+          Healthy serving/log-producing workloads plus missing-configuration CrashLoopBackOff and missing-image Pods. Include a
+          multi-container Pod and completed/failed Jobs so container selection, previous logs and failure explanations have useful evidence.
+        </li>
+        <li>
+          Deployments, StatefulSets, DaemonSets, Jobs and CronJobs; Services and Ingresses; ConfigMaps and fake-value Secrets. Keep
+          predictable small resource requests, bounded log rates and safe CronJob schedules.
+        </li>
+        <li>
+          PVCs and storage inspection: show Pending honestly when no provisioner exists. Any static local storage fixture must be explicitly
+          planned and owned; do not install a storage stack just for browsing.
+        </li>
+        <li>
+          ServiceAccounts, namespace Roles/RoleBindings, ResourceQuotas, LimitRanges, NetworkPolicies and PodDisruptionBudgets for
+          inspection and limited-permission scenarios. Denied-RBAC checks use explicit restricted credentials and read requests, never trial
+          mutations.
+        </li>
+        <li>
+          One small synthetic CRD and custom resources to exercise generic discovery. This is deliberate local test setup, not
+          infrastructure installed by the shipped application. No Operator or monitoring stack is needed.
+        </li>
+        <li>
+          Same-named resources in both clusters with different markers to prove tab isolation. Namespaced objects receive clear fixture
+          ownership labels; any cluster-scoped fixture gets an explicit inventory and collision check.
+        </li>
+      </ul>
+      <p>
+        Extend the existing development setup with idempotent, resource-bounded fixtures and report the actual inventory after applying
+        them. Discover existing namespaces, object names and storage capabilities before choosing additions. Keep cleanup limited to owned
+        fixtures and preserve both clusters. Cover representative discoverable resource types, not an installation of every possible
+        Kubernetes extension. OpenShift-specific resources require a supported OpenShift environment later; kind does not prove those
+        workflows.
+      </p>
       <h2>Phase 1A fixtures</h2>
       <p>
         <code>scripts/local-clusters.sh</code> remains the opt-in Phase 1A fixture tool. It is not the development cluster setup, and it

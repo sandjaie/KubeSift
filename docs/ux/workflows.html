@@ -34,6 +34,36 @@
       <p>Visual direction approved 2026-11-05 · <a href="mocks/index.html">Reference mockups</a></p>
     </header>
     <main id="content">
+      <h2 id="live-entry">Live workspace entry · Phase 1C feedback</h2>
+      <p>
+        Feedback accepted on 2026-11-06: cluster selection must be immediately discoverable. Remove “Explore UI preview”, “Local validation
+        workspace”, “Retained live workspace” and the synthetic-data banner from the normal product journey. Testing and fixture controls
+        belong in an explicit development-only harness, not user navigation. Do not merely hide a preview warning while continuing to
+        display synthetic resources as live data.
+      </p>
+      <p>
+        The proposed 1C.1 layout uses two compact rows: a small brand, cluster tabs and an always-visible “Open cluster” control, with
+        Settings and Ask AI on the right; below, the active context/connection status, namespace selector and resource breadcrumb. Eliminate
+        the “Cluster workspace” subtitle, raw preview IDs and inline environment-label editor. Keep context and namespace visible at every
+        supported size; tab overflow must not hide Open cluster. Users edit environment labels in cluster settings, while tabs display them
+        compactly.
+      </p>
+      <p>
+        Open cluster presents searchable contexts from local kubeconfig sources, with source/endpoint detail to distinguish duplicate names.
+        Selecting a context explicitly connects and opens a tab; loading the list does not execute an untrusted credential helper. Preserve
+        helper review and actionable authentication errors in the product flow. When nothing is connected, show the same cluster picker as
+        the useful empty state, not a choice between development modes.
+      </p>
+      <p>
+        Use distinct, consistent resource icons in the left navigation instead of repeated diamond placeholders. Keep text labels,
+        selected/focus states and accessible names; decorative icons are hidden from assistive technology. Collapsed navigation needs
+        tooltips and accessible names. Do not use unexplained dots to represent unavailable resources.
+      </p>
+      <p>
+        These changes belong to the proposed first live-explorer increment, rather than a separate temporary UI milestone. Detailed layout
+        and connection behavior will be reviewed in the Phase 1C specification. Existing approved reference images remain historical visual
+        references; they do not override this feedback.
+      </p>
       <h2>Application shell and cluster identity</h2>
       <p>
         Use the selected explorer shell: independent cluster tabs, persistent cluster/context and namespace selectors, grouped resource
