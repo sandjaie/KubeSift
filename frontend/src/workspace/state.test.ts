@@ -19,3 +19,15 @@ it('keeps tab navigation and review targets isolated',()=>{
  s=reduceUi(s,{type:'closeTab',id:a.id});s=reduceUi(s,{type:'confirmReview',id:review.id});
  expect(s.resources.some(r=>r.key.uid===rb.key.uid)).toBe(true);expect(s.review).toBeNull();
 });
+it('preserves sessions while hidden and closes only the confirmed owner',()=>{
+ const p=createPreview();const [a,b]=p.tabs;let s=reduceUi(initialUiState(),{type:'preview',...p});const ra=p.resources.find(r=>r.key.clusterId===a.id)!;const rb=p.resources.find(r=>r.key.clusterId===b.id)!;
+ s=reduceUi(s,{type:'startSession',kind:'terminal',target:ra.key});
+ s=reduceUi(s,{type:'startSession',kind:'logs',target:rb.key});
+ const sessions=s.sessions;expect(sessions).toHaveLength(2);
+ s=reduceUi(s,{type:'dock',open:false});s=reduceUi(s,{type:'selectTab',id:b.id});expect(s.sessions).toEqual(sessions);
+ s=reduceUi(s,{type:'closeTab',id:a.id});expect(s.tabs).toHaveLength(2);
+ s=reduceUi(s,{type:'cancelClose'});expect(s.sessions).toEqual(sessions);
+ s=reduceUi(s,{type:'closeTab',id:a.id});s=reduceUi(s,{type:'confirmClose',id:a.id});
+ expect(s.sessions).toEqual([sessions[1]]);s=reduceUi(s,{type:'stopSession',id:sessions[0].id});expect(s.sessions).toEqual([sessions[1]]);
+ s=reduceUi(s,{type:'stopSession',id:sessions[1].id});expect(s.sessions[0].status).toBe('stopped');
+});
