@@ -5,9 +5,12 @@ Used by: Phase 1A packaged acceptance evidence collection.
 Responsibilities: Launch the app with a sanitized environment, read frontend-written numeric evidence and sample native RSS.
 Important: The only cluster write is a fixed rate change on the journal-owned disposable B fixture; never stop a cluster or use ambient kubeconfig.
 """
+import concurrent.futures
+import datetime
 import json
 import os
 from pathlib import Path
+import socket
 import subprocess
 import sys
 import time
@@ -64,8 +67,44 @@ def rate(value):
     subprocess.run(command + ['exec', 'ks-validation', '-c', 'fixture', '--', '/bin/sh', '-c', f'printf "{value}\\n" > /tmp/rate'], check=True, timeout=15)
 
 
+def source_rate(context, target):
+    started = time.monotonic()
+    command = ['kubectl', '--kubeconfig', str(STATE / 'kubeconfig'), '--context', context, '--namespace', 'payments', 'logs', 'ks-validation', '-c', 'fixture', '--timestamps=true', '--since=1s', '--follow=true']
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    try:
+        output, errors = process.communicate(timeout=60)
+        raise RuntimeError('Source log follow ended before the calibration window')
+    except subprocess.TimeoutExpired:
+        process.terminate()
+        output, errors = process.communicate(timeout=5)
+    parts = output.split('\n')
+    partial_bytes = len(parts[-1].encode())
+    lines = parts[:-1]
+    payloads = [line.split(' ', 1) for line in lines]
+    timestamps = [datetime.datetime.fromisoformat(line[0].replace('Z', '+00:00')).timestamp() for line in payloads]
+    span = timestamps[-1] - timestamps[0]
+    window_start = timestamps[0] + 1
+    window_seconds = 55
+    selected = [line for line, timestamp in zip(payloads, timestamps) if window_start <= timestamp < window_start + window_seconds]
+    actual = len(selected) / window_seconds
+    lengths = sorted({len(line[1].encode()) + 1 for line in selected})
+    result = {'context': context, 'collectionSeconds': time.monotonic() - started, 'collectedUnixSeconds': time.time(), 'targetLinesPerSecond': target, 'lines': len(lines), 'spanSeconds': span, 'windowSeconds': window_seconds, 'windowLines': len(selected), 'discardedPartialBytes': partial_bytes, 'actualLinesPerSecond': actual, 'payloadLengths': lengths, 'toleranceFraction': 0.02, 'pass': span >= 57 and abs(actual / target - 1) <= 0.02 and lengths == [256]}
+    with open(STATE / 'source-rates.jsonl', 'a') as stream:
+        stream.write(json.dumps(result) + '\n')
+    if not result['pass']:
+        raise RuntimeError('Actual CRI source rate outside predeclared tolerance; inspect source-rates.jsonl')
+
+
 def profile():
     SAMPLES.unlink(missing_ok=True)
+    (STATE / 'source-rates.jsonl').unlink(missing_ok=True)
+    checks = []
+    checked_cycles = set()
+    baseline_checked = False
+    flood_checked = False
+    probes = concurrent.futures.ThreadPoolExecutor(max_workers=2)
+    pending_probes = []
+    flood_probe = None
     process, log, startup = launch(True)
     print(f'Packaged profile started; pid={process.pid}; frontend Ping={startup:.2f}ms', flush=True)
     start = time.monotonic()
@@ -82,11 +121,36 @@ def profile():
                 rows = [json.loads(row) for row in SAMPLES.read_text().splitlines()] if SAMPLES.exists() else []
                 latest = rows[-1] if rows else None
                 loaded = next((row for row in rows if row['ui']['phase'] == 1), None)
+                for row in rows:
+                    if row['ui']['phase'] != 2:
+                        continue
+                    cycle = row['ui']['cycle']
+                    if cycle not in checked_cycles:
+                        checked_cycles.add(cycle)
+                        with socket.socket() as listener:
+                            listener.settimeout(0.2)
+                            reachable = listener.connect_ex(('127.0.0.1', row['ui']['forwardPort'])) == 0
+                        checks.append({'cycle': cycle, 'forwardPort': row['ui']['forwardPort'], 'reachableAfterStop': reachable})
+                        (STATE / 'listener-checks.json').write_text(json.dumps(checks, indent=2) + '\n')
+                        if reachable:
+                            raise RuntimeError('A stopped-cycle forward listener remains reachable')
+                for probe in pending_probes:
+                    if probe.done():
+                        probe.result()
+                if loaded and not baseline_checked and elapsed >= 30:
+                    pending_probes.extend(probes.submit(source_rate, context, 100) for context in ('kind-dev-local', 'kind-kubesift-b'))
+                    baseline_checked = True
+                if flood_start is not None and flood_probe is None and elapsed - flood_start >= 2:
+                    flood_probe = probes.submit(source_rate, 'kind-kubesift-b', 2000)
+                    pending_probes.append(flood_probe)
+                if flood_probe is not None and flood_probe.done():
+                    flood_probe.result()
+                    flood_checked = True
                 if loaded and flood_start is None and latest['ui']['elapsedMs'] - loaded['ui']['elapsedMs'] >= 120000:
                     rate(2000)
                     flood_start = time.monotonic() - start
-                    print('Disposable B flood started at 2000 nominal lines/sec', flush=True)
-                if flood_start is not None and flood_end is None and elapsed - flood_start >= 60:
+                    print('Disposable B flood started at 2000 paced lines/sec', flush=True)
+                if flood_start is not None and flood_end is None and elapsed - flood_start >= 60 and flood_checked:
                     rate(100)
                     flood_end = time.monotonic() - start
                     print('Disposable B baseline restored', flush=True)
@@ -106,7 +170,10 @@ def profile():
             if flood_start is not None and flood_end is None:
                 rate(100)
         finally:
-            stop(process, log)
+            try:
+                stop(process, log)
+            finally:
+                probes.shutdown(wait=True)
 
 
 if __name__ == '__main__':
