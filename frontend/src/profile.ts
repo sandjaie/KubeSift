@@ -14,10 +14,14 @@ const delay=(ms:number)=>new Promise<void>(resolve=>setTimeout(resolve,ms));
 export async function runProfile(contexts:ContextSummary[],controls:Controls){
  const started=performance.now();let sessions:SessionRef[]=[];let port=0;let rtts:number[]=[];
  const targets:Target[]=[];
- async function sample(phase:number,cycle=0){const state=controls.state();const views=Object.values(state.tabs).flatMap(tab=>Object.values(tab.sessions));const logs=views.filter(view=>view.kind==='logs');await Service.RecordValidation({phase,cycle,elapsedMs:performance.now()-started,listeners:listenerCount(),receivedLogBytes:state.receivedLogBytes??0,retainedLogBytes:logs.reduce((total,view)=>total+view.history.length,0),trimmedLogBytes:logs.reduce((total,view)=>total+view.truncatedBytes,0),maxHistoryBytes:Math.max(0,...logs.map(view=>view.history.length)),terminalRttMs:rtts,forwardPort:port,sessionErrors:views.filter(view=>view.status==='error').length,hostileContentSeen:logs.some(view=>new TextDecoder().decode(view.history).includes('<script>'))});}
+ async function sample(phase:number,cycle=0){const state=controls.state();const views=Object.values(state.tabs).flatMap(tab=>Object.values(tab.sessions));const logs=views.filter(view=>view.kind==='logs');await Service.RecordValidation({phase,cycle,elapsedMs:performance.now()-started,listeners:listenerCount(),receivedLogBytes:state.receivedLogBytes??0,retainedLogBytes:logs.reduce((total,view)=>total+view.history.length,0),trimmedLogBytes:logs.reduce((total,view)=>total+view.truncatedBytes,0),maxHistoryBytes:Math.max(0,...logs.map(view=>view.history.length)),terminalRttMs:rtts,forwardPort:port,sessionErrors:state.observedSessionErrors??0,hostileContentSeen:logs.some(view=>new TextDecoder().decode(view.history).includes('<script>'))});}
  async function register(ref:SessionRef,kind:string,target:Target){sessions.push(ref);await controls.register(ref,kind,target,`PACKAGED PROFILE · ${target.connection.id} / payments / ks-validation / fixture`);return ref;}
  async function startBatch(){for(const target of targets){await register(await Service.WatchPods({...target,name:'',container:''}),'watch',target);for(let i=0;i<2;i++)await register(await Service.StartLogs(target,false,0),'logs',target);}const terminal=await register(await Service.StartTerminal(targets[0]),'terminal',targets[0]);const forward=await Service.StartForward(targets[0],0,8080);port=forward.localPort;await register(forward.session,'forward',targets[0]);return terminal;}
- async function stopBatch(){const owned=sessions;sessions=[];for(const ref of owned)await controls.stop(ref);}
+ async function stopBatch(){
+  const failures:string[]=[];
+  for(const ref of [...sessions]){try{await controls.stop(ref);sessions=sessions.filter(owned=>owned!==ref);}catch(error){failures.push(`${ref.id}: ${error instanceof Error?error.message:'Session stop failed'}`);}}
+  if(failures.length)throw new Error(`Session cleanup failed: ${failures.join('; ')}`);
+ }
  try{
   if(contexts.length!==2)throw new Error('Both owned fixture contexts are required');
   for(const context of contexts){const ref=await controls.open(context);if(!ref)throw new Error('Fixture connection did not open');await Service.FixtureMarker(ref);targets.push({connection:ref,namespace:'payments',name:'ks-validation',container:'fixture'});}
@@ -28,5 +32,10 @@ export async function runProfile(contexts:ContextSummary[],controls:Controls){
   await sample(1);await stopBatch();await delay(2000);
   for(let cycle=1;cycle<=20;cycle++){controls.status(`Packaged profile: cleanup cycle ${cycle}/20`);await startBatch();await delay(1500);await stopBatch();await delay(1000);await sample(2,cycle);}
   await delay(5000);await sample(3,20);controls.status('Packaged profile complete. Numeric evidence saved in the isolated validation directory.');
- }catch(error){controls.status(error instanceof Error?error.message:'Packaged validation failed');try{await sample(4);}finally{await stopBatch();}}
+ }catch(error){
+  let problem=error instanceof Error?error.message:'Packaged validation failed';
+  try{await sample(4);}catch(error){problem+=`; evidence: ${error instanceof Error?error.message:'Sample failed'}`;}
+  try{await stopBatch();}catch(error){problem+=`; cleanup: ${error instanceof Error?error.message:'Session stop failed'}`;}
+  controls.status(problem);
+ }
 }

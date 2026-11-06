@@ -12,7 +12,7 @@ import type {RuntimeStats} from '../bindings/github.com/sandjaie/KubeSift/intern
 import type {ContextSummary} from '../bindings/github.com/sandjaie/KubeSift/internal/config';
 import type {PreviewRecord,Entry} from '../bindings/github.com/sandjaie/KubeSift/internal/trust';
 import {acknowledge,activateSession,listenerCount,onSessionEvent,stopSession,type ConnectionRef,type SessionRef,type Target} from './bridge';
-import {reduceEvent,type SessionView,type TabState,type WorkspaceState} from './state';
+import {podSelection,reduceEvent,type SessionView,type TabState,type WorkspaceState} from './state';
 import './styles.css';
 import {runProfile} from './profile';
 const Terminal=lazy(()=>import('./Terminal'));
@@ -31,8 +31,7 @@ export default function App(){
  const routes=useRef(new Map<string,{ref:SessionRef;kind:string}>());
  const active=workspace.activeTab?workspace.tabs[workspace.activeTab]:undefined;
  const activeIdentity=connections.find(connection=>connection.ref.id===workspace.activeTab);
- const activeWatch=active?Object.values(active.sessions).find(session=>session.kind==='watch'&&session.resources):undefined;
- const pods=activeWatch?.resources??active?.pods??[];const selected=pods.find(pod=>pod.name===active?.selectedPod);
+ const {pods,selected,target}=podSelection(active);
  const allSessions=Object.entries(workspace.tabs).flatMap(([tabId,tab])=>Object.values(tab.sessions).map(session=>({tabId,session})));
 
  function patchTab(id:string,patch:Partial<TabState>){setWorkspace(current=>{const tab=current.tabs[id];return tab?{...current,tabs:{...current.tabs,[id]:{...tab,...patch}}}:current;});}
@@ -52,9 +51,8 @@ export default function App(){
  async function reviewHelper(context:ContextSummary){try{setReview({preview:await Service.ReviewHelper(context.snapshotId,context.name),context});}catch(error){setStatus(message(error));}}
  async function approve(){if(!review)return;try{await Service.ApproveHelper(review.preview.id,review.context.snapshotId,review.context.name);setReview(null);setStatus('Helper approved; opening the context remains explicit.');}catch(error){setStatus(message(error));}}
  async function listTrust(){try{setTrusted((await Service.TrustedHelpers())??[]);}catch(error){setStatus(message(error));}}
- async function revoke(fingerprint:string){try{await Service.RevokeHelper(fingerprint);liveConnections.current.clear();routes.current.clear();setConnections([]);setWorkspace({activeTab:null,tabs:{}});await listTrust();setStatus('Trust revoked and connections closed.');}catch(error){setStatus(message(error));}}
- function target():Target|null{if(!active||!selected||!active.container)return null;return {connection:active.connection,namespace:active.namespace??'',name:selected.name,container:active.container};}
- async function start(kind:string){if(!active)return;const captured=kind==='watch'?{connection:active.connection,namespace:active.namespace??'',name:'',container:''}:target();if(!captured){setStatus('Choose a Pod and container first.');return;}try{let ref:SessionRef;let extra='';if(kind==='watch')ref=await Service.WatchPods(captured);else if(kind==='logs')ref=await Service.StartLogs(captured,previous,tail);else if(kind==='terminal')ref=await Service.StartTerminal(captured);else{const result=await Service.StartForward(captured,localPort,remotePort);ref=result.session;extra=` · 127.0.0.1:${result.localPort} → Pod:${remotePort}`;}
+ async function revoke(fingerprint:string){try{await Service.RevokeHelper(fingerprint);liveConnections.current.clear();routes.current.clear();setConnections([]);setWorkspace(current=>({...current,activeTab:null,tabs:{}}));await listTrust();setStatus('Trust revoked and connections closed.');}catch(error){setStatus(message(error));}}
+ async function start(kind:string){if(!active)return;const captured=kind==='watch'?{connection:active.connection,namespace:active.namespace??'',name:'',container:''}:target;if(!captured){setStatus('Choose a Pod and container first.');return;}try{let ref:SessionRef;let extra='';if(kind==='watch')ref=await Service.WatchPods(captured);else if(kind==='logs')ref=await Service.StartLogs(captured,previous,tail);else if(kind==='terminal')ref=await Service.StartTerminal(captured);else{const result=await Service.StartForward(captured,localPort,remotePort);ref=result.session;extra=` · 127.0.0.1:${result.localPort} → Pod:${remotePort}`;}
   const currentRef=liveConnections.current.get(ref.connection.id);if(!currentRef||!same(currentRef,ref.connection)){await stopSession(ref);return;}
   const label=`${activeIdentity?.label??captured.connection.id} / ${captured.namespace}${captured.name?' / '+captured.name:''}${captured.container?' / '+captured.container:''}${extra}`;
   await registerSession(ref,kind,captured,label);

@@ -127,7 +127,8 @@
     "nativeRssLastBytes": 59490304,
     "nativeRssMaxBytes": 130039808,
     "floodDurationExactSeconds": null,
-    "floodEvidence": "Runner logged start and baseline restoration after >=60s condition; exact endpoints were not persisted before interruption. Source-rate probe proves actual B rate fell short."
+    "floodEvidence": "Runner logged start and baseline restoration after >=60s condition; exact endpoints were not persisted before interruption. Source-rate probe proves actual B rate fell short.",
+    "sessionErrorsInterpretation": "Historical maxSessionErrors=0 is the unchanged status-based counter, which undercounted errors after ended events and session removal. It cannot establish an error-free run. No actual session failure in the interrupted run is demonstrated; eight-session and successful TTY observations stand independently."
   },
   "actualSourceRates": [
     {
@@ -182,6 +183,7 @@
     "CUA getApp for full bundle path hung460.8s despite20s timeout and was aborted; no retry. Packaged binary execution and real frontend readiness succeeded independently.",
     "Go desktop test linker reports module objects built for macOS13/26 versus linker default11; package build succeeded with target13. Host26 only, no minimum-support claim.",
     "Cloud/OpenShift authentication, signing/notarization/updater and other OS compatibility unrun.",
-    "No final performance budget or architecture pass can be inferred from this preliminary run."
+    "No final performance budget or architecture pass can be inferred from this preliminary run.",
+    "Historical sessionErrors counted only current error-status views, not cumulative observed error events; zero is not proof of no session errors. The corrected counter requires fresh measurements."
   ]
 }

@@ -102,9 +102,11 @@ def profile():
         if not done:
             raise RuntimeError('Packaged renderer did not complete the profile; inspect numeric phase-4 evidence and native log')
     finally:
-        if flood_start is not None and flood_end is None:
-            rate(100)
-        stop(process, log)
+        try:
+            if flood_start is not None and flood_end is None:
+                rate(100)
+        finally:
+            stop(process, log)
 
 
 if __name__ == '__main__':
