@@ -74,13 +74,16 @@ func (s *Service) WatchPods(ctx context.Context, t model.Target) (model.SessionR
 			if runCtx.Err() != nil {
 				return runCtx.Err()
 			}
-			client, err := s.streamClient(runCtx, t.Connection)
+			attemptCtx, cancelAttempt := context.WithCancel(runCtx)
+			client, err := s.streamClient(attemptCtx, t.Connection)
 			if err != nil {
+				cancelAttempt()
 				return err
 			}
-			list, err := client.CoreV1().Pods(t.Namespace).List(runCtx, metav1.ListOptions{Limit: 100})
+			list, err := client.CoreV1().Pods(t.Namespace).List(attemptCtx, metav1.ListOptions{Limit: 100})
 			if err != nil {
 				safe := safeError(runCtx, err)
+				cancelAttempt()
 				var typed *model.Error
 				if errors.As(safe, &typed) && typed.Code != "disconnected" {
 					return safe
@@ -95,6 +98,7 @@ func (s *Service) WatchPods(ctx context.Context, t model.Target) (model.SessionR
 				continue
 			}
 			if list.Continue != "" {
+				cancelAttempt()
 				return model.Fail("invalid", "Validation watch is limited to 100 Pods")
 			}
 			views := make([]PodSummary, 0, len(list.Items))
@@ -103,15 +107,33 @@ func (s *Service) WatchPods(ctx context.Context, t model.Target) (model.SessionR
 			}
 			payload, err := json.Marshal(views)
 			if err != nil {
+				cancelAttempt()
 				return model.Fail("invalid", "Cannot encode Pod snapshot")
 			}
-			if err = w.Send("snapshot", payload); err != nil && !errors.Is(err, session.ErrResync) {
+			if err = w.Send("snapshot", payload); err != nil {
+				cancelAttempt()
+				if errors.Is(err, session.ErrResync) {
+					if wait(runCtx, backoff) != nil {
+						return runCtx.Err()
+					}
+					continue
+				}
 				return err
 			}
-			_ = w.Send("state", []byte("running"))
+			if err = w.Send("state", []byte("running")); err != nil {
+				cancelAttempt()
+				if errors.Is(err, session.ErrResync) {
+					if wait(runCtx, backoff) != nil {
+						return runCtx.Err()
+					}
+					continue
+				}
+				return err
+			}
 			timeout := int64(30)
-			stream, err := client.CoreV1().Pods(t.Namespace).Watch(runCtx, metav1.ListOptions{ResourceVersion: list.ResourceVersion, TimeoutSeconds: &timeout, AllowWatchBookmarks: true})
+			stream, err := client.CoreV1().Pods(t.Namespace).Watch(attemptCtx, metav1.ListOptions{ResourceVersion: list.ResourceVersion, TimeoutSeconds: &timeout, AllowWatchBookmarks: true})
 			if err != nil {
+				cancelAttempt()
 				if apierrors.IsForbidden(err) || apierrors.IsUnauthorized(err) {
 					return safeError(runCtx, err)
 				}
@@ -128,6 +150,7 @@ func (s *Service) WatchPods(ctx context.Context, t model.Target) (model.SessionR
 				select {
 				case <-runCtx.Done():
 					stream.Stop()
+					cancelAttempt()
 					return runCtx.Err()
 				case event, open := <-stream.ResultChan():
 					if !open {
@@ -143,6 +166,7 @@ func (s *Service) WatchPods(ctx context.Context, t model.Target) (model.SessionR
 							break watchLoop
 						}
 						stream.Stop()
+						cancelAttempt()
 						return safeError(runCtx, apierrors.FromObject(event.Object))
 					}
 					pod, ok := event.Object.(*corev1.Pod)
@@ -155,6 +179,7 @@ func (s *Service) WatchPods(ctx context.Context, t model.Target) (model.SessionR
 					}{string(event.Type), Summarize(*pod)})
 					if err != nil {
 						stream.Stop()
+						cancelAttempt()
 						return model.Fail("invalid", "Cannot encode Pod update")
 					}
 					if err = w.Send("update", payload); err != nil {
@@ -163,11 +188,13 @@ func (s *Service) WatchPods(ctx context.Context, t model.Target) (model.SessionR
 							break watchLoop
 						}
 						stream.Stop()
+						cancelAttempt()
 						return err
 					}
 				}
 			}
 			stream.Stop()
+			cancelAttempt()
 			message := "stale: watch reconnecting"
 			if resync {
 				message = "stale: watch expired or overflowed; resynchronizing"
