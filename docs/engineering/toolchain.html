@@ -1,1 +1,106 @@
-<!doctype html><html lang="en"><head><meta name="viewport" content="width=device-width, initial-scale=1"><meta charset="utf-8"><title>Phase 1A toolchain</title><link rel="stylesheet" href="../assets/planning.css"><script src="../assets/theme.js"></script></head><body><aside class="rail"><a class="skip" href="#content">Skip to content</a><a class="mark" href="../index.html"><span class="mark-name">KubeSift</span><span class="mark-sub">Planning</span></a><h2>Index</h2><a href="../index.html">Planning index</a><h2>Product</h2><a href="../product/requirements.html">Requirements</a><a href="../product/feature-matrix.html">Capabilities</a><h2>Architecture</h2><a href="../architecture/overview.html">Overview</a><a href="../architecture/decisions.html">Decisions</a><h2>Safeguards</h2><a href="../security/security-model.html">Security and AI</a><h2>Delivery</h2><a href="../roadmap/roadmap.html">Roadmap</a><a href="../ux/workflows.html">UX workflows</a><a href="../ux/mocks/index.html">Mockups</a><h2>Engineering</h2><a href="../engineering/engineering.html">Playbook</a><a href="../engineering/local-development.html">Local development</a><a href="../engineering/toolchain.html" aria-current="page">Toolchain</a><h2>Working</h2><a href="../superpowers/validation/phase-1a.html">Phase 1A validation</a></aside><main id="content"><h1>Phase 1A toolchain</h1><p>2026-11-05. macOS 26.7.1 build 25G241, arm64 Apple M2 Pro, 16 GB. Xcode CLI tools 2416. Go 1.27.3, Node 26.13.0 LTS, npm 11.20.0, Wails 3.1.0 (CLI and module).</p><p>Go archive SHA256: dd3908cf20959d798c1e06ebe5b72213f0505ce01373b40ce3110975a6cd99c2. Node archive verified against official SHASUMS256.txt. Dependency integrity is retained in go.sum and package-lock.json. wails3 doctor passed.</p><div class="table-scroll"><table><tr><th>Package</th><th>Pin</th></tr><tr><td>node_modules/@wailsio/runtime</td><td>3.1.0</td></tr><tr><td>node_modules/eslint</td><td>9.39.1</td></tr><tr><td>node_modules/react</td><td>18.3.1</td></tr><tr><td>node_modules/typescript</td><td>5.9.3</td></tr><tr><td>node_modules/typescript-eslint</td><td>8.72.1</td></tr><tr><td>node_modules/vite</td><td>8.3.6</td></tr><tr><td>node_modules/vitest</td><td>4.1.12</td></tr></table></div><p>Selected local cluster tools: kind 0.33.0; Kubernetes/client-go/API/apimachinery 1.37.0/0.37.0; node kindest/node:v1.37.0@sha256:a1ed56cfb0e7b93589bdf97c8cd566405a265939e3620fc4f5de89adff580ae5. These tools were exercised by the approved local fixtures and integration scenario. Actual Docker client29.9.3/server29.9.2; the initial stopped-daemon preflight is historical. kubectl1.36.1. xterm6.0.0/addon-fit0.11.0. Earlier Task5 PATH selected Node25.1.0/npm11.6.2; final Task6/7 gates explicitly selected pinned Node26.13.0/npm11.20.0.</p><p><a href="https://github.com/wailsapp/wails/releases/tag/v3.1.0">Wails release</a> · <a href="https://github.com/kubernetes-sigs/kind/releases/tag/v0.33.0">kind release and image digest</a> · <a href="https://github.com/kubernetes/client-go#compatibility-matrix">client-go compatibility</a></p><p>Build: npm ci; wails3 task bindings; scripts/check.sh; wails3 task package. Artifact: bin/kubesift.app, ad-hoc signed only. Launch via Finder; verify ready. Final UI package from de25fcf, executable SHA256 9f1d39fcf29f72d3a8e366bacf8dc8706f6166d3b08265527d7155fd6b6d3c29, launched from Finder to ready. Ten sanitized starts of that artifact reached frontend Ping (median 696.615 ms; nearest-rank p95 3888.138 ms). The separate full runtime profile used 8b2de54, executable SHA256 1c3cfb25175afaacf958117738c23fa68e402c5dec2a2b8256254f9204106140; the later UI-only confirmation change did not affect its stream path. Both packages passed deep/strict ad hoc signature verification and packaged LICENSE/NOTICE byte comparisons. See the Phase 1A validation report for exact scope and limits.</p><p>The reorganized build targets macOS 13.0 to match the Go toolchain; only macOS 26.7.1 has been exercised. Earlier generated builds targeted12.0. Desktop test linking still warns about module objects targeting13/26 against default11; final target13 package build passes. This host-only smoke does not establish minimum macOS support. Other platforms, signing/notarization/updater are unvalidated.</p></main></body></html>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="utf-8" />
+    <title>Phase 1A toolchain</title>
+    <link rel="stylesheet" href="../assets/planning.css" />
+    <script src="../assets/theme.js"></script>
+  </head>
+  <body>
+    <aside class="rail">
+      <a class="skip" href="#content">Skip to content</a
+      ><a class="mark" href="../index.html"><span class="mark-name">KubeSift</span><span class="mark-sub">Planning</span></a>
+      <h2>Index</h2>
+      <a href="../index.html">Planning index</a>
+      <h2>Product</h2>
+      <a href="../product/requirements.html">Requirements</a><a href="../product/feature-matrix.html">Capabilities</a>
+      <h2>Architecture</h2>
+      <a href="../architecture/overview.html">Overview</a><a href="../architecture/decisions.html">Decisions</a>
+      <h2>Safeguards</h2>
+      <a href="../security/security-model.html">Security and AI</a>
+      <h2>Delivery</h2>
+      <a href="../roadmap/roadmap.html">Roadmap</a><a href="../ux/workflows.html">UX workflows</a
+      ><a href="../ux/mocks/index.html">Mockups</a>
+      <h2>Engineering</h2>
+      <a href="../engineering/engineering.html">Playbook</a><a href="../engineering/local-development.html">Local development</a
+      ><a href="../engineering/toolchain.html" aria-current="page">Toolchain</a>
+      <h2>Working</h2>
+      <a href="../superpowers/validation/phase-1a.html">Phase 1A validation</a>
+    </aside>
+    <main id="content">
+      <h1>Phase 1A toolchain</h1>
+      <p>
+        2026-11-05. macOS 26.7.1 build 25G241, arm64 Apple M2 Pro, 16 GB. Xcode CLI tools 2416. Go 1.27.3, Node 26.13.0 LTS, npm 11.20.0,
+        Wails 3.1.0 (CLI and module).
+      </p>
+      <p>
+        Go archive SHA256: dd3908cf20959d798c1e06ebe5b72213f0505ce01373b40ce3110975a6cd99c2. Node archive verified against official
+        SHASUMS256.txt. Dependency integrity is retained in go.sum and package-lock.json. wails3 doctor passed.
+      </p>
+      <div class="table-scroll">
+        <table>
+          <tr>
+            <th>Package</th>
+            <th>Pin</th>
+          </tr>
+          <tr>
+            <td>node_modules/@wailsio/runtime</td>
+            <td>3.1.0</td>
+          </tr>
+          <tr>
+            <td>node_modules/eslint</td>
+            <td>9.39.1</td>
+          </tr>
+          <tr>
+            <td>node_modules/react</td>
+            <td>18.3.1</td>
+          </tr>
+          <tr>
+            <td>node_modules/typescript</td>
+            <td>5.9.3</td>
+          </tr>
+          <tr>
+            <td>node_modules/typescript-eslint</td>
+            <td>8.72.1</td>
+          </tr>
+          <tr>
+            <td>node_modules/vite</td>
+            <td>8.3.6</td>
+          </tr>
+          <tr>
+            <td>node_modules/vitest</td>
+            <td>4.1.12</td>
+          </tr>
+        </table>
+      </div>
+      <p>
+        Selected local cluster tools: kind 0.33.0; Kubernetes/client-go/API/apimachinery 1.37.0/0.37.0; node
+        kindest/node:v1.37.0@sha256:a1ed56cfb0e7b93589bdf97c8cd566405a265939e3620fc4f5de89adff580ae5. These tools were exercised by the
+        approved local fixtures and integration scenario. Actual Docker client29.9.3/server29.9.2; the initial stopped-daemon preflight is
+        historical. kubectl1.36.1. xterm6.0.0/addon-fit0.11.0. Earlier Task5 PATH selected Node25.1.0/npm11.6.2; final Task6/7 gates
+        explicitly selected pinned Node26.13.0/npm11.20.0.
+      </p>
+      <p>
+        <a href="https://github.com/wailsapp/wails/releases/tag/v3.1.0">Wails release</a> ·
+        <a href="https://github.com/kubernetes-sigs/kind/releases/tag/v0.33.0">kind release and image digest</a> ·
+        <a href="https://github.com/kubernetes/client-go#compatibility-matrix">client-go compatibility</a>
+      </p>
+      <p>
+        Build: npm ci; wails3 task bindings; scripts/check.sh; wails3 task package. Artifact: bin/kubesift.app, ad-hoc signed only. Launch
+        via Finder; verify ready. Final UI package from de25fcf, executable SHA256
+        9f1d39fcf29f72d3a8e366bacf8dc8706f6166d3b08265527d7155fd6b6d3c29, launched from Finder to ready. Ten sanitized starts of that
+        artifact reached frontend Ping (median 696.615 ms; nearest-rank p95 3888.138 ms). The separate full runtime profile used 8b2de54,
+        executable SHA256 1c3cfb25175afaacf958117738c23fa68e402c5dec2a2b8256254f9204106140; the later UI-only confirmation change did not
+        affect its stream path. Both packages passed deep/strict ad hoc signature verification and packaged LICENSE/NOTICE byte comparisons.
+        See the Phase 1A validation report for exact scope and limits.
+      </p>
+      <p>
+        The reorganized build targets macOS 13.0 to match the Go toolchain; only macOS 26.7.1 has been exercised. Earlier generated builds
+        targeted12.0. Desktop test linking still warns about module objects targeting13/26 against default11; final target13 package build
+        passes. This host-only smoke does not establish minimum macOS support. Other platforms, signing/notarization/updater are
+        unvalidated.
+      </p>
+    </main>
+  </body>
+</html>

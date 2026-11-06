@@ -1,10 +1,183 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Security and AI data handling · KubeSift</title><link rel="stylesheet" href="../assets/planning.css"><script src="../assets/theme.js"></script></head><body><aside class="rail"><a class="skip" href="#content">Skip to content</a><a class="mark" href="../index.html"><span class="mark-name">KubeSift</span><span class="mark-sub">Planning</span></a><h2>Index</h2><a href="../index.html">Planning index</a><h2>Product</h2><a href="../product/requirements.html">Requirements</a><a href="../product/feature-matrix.html">Capabilities</a><h2>Architecture</h2><a href="../architecture/overview.html">Overview</a><a href="../architecture/decisions.html">Decisions</a><h2>Safeguards</h2><a href="../security/security-model.html" aria-current="page">Security and AI</a><h2>Delivery</h2><a href="../roadmap/roadmap.html">Roadmap</a><a href="../ux/workflows.html">UX workflows</a><a href="../ux/mocks/index.html">Mockups</a><h2>Engineering</h2><a href="../engineering/engineering.html">Playbook</a><a href="../engineering/local-development.html">Local development</a><a href="../engineering/toolchain.html">Toolchain</a><h2>Working</h2><a href="../superpowers/validation/phase-1a.html">Phase 1A validation</a></aside><header><a href="../index.html">KubeSift / Planning</a><h1>Security and AI data handling</h1><p>Local-first operation with explicit targets, trusted helpers and controlled evidence sharing.</p></header><main id="content">
-<h2>Assets and trust boundaries</h2><p>Protect kubeconfig credentials, cloud sessions, provider keys, resource data and cluster integrity. Boundaries: untrusted cluster content → webview; webview → native services; kubeconfig → executable helpers; app → Kubernetes/monitoring APIs; evidence → external model; local project → public repository. A compromised laptop or malicious native dependency is outside a complete protection guarantee.</p>
-<div class="table-scroll"><table><tr><th>Threat</th><th>Required control</th></tr><tr><td>Wrong-cluster changes</td><td>Backend-bound connection generation, resource identity and operation payload; target shown during review</td></tr><tr><td>Untrusted kubeconfig executes code</td><td>Review helper executable configuration before execution; no generic frontend shell API</td></tr><tr><td>Malicious logs/YAML/annotations</td><td>Render as data, never active HTML or instructions; constrain navigation and native bindings</td></tr><tr><td>Credential or sensitive-data leakage</td><td>Credential store, redaction, export review and no secrets in public fixtures</td></tr><tr><td>Expensive streams/queries</td><td>Bounded queues, concurrency, timeouts, cancellation and visible truncation</td></tr><tr><td>AI prompt injection or unauthorized action</td><td>Separate read-only tool surface, scope validation and evidence treated as untrusted data</td></tr></table></div>
-<h2>Credential-helper trust</h2><p>Review the resolved executable, arguments, kubeconfig source and configured environment overrides before the first run. Remember approval; prompt again when executable configuration changes. Resolve paths before matching trust so a PATH change cannot silently select a different executable. Store sensitive trust inputs as protected fingerprints where possible; redact displayed values.</p><p>Settings must list and revoke trusted entries. Revocation blocks future executions, not already-issued credentials. Proposed baseline: a routine binary upgrade at the same path does not count as configuration change; executable integrity checking can be evaluated separately. This trust mechanism is not a sandbox for an approved helper. Never execute a helper merely to preview an untrusted kubeconfig.</p>
-<h2>RBAC and mutations</h2><p>Use permission checks to guide UI, but server authorization is final and can change between review and execution. Scope checks and target binding belong in Go, not only disabled buttons. An unrestricted credential remains powerful even if the UI is read-only.</p><ul><li>Prepared operations bind connection generation, target, payload and relevant resource version/UID. Proposed confirmation records expire and are single-use; stale targets require renewed review.</li><li>Show differences for YAML changes and explicit impact for destructive actions. Production labels strengthen confirmation but do not replace normal controls.</li><li>Drain uses eviction semantics and respects disruption budgets by default. Never silently force-delete, bypass PDBs or discard local data; define exceptional options separately.</li><li>Helm installs/upgrades/rollback can execute hooks and modify cluster-scoped resources. Display the best available impact preview, explain incomplete previews, and require deliberate confirmation. Do not log sensitive values.</li><li>Operator lifecycle actions may create CRDs, cluster roles and resources beyond a namespace. Namespace access alone is not authorization for cluster-wide tests.</li><li>Container exec grants an interactive session capable of writes. Label its target clearly; do not describe it as read-only or promise confirmation for each shell command.</li></ul>
-<h2>AI availability and provider routing</h2><p>AI investigation is available in Phase 2. Application default provider plus per-cluster overrides references profiles stored securely. Show effective cluster/provider/model before submission. A missing or invalid override fails clearly; never silently fall back to another provider.</p><p>Claude is the first adapter. OpenAI API, OpenRouter and other supported providers follow a provider abstraction; arbitrary API keys and consumer subscriptions do not imply compatible APIs or model capabilities. </p>
-<h2>Evidence and tool contracts</h2><p>Collect only bounded, relevant evidence. Exclude credentials and Kubernetes Secret values from model submissions; logs, annotations, Helm values and ConfigMaps can also contain secrets. Redaction is defense in depth, not a guarantee. Explicit sharing policies and payload review govern sensitive logs/configuration; policies can be remembered to avoid repetitive prompts.</p><div class="table-scroll"><table><tr><th>Proposed read-only tool</th><th>Constraints</th></tr><tr><td>Inspect workload / related events</td><td>Connection and resource scope, field allowlist, collection time and source references</td></tr><tr><td>Get relevant logs</td><td>Container, time/line/byte limits, redaction and sharing policy</td></tr><tr><td>Get resource metrics / history</td><td>Selected endpoint, approved templates, bounded range/step/series/timeouts</td></tr></table></div><p>Do not initially expose arbitrary shell, mutation, URL-fetch or unrestricted PromQL tools. Kubernetes RBAC does not automatically enforce namespace access on a shared Prometheus endpoint; provider-side access controls and application query scope require separate validation. Keep raw evidence local by default; send only the permitted projection.</p><p>AI output distinguishes observations from hypotheses, cites evidence and time windows, acknowledges missing data and does not assert a memory leak solely from increasing memory. Phase 2 has no AI write tools. Future remediation needs a separate design.</p>
-<h2>Audit, persistence and public-source hygiene</h2><p>Proposed local audit records: action type, target reference, time, outcome, confirmation and provider profile identifier where relevant. Never record credentials, full log payloads or Secret values. Retention/deletion settings must be chosen before release. Investigation history persistence is opt-in and needs a separate storage review.</p><p>Use synthetic fixtures and exclude credentials from tracked files. Exports and issue reports require preview. Diagnostic uploads and telemetry are not enabled by this plan.</p>
-<h2>Development boundaries</h2><p>Use disposable local clusters for destructive tests. External integration tests require explicit targets and allowed actions. Real-provider tests must not print credentials. OpenShift lifecycle and node maintenance need suitable isolated environments. The app itself deploys no supporting agents or monitoring components.</p><footer>2026-11-05 · Draft for review · <a href="../index.html">Planning index</a></footer></main></body></html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Security and AI data handling · KubeSift</title>
+    <link rel="stylesheet" href="../assets/planning.css" />
+    <script src="../assets/theme.js"></script>
+  </head>
+  <body>
+    <aside class="rail">
+      <a class="skip" href="#content">Skip to content</a
+      ><a class="mark" href="../index.html"><span class="mark-name">KubeSift</span><span class="mark-sub">Planning</span></a>
+      <h2>Index</h2>
+      <a href="../index.html">Planning index</a>
+      <h2>Product</h2>
+      <a href="../product/requirements.html">Requirements</a><a href="../product/feature-matrix.html">Capabilities</a>
+      <h2>Architecture</h2>
+      <a href="../architecture/overview.html">Overview</a><a href="../architecture/decisions.html">Decisions</a>
+      <h2>Safeguards</h2>
+      <a href="../security/security-model.html" aria-current="page">Security and AI</a>
+      <h2>Delivery</h2>
+      <a href="../roadmap/roadmap.html">Roadmap</a><a href="../ux/workflows.html">UX workflows</a
+      ><a href="../ux/mocks/index.html">Mockups</a>
+      <h2>Engineering</h2>
+      <a href="../engineering/engineering.html">Playbook</a><a href="../engineering/local-development.html">Local development</a
+      ><a href="../engineering/toolchain.html">Toolchain</a>
+      <h2>Working</h2>
+      <a href="../superpowers/validation/phase-1a.html">Phase 1A validation</a>
+    </aside>
+    <header>
+      <a href="../index.html">KubeSift / Planning</a>
+      <h1>Security and AI data handling</h1>
+      <p>Local-first operation with explicit targets, trusted helpers and controlled evidence sharing.</p>
+    </header>
+    <main id="content">
+      <h2>Assets and trust boundaries</h2>
+      <p>
+        Protect kubeconfig credentials, cloud sessions, provider keys, resource data and cluster integrity. Boundaries: untrusted cluster
+        content → webview; webview → native services; kubeconfig → executable helpers; app → Kubernetes/monitoring APIs; evidence → external
+        model; local project → public repository. A compromised laptop or malicious native dependency is outside a complete protection
+        guarantee.
+      </p>
+      <div class="table-scroll">
+        <table>
+          <tr>
+            <th>Threat</th>
+            <th>Required control</th>
+          </tr>
+          <tr>
+            <td>Wrong-cluster changes</td>
+            <td>Backend-bound connection generation, resource identity and operation payload; target shown during review</td>
+          </tr>
+          <tr>
+            <td>Untrusted kubeconfig executes code</td>
+            <td>Review helper executable configuration before execution; no generic frontend shell API</td>
+          </tr>
+          <tr>
+            <td>Malicious logs/YAML/annotations</td>
+            <td>Render as data, never active HTML or instructions; constrain navigation and native bindings</td>
+          </tr>
+          <tr>
+            <td>Credential or sensitive-data leakage</td>
+            <td>Credential store, redaction, export review and no secrets in public fixtures</td>
+          </tr>
+          <tr>
+            <td>Expensive streams/queries</td>
+            <td>Bounded queues, concurrency, timeouts, cancellation and visible truncation</td>
+          </tr>
+          <tr>
+            <td>AI prompt injection or unauthorized action</td>
+            <td>Separate read-only tool surface, scope validation and evidence treated as untrusted data</td>
+          </tr>
+        </table>
+      </div>
+      <h2>Credential-helper trust</h2>
+      <p>
+        Review the resolved executable, arguments, kubeconfig source and configured environment overrides before the first run. Remember
+        approval; prompt again when executable configuration changes. Resolve paths before matching trust so a PATH change cannot silently
+        select a different executable. Store sensitive trust inputs as protected fingerprints where possible; redact displayed values.
+      </p>
+      <p>
+        Settings must list and revoke trusted entries. Revocation blocks future executions, not already-issued credentials. Proposed
+        baseline: a routine binary upgrade at the same path does not count as configuration change; executable integrity checking can be
+        evaluated separately. This trust mechanism is not a sandbox for an approved helper. Never execute a helper merely to preview an
+        untrusted kubeconfig.
+      </p>
+      <h2>RBAC and mutations</h2>
+      <p>
+        Use permission checks to guide UI, but server authorization is final and can change between review and execution. Scope checks and
+        target binding belong in Go, not only disabled buttons. An unrestricted credential remains powerful even if the UI is read-only.
+      </p>
+      <ul>
+        <li>
+          Prepared operations bind connection generation, target, payload and relevant resource version/UID. Proposed confirmation records
+          expire and are single-use; stale targets require renewed review.
+        </li>
+        <li>
+          Show differences for YAML changes and explicit impact for destructive actions. Production labels strengthen confirmation but do
+          not replace normal controls.
+        </li>
+        <li>
+          Drain uses eviction semantics and respects disruption budgets by default. Never silently force-delete, bypass PDBs or discard
+          local data; define exceptional options separately.
+        </li>
+        <li>
+          Helm installs/upgrades/rollback can execute hooks and modify cluster-scoped resources. Display the best available impact preview,
+          explain incomplete previews, and require deliberate confirmation. Do not log sensitive values.
+        </li>
+        <li>
+          Operator lifecycle actions may create CRDs, cluster roles and resources beyond a namespace. Namespace access alone is not
+          authorization for cluster-wide tests.
+        </li>
+        <li>
+          Container exec grants an interactive session capable of writes. Label its target clearly; do not describe it as read-only or
+          promise confirmation for each shell command.
+        </li>
+      </ul>
+      <h2>AI availability and provider routing</h2>
+      <p>
+        AI investigation is available in Phase 2. Application default provider plus per-cluster overrides references profiles stored
+        securely. Show effective cluster/provider/model before submission. A missing or invalid override fails clearly; never silently fall
+        back to another provider.
+      </p>
+      <p>
+        Claude is the first adapter. OpenAI API, OpenRouter and other supported providers follow a provider abstraction; arbitrary API keys
+        and consumer subscriptions do not imply compatible APIs or model capabilities.
+      </p>
+      <h2>Evidence and tool contracts</h2>
+      <p>
+        Collect only bounded, relevant evidence. Exclude credentials and Kubernetes Secret values from model submissions; logs, annotations,
+        Helm values and ConfigMaps can also contain secrets. Redaction is defense in depth, not a guarantee. Explicit sharing policies and
+        payload review govern sensitive logs/configuration; policies can be remembered to avoid repetitive prompts.
+      </p>
+      <div class="table-scroll">
+        <table>
+          <tr>
+            <th>Proposed read-only tool</th>
+            <th>Constraints</th>
+          </tr>
+          <tr>
+            <td>Inspect workload / related events</td>
+            <td>Connection and resource scope, field allowlist, collection time and source references</td>
+          </tr>
+          <tr>
+            <td>Get relevant logs</td>
+            <td>Container, time/line/byte limits, redaction and sharing policy</td>
+          </tr>
+          <tr>
+            <td>Get resource metrics / history</td>
+            <td>Selected endpoint, approved templates, bounded range/step/series/timeouts</td>
+          </tr>
+        </table>
+      </div>
+      <p>
+        Do not initially expose arbitrary shell, mutation, URL-fetch or unrestricted PromQL tools. Kubernetes RBAC does not automatically
+        enforce namespace access on a shared Prometheus endpoint; provider-side access controls and application query scope require separate
+        validation. Keep raw evidence local by default; send only the permitted projection.
+      </p>
+      <p>
+        AI output distinguishes observations from hypotheses, cites evidence and time windows, acknowledges missing data and does not assert
+        a memory leak solely from increasing memory. Phase 2 has no AI write tools. Future remediation needs a separate design.
+      </p>
+      <h2>Audit, persistence and public-source hygiene</h2>
+      <p>
+        Proposed local audit records: action type, target reference, time, outcome, confirmation and provider profile identifier where
+        relevant. Never record credentials, full log payloads or Secret values. Retention/deletion settings must be chosen before release.
+        Investigation history persistence is opt-in and needs a separate storage review.
+      </p>
+      <p>
+        Use synthetic fixtures and exclude credentials from tracked files. Exports and issue reports require preview. Diagnostic uploads and
+        telemetry are not enabled by this plan.
+      </p>
+      <h2>Development boundaries</h2>
+      <p>
+        Use disposable local clusters for destructive tests. External integration tests require explicit targets and allowed actions.
+        Real-provider tests must not print credentials. OpenShift lifecycle and node maintenance need suitable isolated environments. The
+        app itself deploys no supporting agents or monitoring components.
+      </p>
+      <footer>2026-11-05 · Draft for review · <a href="../index.html">Planning index</a></footer>
+    </main>
+  </body>
+</html>
