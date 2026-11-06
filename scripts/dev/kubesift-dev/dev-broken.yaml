@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: incidents
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: checkout-api
+  namespace: incidents
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: checkout-api
+  template:
+    metadata:
+      labels:
+        app: checkout-api
+    spec:
+      containers:
+      - name: checkout-api
+        image: alpine:3.20
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          echo "ERROR required setting DATABASE_URL is missing"
+          exit 1
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            cpu: 50m
+            memory: 32Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: missing-image
+  namespace: incidents
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: missing-image
+  template:
+    metadata:
+      labels:
+        app: missing-image
+    spec:
+      containers:
+      - name: missing-image
+        image: kubesift.invalid/missing:dev
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            cpu: 50m
+            memory: 32Mi

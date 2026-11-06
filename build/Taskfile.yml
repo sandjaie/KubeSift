@@ -1,0 +1,46 @@
+# Purpose: Build the Phase 1A desktop application.
+# Used by: The root Taskfile and wails3 build/package/dev.
+# Responsibilities: Generate bindings, bundle frontend assets and compile/package macOS.
+# Important: Packaging is local and ad-hoc signed; this does not publish a release.
+version: '3'
+vars:
+  DEV: '{{.DEV | default "false"}}'
+tasks:
+  bindings:
+    cmds:
+      - go mod tidy
+      - wails3 generate bindings -ts -i ./cmd/kubesift
+      - python3 scripts/source-descriptions.py bindings
+  frontend:
+    deps: [bindings]
+    preconditions:
+      - sh: test -d node_modules
+        msg: Run npm ci from the repository root first.
+    cmds:
+      - npm run build
+  build:
+    deps: [frontend]
+    preconditions:
+      - sh: test "$(go env GOOS)" = darwin
+        msg: Phase 1A packaging is validated on macOS only.
+    env:
+      MACOSX_DEPLOYMENT_TARGET: '13.0'
+      CGO_CFLAGS: '-mmacosx-version-min=13.0'
+      CGO_LDFLAGS: '-mmacosx-version-min=13.0'
+    cmds:
+      - mkdir -p bin
+      - go build {{if ne .DEV "true"}}-tags production -ldflags="-w -s"{{end}} -trimpath -buildvcs=false -o bin/kubesift ./cmd/kubesift
+  package:
+    deps: [build]
+    cmds:
+      - bash build/package-macos.sh
+  run:
+    cmds:
+      - bash build/package-macos.sh
+      - open -W bin/kubesift.app
+  frontend:dev:
+    cmds:
+      - npm run dev --workspace frontend -- --port 9245 --strictPort
+  dev:
+    cmds:
+      - wails3 dev -config build/config.yml -port 9245

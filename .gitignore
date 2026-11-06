@@ -1,0 +1,8 @@
+node_modules/
+frontend/dist/
+bin/
+.local/
+.DS_Store
+.task/
+internal/desktop/assets/dist/
+.superpowers/

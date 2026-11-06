@@ -5,6 +5,7 @@ Branching, commits, pull requests, and publication for KubeSift. The engineering
 ## Branches
 
 - `develop` integrates. `main` is only what has been released.
+- Never delete `main`, `master` or `develop`. Only merged task/phase source branches are eligible for cleanup.
 - `main` moves through `release/*` or `hotfix/*`. Everything else merges to `develop`.
 - The repository today has only `main`, and the commits on it are planning. Create `develop` from `main` when implementation starts. After that, feature and fix work is branched.
 - Feature and fix work merges to `develop`. Do not commit that work straight to `develop` or `main`.
@@ -25,14 +26,17 @@ Documentation bootstrap exception: until implementation starts and `develop` exi
 ## Pull requests
 
 - Pull requests on [sandjaie/KubeSift](https://github.com/sandjaie/KubeSift) carry a summary and a test plan. Fill the template.
-- Squash-merge and delete the source branch.
+- At the end of every completed phase, after its acceptance evidence and independent review are complete, create a pull request from the phase feature branch targeting `develop`. Include the actual checks, review resolutions and remaining limitations.
+- The maintainer has authorized squash-merging completed phase pull requests into `develop` after the exact PR head has passed applicable checks and review; delete the source branch after merge. Do not bypass failed checks or unresolved blocking findings.
+- This phase-completion rule does not authorize merging to `main`, starting the next phase, force pushes or releases.
 
 ## Identity and publication
 
 - Use the configured repository author and authorized GitHub account. Destination: [sandjaie/KubeSift](https://github.com/sandjaie/KubeSift).
 - Before commits, verify repository-local author identity. Before remote operations, verify remote destination and authentication account separately.
 - Do not infer identity from the OS username or change global Git identity. Confirm an ambiguous account before remote operations.
-- Do not push or publish without authorization.
+- The maintainer has authorized committing and pushing completed task changes by default. After appropriate verification, commit only the task’s changes and push the current authorized feature branch; preserve unrelated work. Report the commit and push result.
+- This standing authorization permits completed-phase merges into `develop` only under the pull-request rule above. Other merges, releases, force pushes and publication outside the configured repository require explicit authorization.
 - KubeSift is licensed under Apache-2.0; retain the root LICENSE and required third-party notices.
 - Signing, notarization, and the updater stay open until the release-readiness gate in the roadmap.
 

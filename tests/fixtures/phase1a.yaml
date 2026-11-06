@@ -1,0 +1,263 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "ConfigMap",
+      "metadata": {
+        "name": "ks-marker",
+        "namespace": "payments"
+      },
+      "data": {
+        "marker": "cluster-a",
+        "index.html": "KubeSift synthetic fixture"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Pod",
+      "metadata": {
+        "name": "ks-validation",
+        "namespace": "payments",
+        "annotations": {
+          "kubesift.dev/marker": "cluster-a",
+          "kubesift.dev/hostile": "<img src=x onerror=\"window.__kubesiftInjected=true\">"
+        }
+      },
+      "spec": {
+        "automountServiceAccountToken": false,
+        "securityContext": {
+          "runAsNonRoot": true,
+          "runAsUser": 1000,
+          "runAsGroup": 1000
+        },
+        "containers": [
+          {
+            "name": "fixture",
+            "image": "docker.io/library/busybox:1.37.0@sha256:a7dbc319b1438115a207e11930dc4bb3e643dcb3ec0bdd694bb36cd8fad289ec",
+            "env": [
+              {
+                "name": "MARKER",
+                "value": "cluster-a"
+              }
+            ],
+            "command": [
+              "/bin/sh",
+              "-c"
+            ],
+            "args": [
+              "httpd -f -p 8080 -h /www &\nhttp_pid=$!\ntrap \"kill $http_pid 2>/dev/null || true\" EXIT TERM INT\necho 100 > /tmp/rate\ncount=0; remainder=0\nread -r up ignored < /proc/uptime\nlast=${up%.*}${up#*.}\nwhile :; do\n read -r rate < /tmp/rate; case \"$rate\" in 100|2000) ;; *) rate=100 ;; esac\n read -r up ignored < /proc/uptime\n now=${up%.*}${up#*.}; ticks=$((now-last)); last=$now\n [ \"$ticks\" -le 100 ] || ticks=100\n credit=$((ticks*rate+remainder)); batch=$((credit/100)); remainder=$((credit%100))\n i=0\n while [ \"$i\" -lt \"$batch\" ]; do\n  printf \"%-255s\\n\" \"$MARKER synthetic-line-$count <script>window.__kubesiftInjected=true</script>\"\n  count=$((count+1)); i=$((i+1))\n done\n sleep 0.01\ndone"
+            ],
+            "readinessProbe": {
+              "httpGet": {
+                "path": "/marker",
+                "port": 8080
+              },
+              "periodSeconds": 1
+            },
+            "ports": [
+              {
+                "containerPort": 8080
+              }
+            ],
+            "resources": {
+              "requests": {
+                "cpu": "20m",
+                "memory": "16Mi"
+              },
+              "limits": {
+                "cpu": "500m",
+                "memory": "64Mi"
+              }
+            },
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "readOnlyRootFilesystem": true,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              }
+            },
+            "volumeMounts": [
+              {
+                "name": "www",
+                "mountPath": "/www",
+                "readOnly": true
+              },
+              {
+                "name": "tmp",
+                "mountPath": "/tmp"
+              }
+            ]
+          }
+        ],
+        "volumes": [
+          {
+            "name": "www",
+            "configMap": {
+              "name": "ks-marker"
+            }
+          },
+          {
+            "name": "tmp",
+            "emptyDir": {
+              "sizeLimit": "8Mi"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "ks-denied",
+        "namespace": "payments"
+      },
+      "automountServiceAccountToken": false
+    },
+    {
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "kind": "Role",
+      "metadata": {
+        "name": "ks-denied",
+        "namespace": "payments"
+      },
+      "rules": [
+        {
+          "apiGroups": [
+            ""
+          ],
+          "resources": [
+            "configmaps"
+          ],
+          "resourceNames": [
+            "ks-marker"
+          ],
+          "verbs": [
+            "get"
+          ]
+        }
+      ]
+    },
+    {
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "kind": "RoleBinding",
+      "metadata": {
+        "name": "ks-denied",
+        "namespace": "payments"
+      },
+      "subjects": [
+        {
+          "kind": "ServiceAccount",
+          "name": "ks-denied",
+          "namespace": "payments"
+        }
+      ],
+      "roleRef": {
+        "apiGroup": "rbac.authorization.k8s.io",
+        "kind": "Role",
+        "name": "ks-denied"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "ks-helper",
+        "namespace": "payments"
+      },
+      "automountServiceAccountToken": false
+    },
+    {
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "kind": "Role",
+      "metadata": {
+        "name": "ks-helper",
+        "namespace": "payments"
+      },
+      "rules": [
+        {
+          "apiGroups": [
+            ""
+          ],
+          "resources": [
+            "pods"
+          ],
+          "verbs": [
+            "get",
+            "list",
+            "watch"
+          ]
+        },
+        {
+          "apiGroups": [
+            ""
+          ],
+          "resources": [
+            "pods/log"
+          ],
+          "resourceNames": [
+            "ks-validation"
+          ],
+          "verbs": [
+            "get"
+          ]
+        },
+        {
+          "apiGroups": [
+            ""
+          ],
+          "resources": [
+            "pods/exec",
+            "pods/portforward"
+          ],
+          "resourceNames": [
+            "ks-validation"
+          ],
+          "verbs": [
+            "create"
+          ]
+        },
+        {
+          "apiGroups": [
+            ""
+          ],
+          "resources": [
+            "configmaps"
+          ],
+          "resourceNames": [
+            "ks-marker"
+          ],
+          "verbs": [
+            "get",
+            "update",
+            "patch"
+          ]
+        }
+      ]
+    },
+    {
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "kind": "RoleBinding",
+      "metadata": {
+        "name": "ks-helper",
+        "namespace": "payments"
+      },
+      "subjects": [
+        {
+          "kind": "ServiceAccount",
+          "name": "ks-helper",
+          "namespace": "payments"
+        }
+      ],
+      "roleRef": {
+        "apiGroup": "rbac.authorization.k8s.io",
+        "kind": "Role",
+        "name": "ks-helper"
+      }
+    }
+  ]
+}

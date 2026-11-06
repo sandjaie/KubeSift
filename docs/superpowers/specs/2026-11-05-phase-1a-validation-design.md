@@ -17,7 +17,7 @@ The user already selected Wails with an early validation milestone. Expand that 
 
 - A mock-only desktop demo would test rendering but leave Kubernetes authentication, actual streaming and cleanup unproven; it is insufficient.
 - A full explorer would delay discovery of architecture risks and duplicate Phase 1B scope; defer it.
-- The selected integration approach uses a small validation interface, real disposable clusters and synthetic fixtures. Retain useful service code only if it satisfies the approved boundaries and checks; validation controls are not automatically production UX.
+- The selected integration approach uses a small validation interface, real local clusters and synthetic fixtures. Retain useful service code only if it satisfies the approved boundaries and checks; validation controls are not automatically production UX.
 
 ## Goals and non-goals
 
@@ -31,11 +31,13 @@ All permanent safeguards are owned by [the security model](../../security/securi
 
 Initial validation target: this development Mac's arm64 architecture. Host inspection found macOS 26.7.1, Node and a Docker executable; Go and kind/minikube/k3d were not on PATH. This does not establish a running container engine or minimum supported macOS version.
 
-Proposed builder default: two disposable kind clusters when a compatible container runtime is available. The implementation plan must verify current official prerequisites and pin versions before installation. If kind is unsuitable, document the switch to minikube/k3d in the plan without changing the two-cluster acceptance requirement. No tooling is installed in this planning session.
+Local target update (2026-11-05): use the existing `kind-dev-local` context and `payments` namespace for primary development/validation. Treat its workloads as user-owned. Use a separate disposable second cluster for the two-server checks. [Local development](../../engineering/local-development.html) owns target details, setup and teardown rules. Do not recreate the primary cluster or namespace.
 
 Use two genuinely different API servers, each containing an identically named namespace and workload. Give their synthetic responses different marker values so cross-cluster mistakes are observable. Store test kubeconfigs outside tracked paths and pass an explicit isolated kubeconfig to fixture tooling. Do not alter the user's default kubeconfig or current-context.
 
 Use only local fixtures for mutation/fault injection. External authentication checks require explicit user-selected contexts and read-only scope; no automatic probing of every kubeconfig context. Real OpenShift/EKS/AKS results are reported separately from local architectural validation.
+
+Approved visual direction: [UX specification](../../ux/workflows.html) and its single mockup gallery. This does not expand Phase 1A into the full explorer or AI implementation.
 
 ## Minimal validation interface
 
@@ -119,6 +121,6 @@ First assess batching, cancellation and flow control when performance is inadequ
 
 ## Deliverables for the implementation chat
 
-An approved execution plan, minimal integration source/tests/fixtures, reproducible local verification instructions and a validation report under docs/validation/ (HTML summary with synthetic machine-readable measurements as appropriate). The report must list actual versions, pass/fail/not-run cases, measured results, limitations and recommendation. Use synthetic evidence in the report.
+An approved execution plan, minimal integration source/tests/fixtures, reproducible local verification instructions and a validation report under docs/superpowers/validation/ (HTML summary with synthetic machine-readable measurements as appropriate). The report must list actual versions, pass/fail/not-run cases, measured results, limitations and recommendation. Use synthetic evidence in the report.
 
 The user approved this specification. Create and review its detailed Superpowers plan in this planning chat before implementation. The implementation chat should receive links to this spec, the approved plan, parent design and AGENTS.md; it should verify the checked-out commit and execute only Phase 1A. Decisions that change scope return to this planning chat rather than being silently expanded.

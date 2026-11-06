@@ -1,0 +1,23 @@
+{
+  "name": "kubesift",
+  "private": true,
+  "workspaces": [
+    "frontend"
+  ],
+  "scripts": {
+    "test": "npm run test --workspace frontend",
+    "lint": "npm run lint --workspace frontend",
+    "typecheck": "npm run typecheck --workspace frontend",
+    "build": "npm run build --workspace frontend",
+    "prepare": "husky",
+    "bindings": "wails3 task bindings"
+  },
+  "devDependencies": {
+    "husky": "9.1.7",
+    "lint-staged": "16.2.7"
+  },
+  "lint-staged": {
+    "frontend/**/*.{ts,tsx}": "npm exec --workspace frontend -- eslint --fix",
+    "*.go": "gofmt -w"
+  }
+}
