@@ -4,15 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Engineering playbook · KubeSift</title>
-<link rel="stylesheet" href="../assets/planning.css">
+<link rel="stylesheet" href="../assets/planning.css"><script src="../assets/theme.js"></script>
 </head>
-<body>
+<body><aside class="rail"><a class="skip" href="#content">Skip to content</a><a class="mark" href="../index.html"><span class="mark-name">KubeSift</span><span class="mark-sub">Planning</span></a><h2>Index</h2><a href="../index.html">Planning index</a><h2>Product</h2><a href="../product/requirements.html">Requirements</a><a href="../product/feature-matrix.html">Capabilities</a><h2>Architecture</h2><a href="../architecture/overview.html">Overview</a><a href="../architecture/decisions.html">Decisions</a><h2>Safeguards</h2><a href="../security/security-model.html">Security and AI</a><h2>Delivery</h2><a href="../roadmap/roadmap.html">Roadmap</a><a href="../ux/workflows.html">UX workflows</a><a href="../ux/mocks/index.html">Mockups</a><h2>Engineering</h2><a href="../engineering/engineering.html" aria-current="page">Playbook</a><a href="../engineering/local-development.html">Local development</a><a href="../engineering/toolchain.html">Toolchain</a><h2>Working</h2><a href="../superpowers/validation/phase-1a.html">Phase 1A validation</a></aside>
 <header>
 <a href="../index.html">KubeSift / Planning</a>
 <h1>Engineering playbook</h1>
 <p>How KubeSift is designed, built, reviewed, and released. Product scope stays in the owning documents.</p>
 </header>
-<main>
+<main id="content">
 <p class="callout">This page owns the development loop. It does not authorize implementation, cluster access, or publication. Requirements stay in <a href="../product/requirements.html">product</a>, boundaries in <a href="../architecture/overview.html">architecture</a>, safeguards in <a href="../security/security-model.html">security</a>, status in <a href="../architecture/decisions.html">decisions</a>, and phase order in the <a href="../roadmap/roadmap.html">roadmap</a>. The short agent contract is <a href="../../AGENTS.md">AGENTS.md</a>.</p>
 
 <h2 id="loop">Loop</h2>
@@ -163,30 +163,30 @@ npx tsc --noEmit</code></pre>
 <p>Process skills set the order of work. Repo skills know this codebase. Ponytail decides how much code is enough. Invoke the process skill before editing. If two apply, the process skill goes first.</p>
 
 <h3>Always on</h3>
-<table>
+<div class="table-scroll"><table>
 <tr><th>Skill</th><th>When</th><th>What it forces</th></tr>
 <tr><td><code>using-superpowers</code></td><td>Start of any agent conversation</td><td>Find and read the skill that fits before exploring, asking, or editing.</td></tr>
 <tr><td><code>ponytail</code> lite</td><td>Any coding in this repo</td><td>Build what was asked. Climb stdlib → existing helper → already-installed dep → one line → minimum code. Afterward, one line naming the lazier alternative. Never drop trust-boundary checks, data-loss handling, or security.</td></tr>
-</table>
+</table></div>
 <p>Ponytail intensities, for a single session:</p>
-<table>
+<div class="table-scroll"><table>
 <tr><th>Level</th><th>Behavior</th></tr>
 <tr><td>lite</td><td>Build the request. Name the shorter option. The user picks. This repo’s default, once the rule file exists.</td></tr>
 <tr><td>full</td><td>Enforce the ladder. Shortest diff. Say what was skipped and when to add it.</td></tr>
 <tr><td>ultra</td><td>Refuse speculative scope. Ship the one-liner and challenge the rest of the requirement.</td></tr>
-</table>
+</table></div>
 <p>Off switch: <code>stop ponytail</code> / <code>normal mode</code>. Session switch: <code>/ponytail lite</code>, <code>/ponytail full</code>, <code>/ponytail ultra</code>.</p>
 
 <h3>Before code</h3>
-<table>
+<div class="table-scroll"><table>
 <tr><th>Skill</th><th>When</th><th>What it forces</th></tr>
 <tr><td><code>brainstorming</code></td><td>Any new feature, component, or behavior change</td><td>Explore context, ask one question at a time, present a design, wait for approval. No code until the design is accepted. A short design is enough for a small change.</td></tr>
 <tr><td><code>writing-plans</code></td><td>A spec that takes more than one step</td><td>A plan a stranger could execute. Each task names files, the test to write first, and a commit. Save to <code>docs/superpowers/plans/YYYY-MM-DD-&lt;feature&gt;.md</code>.</td></tr>
 <tr><td><code>using-git-worktrees</code></td><td>Feature work that must stay off the current checkout</td><td>Isolated worktree and branch before implementation starts.</td></tr>
-</table>
+</table></div>
 
 <h3>While building</h3>
-<table>
+<div class="table-scroll"><table>
 <tr><th>Skill</th><th>When</th><th>What it forces</th></tr>
 <tr><td><code>test-driven-development</code></td><td>Every feature, bugfix, refactor, and behavior change</td><td>Red, then green, then the smallest code. Generated scaffolding and configuration are verified through build and behavior checks; handwritten behavior follows red/green tests.</td></tr>
 <tr><td><code>systematic-debugging</code></td><td>Any bug, red test, or surprise</td><td>Root cause before a patch. Trace every caller of the function you are about to change.</td></tr>
@@ -194,10 +194,10 @@ npx tsc --noEmit</code></pre>
 <tr><td><code>executing-plans</code></td><td>The same plan, in a separate session, or when sub-agents are unavailable</td><td>Load the plan, challenge it, execute, report. Prefer subagent-driven development when sub-agents exist.</td></tr>
 <tr><td><code>dispatching-parallel-agents</code></td><td>Two or more tasks that share no state</td><td>Parallel agents instead of a serial queue.</td></tr>
 <tr><td><code>verification-before-completion</code></td><td>About to say done, fixed, or passing, or about to commit or open a pull request</td><td>Run the verification command in this turn. No claim without fresh output.</td></tr>
-</table>
+</table></div>
 
 <h3>Before merge</h3>
-<table>
+<div class="table-scroll"><table>
 <tr><th>Skill</th><th>When</th><th>What it forces</th></tr>
 <tr><td><code>kubesift-code-review</code></td><td>Feature or fix ready for <code>develop</code></td><td>Senior review of the branch against <code>develop</code>, including uncommitted work. Findings only. Another agent patches them. Record each as <code>KSF-00N</code> in the pull request. Write this skill into the repo before relying on it.</td></tr>
 <tr><td><code>requesting-code-review</code></td><td>End of a task, end of a major feature, before merge</td><td>Dispatch a reviewer sub-agent with the spec and the diff. The reviewer does not inherit the coding session.</td></tr>
@@ -207,11 +207,11 @@ npx tsc --noEmit</code></pre>
 <tr><td><code>ponytail-audit</code></td><td>Whole repo, same question</td><td>Hygiene’s neighbor for complexity. Does not replace correctness review.</td></tr>
 <tr><td><code>review-bugbot</code></td><td>You ask <code>/review-bugbot</code></td><td>Launches the <code>bugbot</code> sub-agent on the branch diff.</td></tr>
 <tr><td><code>review-security</code></td><td>You ask <code>/review-security</code></td><td>Launches the <code>security-review</code> sub-agent on the branch diff.</td></tr>
-</table>
+</table></div>
 <p>The reviewer does not edit. A finding is an id plus a patch another agent can apply.</p>
 
 <h3>Ship, and skill maintenance</h3>
-<table>
+<div class="table-scroll"><table>
 <tr><th>Skill</th><th>When</th><th>What it forces</th></tr>
 <tr><td><code>finishing-a-development-branch</code></td><td>Tests pass and the branch needs a home</td><td>Verify, then offer merge, pull request, or cleanup. Execute the choice.</td></tr>
 <tr><td><code>release-this</code></td><td>“release”, “cut a release”, a version, or a tag</td><td>From clean up-to-date <code>develop</code>: ask minor vs patch if unspecified, changelog from conventional commits, <code>release/v*</code> pull request to <code>main</code>, annotated tag, GitHub release, back-merge. Verify license and dependency notices. Write this skill into the repo before relying on it.</td></tr>
@@ -219,7 +219,7 @@ npx tsc --noEmit</code></pre>
 <tr><td><code>ponytail-debt</code></td><td>You want the ledger of <code>ponytail:</code> comments</td><td>Harvest every marked shortcut so the ceiling is visible.</td></tr>
 <tr><td><code>ponytail-gain</code></td><td>You want a before/after size check</td><td>Compact scoreboard of code removed.</td></tr>
 <tr><td><code>ponytail-help</code></td><td>You forgot the modes</td><td>One-shot card of ponytail commands.</td></tr>
-</table>
+</table></div>
 
 <h3>Order when several apply</h3>
 <pre><code>using-superpowers
@@ -236,7 +236,7 @@ npx tsc --noEmit</code></pre>
 
 <h2 id="sub-agents">Sub-agents</h2>
 <p>Dispatch a fresh sub-agent when the task needs a clean context: review, a wide search, or one plan task. Give it the repo path, the diff or the task, and the spec. Do not hand it the coding session’s history.</p>
-<table>
+<div class="table-scroll"><table>
 <tr><th>Sub-agent</th><th>Use</th></tr>
 <tr><td><code>generalPurpose</code></td><td>One plan task, a multi-step investigation, or anything that is not a narrow search. This is the implementer in subagent-driven development.</td></tr>
 <tr><td><code>explore</code></td><td>Find files or call sites. Set thoroughness: quick, medium, or very thorough. Prefer this over guessing paths.</td></tr>
@@ -246,7 +246,7 @@ npx tsc --noEmit</code></pre>
 <tr><td><code>best-of-n-runner</code></td><td>Parallel attempts that must not share a checkout. Each gets its own worktree and branch.</td></tr>
 <tr><td><code>docs-researcher</code></td><td>Library or API docs, so the main session stays small.</td></tr>
 <tr><td><code>cursor-guide</code></td><td>How Cursor itself works, when the question is about the product.</td></tr>
-</table>
+</table></div>
 <p>Phase 2 provider and agent design may use <code>ai-architect</code>. Desktop packaging and performance stay in this playbook and the roadmap. Web-host deploy and web-vitals agents are for a different kind of application.</p>
 <p>Rules that keep sub-agents useful:</p>
 <ul>
