@@ -32,7 +32,8 @@ Documentation bootstrap exception: until implementation starts and `develop` exi
 - Use the configured repository author and authorized GitHub account. Destination: [sandjaie/KubeSift](https://github.com/sandjaie/KubeSift).
 - Before commits, verify repository-local author identity. Before remote operations, verify remote destination and authentication account separately.
 - Do not infer identity from the OS username or change global Git identity. Confirm an ambiguous account before remote operations.
-- Do not push or publish without authorization.
+- The maintainer has authorized committing and pushing completed task changes by default. After appropriate verification, commit only the task’s changes and push the current authorized feature branch; preserve unrelated work. Report the commit and push result.
+- This standing authorization does not authorize merges, releases, force pushes or publication outside the configured repository; obtain explicit authorization for those actions.
 - KubeSift is licensed under Apache-2.0; retain the root LICENSE and required third-party notices.
 - Signing, notarization, and the updater stay open until the release-readiness gate in the roadmap.
 
