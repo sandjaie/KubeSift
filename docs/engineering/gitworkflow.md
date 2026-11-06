@@ -6,11 +6,12 @@ Branching, commits, pull requests, and publication for KubeSift. The engineering
 
 - `develop` integrates. `main` is only what has been released.
 - Never delete `main`, `master` or `develop`. Only merged task/phase source branches are eligible for cleanup.
-- `main` moves through `release/*` or `hotfix/*`. Everything else merges to `develop`.
-- The repository today has only `main`, and the commits on it are planning. Create `develop` from `main` when implementation starts. After that, feature and fix work is branched.
-- Feature and fix work merges to `develop`. Do not commit that work straight to `develop` or `main`.
+- `main` moves through `release/*` or `hotfix/*`. Other work targets `develop` under the rules below.
+- Implementation feature and fix work merges to `develop` through the pull-request workflow. Do not commit implementation work straight to `develop` or `main`.
+- Planning-only changes from the planning session, including specifications, implementation plans, architecture, roadmap and related documentation, are committed and pushed directly to `develop`. No separate planning branch or pull request is required. Run the applicable documentation checks first.
+- If an implementation agent is using another branch in the shared checkout, use an isolated checkout for planning updates; never switch, stash or modify its in-progress work. Implementation branches incorporate the latest reviewed planning changes from `develop` before dependent work.
 
-Documentation bootstrap exception: until implementation starts and `develop` exists, authorized planning/documentation commits may remain on `main`. This does not represent a released application. The first implementation session creates `develop` from the reviewed planning commit and uses a `feature/*` branch.
+This planning exception does not authorize application code changes, merges to `main`, releases or force pushes. Existing implementation branches continue through the normal review and phase-completion gates.
 
 ## Names
 
@@ -35,7 +36,7 @@ Documentation bootstrap exception: until implementation starts and `develop` exi
 - Use the configured repository author and authorized GitHub account. Destination: [sandjaie/KubeSift](https://github.com/sandjaie/KubeSift).
 - Before commits, verify repository-local author identity. Before remote operations, verify remote destination and authentication account separately.
 - Do not infer identity from the OS username or change global Git identity. Confirm an ambiguous account before remote operations.
-- The maintainer has authorized committing and pushing completed task changes by default. After appropriate verification, commit only the task’s changes and push the current authorized feature branch; preserve unrelated work. Report the commit and push result.
+- The maintainer has authorized committing and pushing completed task changes by default. After appropriate verification, commit only the task’s changes and push `develop` for planning-only changes or the authorized feature branch for implementation; preserve unrelated work. Report the commit and push result.
 - This standing authorization permits completed-phase merges into `develop` only under the pull-request rule above. Other merges, releases, force pushes and publication outside the configured repository require explicit authorization.
 - KubeSift is licensed under Apache-2.0; retain the root LICENSE and required third-party notices.
 - Signing, notarization, and the updater stay open until the release-readiness gate in the roadmap.
