@@ -6,3 +6,4 @@ bin/
 .task/
 internal/desktop/assets/dist/
 .superpowers/
+!.superpowers/sdd/status.md

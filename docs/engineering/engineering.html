@@ -1,227 +1,883 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Engineering playbook · KubeSift</title>
-<link rel="stylesheet" href="../assets/planning.css"><script src="../assets/theme.js"></script>
-</head>
-<body><aside class="rail"><a class="skip" href="#content">Skip to content</a><a class="mark" href="../index.html"><span class="mark-name">KubeSift</span><span class="mark-sub">Planning</span></a><h2>Index</h2><a href="../index.html">Planning index</a><h2>Product</h2><a href="../product/requirements.html">Requirements</a><a href="../product/feature-matrix.html">Capabilities</a><h2>Architecture</h2><a href="../architecture/overview.html">Overview</a><a href="../architecture/decisions.html">Decisions</a><h2>Safeguards</h2><a href="../security/security-model.html">Security and AI</a><h2>Delivery</h2><a href="../roadmap/roadmap.html">Roadmap</a><a href="../ux/workflows.html">UX workflows</a><a href="../ux/mocks/index.html">Mockups</a><h2>Engineering</h2><a href="../engineering/engineering.html" aria-current="page">Playbook</a><a href="../engineering/local-development.html">Local development</a><a href="../engineering/toolchain.html">Toolchain</a><h2>Working</h2><a href="../superpowers/validation/phase-1a.html">Phase 1A validation</a></aside>
-<header>
-<a href="../index.html">KubeSift / Planning</a>
-<h1>Engineering playbook</h1>
-<p>How KubeSift is designed, built, reviewed, and released. Product scope stays in the owning documents.</p>
-</header>
-<main id="content">
-<p class="callout">This page owns the development loop. It does not authorize implementation, cluster access, or publication. Requirements stay in <a href="../product/requirements.html">product</a>, boundaries in <a href="../architecture/overview.html">architecture</a>, safeguards in <a href="../security/security-model.html">security</a>, status in <a href="../architecture/decisions.html">decisions</a>, and phase order in the <a href="../roadmap/roadmap.html">roadmap</a>. The short agent contract is <a href="../../AGENTS.md">AGENTS.md</a>.</p>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Engineering playbook · KubeSift</title>
+    <link rel="stylesheet" href="../assets/planning.css" />
+    <script src="../assets/theme.js"></script>
+  </head>
+  <body>
+    <aside class="rail">
+      <a class="skip" href="#content">Skip to content</a
+      ><a class="mark" href="../index.html"
+        ><span class="mark-name">KubeSift</span
+        ><span class="mark-sub">Planning</span></a
+      >
+      <h2>Index</h2>
+      <a href="../index.html">Planning index</a>
+      <h2>Product</h2>
+      <a href="../product/requirements.html">Requirements</a
+      ><a href="../product/feature-matrix.html">Capabilities</a>
+      <h2>Architecture</h2>
+      <a href="../architecture/overview.html">Overview</a
+      ><a href="../architecture/decisions.html">Decisions</a>
+      <h2>Safeguards</h2>
+      <a href="../security/security-model.html">Security and AI</a>
+      <h2>Delivery</h2>
+      <a href="../roadmap/roadmap.html">Roadmap</a
+      ><a href="../ux/workflows.html">UX workflows</a
+      ><a href="../ux/mocks/index.html">Mockups</a>
+      <h2>Engineering</h2>
+      <a href="../engineering/engineering.html" aria-current="page">Playbook</a
+      ><a href="../engineering/local-development.html">Local development</a
+      ><a href="../engineering/toolchain.html">Toolchain</a>
+      <h2>Working</h2>
+      <a href="../superpowers/validation/phase-1a.html">Phase 1A validation</a>
+    </aside>
+    <header>
+      <a href="../index.html">KubeSift / Planning</a>
+      <h1>Engineering playbook</h1>
+      <p>
+        How KubeSift is designed, built, reviewed, and released. Product scope
+        stays in the owning documents.
+      </p>
+    </header>
+    <main id="content">
+      <p class="callout">
+        This page owns the development loop. It does not authorize
+        implementation, cluster access, or publication. Requirements stay in
+        <a href="../product/requirements.html">product</a>, boundaries in
+        <a href="../architecture/overview.html">architecture</a>, safeguards in
+        <a href="../security/security-model.html">security</a>, status in
+        <a href="../architecture/decisions.html">decisions</a>, and phase order
+        in the <a href="../roadmap/roadmap.html">roadmap</a>. The short agent
+        contract is <a href="../../AGENTS.md">AGENTS.md</a>.
+      </p>
 
-<h2 id="loop">Loop</h2>
-<ol>
-<li><strong>Design before code.</strong> Brainstorm, write a short spec, get a yes. Multi-step work gets a plan with file-level tasks before anyone edits. Planning approval is still not implementation authorization.</li>
-<li><strong>Branch off the integration branch.</strong> Feature and fix work merges to <code>develop</code>. <code>main</code> moves only through a release or a hotfix.</li>
-<li><strong>Test first.</strong> Failing test, watch it fail, smallest code that passes.</li>
-<li><strong>Stay small.</strong> Ponytail lite: build what was asked, then name the lazier option in one line.</li>
-<li><strong>Prove it.</strong> The gates for the languages you touched run in this session before anyone says it passes. Say which commands ran and which did not.</li>
-<li><strong>Review the diff.</strong> Correctness review, then hygiene or complexity review when the change is large.</li>
-<li><strong>Merge small.</strong> Squash-merge, delete the branch.</li>
-<li><strong>Release on purpose.</strong> Version, changelog, tag, and publish are a skill. They are not a side effect of CI.</li>
-</ol>
+      <h2 id="loop">Loop</h2>
+      <ol>
+        <li>
+          <strong>Design before code.</strong> Brainstorm, write a short spec,
+          get a yes. Multi-step work gets a plan with file-level tasks before
+          anyone edits. Planning approval is still not implementation
+          authorization.
+        </li>
+        <li>
+          <strong>Branch off the integration branch.</strong> Feature and fix
+          work merges to <code>develop</code>. <code>main</code> moves only
+          through a release or a hotfix.
+        </li>
+        <li>
+          <strong>Test first.</strong> Failing test, watch it fail, smallest
+          code that passes.
+        </li>
+        <li>
+          <strong>Stay small.</strong> Ponytail lite: build what was asked, then
+          name the lazier option in one line.
+        </li>
+        <li>
+          <strong>Prove it.</strong> The gates for the languages you touched run
+          in this session before anyone says it passes. Say which commands ran
+          and which did not.
+        </li>
+        <li>
+          <strong>Review the diff.</strong> Correctness review, then hygiene or
+          complexity review when the change is large.
+        </li>
+        <li><strong>Merge small.</strong> Squash-merge, delete the branch.</li>
+        <li>
+          <strong>Release on purpose.</strong> Version, changelog, tag, and
+          publish are a skill. They are not a side effect of CI.
+        </li>
+      </ol>
 
-<h2 id="practices">Practices</h2>
+      <h2 id="practices">Practices</h2>
 
-<h3 id="git">Git</h3>
-<p>Branching, commits, pull requests, and publication are in <a href="gitworkflow.md">gitworkflow.md</a>.</p>
+      <h3 id="git">Git</h3>
+      <p>
+        Branching, commits, pull requests, and publication are in
+        <a href="gitworkflow.md">gitworkflow.md</a>.
+      </p>
 
-<h3 id="quality-gates">Quality gates</h3>
-<p>Run these before review, for the code the change touches. A documentation-only change does not start them. A change that crosses the desktop bridge runs both sets. There is no application module yet; these commands start when that module exists.</p>
-<p>Go, for services, adapters, sessions, and security:</p>
-<pre><code>go test ./...
+      <h3 id="quality-gates">Quality gates</h3>
+      <p>
+        Run these before review, for the code the change touches. A
+        documentation-only change does not start them. A change that crosses the
+        desktop bridge runs both sets. There is no application module yet; these
+        commands start when that module exists.
+      </p>
+      <p>Go, for services, adapters, sessions, and security:</p>
+      <pre><code>go test ./...
 go vet ./...</code></pre>
-<p>React/TypeScript, for presentation:</p>
-<pre><code>npx vitest run
+      <p>React/TypeScript, for presentation:</p>
+      <pre><code>npx vitest run
 npx eslint .
 npx tsc --noEmit</code></pre>
-<p>Commit runs linters and formatters only. See <a href="#hooks">Hooks</a>. Tests are run by the agent, by <code>scripts/check.sh</code>, and by CI. <code>go vet</code> and <code>tsc --noEmit</code> stay review and pull-request checks.</p>
-<p>No coverage threshold. The frontend has no Prettier. Frontend lint is ESLint plus typescript-eslint recommended. Go formatting is <code>gofmt</code>, because the Go toolchain owns it. CI runs on pull requests and pushes to develop, main and master; feature pushes wait for a pull request to avoid duplicate runs. Superseded runs are cancelled. Code changes run bindings generation, the Vite production bundle and scripts/check.sh, with Go, npm and Wails CLI caches. TypeScript checking runs once through scripts/check.sh; local npm run build still includes it. Changes confined to docs/, AGENTS.md and root README files run source-description and documentation-link checks in the same check job. Unknown comparison bases receive the full checks. Packaging, signing, notarizing, publishing, and version bumps stay in the release skill.</p>
+      <p>
+        Commit runs linters and formatters only. See <a href="#hooks">Hooks</a>.
+        Tests are run by the agent, by <code>scripts/check.sh</code>, and by CI.
+        <code>go vet</code> and <code>tsc --noEmit</code> stay review and
+        pull-request checks.
+      </p>
+      <p>
+        No coverage threshold. Prettier formats HTML only. It does not format
+        frontend TypeScript. Frontend lint is ESLint plus typescript-eslint
+        recommended. Go formatting is <code>gofmt</code>, because the Go
+        toolchain owns it. CI runs on pull requests and pushes to develop, main
+        and master; feature pushes wait for a pull request to avoid duplicate
+        runs. Superseded runs are cancelled. Code changes run bindings
+        generation, the Vite production bundle and scripts/check.sh, with Go,
+        npm and Wails CLI caches. TypeScript checking runs once through
+        scripts/check.sh; local npm run build still includes it. Changes
+        confined to docs/, AGENTS.md and root README files run
+        source-description and documentation-link checks in the same check job.
+        Unknown comparison bases receive the full checks. Packaging, signing,
+        notarizing, publishing, and version bumps stay in the release skill.
+      </p>
 
-<h3 id="hooks">Hooks</h3>
-<p>Husky installs the commit hook on <code>npm install</code> via the <code>prepare</code> script. There is no push hook.</p>
-<p><strong>pre-commit</strong> — <code>.husky/pre-commit</code> runs <code>npx lint-staged</code>.</p>
-<p><code>lint-staged</code> looks only at files already staged for this commit. For <code>*.ts</code> and <code>*.tsx</code> it runs <code>eslint --fix</code>. For <code>*.go</code> it runs <code>gofmt -w</code>. Other files are left alone. When a fixer rewrites a file, lint-staged puts that rewrite back into the index, so the commit contains the fixed code. A remaining lint error aborts the commit.</p>
-<p>This is the fast check. It does not lint the rest of the working tree, it does not typecheck, and it does not run tests. A commit of markdown, YAML, or JSON does not start ESLint or <code>gofmt</code>.</p>
-<p><strong>What the hook does not do</strong></p>
-<ul>
-<li>No tests on commit or push. The agent runs the tests the change needs. <code>scripts/check.sh</code> and CI still run the Go and frontend suites.</li>
-<li>No <code>commit-msg</code> hook. Conventional Commits are the agreed style. Git will not reject a message that breaks it.</li>
-<li>No <code>go vet</code> and no <code>tsc --noEmit</code>. Those run before review, and they are checkboxes on the pull request template.</li>
-<li>No coverage gate and no frontend format-on-commit. Fixture and credential-handling requirements are review rules. See the <a href="../security/security-model.html">security model</a>.</li>
-</ul>
-<p>Once implemented, CI runs lint and the unit suites again. Skipping a hook with <code>--no-verify</code> does not skip the pipeline. Use <code>--no-verify</code> only when you mean to, and say so.</p>
-<p>No automated native Wails UI end-to-end suite is planned for Phase 1A. Use unit tests with injected clients/session fakes, explicit opt-in local-cluster integration tests, and a recorded packaged-app smoke test. These are complementary checks; mocks alone do not establish integration correctness. Mutation checks use a disposable local cluster. External contexts require an explicit context, namespace and allowed actions.</p>
+      <h3 id="hooks">Hooks</h3>
+      <p>
+        Husky installs the commit hook on <code>npm install</code> via the
+        <code>prepare</code> script. There is no push hook.
+      </p>
+      <p>
+        <strong>pre-commit</strong> — <code>.husky/pre-commit</code> runs
+        <code>npx lint-staged</code>.
+      </p>
+      <p>
+        <code>lint-staged</code> looks only at files already staged for this
+        commit. For <code>*.html</code> it runs <code>prettier --write</code>.
+        For <code>*.ts</code> and <code>*.tsx</code> it runs
+        <code>eslint --fix</code>. For <code>*.go</code> it runs
+        <code>gofmt -w</code>. Other files are left alone. When a fixer rewrites
+        a file, lint-staged puts that rewrite back into the index, so the commit
+        contains the fixed code. A remaining lint error aborts the commit.
+      </p>
+      <p>
+        This is the fast check. It does not lint the rest of the working tree,
+        it does not typecheck, and it does not run tests. A commit of markdown,
+        YAML, or JSON does not start ESLint, <code>gofmt</code>, or Prettier.
+      </p>
+      <p><strong>What the hook does not do</strong></p>
+      <ul>
+        <li>
+          No tests on commit or push. The agent runs the tests the change needs.
+          <code>scripts/check.sh</code> and CI still run the Go and frontend
+          suites.
+        </li>
+        <li>
+          No <code>commit-msg</code> hook. Conventional Commits are the agreed
+          style. Git will not reject a message that breaks it.
+        </li>
+        <li>
+          No <code>go vet</code> and no <code>tsc --noEmit</code>. Those run
+          before review, and they are checkboxes on the pull request template.
+        </li>
+        <li>
+          No coverage gate and no TypeScript format-on-commit. Fixture and
+          credential-handling requirements are review rules. See the
+          <a href="../security/security-model.html">security model</a>.
+        </li>
+      </ul>
+      <p>
+        Once implemented, CI runs lint and the unit suites again. Skipping a
+        hook with <code>--no-verify</code> does not skip the pipeline. Use
+        <code>--no-verify</code> only when you mean to, and say so.
+      </p>
+      <p>
+        No automated native Wails UI end-to-end suite is planned for Phase 1A.
+        Use unit tests with injected clients/session fakes, explicit opt-in
+        local-cluster integration tests, and a recorded packaged-app smoke test.
+        These are complementary checks; mocks alone do not establish integration
+        correctness. Mutation checks use a disposable local cluster. External
+        contexts require an explicit context, namespace and allowed actions.
+      </p>
 
-<h3 id="tests">Tests</h3>
-<p>Keep tests minimal and behavior-focused: representative checks for trust boundaries, targeting, cancellation and data-loss risks. Avoid exhaustive UI suites, snapshots and tests that mirror implementation. Use one opt-in local integration scenario and a short manual packaged-app checklist where appropriate. Add regression tests when a real defect justifies them.</p>
-<ul>
-<li>Go tests live in <code>*_test.go</code> beside the package they lock. Frontend tests are Vitest, next to the behavior they lock. Exact trees are fixed when the source layout is created.</li>
-<li>Write the test before the production code. If you did not see it fail, it does not count.</li>
-<li>Unit tests use synthetic fixtures. They do not talk to a live cluster or a live git remote.</li>
-<li>A milestone that needs a cluster uses a disposable local cluster and names the tool. The app installs nothing into that cluster for its own functionality.</li>
-<li>A bug fix gets a regression test at the shared function, after every caller has been traced.</li>
-</ul>
+      <h3 id="tests">Tests</h3>
+      <p>
+        Keep tests minimal and behavior-focused: representative checks for trust
+        boundaries, targeting, cancellation and data-loss risks. Avoid
+        exhaustive UI suites, snapshots and tests that mirror implementation.
+        Use one opt-in local integration scenario and a short manual
+        packaged-app checklist where appropriate. Add regression tests when a
+        real defect justifies them.
+      </p>
+      <ul>
+        <li>
+          Go tests live in <code>*_test.go</code> beside the package they lock.
+          Frontend tests are Vitest, next to the behavior they lock. Exact trees
+          are fixed when the source layout is created.
+        </li>
+        <li>
+          Write the test before the production code. If you did not see it fail,
+          it does not count.
+        </li>
+        <li>
+          Unit tests use synthetic fixtures. They do not talk to a live cluster
+          or a live git remote.
+        </li>
+        <li>
+          A milestone that needs a cluster uses a disposable local cluster and
+          names the tool. The app installs nothing into that cluster for its own
+          functionality.
+        </li>
+        <li>
+          A bug fix gets a regression test at the shared function, after every
+          caller has been traced.
+        </li>
+      </ul>
 
-<h3 id="source-layout">Project layout and source descriptions</h3><p><code>cmd/kubesift</code> owns the executable entry point; <code>internal</code> owns Go services and the thin desktop adapter; <code>frontend/src</code> owns React presentation; <code>build</code> owns desktop build and packaging support; <code>scripts</code> owns checks and development tooling; <code>tests</code> owns synthetic fixtures and opt-in integration. Root <code>go.mod</code>/<code>go.sum</code> define the module. The tiny root <code>Taskfile.yml</code> lets Wails discover tasks and delegates to <code>build/Taskfile.yml</code>.</p><p>Every project-owned Go, TS and TSX file has a plain-English header with <strong>Purpose</strong>, <strong>Used by</strong>, <strong>Responsibilities</strong> and relevant <strong>Important</strong> notes. Describe actual behavior and callers, including safety boundaries where relevant. Keep handwritten descriptions with their source. The binding task annotates generated glue after regeneration; do not edit generated RPC code.</p><p>Start at <a href="../index.html">the planning index</a> for durable status. For local execution state, read <code>.superpowers/sdd/status.md</code> and the active plan ledger if present. A fresh clone uses the permanent plan and phase validation report. Update local status only after verification.</p><h3 id="documentation-layout">Documentation layout</h3>
-<p><a href="../index.html">docs/index.html</a> is the documentation entry point. Product, architecture, security, UX, roadmap and engineering directories own durable project documentation. Reusable build and toolchain instructions belong in <a href="toolchain.html">engineering/toolchain.html</a>.</p>
-<ul>
-<li><code>docs/superpowers/specs/</code>: approved specifications.</li>
-<li><code>docs/superpowers/plans/</code>: detailed execution plans.</li>
-<li><code>docs/superpowers/validation/</code>: phase acceptance reports and summarized measurements.</li>
-<li><code>docs/superpowers/evidence/&lt;phase&gt;/</code>: only curated, synthetic raw proof needed to audit a permanent phase result. Keep a short manifest explaining each retained file.</li>
-<li><code>.superpowers/sdd/</code>: ignored local execution ledgers, progress, checks, diffs, logs, reviews, handoffs, working notes and temporary Markdown. Archive generated operational outputs here after each run.</li>
-</ul>
-<p>Permanent reports summarize scope, methods, results, limitations and accepted history, with links to curated proof when raw values matter. Operational history remains in local SDD; do not copy it into public evidence. Specs and plans stay permanent so fresh clones can understand the work. Test fixtures stay in <code>tests/</code>. Runtime credentials, ownership records and live app output remain in ignored <code>.local/</code> under the security model. Never commit credentials or generated kubeconfigs. Update public links when moving documents.</p>
-<h3 id="language">Language and boundaries</h3>
-<ul>
-<li>Go owns Kubernetes clients, operational policy, and session lifecycle. Domain services stay independent of Wails. The desktop adapter translates typed requests and events and holds no business logic.</li>
-<li>TypeScript is strict and owns presentation: navigation, tables, editors, terminal rendering, confirmations, and transient UI state.</li>
-<li>Every call carries an explicit connection id, generation, and resource identity. Nothing reads a mutable global current context. The app does not change kubeconfig current-context.</li>
-<li>Validate KubeSift-owned settings and trust records with strict, versioned schemas; reject unknown keys and unresolved references. Parse kubeconfig using Kubernetes loading semantics and retain supported extensions; validate safety-sensitive fields without rejecting extensible Kubernetes resources. User settings cannot bypass mandatory safety controls. The backend loader is authoritative.</li>
-<li>Kubeconfig is read-only in Phase 1A. Later YAML editing should preserve user text/comments in the editor and use structured parsing for validation and API requests; server round-trips do not preserve comments or key order. Never use string replacement to mutate Kubernetes resources.</li>
-<li>One registry is the source of truth for a closed set. Adding a member means extending the registry, the schema, and the tests together. AI providers, when they exist, are one such set.</li>
-<li>Adapters implement one contract. Specialized OpenShift workflows are a dedicated adapter. Generic discovery stays generic. A new provider is a full adapter.</li>
-</ul>
+      <h3 id="source-layout">Project layout and source descriptions</h3>
+      <p>
+        <code>cmd/kubesift</code> owns the executable entry point;
+        <code>internal</code> owns Go services and the thin desktop adapter;
+        <code>frontend/src</code> owns React presentation;
+        <code>build</code> owns desktop build and packaging support;
+        <code>scripts</code> owns checks and development tooling;
+        <code>tests</code> owns synthetic fixtures and opt-in integration. Root
+        <code>go.mod</code>/<code>go.sum</code> define the module. The tiny root
+        <code>Taskfile.yml</code> lets Wails discover tasks and delegates to
+        <code>build/Taskfile.yml</code>.
+      </p>
+      <p>
+        Every project-owned Go, TS and TSX file has a plain-English header with
+        <strong>Purpose</strong>, <strong>Used by</strong>,
+        <strong>Responsibilities</strong> and relevant
+        <strong>Important</strong> notes. Describe actual behavior and callers,
+        including safety boundaries where relevant. Keep handwritten
+        descriptions with their source. The binding task annotates generated
+        glue after regeneration; do not edit generated RPC code.
+      </p>
+      <p>
+        Start at <a href="../index.html">the planning index</a> for durable
+        status. For a portable resume checkpoint, read tracked
+        <code>.superpowers/sdd/status.md</code>, then the local active plan
+        ledger if present. A fresh clone uses the permanent plan and phase
+        validation report. Update local status only after verification.
+      </p>
+      <h3 id="documentation-layout">Documentation layout</h3>
+      <p>
+        <a href="../index.html">docs/index.html</a> is the documentation entry
+        point. Product, architecture, security, UX, roadmap and engineering
+        directories own durable project documentation. Reusable build and
+        toolchain instructions belong in
+        <a href="toolchain.html">engineering/toolchain.html</a>.
+      </p>
+      <ul>
+        <li><code>docs/superpowers/specs/</code>: approved specifications.</li>
+        <li><code>docs/superpowers/plans/</code>: detailed execution plans.</li>
+        <li>
+          <code>docs/superpowers/validation/</code>: phase acceptance reports
+          and summarized measurements.
+        </li>
+        <li>
+          <code>docs/superpowers/evidence/&lt;phase&gt;/</code>: only curated,
+          synthetic raw proof needed to audit a permanent phase result. Keep a
+          short manifest explaining each retained file.
+        </li>
+        <li>
+          <code>.superpowers/sdd/</code>: ignored local execution ledgers,
+          progress, checks, diffs, logs, reviews, handoffs, working notes and
+          temporary Markdown. The concise <code>status.md</code> checkpoint is
+          tracked for resuming on another machine; it links permanent plans and
+          reports and contains no machine-local evidence. Archive generated
+          operational outputs here after each run.
+        </li>
+      </ul>
+      <p>
+        Permanent reports summarize scope, methods, results, limitations and
+        accepted history, with links to curated proof when raw values matter.
+        Operational history remains in local SDD; do not copy it into public
+        evidence. Specs and plans stay permanent so fresh clones can understand
+        the work. Test fixtures stay in <code>tests/</code>. Runtime
+        credentials, ownership records and live app output remain in ignored
+        <code>.local/</code> under the security model. Never commit credentials
+        or generated kubeconfigs. Update public links when moving documents.
+      </p>
+      <h3 id="language">Language and boundaries</h3>
+      <ul>
+        <li>
+          Go owns Kubernetes clients, operational policy, and session lifecycle.
+          Domain services stay independent of Wails. The desktop adapter
+          translates typed requests and events and holds no business logic.
+        </li>
+        <li>
+          TypeScript is strict and owns presentation: navigation, tables,
+          editors, terminal rendering, confirmations, and transient UI state.
+        </li>
+        <li>
+          Every call carries an explicit connection id, generation, and resource
+          identity. Nothing reads a mutable global current context. The app does
+          not change kubeconfig current-context.
+        </li>
+        <li>
+          Validate KubeSift-owned settings and trust records with strict,
+          versioned schemas; reject unknown keys and unresolved references.
+          Parse kubeconfig using Kubernetes loading semantics and retain
+          supported extensions; validate safety-sensitive fields without
+          rejecting extensible Kubernetes resources. User settings cannot bypass
+          mandatory safety controls. The backend loader is authoritative.
+        </li>
+        <li>
+          Kubeconfig is read-only in Phase 1A. Later YAML editing should
+          preserve user text/comments in the editor and use structured parsing
+          for validation and API requests; server round-trips do not preserve
+          comments or key order. Never use string replacement to mutate
+          Kubernetes resources.
+        </li>
+        <li>
+          One registry is the source of truth for a closed set. Adding a member
+          means extending the registry, the schema, and the tests together. AI
+          providers, when they exist, are one such set.
+        </li>
+        <li>
+          Adapters implement one contract. Specialized OpenShift workflows are a
+          dedicated adapter. Generic discovery stays generic. A new provider is
+          a full adapter.
+        </li>
+      </ul>
 
-<h3 id="security">Security that is part of the design</h3>
-<p>Safeguards are specified in the <a href="../security/security-model.html">security model</a>. These are the engineering consequences.</p>
-<ul>
-<li>Fail closed. A skipped check is a failed run, unless the user passes an explicit skip that the security model allows.</li>
-<li>Re-run every safety guard at the moment of the dangerous call. Prepared operations bind connection generation, target, payload, and relevant resource version or UID. Proposed confirmations expire and are single-use. Stale targets require a new review.</li>
-<li>Never retarget an existing terminal or prepared mutation. Frontend listener removal is not backend cancellation. Reads may reconnect after sleep. Writes and commands must not replay. Do not retry a write whose outcome is uncertain.</li>
-<li>Clusters the user selects, including ones labeled production, are in scope for an operations client. A production label strengthens confirmation. It does not replace target binding, review, or server authorization.</li>
-<li>Review a credential helper’s resolved executable, arguments, kubeconfig source, and configured environment overrides before the first run. Prompt again when that configuration changes. Never execute a helper merely to preview an untrusted kubeconfig.</li>
-<li>Provider keys belong in the OS credential store. Resource caches are memory-only by default. Audit records store action type, target reference, time, outcome, confirmation, and provider profile id. They do not store credentials, full log payloads, or Secret values.</li>
-<li>Startup readiness is local: commands, paths, and repo shape. Opening a connection is what talks to Kubernetes. Startup does not read tokens to prove the app launched.</li>
-<li>Use synthetic fixtures and follow the security model for credential handling.</li>
-<li>Phase 2 AI tools are read-only. Evidence is untrusted data. A missing or invalid provider override fails clearly. There is no silent fallback to another provider, and there are no AI write tools in that phase.</li>
-<li>KubeSift installs no agent, metrics stack, or other cluster component for its own functionality.</li>
-</ul>
+      <h3 id="security">Security that is part of the design</h3>
+      <p>
+        Safeguards are specified in the
+        <a href="../security/security-model.html">security model</a>. These are
+        the engineering consequences.
+      </p>
+      <ul>
+        <li>
+          Fail closed. A skipped check is a failed run, unless the user passes
+          an explicit skip that the security model allows.
+        </li>
+        <li>
+          Re-run every safety guard at the moment of the dangerous call.
+          Prepared operations bind connection generation, target, payload, and
+          relevant resource version or UID. Proposed confirmations expire and
+          are single-use. Stale targets require a new review.
+        </li>
+        <li>
+          Never retarget an existing terminal or prepared mutation. Frontend
+          listener removal is not backend cancellation. Reads may reconnect
+          after sleep. Writes and commands must not replay. Do not retry a write
+          whose outcome is uncertain.
+        </li>
+        <li>
+          Clusters the user selects, including ones labeled production, are in
+          scope for an operations client. A production label strengthens
+          confirmation. It does not replace target binding, review, or server
+          authorization.
+        </li>
+        <li>
+          Review a credential helper’s resolved executable, arguments,
+          kubeconfig source, and configured environment overrides before the
+          first run. Prompt again when that configuration changes. Never execute
+          a helper merely to preview an untrusted kubeconfig.
+        </li>
+        <li>
+          Provider keys belong in the OS credential store. Resource caches are
+          memory-only by default. Audit records store action type, target
+          reference, time, outcome, confirmation, and provider profile id. They
+          do not store credentials, full log payloads, or Secret values.
+        </li>
+        <li>
+          Startup readiness is local: commands, paths, and repo shape. Opening a
+          connection is what talks to Kubernetes. Startup does not read tokens
+          to prove the app launched.
+        </li>
+        <li>
+          Use synthetic fixtures and follow the security model for credential
+          handling.
+        </li>
+        <li>
+          Phase 2 AI tools are read-only. Evidence is untrusted data. A missing
+          or invalid provider override fails clearly. There is no silent
+          fallback to another provider, and there are no AI write tools in that
+          phase.
+        </li>
+        <li>
+          KubeSift installs no agent, metrics stack, or other cluster component
+          for its own functionality.
+        </li>
+      </ul>
 
-<h3 id="docs">Docs that stay true</h3>
-<ul>
-<li><a href="../../AGENTS.md">AGENTS.md</a> is the short contract: what the product is, what must not break, how to test, and what is still planning.</li>
-<li>Owning HTML documents hold product, architecture, security, decisions, roadmap, UX, and this loop. Specs and plans live under <a href="../superpowers/specs/">docs/superpowers/specs/</a> and <a href="../superpowers/plans/">docs/superpowers/plans/</a> as <code>YYYY-MM-DD-&lt;name&gt;.md</code>.</li>
-<li>Update the owning document in the same change as the behavior. Link to it. Do not paste the requirement into a second file.</li>
-<li>When source exists, every source directory has a hand-maintained <code>README.html</code> updated in the same change as an add, rename, or delete. Header comments and export docstrings are the module map. Do not generate a second one.</li>
-<li>A deliberate shortcut that has a known ceiling gets a <code>ponytail:</code> comment naming the ceiling and the upgrade.</li>
-</ul>
+      <h3 id="docs">Docs that stay true</h3>
+      <ul>
+        <li>
+          <a href="../../AGENTS.md">AGENTS.md</a> is the short contract: what
+          the product is, what must not break, how to test, and what is still
+          planning.
+        </li>
+        <li>
+          Owning HTML documents hold product, architecture, security, decisions,
+          roadmap, UX, and this loop. Specs and plans live under
+          <a href="../superpowers/specs/">docs/superpowers/specs/</a> and
+          <a href="../superpowers/plans/">docs/superpowers/plans/</a> as
+          <code>YYYY-MM-DD-&lt;name&gt;.md</code>.
+        </li>
+        <li>
+          Update the owning document in the same change as the behavior. Link to
+          it. Do not paste the requirement into a second file.
+        </li>
+        <li>
+          When source exists, every source directory has a hand-maintained
+          <code>README.html</code> updated in the same change as an add, rename,
+          or delete. Header comments and export docstrings are the module map.
+          Do not generate a second one.
+        </li>
+        <li>
+          A deliberate shortcut that has a known ceiling gets a
+          <code>ponytail:</code> comment naming the ceiling and the upgrade.
+        </li>
+      </ul>
 
-<h3 id="file-descriptions">Plain-English descriptions in every source file</h3>
-<p>Every project-owned <code>.go</code>, <code>.ts</code> and <code>.tsx</code> file must begin with a short description of its purpose and consumers. This includes frontend components, hooks, state, backend services, internal packages, desktop adapters, entry points, tests, fixtures, tooling and configuration written in these languages. A reader should understand why the file exists without tracing its code. A directory README does not replace this description.</p>
-<p>Use these labels in a normal top-of-file comment. Usually 4–8 short lines are enough; include additional detail only when it helps the reader:</p>
-<ul>
-<li><strong>Purpose:</strong> What this file does for KubeSift, in ordinary language. Explain the user-facing or engineering reason it exists, not just its filename or technical category.</li>
-<li><strong>Used by:</strong> The actual consuming component, package, entry point, test runner or build tool. Name a relevant repository-relative path or symbol when useful. For shared helpers, name the main consumer groups rather than maintaining an exhaustive caller list. For an entry point, explain what launches it.</li>
-<li><strong>Responsibilities:</strong> The important input, output or work it owns. Keep this concrete; do not list every function.</li>
-<li><strong>Important:</strong> Relevant side effects, ownership, cancellation/cleanup, sensitive-data handling, constraints or non-obvious failure behavior. Omit this line if there is nothing useful to add; do not repeat a security checklist in every file.</li>
-</ul>
-<p>Example shape for a TypeScript view (adapt names and claims to the actual code):</p>
-<pre><code>/**
+      <h3 id="file-descriptions">
+        Plain-English descriptions in every source file
+      </h3>
+      <p>
+        Every project-owned <code>.go</code>, <code>.ts</code> and
+        <code>.tsx</code> file must begin with a short description of its
+        purpose and consumers. This includes frontend components, hooks, state,
+        backend services, internal packages, desktop adapters, entry points,
+        tests, fixtures, tooling and configuration written in these languages. A
+        reader should understand why the file exists without tracing its code. A
+        directory README does not replace this description.
+      </p>
+      <p>
+        Use these labels in a normal top-of-file comment. Usually 4–8 short
+        lines are enough; include additional detail only when it helps the
+        reader:
+      </p>
+      <ul>
+        <li>
+          <strong>Purpose:</strong> What this file does for KubeSift, in
+          ordinary language. Explain the user-facing or engineering reason it
+          exists, not just its filename or technical category.
+        </li>
+        <li>
+          <strong>Used by:</strong> The actual consuming component, package,
+          entry point, test runner or build tool. Name a relevant
+          repository-relative path or symbol when useful. For shared helpers,
+          name the main consumer groups rather than maintaining an exhaustive
+          caller list. For an entry point, explain what launches it.
+        </li>
+        <li>
+          <strong>Responsibilities:</strong> The important input, output or work
+          it owns. Keep this concrete; do not list every function.
+        </li>
+        <li>
+          <strong>Important:</strong> Relevant side effects, ownership,
+          cancellation/cleanup, sensitive-data handling, constraints or
+          non-obvious failure behavior. Omit this line if there is nothing
+          useful to add; do not repeat a security checklist in every file.
+        </li>
+      </ul>
+      <p>
+        Example shape for a TypeScript view (adapt names and claims to the
+        actual code):
+      </p>
+      <pre><code>/**
  * Purpose: Shows the selected Pod's details and available actions.
  * Used by: The workspace screen when the user selects a Pod.
  * Responsibilities: Renders supplied state and forwards user actions to the bridge.
  * Important: Uses the supplied cluster target; it does not choose a global context.
  */</code></pre>
-<p>Example shape for a Go session service (describe only behavior the file actually implements):</p>
-<pre><code>// Purpose: Keeps track of the live log and terminal sessions opened by the app.
+      <p>
+        Example shape for a Go session service (describe only behavior the file
+        actually implements):
+      </p>
+      <pre><code>// Purpose: Keeps track of the live log and terminal sessions opened by the app.
 // Used by: Kubernetes adapters and the desktop service that starts and stops sessions.
 // Responsibilities: Associates each session with its cluster and exposes cancellation.
 // Important: Closing a session must stop its background work and release its resources.</code></pre>
-<p>Test files describe the behavior or regression they protect and identify the test runner as their consumer. Configuration files describe which tool reads them. Avoid vague phrases such as “handles logic” or “utility functions”; explain unfamiliar terms when needed. Do not include author names, change histories, stale timestamps, copied function signatures or comments that simply narrate the code.</p>
-<p>Keep required language directives, build tags and license notices in their valid positions; place the description immediately after them and before ordinary code. Preserve Go package/exported-symbol documentation and TypeScript API documentation where appropriate; the file description explains the whole file, while symbol comments explain the contract of that symbol.</p>
-<p>Generated project files also need a concise purpose/consumer description, their generator/source location, and a clear generated-file marker. Add descriptions through the generator template or a repeatable generation step, not manual edits that disappear on regeneration. Preserve the generator's required markers and directives. Third-party vendored code, installed dependencies and compiled bundles are outside this source-authoring rule.</p>
-<p>Update a file's description in the same change when its purpose, consumers or important behavior changes. Verify consumer names against the code. During review, check new and changed files for accurate descriptions; no dedicated test suite or additional documentation framework is required. The implementation agent should backfill existing project source files under this rule. This documentation change itself does not modify application files.</p>
+      <p>
+        Test files describe the behavior or regression they protect and identify
+        the test runner as their consumer. Configuration files describe which
+        tool reads them. Avoid vague phrases such as “handles logic” or “utility
+        functions”; explain unfamiliar terms when needed. Do not include author
+        names, change histories, stale timestamps, copied function signatures or
+        comments that simply narrate the code.
+      </p>
+      <p>
+        Keep required language directives, build tags and license notices in
+        their valid positions; place the description immediately after them and
+        before ordinary code. Preserve Go package/exported-symbol documentation
+        and TypeScript API documentation where appropriate; the file description
+        explains the whole file, while symbol comments explain the contract of
+        that symbol.
+      </p>
+      <p>
+        Generated project files also need a concise purpose/consumer
+        description, their generator/source location, and a clear generated-file
+        marker. Add descriptions through the generator template or a repeatable
+        generation step, not manual edits that disappear on regeneration.
+        Preserve the generator's required markers and directives. Third-party
+        vendored code, installed dependencies and compiled bundles are outside
+        this source-authoring rule.
+      </p>
+      <p>
+        Update a file's description in the same change when its purpose,
+        consumers or important behavior changes. Verify consumer names against
+        the code. During review, check new and changed files for accurate
+        descriptions; no dedicated test suite or additional documentation
+        framework is required. The implementation agent should backfill existing
+        project source files under this rule. This documentation change itself
+        does not modify application files.
+      </p>
 
-<h3 id="release">Release</h3>
-<p>Branch, tag, and publication steps are in <a href="gitworkflow.md">gitworkflow.md</a>.</p>
-<ul>
-<li>Smoke-test the packaged macOS build, not only the unit suites. Record the desktop, Kubernetes, OpenShift, Helm, and authentication versions you exercised.</li>
-</ul>
+      <h3 id="release">Release</h3>
+      <p>
+        Branch, tag, and publication steps are in
+        <a href="gitworkflow.md">gitworkflow.md</a>.
+      </p>
+      <ul>
+        <li>
+          Smoke-test the packaged macOS build, not only the unit suites. Record
+          the desktop, Kubernetes, OpenShift, Helm, and authentication versions
+          you exercised.
+        </li>
+      </ul>
 
-<h3 id="artifacts">Artifacts to add when implementation starts</h3>
-<p>Process skills already come from the agent environment. These repo artifacts do not exist yet. Add them with the first implementation change, not during planning.</p>
-<ul>
-<li><code>.cursor/rules/ponytail-lite.mdc</code>, always on.</li>
-<li>Husky on commit only, as in <a href="#hooks">Hooks</a>: <code>lint-staged</code> with <code>eslint --fix</code> and <code>gofmt -w</code>. No test hook.</li>
-<li>A pull request template whose validation box is the Go and frontend commands, plus a post-review section that lists findings as <code>KSF-001</code> style ids.</li>
+      <h3 id="artifacts">Artifacts to add when implementation starts</h3>
+      <p>
+        Process skills already come from the agent environment. These repo
+        artifacts do not exist yet. Add them with the first implementation
+        change, not during planning.
+      </p>
+      <ul>
+        <li><code>.cursor/rules/ponytail-lite.mdc</code>, always on.</li>
+        <li>
+          Husky on commit only, as in <a href="#hooks">Hooks</a>:
+          <code>lint-staged</code> with <code>prettier --write</code> for HTML,
+          <code>eslint --fix</code>, and <code>gofmt -w</code>. No test hook.
+        </li>
+        <li>
+          A pull request template whose validation box is the Go and frontend
+          commands, plus a post-review section that lists findings as
+          <code>KSF-001</code> style ids.
+        </li>
 
-<li><code>.agents/skills/</code> for <code>kubesift-code-review</code>, <code>kubesift-code-hygiene</code>, and release. Keep one canonical SKILL.md per skill; add tool-specific links only if needed.</li>
-<li>Strict schemas for application-owned settings/helper trust and later provider profiles; Kubernetes-compatible kubeconfig parsing with explicit helper validation.</li>
-<li>Conventional Commits, so the release skill can build a changelog without a human rewrite.</li>
-</ul>
+        <li>
+          <code>.agents/skills/</code> for <code>kubesift-code-review</code>,
+          <code>kubesift-code-hygiene</code>, and release. Keep one canonical
+          SKILL.md per skill; add tool-specific links only if needed.
+        </li>
+        <li>
+          Strict schemas for application-owned settings/helper trust and later
+          provider profiles; Kubernetes-compatible kubeconfig parsing with
+          explicit helper validation.
+        </li>
+        <li>
+          Conventional Commits, so the release skill can build a changelog
+          without a human rewrite.
+        </li>
+      </ul>
 
-<h2 id="skills">Skills</h2>
-<p>Process skills set the order of work. Repo skills know this codebase. Ponytail decides how much code is enough. Invoke the process skill before editing. If two apply, the process skill goes first.</p>
+      <h2 id="skills">Skills</h2>
+      <p>
+        Process skills set the order of work. Repo skills know this codebase.
+        Ponytail decides how much code is enough. Invoke the process skill
+        before editing. If two apply, the process skill goes first.
+      </p>
 
-<h3>Always on</h3>
-<div class="table-scroll"><table>
-<tr><th>Skill</th><th>When</th><th>What it forces</th></tr>
-<tr><td><code>using-superpowers</code></td><td>Start of any agent conversation</td><td>Find and read the skill that fits before exploring, asking, or editing.</td></tr>
-<tr><td><code>ponytail</code> lite</td><td>Any coding in this repo</td><td>Build what was asked. Climb stdlib → existing helper → already-installed dep → one line → minimum code. Afterward, one line naming the lazier alternative. Never drop trust-boundary checks, data-loss handling, or security.</td></tr>
-</table></div>
-<p>Ponytail intensities, for a single session:</p>
-<div class="table-scroll"><table>
-<tr><th>Level</th><th>Behavior</th></tr>
-<tr><td>lite</td><td>Build the request. Name the shorter option. The user picks. This repo’s default, once the rule file exists.</td></tr>
-<tr><td>full</td><td>Enforce the ladder. Shortest diff. Say what was skipped and when to add it.</td></tr>
-<tr><td>ultra</td><td>Refuse speculative scope. Ship the one-liner and challenge the rest of the requirement.</td></tr>
-</table></div>
-<p>Off switch: <code>stop ponytail</code> / <code>normal mode</code>. Session switch: <code>/ponytail lite</code>, <code>/ponytail full</code>, <code>/ponytail ultra</code>.</p>
+      <h3>Always on</h3>
+      <div class="table-scroll">
+        <table>
+          <tr>
+            <th>Skill</th>
+            <th>When</th>
+            <th>What it forces</th>
+          </tr>
+          <tr>
+            <td><code>using-superpowers</code></td>
+            <td>Start of any agent conversation</td>
+            <td>
+              Find and read the skill that fits before exploring, asking, or
+              editing.
+            </td>
+          </tr>
+          <tr>
+            <td><code>ponytail</code> lite</td>
+            <td>Any coding in this repo</td>
+            <td>
+              Build what was asked. Climb stdlib → existing helper →
+              already-installed dep → one line → minimum code. Afterward, one
+              line naming the lazier alternative. Never drop trust-boundary
+              checks, data-loss handling, or security.
+            </td>
+          </tr>
+        </table>
+      </div>
+      <p>Ponytail intensities, for a single session:</p>
+      <div class="table-scroll">
+        <table>
+          <tr>
+            <th>Level</th>
+            <th>Behavior</th>
+          </tr>
+          <tr>
+            <td>lite</td>
+            <td>
+              Build the request. Name the shorter option. The user picks. This
+              repo’s default, once the rule file exists.
+            </td>
+          </tr>
+          <tr>
+            <td>full</td>
+            <td>
+              Enforce the ladder. Shortest diff. Say what was skipped and when
+              to add it.
+            </td>
+          </tr>
+          <tr>
+            <td>ultra</td>
+            <td>
+              Refuse speculative scope. Ship the one-liner and challenge the
+              rest of the requirement.
+            </td>
+          </tr>
+        </table>
+      </div>
+      <p>
+        Off switch: <code>stop ponytail</code> / <code>normal mode</code>.
+        Session switch: <code>/ponytail lite</code>,
+        <code>/ponytail full</code>, <code>/ponytail ultra</code>.
+      </p>
 
-<h3>Before code</h3>
-<div class="table-scroll"><table>
-<tr><th>Skill</th><th>When</th><th>What it forces</th></tr>
-<tr><td><code>brainstorming</code></td><td>Any new feature, component, or behavior change</td><td>Explore context, ask one question at a time, present a design, wait for approval. No code until the design is accepted. A short design is enough for a small change.</td></tr>
-<tr><td><code>writing-plans</code></td><td>A spec that takes more than one step</td><td>A plan a stranger could execute. Each task names files, the test to write first, and a commit. Save to <code>docs/superpowers/plans/YYYY-MM-DD-&lt;feature&gt;.md</code>.</td></tr>
-<tr><td><code>using-git-worktrees</code></td><td>Feature work that must stay off the current checkout</td><td>Isolated worktree and branch before implementation starts.</td></tr>
-</table></div>
+      <h3>Before code</h3>
+      <div class="table-scroll">
+        <table>
+          <tr>
+            <th>Skill</th>
+            <th>When</th>
+            <th>What it forces</th>
+          </tr>
+          <tr>
+            <td><code>brainstorming</code></td>
+            <td>Any new feature, component, or behavior change</td>
+            <td>
+              Explore context, ask one question at a time, present a design,
+              wait for approval. No code until the design is accepted. A short
+              design is enough for a small change.
+            </td>
+          </tr>
+          <tr>
+            <td><code>writing-plans</code></td>
+            <td>A spec that takes more than one step</td>
+            <td>
+              A plan a stranger could execute. Each task names files, the test
+              to write first, and a commit. Save to
+              <code>docs/superpowers/plans/YYYY-MM-DD-&lt;feature&gt;.md</code>.
+            </td>
+          </tr>
+          <tr>
+            <td><code>using-git-worktrees</code></td>
+            <td>Feature work that must stay off the current checkout</td>
+            <td>Isolated worktree and branch before implementation starts.</td>
+          </tr>
+        </table>
+      </div>
 
-<h3>While building</h3>
-<div class="table-scroll"><table>
-<tr><th>Skill</th><th>When</th><th>What it forces</th></tr>
-<tr><td><code>test-driven-development</code></td><td>Every feature, bugfix, refactor, and behavior change</td><td>Red, then green, then the smallest code. Generated scaffolding and configuration are verified through build and behavior checks; handwritten behavior follows red/green tests.</td></tr>
-<tr><td><code>systematic-debugging</code></td><td>Any bug, red test, or surprise</td><td>Root cause before a patch. Trace every caller of the function you are about to change.</td></tr>
-<tr><td><code>subagent-driven-development</code></td><td>Executing a plan whose tasks are independent, in this session</td><td>One fresh implementer sub-agent per task, a review after each task, a whole-branch review at the end. Do not stop between tasks.</td></tr>
-<tr><td><code>executing-plans</code></td><td>The same plan, in a separate session, or when sub-agents are unavailable</td><td>Load the plan, challenge it, execute, report. Prefer subagent-driven development when sub-agents exist.</td></tr>
-<tr><td><code>dispatching-parallel-agents</code></td><td>Two or more tasks that share no state</td><td>Parallel agents instead of a serial queue.</td></tr>
-<tr><td><code>verification-before-completion</code></td><td>About to say done, fixed, or passing, or about to commit or open a pull request</td><td>Run the verification command in this turn. No claim without fresh output.</td></tr>
-</table></div>
+      <h3>While building</h3>
+      <div class="table-scroll">
+        <table>
+          <tr>
+            <th>Skill</th>
+            <th>When</th>
+            <th>What it forces</th>
+          </tr>
+          <tr>
+            <td><code>test-driven-development</code></td>
+            <td>Every feature, bugfix, refactor, and behavior change</td>
+            <td>
+              Red, then green, then the smallest code. Generated scaffolding and
+              configuration are verified through build and behavior checks;
+              handwritten behavior follows red/green tests.
+            </td>
+          </tr>
+          <tr>
+            <td><code>systematic-debugging</code></td>
+            <td>Any bug, red test, or surprise</td>
+            <td>
+              Root cause before a patch. Trace every caller of the function you
+              are about to change.
+            </td>
+          </tr>
+          <tr>
+            <td><code>subagent-driven-development</code></td>
+            <td>
+              Executing a plan whose tasks are independent, in this session
+            </td>
+            <td>
+              One fresh implementer sub-agent per task, a review after each
+              task, a whole-branch review at the end. Do not stop between tasks.
+            </td>
+          </tr>
+          <tr>
+            <td><code>executing-plans</code></td>
+            <td>
+              The same plan, in a separate session, or when sub-agents are
+              unavailable
+            </td>
+            <td>
+              Load the plan, challenge it, execute, report. Prefer
+              subagent-driven development when sub-agents exist.
+            </td>
+          </tr>
+          <tr>
+            <td><code>dispatching-parallel-agents</code></td>
+            <td>Two or more tasks that share no state</td>
+            <td>Parallel agents instead of a serial queue.</td>
+          </tr>
+          <tr>
+            <td><code>verification-before-completion</code></td>
+            <td>
+              About to say done, fixed, or passing, or about to commit or open a
+              pull request
+            </td>
+            <td>
+              Run the verification command in this turn. No claim without fresh
+              output.
+            </td>
+          </tr>
+        </table>
+      </div>
 
-<h3>Before merge</h3>
-<div class="table-scroll"><table>
-<tr><th>Skill</th><th>When</th><th>What it forces</th></tr>
-<tr><td><code>kubesift-code-review</code></td><td>Feature or fix ready for <code>develop</code></td><td>Senior review of the branch against <code>develop</code>, including uncommitted work. Findings only. Another agent patches them. Record each as <code>KSF-00N</code> in the pull request. Write this skill into the repo before relying on it.</td></tr>
-<tr><td><code>requesting-code-review</code></td><td>End of a task, end of a major feature, before merge</td><td>Dispatch a reviewer sub-agent with the spec and the diff. The reviewer does not inherit the coding session.</td></tr>
-<tr><td><code>receiving-code-review</code></td><td>Review comments came back</td><td>Understand each finding before changing code. Push back when the suggestion is wrong.</td></tr>
-<tr><td><code>kubesift-code-hygiene</code></td><td>Dead code, duplication, rot, stale TODOs, README drift</td><td>Report only, unless you explicitly say fix. Priority: unwanted, then duplicate, then rot, then dead. Write this skill into the repo before relying on it.</td></tr>
-<tr><td><code>ponytail-review</code></td><td>“What can we delete?”</td><td>Over-engineering only. One line per finding: location, what to cut, what replaces it.</td></tr>
-<tr><td><code>ponytail-audit</code></td><td>Whole repo, same question</td><td>Hygiene’s neighbor for complexity. Does not replace correctness review.</td></tr>
-<tr><td><code>review-bugbot</code></td><td>You ask <code>/review-bugbot</code></td><td>Launches the <code>bugbot</code> sub-agent on the branch diff.</td></tr>
-<tr><td><code>review-security</code></td><td>You ask <code>/review-security</code></td><td>Launches the <code>security-review</code> sub-agent on the branch diff.</td></tr>
-</table></div>
-<p>The reviewer does not edit. A finding is an id plus a patch another agent can apply.</p>
+      <h3>Before merge</h3>
+      <div class="table-scroll">
+        <table>
+          <tr>
+            <th>Skill</th>
+            <th>When</th>
+            <th>What it forces</th>
+          </tr>
+          <tr>
+            <td><code>kubesift-code-review</code></td>
+            <td>Feature or fix ready for <code>develop</code></td>
+            <td>
+              Senior review of the branch against <code>develop</code>,
+              including uncommitted work. Findings only. Another agent patches
+              them. Record each as <code>KSF-00N</code> in the pull request.
+              Write this skill into the repo before relying on it.
+            </td>
+          </tr>
+          <tr>
+            <td><code>requesting-code-review</code></td>
+            <td>End of a task, end of a major feature, before merge</td>
+            <td>
+              Dispatch a reviewer sub-agent with the spec and the diff. The
+              reviewer does not inherit the coding session.
+            </td>
+          </tr>
+          <tr>
+            <td><code>receiving-code-review</code></td>
+            <td>Review comments came back</td>
+            <td>
+              Understand each finding before changing code. Push back when the
+              suggestion is wrong.
+            </td>
+          </tr>
+          <tr>
+            <td><code>kubesift-code-hygiene</code></td>
+            <td>Dead code, duplication, rot, stale TODOs, README drift</td>
+            <td>
+              Report only, unless you explicitly say fix. Priority: unwanted,
+              then duplicate, then rot, then dead. Write this skill into the
+              repo before relying on it.
+            </td>
+          </tr>
+          <tr>
+            <td><code>ponytail-review</code></td>
+            <td>“What can we delete?”</td>
+            <td>
+              Over-engineering only. One line per finding: location, what to
+              cut, what replaces it.
+            </td>
+          </tr>
+          <tr>
+            <td><code>ponytail-audit</code></td>
+            <td>Whole repo, same question</td>
+            <td>
+              Hygiene’s neighbor for complexity. Does not replace correctness
+              review.
+            </td>
+          </tr>
+          <tr>
+            <td><code>review-bugbot</code></td>
+            <td>You ask <code>/review-bugbot</code></td>
+            <td>
+              Launches the <code>bugbot</code> sub-agent on the branch diff.
+            </td>
+          </tr>
+          <tr>
+            <td><code>review-security</code></td>
+            <td>You ask <code>/review-security</code></td>
+            <td>
+              Launches the <code>security-review</code> sub-agent on the branch
+              diff.
+            </td>
+          </tr>
+        </table>
+      </div>
+      <p>
+        The reviewer does not edit. A finding is an id plus a patch another
+        agent can apply.
+      </p>
 
-<h3>Ship, and skill maintenance</h3>
-<div class="table-scroll"><table>
-<tr><th>Skill</th><th>When</th><th>What it forces</th></tr>
-<tr><td><code>finishing-a-development-branch</code></td><td>Tests pass and the branch needs a home</td><td>Verify, then offer merge, pull request, or cleanup. Execute the choice.</td></tr>
-<tr><td><code>release-this</code></td><td>“release”, “cut a release”, a version, or a tag</td><td>From clean up-to-date <code>develop</code>: ask minor vs patch if unspecified, changelog from conventional commits, <code>release/v*</code> pull request to <code>main</code>, annotated tag, GitHub release, back-merge. Verify license and dependency notices. Write this skill into the repo before relying on it.</td></tr>
-<tr><td><code>writing-skills</code></td><td>Creating or editing a skill</td><td>The skill file is the procedure. Verify it against a real run.</td></tr>
-<tr><td><code>ponytail-debt</code></td><td>You want the ledger of <code>ponytail:</code> comments</td><td>Harvest every marked shortcut so the ceiling is visible.</td></tr>
-<tr><td><code>ponytail-gain</code></td><td>You want a before/after size check</td><td>Compact scoreboard of code removed.</td></tr>
-<tr><td><code>ponytail-help</code></td><td>You forgot the modes</td><td>One-shot card of ponytail commands.</td></tr>
-</table></div>
+      <h3>Ship, and skill maintenance</h3>
+      <div class="table-scroll">
+        <table>
+          <tr>
+            <th>Skill</th>
+            <th>When</th>
+            <th>What it forces</th>
+          </tr>
+          <tr>
+            <td><code>finishing-a-development-branch</code></td>
+            <td>Tests pass and the branch needs a home</td>
+            <td>
+              Verify, then offer merge, pull request, or cleanup. Execute the
+              choice.
+            </td>
+          </tr>
+          <tr>
+            <td><code>release-this</code></td>
+            <td>“release”, “cut a release”, a version, or a tag</td>
+            <td>
+              From clean up-to-date <code>develop</code>: ask minor vs patch if
+              unspecified, changelog from conventional commits,
+              <code>release/v*</code> pull request to <code>main</code>,
+              annotated tag, GitHub release, back-merge. Verify license and
+              dependency notices. Write this skill into the repo before relying
+              on it.
+            </td>
+          </tr>
+          <tr>
+            <td><code>writing-skills</code></td>
+            <td>Creating or editing a skill</td>
+            <td>
+              The skill file is the procedure. Verify it against a real run.
+            </td>
+          </tr>
+          <tr>
+            <td><code>ponytail-debt</code></td>
+            <td>You want the ledger of <code>ponytail:</code> comments</td>
+            <td>Harvest every marked shortcut so the ceiling is visible.</td>
+          </tr>
+          <tr>
+            <td><code>ponytail-gain</code></td>
+            <td>You want a before/after size check</td>
+            <td>Compact scoreboard of code removed.</td>
+          </tr>
+          <tr>
+            <td><code>ponytail-help</code></td>
+            <td>You forgot the modes</td>
+            <td>One-shot card of ponytail commands.</td>
+          </tr>
+        </table>
+      </div>
 
-<h3>Order when several apply</h3>
-<pre><code>using-superpowers
+      <h3>Order when several apply</h3>
+      <pre><code>using-superpowers
   → brainstorming                 (new behavior)
   → writing-plans                 (multi-step)
   → test-driven-development       (each task)
@@ -231,48 +887,170 @@ npx tsc --noEmit</code></pre>
   → ponytail-review               (if the diff feels large)
   → finishing-a-development-branch
   → release-this                  (only when shipping)</code></pre>
-<p>A bug skips brainstorming and starts at <code>systematic-debugging</code>, then test-driven development for the regression.</p>
+      <p>
+        A bug skips brainstorming and starts at
+        <code>systematic-debugging</code>, then test-driven development for the
+        regression.
+      </p>
 
-<h2 id="sub-agents">Sub-agents</h2>
-<p>Dispatch a fresh sub-agent when the task needs a clean context: review, a wide search, or one plan task. Give it the repo path, the diff or the task, and the spec. Do not hand it the coding session’s history.</p>
-<div class="table-scroll"><table>
-<tr><th>Sub-agent</th><th>Use</th></tr>
-<tr><td><code>generalPurpose</code></td><td>One plan task, a multi-step investigation, or anything that is not a narrow search. This is the implementer in subagent-driven development.</td></tr>
-<tr><td><code>explore</code></td><td>Find files or call sites. Set thoroughness: quick, medium, or very thorough. Prefer this over guessing paths.</td></tr>
-<tr><td><code>bugbot</code></td><td>Bug-focused review of branch changes, uncommitted changes, or a described diff. Launched only through <code>review-bugbot</code>, one at a time, in the foreground.</td></tr>
-<tr><td><code>security-review</code></td><td>Security review of the local diff. Launched only through <code>review-security</code>, one at a time, in the foreground. It computes the diff itself.</td></tr>
-<tr><td><code>ci-investigator</code></td><td>One failing pull request check. Returns a short root cause.</td></tr>
-<tr><td><code>best-of-n-runner</code></td><td>Parallel attempts that must not share a checkout. Each gets its own worktree and branch.</td></tr>
-<tr><td><code>docs-researcher</code></td><td>Library or API docs, so the main session stays small.</td></tr>
-<tr><td><code>cursor-guide</code></td><td>How Cursor itself works, when the question is about the product.</td></tr>
-</table></div>
-<p>Phase 2 provider and agent design may use <code>ai-architect</code>. Desktop packaging and performance stay in this playbook and the roadmap. Web-host deploy and web-vitals agents are for a different kind of application.</p>
-<p>Rules that keep sub-agents useful:</p>
-<ul>
-<li>One reviewer per review. Two reviewers of the same diff in parallel produce two lists and no owner.</li>
-<li>Review sub-agents do not modify code.</li>
-<li>An implementer sub-agent gets one task, the files, and the test command. The parent integrates.</li>
-<li>Parallelize only when tasks share no files and no state.</li>
-<li>If a sub-agent is missing from the session, do the review in the main session with the same prompt shape. Say that you did.</li>
-</ul>
+      <h2 id="sub-agents">Sub-agents</h2>
+      <p>
+        Dispatch a fresh sub-agent when the task needs a clean context: review,
+        a wide search, or one plan task. Give it the repo path, the diff or the
+        task, and the spec. Do not hand it the coding session’s history.
+      </p>
+      <div class="table-scroll">
+        <table>
+          <tr>
+            <th>Sub-agent</th>
+            <th>Use</th>
+          </tr>
+          <tr>
+            <td><code>generalPurpose</code></td>
+            <td>
+              One plan task, a multi-step investigation, or anything that is not
+              a narrow search. This is the implementer in subagent-driven
+              development.
+            </td>
+          </tr>
+          <tr>
+            <td><code>explore</code></td>
+            <td>
+              Find files or call sites. Set thoroughness: quick, medium, or very
+              thorough. Prefer this over guessing paths.
+            </td>
+          </tr>
+          <tr>
+            <td><code>bugbot</code></td>
+            <td>
+              Bug-focused review of branch changes, uncommitted changes, or a
+              described diff. Launched only through <code>review-bugbot</code>,
+              one at a time, in the foreground.
+            </td>
+          </tr>
+          <tr>
+            <td><code>security-review</code></td>
+            <td>
+              Security review of the local diff. Launched only through
+              <code>review-security</code>, one at a time, in the foreground. It
+              computes the diff itself.
+            </td>
+          </tr>
+          <tr>
+            <td><code>ci-investigator</code></td>
+            <td>One failing pull request check. Returns a short root cause.</td>
+          </tr>
+          <tr>
+            <td><code>best-of-n-runner</code></td>
+            <td>
+              Parallel attempts that must not share a checkout. Each gets its
+              own worktree and branch.
+            </td>
+          </tr>
+          <tr>
+            <td><code>docs-researcher</code></td>
+            <td>Library or API docs, so the main session stays small.</td>
+          </tr>
+          <tr>
+            <td><code>cursor-guide</code></td>
+            <td>
+              How Cursor itself works, when the question is about the product.
+            </td>
+          </tr>
+        </table>
+      </div>
+      <p>
+        Phase 2 provider and agent design may use <code>ai-architect</code>.
+        Desktop packaging and performance stay in this playbook and the roadmap.
+        Web-host deploy and web-vitals agents are for a different kind of
+        application.
+      </p>
+      <p>Rules that keep sub-agents useful:</p>
+      <ul>
+        <li>
+          One reviewer per review. Two reviewers of the same diff in parallel
+          produce two lists and no owner.
+        </li>
+        <li>Review sub-agents do not modify code.</li>
+        <li>
+          An implementer sub-agent gets one task, the files, and the test
+          command. The parent integrates.
+        </li>
+        <li>Parallelize only when tasks share no files and no state.</li>
+        <li>
+          If a sub-agent is missing from the session, do the review in the main
+          session with the same prompt shape. Say that you did.
+        </li>
+      </ul>
 
-<h2 id="kubesift-only">Decisions another playbook must not overwrite</h2>
-<p>These belong to KubeSift. Copy the loop, not another application’s deploy path, host tools, or release artifact.</p>
-<ul>
-<li>Wails, Go, and React/TypeScript. Wails v3 is the proposed baseline; pin a supported version at validation. Domain services do not import the desktop bridge.</li>
-<li>macOS first. The shipped check is a packaged desktop build, including Finder launch. Signing, notarization, minimum macOS, and the updater are still open.</li>
-<li>Connection id plus generation on every operation. Tabs own namespace filters. No global active context, and no rewrite of kubeconfig current-context.</li>
-<li>Watches, logs, exec, and port forwards are sessions with explicit ids, cancellation, bounded buffers, and visible truncation. Port-forward payload traffic stays outside React. Loopback is the default.</li>
-<li>Prepare, review, execute. Dry-run where the API supports it. Helm and Operator previews must say when they can touch resources outside the selected namespace.</li>
-<li>Container exec is an interactive session that can write. Label the target. Do not describe it as read-only.</li>
-<li>OpenShift Projects, Routes, Builds, and Operators are dedicated workflows. Generic custom resources stay on the dynamic client. Detect the APIs that are present.</li>
-<li>Metrics come from an existing Metrics API and, when the user selects one, an existing Prometheus-compatible endpoint. Never forward cluster tokens to an arbitrary discovered URL.</li>
-<li>AI starts in Phase 2: Claude first, then other adapters behind one contract. Profiles support an application default and per-cluster overrides, with no silent cross-provider fallback.</li>
-<li>Disposable local clusters for mutation tests. The local-cluster tool is still an open choice. External integration environments require a named target and named actions. Do not discover permission by trying a write.</li>
-<li>Do not claim Lens or K9s parity without a reviewed capability inventory and evidence.</li>
-<li>Apache-2.0 licensing; repository workflow lives in gitworkflow.md.</li>
-</ul>
-<footer>2026-11-05 · Draft for review · <a href="../index.html">Planning index</a></footer>
-</main>
-</body>
+      <h2 id="kubesift-only">Decisions another playbook must not overwrite</h2>
+      <p>
+        These belong to KubeSift. Copy the loop, not another application’s
+        deploy path, host tools, or release artifact.
+      </p>
+      <ul>
+        <li>
+          Wails, Go, and React/TypeScript. Wails v3 is the proposed baseline;
+          pin a supported version at validation. Domain services do not import
+          the desktop bridge.
+        </li>
+        <li>
+          macOS first. The shipped check is a packaged desktop build, including
+          Finder launch. Signing, notarization, minimum macOS, and the updater
+          are still open.
+        </li>
+        <li>
+          Connection id plus generation on every operation. Tabs own namespace
+          filters. No global active context, and no rewrite of kubeconfig
+          current-context.
+        </li>
+        <li>
+          Watches, logs, exec, and port forwards are sessions with explicit ids,
+          cancellation, bounded buffers, and visible truncation. Port-forward
+          payload traffic stays outside React. Loopback is the default.
+        </li>
+        <li>
+          Prepare, review, execute. Dry-run where the API supports it. Helm and
+          Operator previews must say when they can touch resources outside the
+          selected namespace.
+        </li>
+        <li>
+          Container exec is an interactive session that can write. Label the
+          target. Do not describe it as read-only.
+        </li>
+        <li>
+          OpenShift Projects, Routes, Builds, and Operators are dedicated
+          workflows. Generic custom resources stay on the dynamic client. Detect
+          the APIs that are present.
+        </li>
+        <li>
+          Metrics come from an existing Metrics API and, when the user selects
+          one, an existing Prometheus-compatible endpoint. Never forward cluster
+          tokens to an arbitrary discovered URL.
+        </li>
+        <li>
+          AI starts in Phase 2: Claude first, then other adapters behind one
+          contract. Profiles support an application default and per-cluster
+          overrides, with no silent cross-provider fallback.
+        </li>
+        <li>
+          Disposable local clusters for mutation tests. The local-cluster tool
+          is still an open choice. External integration environments require a
+          named target and named actions. Do not discover permission by trying a
+          write.
+        </li>
+        <li>
+          Do not claim Lens or K9s parity without a reviewed capability
+          inventory and evidence.
+        </li>
+        <li>
+          Apache-2.0 licensing; repository workflow lives in gitworkflow.md.
+        </li>
+      </ul>
+      <footer>
+        2026-11-05 · Draft for review ·
+        <a href="../index.html">Planning index</a>
+      </footer>
+    </main>
+  </body>
 </html>
