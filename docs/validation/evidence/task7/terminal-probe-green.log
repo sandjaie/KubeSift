@@ -1,0 +1,16 @@
+
+> test
+> npm run test --workspace frontend
+
+
+> @kubesift/frontend@0.0.0 test
+> vitest run
+
+
+ RUN  v4.1.12 /Users/sandjaie.ravi/dev/kubesift/frontend
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  15:08:53
+   Duration  156ms (transform 27ms, setup 0ms, import 58ms, tests 4ms, environment 0ms)

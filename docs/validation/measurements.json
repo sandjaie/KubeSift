@@ -1,35 +1,187 @@
 {
-  "status": "incomplete-safety-gate",
+  "status": "incomplete-user-handoff",
   "date": "2026-11-05",
   "host": {
     "os": "macOS 26.7.1",
+    "build": "25G241",
     "architecture": "arm64",
     "cpu": "Apple M2 Pro",
-    "memoryGB": 16
+    "memoryBytes": 17179869184
   },
   "versions": {
     "go": "1.27.3",
     "node": "26.13.0",
     "npm": "11.20.0",
-    "wails": "3.1.0",
-    "clientGo": "0.37.0"
+    "wailsCliAndModule": "3.1.0",
+    "wailsRuntime": "3.1.0",
+    "clientGo": "0.37.0",
+    "react": "18.3.1",
+    "typescript": "5.9.3",
+    "vite": "8.3.6",
+    "vitest": "4.1.12",
+    "xterm": "6.0.0",
+    "xtermFit": "0.11.0",
+    "kind": "0.33.0",
+    "kubectl": "1.36.1",
+    "kubernetesFixture": "1.37.0",
+    "dockerClient": "29.9.3",
+    "dockerServer": "29.9.2"
   },
-  "startupSamplesMs": [],
-  "terminalRoundTripSamplesMs": [],
-  "memorySamplesBytes": [],
-  "loadDurationSeconds": null,
-  "sessionCycles": null,
+  "startupSamplesMs": [
+    3631.5879999892786,
+    867.8643340244889,
+    980.401124979835,
+    798.6920830444433,
+    995.5530830193311,
+    640.4322910238989,
+    755.4567499901168,
+    843.8448749948293,
+    586.9246670044959,
+    569.6564159588888
+  ],
+  "startupSummary": {
+    "count": 10,
+    "medianMs": 821.2684790196363,
+    "p95Ms": 3631.5879999892786,
+    "minMs": 569.6564159588888,
+    "maxMs": 3631.5879999892786
+  },
+  "preliminaryStartupSamplesRoundedMs": [
+    7772.85,
+    958.42,
+    776.18,
+    1154.98,
+    1051.99,
+    1060.11,
+    729.46,
+    683.97,
+    804.91,
+    915.04
+  ],
+  "preliminaryStartupNote": "Earlier package iteration before numeric file-cap change; console-rounded samples retained including first cold outlier. Excluded from final-package summary.",
+  "terminalRoundTripSamplesMs": [
+    9,
+    50,
+    50,
+    50,
+    50,
+    50,
+    50,
+    50,
+    50,
+    50,
+    50,
+    50,
+    50,
+    50,
+    50,
+    50,
+    50,
+    50,
+    50,
+    50
+  ],
+  "terminalSummary": {
+    "count": 20,
+    "medianMs": 50.0,
+    "p95Ms": 50,
+    "minMs": 9,
+    "maxMs": 50
+  },
+  "percentileMethod": "nearest rank: sorted[ceil(0.95*n)-1]; median averages middle pair for even n",
+  "startupMethod": "Monotonic launcher elapsed through 10ms polling of fixed readiness file written only after actual packaged frontend Ping; sanitized environment, system PATH, explicit fixture source, cwd /. Includes process/WebKit/bridge/config-validation/file/poll overhead. Not Finder launch.",
+  "terminalMethod": "Fixed remote printf marker split across format/token arguments to exclude echoed command. performance.now from TerminalInput submission through matching response at xterm write callback. Sequential samples; includes bridge/network/shell/batching/xterm overhead.",
+  "requestedLoad": {
+    "durationSeconds": 600,
+    "sessionCount": 8,
+    "watches": 2,
+    "logFollows": 4,
+    "terminals": 1,
+    "forwards": 1,
+    "baselineLinesPerSecondPerSource": 100,
+    "floodLinesPerSecondOneSource": 2000,
+    "payloadBytes": 256,
+    "floodDurationSeconds": 60,
+    "cleanupCycles": 20
+  },
+  "actualLoad": {
+    "rendererElapsedSeconds": 226.868,
+    "sampledLoadSpanSeconds": 221.614,
+    "records": 46,
+    "completed600Seconds": false,
+    "completedCleanupCycles": 0,
+    "nativeSessionsAtLastSample": 8,
+    "maxFrontendListeners": 2,
+    "maxNativeQueuedBytes": 123904,
+    "maxNativeInFlightBytes": 124160,
+    "nativeDroppedLogBytes": 0,
+    "frontendReceivedLogBytes": 65594368,
+    "frontendRetainedLogBytes": 4194304,
+    "frontendTrimmedLogBytes": 61400064,
+    "maxHistoryBytesPerSession": 1048576,
+    "maxSessionErrors": 0,
+    "nativeHeapAllocFirstBytes": 3553256,
+    "nativeHeapAllocLastBytes": 5004952,
+    "nativeHeapAllocMaxBytes": 6194456,
+    "nativeRssFirstBytes": 123355136,
+    "nativeRssLastBytes": 59490304,
+    "nativeRssMaxBytes": 130039808,
+    "floodDurationExactSeconds": null,
+    "floodEvidence": "Runner logged start and baseline restoration after >=60s condition; exact endpoints were not persisted before interruption. Source-rate probe proves actual B rate fell short."
+  },
+  "actualSourceRates": [
+    {
+      "context": "kind-dev-local",
+      "requestedLinesPerSecond": 100,
+      "lineCount": 824,
+      "timestampDurationSeconds": 10.050410985946655,
+      "observedLinesPerSecond": 81.88719855842602,
+      "payloadBytesPerLine": 256
+    },
+    {
+      "context": "kind-kubesift-b",
+      "requestedLinesPerSecond": 2000,
+      "lineCount": 16400,
+      "timestampDurationSeconds": 10.097589015960693,
+      "observedLinesPerSecond": 1624.051045658426,
+      "payloadBytesPerLine": 256
+    }
+  ],
+  "cleanup": {
+    "forwardPort": 58323,
+    "listenerClosed": true,
+    "packagedProcessPresent": false,
+    "partialRendererElapsedMs": 226868,
+    "recordCount": 46,
+    "lastNativeSessionsBeforeShutdown": 8,
+    "completion": "interrupted-for-user-handoff"
+  },
+  "manualEvidence": {
+    "source": "User report forwarded by parent during current packaged profile",
+    "quote": "Visible; resize works; fixture strings are plain text",
+    "covers": [
+      "current packaged UI visible",
+      "two-cluster/session display as asked by parent",
+      "window resize/terminal usability as asked by parent",
+      "hostile fixture strings render as plain text"
+    ],
+    "notCuaObserved": true
+  },
   "trustProbe": {
+    "nativeClientGoExpectedSafetyFailure": true,
     "guardChecks": 1,
     "helperInvocations": 2,
-    "revokedBeforeSecondExecution": true,
-    "expectedHelperInvocations": 1,
-    "passed": false
+    "ownedAdapterRegression": "passed; native exec disabled; Task3 and current integration evidence"
   },
   "limitations": [
-    "No Kubernetes cluster accessed.",
-    "Tasks 3\u20137 integration functionality not implemented after native exec refresh trust failure.",
-    "No startup, latency, soak or memory performance measurements performed.",
-    "Native packaged readiness confirmed by user for Task1; Finder double-click not observed."
+    "User requested checkpoint before the 600-second run and twenty cleanup cycles completed.",
+    "Generator nominal rate100/2000 was measured at81.887/1624.051 lines/sec; fix/calibrate generator and rerun complete prescribed profile.",
+    "Native RSS excludes WebKit XPC memory; renderer-specific WebKit memory attribution was not established. No post-cycle memory trend or leak conclusion.",
+    "RAF acknowledgements are visibility-sensitive; user confirmed visibility during run, but foreground/occlusion was not controlled continuously.",
+    "Finder fresh launch/default-source/helper platform lifecycle/fault recovery/sleep-wake/close-during-setup/app-exit-with-active-sessions remain unrun.",
+    "CUA getApp for full bundle path hung460.8s despite20s timeout and was aborted; no retry. Packaged binary execution and real frontend readiness succeeded independently.",
+    "Go desktop test linker reports module objects built for macOS13/26 versus linker default11; package build succeeded with target13. Host26 only, no minimum-support claim.",
+    "Cloud/OpenShift authentication, signing/notarization/updater and other OS compatibility unrun.",
+    "No final performance budget or architecture pass can be inferred from this preliminary run."
   ]
 }

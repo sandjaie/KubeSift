@@ -1,0 +1,18 @@
+[
+  {
+    "context": "kind-dev-local",
+    "requestedLinesPerSecond": 100,
+    "lineCount": 824,
+    "timestampDurationSeconds": 10.050410985946655,
+    "observedLinesPerSecond": 81.88719855842602,
+    "payloadBytesPerLine": 256
+  },
+  {
+    "context": "kind-kubesift-b",
+    "requestedLinesPerSecond": 2000,
+    "lineCount": 16400,
+    "timestampDurationSeconds": 10.097589015960693,
+    "observedLinesPerSecond": 1624.051045658426,
+    "payloadBytesPerLine": 256
+  }
+]

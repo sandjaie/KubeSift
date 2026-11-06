@@ -1,0 +1,49 @@
+# github.com/sandjaie/KubeSift/internal/desktop.test
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-2483200122/go.o) was built for newer 'macOS' version (13.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-2483200122/000027.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-2483200122/000028.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-2483200122/000029.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-2483200122/000030.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-2483200122/000031.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-2483200122/000032.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-2483200122/000033.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-2483200122/000034.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-2483200122/000035.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-2483200122/000036.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-2483200122/000037.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-2483200122/000038.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-2483200122/000039.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-2483200122/000040.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-2483200122/000041.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-2483200122/000042.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-2483200122/000043.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-2483200122/000044.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+# github.com/sandjaie/KubeSift/internal/config.test
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-581439461/go.o) was built for newer 'macOS' version (13.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-581439461/000027.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-581439461/000028.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-581439461/000029.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-581439461/000030.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-581439461/000031.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-581439461/000032.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-581439461/000033.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-581439461/000034.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-581439461/000035.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-581439461/000036.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-581439461/000037.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-581439461/000038.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-581439461/000039.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-581439461/000040.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-581439461/000041.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-581439461/000042.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-581439461/000043.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ld: warning: object file (/private/var/folders/60/_pm9lf6d7g5d38b65mgd8s9m0000gn/T/go-link-581439461/000044.o) was built for newer 'macOS' version (26.0) than being linked (11.0)
+ok  	github.com/sandjaie/KubeSift/internal/config	1.789s
+?   	github.com/sandjaie/KubeSift/internal/connection	[no test files]
+ok  	github.com/sandjaie/KubeSift/internal/desktop	2.540s
+?   	github.com/sandjaie/KubeSift/internal/desktop/assets	[no test files]
+?   	github.com/sandjaie/KubeSift/internal/kube	[no test files]
+?   	github.com/sandjaie/KubeSift/internal/model	[no test files]
+ok  	github.com/sandjaie/KubeSift/internal/operation	(cached)
+ok  	github.com/sandjaie/KubeSift/internal/session	(cached)
+ok  	github.com/sandjaie/KubeSift/internal/trust	3.230s

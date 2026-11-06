@@ -1,0 +1,17 @@
+# Execution decisions retained for machine handoff
+
+Ruling: Use baseline 371f9a9 — contains approved 2b91079 and requested outline rename only — no behavior difference if wrong.
+
+Final: Ruling: declined helper/session/stream/mutation/native/provider/soak/unsupported-platform acceptance — unimplemented or unrun after explicit safety gate, no pass claimed — cost if wrong: Phase 1A readiness would be overstated; acceptance remains blocked.
+
+Task 3: Ruling: own exec invocation rather than native refresh — proven401 bypass requires execution-time authorization; native exec disabled, same approved safety behavior — cost: additional protocol adapter maintenance and helper execution overhead; provider compatibility must be measured. D13 records revision. StreamConfig adds explicit authenticated stream startup while preventing native exec.
+
+Task 4: Ruling: add StartPending/Activate bridge handshake — register returned IDs before emitting events — cost: one local bridge round trip per session. Terminal output acknowledgement permits one bounded chunk in flight; xterm callback supplies credit in Task5. Session target validator runs under session creation lock, while connection cleanup runs outside connection locks, preventing close/start races without deadlock.
+
+Ruling: switch to subagent-driven-development starting Task 6 at explicit user request; sol high implementer, Astra high safety reviewer. Shared tracked status remains .superpowers/progress.md, detailed scratch stays ignored.
+
+Ruling: user-requested primary workspace and tracked shared status override skill scratch-ledger/worktree placement — avoid duplicate checkout or hidden progress — cost if wrong: reduced isolation, addressed by single implementation owner and explicit workdir.
+
+Task7 native CUA limitation: full-path getApp hung460.8s despite20000ms timeout; user abort released it. No source edits or measurements occurred while waiting. Parent interrupted/resumed implementer to obtain diagnosis. No further getApp retries. Ruling: instrument actual packaged renderer through an explicit fixture-only validation trigger and fixed numeric evidence output; use separate human Finder/sleep checks — tool control failure does not justify replacing packaged measurements with domain-only results — cost if wrong: instrumentation overhead could bias results, so report method/overhead and keep unobserved manual cases not-run. Standard implementer retained because blocker was tool wait, not reasoning failure.
+
+Task7 was interrupted by explicit user request before completion; continue only Phase1A. Shared status remains .superpowers/progress.md in Git.

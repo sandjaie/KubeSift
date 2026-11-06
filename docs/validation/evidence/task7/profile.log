@@ -1,0 +1,11 @@
+Packaged profile started; pid=13465; frontend Ping=647.33ms
+Disposable B flood started at 2000 nominal lines/sec
+Disposable B baseline restored
+Traceback (most recent call last):
+  File "/Users/sandjaie.ravi/dev/kubesift/scripts/measure-packaged.py", line 120, in <module>
+    profile()
+    ~~~~~~~^^
+  File "/Users/sandjaie.ravi/dev/kubesift/scripts/measure-packaged.py", line 98, in profile
+    time.sleep(2)
+    ~~~~~~~~~~^^^
+KeyboardInterrupt
