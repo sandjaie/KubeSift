@@ -1,6 +1,157 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>KubeSift planning · KubeSift</title><link rel="stylesheet" href="assets/planning.css"><script src="assets/theme.js"></script></head><body><aside class="rail"><a class="skip" href="#content">Skip to content</a><a class="mark" href="index.html"><span class="mark-name">KubeSift</span><span class="mark-sub">Planning</span></a><h2>Index</h2><a href="index.html" aria-current="page">Planning index</a><h2>Product</h2><a href="product/requirements.html">Requirements</a><a href="product/feature-matrix.html">Capabilities</a><h2>Architecture</h2><a href="architecture/overview.html">Overview</a><a href="architecture/decisions.html">Decisions</a><h2>Safeguards</h2><a href="security/security-model.html">Security and AI</a><h2>Delivery</h2><a href="roadmap/roadmap.html">Roadmap</a><a href="ux/workflows.html">UX workflows</a><a href="ux/mocks/index.html">Mockups</a><h2>Engineering</h2><a href="engineering/engineering.html">Playbook</a><a href="engineering/local-development.html">Local development</a><a href="engineering/toolchain.html">Toolchain</a><h2>Working</h2><a href="superpowers/validation/phase-1a.html">Phase 1A validation</a></aside><header><a href="index.html">KubeSift / Planning</a><h1>KubeSift planning</h1><p>Local-first · Multi-cluster · Operations first · AI-assisted investigation</p></header><main id="content">
-<p class="callout">Phase 1A local validation is complete with a proceed-with-follow-ups recommendation; independent source and evidence review approved the qualified local result. The packaged load and twenty cleanup cycles completed, with bounded log loss during backgrounding and explicit compatibility limits. See <a href="superpowers/validation/phase-1a.html">the acceptance matrix and measurements</a>. This status does not authorize Phase 1B, merge or release.</p>
-<h2>Read the plan</h2><div class="cards"><a href="product/requirements.html"><strong>Product requirements</strong><span>Scope, users and acceptance journeys</span></a><a href="architecture/overview.html"><strong>Architecture</strong><span>Wails, Go, sessions and integration boundaries</span></a><a href="security/security-model.html"><strong>Security &amp; AI</strong><span>Credentials, operations and evidence sharing</span></a><a href="roadmap/roadmap.html"><strong>Roadmap</strong><span>Phase 1A–1G, UI-first sequence and Phase 2 planning</span></a><a href="architecture/decisions.html"><strong>Decisions</strong><span>Accepted direction and open details</span></a><a href="product/feature-matrix.html"><strong>Capabilities</strong><span>Coverage and unresolved parity questions</span></a><a href="ux/workflows.html"><strong>UX workflows</strong><span>Screen behavior and interaction requirements</span></a><a href="engineering/engineering.html"><strong>Engineering</strong><span>Branching, tests, review and release</span></a></div>
-<h2>Next phase planning</h2><p>UI foundation is now Phase 1B, followed by the live explorer in 1C. Read the <a href="roadmap/roadmap.html">expanded roadmap</a> and <a href="superpowers/specs/2026-11-06-phase-1b-ui-design.md">approved UI specification</a>. The <a href="superpowers/plans/2026-11-06-phase-1b-ui-foundation.md">detailed Phase 1B plan</a> is ready for a separate implementation session. No Phase 1B implementation was performed during planning.</p><h2>Approved references</h2><ul><li><a href="ux/mocks/index.html">Dark/light workspace mockups</a></li><li><a href="engineering/local-development.html">Local development target and validation ownership</a></li></ul><h2>Superpowers plans and reports</h2><ul><li><a href="superpowers/validation/phase-1a.html">Phase 1A validation and evidence</a></li><li><a href="superpowers/specs/2026-11-05-kubesift-design.md">Design specification (Markdown)</a></li><li><a href="superpowers/specs/2026-11-05-phase-1a-validation-design.md">Phase 1A validation specification (Markdown, approved)</a></li><li><a href="superpowers/plans/2026-11-05-phase-1a-validation.md">Phase 1A implementation plan (Markdown)</a></li><li><a href="superpowers/plans/README.md">Planning workflow and ownership</a></li></ul>
-<h2>Document ownership</h2><p>Product requirements own scope; architecture owns system boundaries; security owns safeguards; decisions own status/rationale; roadmap owns phase order; UX owns interaction behavior; engineering owns the development loop; <a href="engineering/gitworkflow.md">git workflow</a> owns branching and publication. Superpowers specs link these sources into a review package; detailed plans translate approved specifications into implementation tasks.</p><p>License: <a href="../LICENSE">Apache-2.0</a>. GitHub: <a href="https://github.com/sandjaie/KubeSift">sandjaie/KubeSift</a>. </p><footer>2026-11-05 · Draft for review · <a href="index.html">Planning index</a></footer></main></body></html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>KubeSift planning · KubeSift</title>
+    <link rel="stylesheet" href="assets/planning.css" />
+    <script src="assets/theme.js"></script>
+  </head>
+  <body>
+    <aside class="rail">
+      <a class="skip" href="#content">Skip to content</a
+      ><a class="mark" href="index.html"
+        ><span class="mark-name">KubeSift</span
+        ><span class="mark-sub">Planning</span></a
+      >
+      <h2>Index</h2>
+      <a href="index.html" aria-current="page">Planning index</a>
+      <h2>Product</h2>
+      <a href="product/requirements.html">Requirements</a
+      ><a href="product/feature-matrix.html">Capabilities</a>
+      <h2>Architecture</h2>
+      <a href="architecture/overview.html">Overview</a
+      ><a href="architecture/decisions.html">Decisions</a>
+      <h2>Safeguards</h2>
+      <a href="security/security-model.html">Security and AI</a>
+      <h2>Delivery</h2>
+      <a href="roadmap/roadmap.html">Roadmap</a
+      ><a href="ux/workflows.html">UX workflows</a
+      ><a href="ux/mocks/index.html">Mockups</a>
+      <h2>Engineering</h2>
+      <a href="engineering/engineering.html">Playbook</a
+      ><a href="engineering/local-development.html">Local development</a
+      ><a href="engineering/toolchain.html">Toolchain</a>
+      <h2>Working</h2>
+      <a href="superpowers/validation/phase-1a.html">Phase 1A validation</a>
+    </aside>
+    <header>
+      <a href="index.html">KubeSift / Planning</a>
+      <h1>KubeSift planning</h1>
+      <p>
+        Local-first · Multi-cluster · Operations first · AI-assisted
+        investigation
+      </p>
+    </header>
+    <main id="content">
+      <p class="callout">
+        Phase 1A local validation is complete with a proceed-with-follow-ups
+        recommendation; independent source and evidence review approved the
+        qualified local result. The packaged load and twenty cleanup cycles
+        completed, with bounded log loss during backgrounding and explicit
+        compatibility limits. See
+        <a href="superpowers/validation/phase-1a.html"
+          >the acceptance matrix and measurements</a
+        >. This status does not authorize Phase 1B, merge or release.
+      </p>
+      <h2>Read the plan</h2>
+      <div class="cards">
+        <a href="product/requirements.html"
+          ><strong>Product requirements</strong
+          ><span>Scope, users and acceptance journeys</span></a
+        ><a href="architecture/overview.html"
+          ><strong>Architecture</strong
+          ><span>Wails, Go, sessions and integration boundaries</span></a
+        ><a href="security/security-model.html"
+          ><strong>Security &amp; AI</strong
+          ><span>Credentials, operations and evidence sharing</span></a
+        ><a href="roadmap/roadmap.html"
+          ><strong>Roadmap</strong
+          ><span>Phase 1A–1G, UI-first sequence and Phase 2 planning</span></a
+        ><a href="architecture/decisions.html"
+          ><strong>Decisions</strong
+          ><span>Accepted direction and open details</span></a
+        ><a href="product/feature-matrix.html"
+          ><strong>Capabilities</strong
+          ><span>Coverage and unresolved parity questions</span></a
+        ><a href="ux/workflows.html"
+          ><strong>UX workflows</strong
+          ><span>Screen behavior and interaction requirements</span></a
+        ><a href="engineering/engineering.html"
+          ><strong>Engineering</strong
+          ><span>Branching, tests, review and release</span></a
+        >
+      </div>
+      <h2>Next phase planning</h2>
+      <p>
+        UI foundation is now Phase 1B, followed by the live explorer in 1C. Read
+        the <a href="roadmap/roadmap.html">expanded roadmap</a> and
+        <a href="superpowers/specs/2026-11-06-phase-1b-ui-design.md"
+          >approved UI specification</a
+        >. The
+        <a href="superpowers/plans/2026-11-06-phase-1b-ui-foundation.md"
+          >Phase 1B plan</a
+        >
+        has been implemented. Read the
+        <a href="superpowers/validation/phase-1b.html"
+          >actual UI validation results and screenshots</a
+        >. User visual review is pending; Phase 1C has not started.
+      </p>
+      <h2>Approved references</h2>
+      <ul>
+        <li><a href="ux/mocks/index.html">Dark/light workspace mockups</a></li>
+        <li>
+          <a href="engineering/local-development.html"
+            >Local development target and validation ownership</a
+          >
+        </li>
+      </ul>
+      <h2>Superpowers plans and reports</h2>
+      <ul>
+        <li>
+          <a href="superpowers/validation/phase-1a.html"
+            >Phase 1A validation and evidence</a
+          >
+        </li>
+        <li>
+          <a href="superpowers/specs/2026-11-05-kubesift-design.md"
+            >Design specification (Markdown)</a
+          >
+        </li>
+        <li>
+          <a href="superpowers/specs/2026-11-05-phase-1a-validation-design.md"
+            >Phase 1A validation specification (Markdown, approved)</a
+          >
+        </li>
+        <li>
+          <a href="superpowers/plans/2026-11-05-phase-1a-validation.md"
+            >Phase 1A implementation plan (Markdown)</a
+          >
+        </li>
+        <li>
+          <a href="superpowers/plans/README.md"
+            >Planning workflow and ownership</a
+          >
+        </li>
+      </ul>
+      <h2>Document ownership</h2>
+      <p>
+        Product requirements own scope; architecture owns system boundaries;
+        security owns safeguards; decisions own status/rationale; roadmap owns
+        phase order; UX owns interaction behavior; engineering owns the
+        development loop;
+        <a href="engineering/gitworkflow.md">git workflow</a> owns branching and
+        publication. Superpowers specs link these sources into a review package;
+        detailed plans translate approved specifications into implementation
+        tasks.
+      </p>
+      <p>
+        License: <a href="../LICENSE">Apache-2.0</a>. GitHub:
+        <a href="https://github.com/sandjaie/KubeSift">sandjaie/KubeSift</a>.
+      </p>
+      <footer>
+        2026-11-05 · Draft for review · <a href="index.html">Planning index</a>
+      </footer>
+    </main>
+  </body>
+</html>
