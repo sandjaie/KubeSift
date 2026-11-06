@@ -14,5 +14,7 @@ export {
 
 export type {
     FixtureTarget,
-    RuntimeStats
+    RuntimeStats,
+    ValidationSample,
+    ValidationSetup
 } from "./models.js";

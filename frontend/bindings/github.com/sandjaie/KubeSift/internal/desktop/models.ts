@@ -9,6 +9,9 @@ Important: Wails generates this glue; change Go contracts and regenerate rather 
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
+import * as config$0 from "../config/models.js";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
 import * as model$0 from "../model/models.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
@@ -26,4 +29,24 @@ export interface RuntimeStats {
     "goroutines": number;
     "heapAlloc": number;
     "heapSys": number;
+}
+
+export interface ValidationSample {
+    "phase": number;
+    "cycle": number;
+    "elapsedMs": number;
+    "listeners": number;
+    "receivedLogBytes": number;
+    "retainedLogBytes": number;
+    "trimmedLogBytes": number;
+    "maxHistoryBytes": number;
+    "terminalRttMs": number[] | null;
+    "forwardPort": number;
+    "sessionErrors": number;
+    "hostileContentSeen": boolean;
+}
+
+export interface ValidationSetup {
+    "contexts": config$0.ContextSummary[] | null;
+    "autorun": boolean;
 }

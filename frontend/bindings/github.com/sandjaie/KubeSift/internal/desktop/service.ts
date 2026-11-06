@@ -61,6 +61,13 @@ export function FixtureMarker(ref: model$0.ConnectionRef): $CancellablePromise<$
     return $Call.ByID(854518666, ref);
 }
 
+/**
+ * FrontendReady is called only after the renderer has completed Ping.
+ */
+export function FrontendReady(): $CancellablePromise<void> {
+    return $Call.ByID(2680015522);
+}
+
 export function ListPods(ref: model$0.ConnectionRef, $namespace: string): $CancellablePromise<kube$0.PodSummary[] | null> {
     return $Call.ByID(2659037247, ref, $namespace);
 }
@@ -79,6 +86,10 @@ export function Ping(): $CancellablePromise<string> {
 
 export function PrepareMarker(ref: model$0.ConnectionRef, value: string): $CancellablePromise<operation$0.Preview> {
     return $Call.ByID(529151800, ref, value);
+}
+
+export function RecordValidation(sample: $models.ValidationSample): $CancellablePromise<void> {
+    return $Call.ByID(3589341213, sample);
 }
 
 export function ResizeTerminal(ref: model$0.SessionRef, cols: number, rows: number): $CancellablePromise<void> {
@@ -123,6 +134,10 @@ export function TerminalInput(ref: model$0.SessionRef, data: string | null): $Ca
 
 export function TrustedHelpers(): $CancellablePromise<trust$0.Entry[] | null> {
     return $Call.ByID(1222629415);
+}
+
+export function ValidationConfiguration(): $CancellablePromise<$models.ValidationSetup> {
+    return $Call.ByID(2099387850);
 }
 
 export function WatchPods(target: model$0.Target): $CancellablePromise<model$0.SessionRef> {
