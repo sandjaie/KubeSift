@@ -2,14 +2,10 @@
 
 Updated 2026-11-06. Branch: `develop`.
 
-- Phase 1B merged by the user through PR #2 as `6fc4d83`. The user requested Phase 1C planning; no Phase 1C implementation is authorized.
-- Next: agree the live-explorer delivery approach, write/review the Phase 1C specification, then create its implementation plan for a separate session.
-- Current product UI uses synthetic previews; live connections and sessions remain in the retained validation interface. Phase 1C integrates actual data into the product workspace.
-- [Phase 1B validation](../../docs/superpowers/validation/phase-1b.html) retains the historical checks, screenshots and unrun cases. Merge does not turn unrun OS appearance, monitor disconnect or focus checks into passes.
-- [Phase 1A validation](../../docs/superpowers/validation/phase-1a.html) retains backgrounded WebKit log-loss and compatibility limitations.
-- [Roadmap](../../docs/roadmap/roadmap.html#phase-1c) owns scope and order. Detailed execution notes stay ignored under .superpowers/sdd/.
-
-- Phase 1C UI feedback captured: obvious cluster picker, no preview/validation entry points in normal product navigation, compact header and meaningful sidebar icons. Proposed integration in 1C.1; specification approval remains pending.
-- Local fixture expansion is planned only for kind-dev-local-a and kind-dev-local-b; see the local-development guide. No cluster resources were changed in this planning update.
-
-- Approved 1C.1 direction: cluster-list startup, existing kubeconfig context selection, setup/configuration only in Settings, no product validation/preview screens, compact header/sidebar icons, accurate connection/error indicators. Users perform cloud/OpenShift login externally; Retry reloads credentials. Full specification/task plan still pending.
+- Phase 1B merged through PR #2 as `6fc4d83`; historical results and unrun checks remain in its [validation report](../../docs/superpowers/validation/phase-1b.html).
+- [Phase 1C.1 specification](../../docs/superpowers/specs/2026-11-06-phase-1c1-cluster-connections-design.md) drafted from approved product direction; builder check found no important gaps. Written-spec approval is pending. No implementation performed.
+- Scope: cluster-list entry, Settings-only configuration, distinct connection states, external login/Retry, helper trust, independent live tabs, compact header/icons and basic real namespace/Pod listing. No product preview/validation screens.
+- Next: user reviews spec; after approval use Superpowers writing-plans for a separate implementation session. Keep tests minimal.
+- Local targets: only kind-dev-local-a and kind-dev-local-b. Fixture expansion is specified, not applied in planning.
+- Preserve [Phase 1A limitations](../../docs/superpowers/validation/phase-1a.html), including backgrounded WebKit log loss. No provider/platform compatibility claims beyond actual evidence.
+- [Roadmap](../../docs/roadmap/roadmap.html#phase-1c) owns increment order. Planning goes directly to develop; implementation uses a feature branch. Detailed execution notes remain ignored.
