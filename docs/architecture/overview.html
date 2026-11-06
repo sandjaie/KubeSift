@@ -93,8 +93,15 @@
       <p>
         Use Kubernetes kubeconfig loading semantics for default paths, KUBECONFIG and added files. Reuse configured tokens/certificates and
         trusted exec helpers rather than scraping cloud credential caches. Support helper-path configuration for Finder-launched apps; test
-        expiry, missing helpers, interactive login and reload. AKS may require a configured helper such as kubelogin. Honor configured
-        CA/proxy settings; surface VPN/network failures distinctly. See the security model for trust rules.
+        expiry, missing helpers, externally completed login and reload. AKS may require a configured helper such as kubelogin. Honor
+        configured CA/proxy settings; surface VPN/network failures distinctly. See the security model for trust rules.
+      </p>
+      <p>
+        Users own interactive login and renewal in their terminal. KubeSift does not run oc login, AWS SSO login or Azure login, accept
+        pasted login tokens, or start browser/device-login flows. Approved kubeconfig credential helpers may retrieve credentials for
+        selected connections; helpers requiring interaction fail with external-login guidance. Retry reloads the selected source and
+        re-evaluates trust and connection identity. Authentication errors, transport/TLS errors and resource-level authorization failures
+        remain distinct.
       </p>
       <h2>Resource access and operations</h2>
       <p>

@@ -34,35 +34,70 @@
       <p>Visual direction approved 2026-11-05 · <a href="mocks/index.html">Reference mockups</a></p>
     </header>
     <main id="content">
-      <h2 id="live-entry">Live workspace entry · Phase 1C feedback</h2>
+      <h2 id="live-entry">Cluster-first entry · approved Phase 1C.1 direction</h2>
       <p>
-        Feedback accepted on 2026-11-06: cluster selection must be immediately discoverable. Remove “Explore UI preview”, “Local validation
-        workspace”, “Retained live workspace” and the synthetic-data banner from the normal product journey. Testing and fixture controls
-        belong in an explicit development-only harness, not user navigation. Do not merely hide a preview warning while continuing to
-        display synthetic resources as live data.
+        Approved on 2026-11-06: perform the entry, header and sidebar refactoring in 1C.1. Replace the marketing home screen with a
+        searchable list of contexts loaded from the configured local kubeconfig sources. Selecting an existing context connects and opens
+        its workspace tab. Closing every tab returns to that list. Merely loading the list does not connect to clusters or execute
+        credential helpers.
       </p>
       <p>
-        The proposed 1C.1 layout uses two compact rows: a small brand, cluster tabs and an always-visible “Open cluster” control, with
-        Settings and Ask AI on the right; below, the active context/connection status, namespace selector and resource breadcrumb. Eliminate
-        the “Cluster workspace” subtitle, raw preview IDs and inline environment-label editor. Keep context and namespace visible at every
-        supported size; tab overflow must not hide Open cluster. Users edit environment labels in cluster settings, while tabs display them
-        compactly.
+        Adding kubeconfig sources and managing connection configuration belong in Settings, alongside helper trust, appearance and cluster
+        labels. The cluster list and tab-strip selector choose existing contexts; they are not add-cluster wizards. If no contexts are
+        found, show a concise empty state with a link to Settings. There is no separate “Local validation workspace”, “Retained live
+        workspace” or “Explore UI preview” in the product journey. Validation tools remain developer-only; never show fixture data as live
+        cluster data.
       </p>
       <p>
-        Open cluster presents searchable contexts from local kubeconfig sources, with source/endpoint detail to distinguish duplicate names.
-        Selecting a context explicitly connects and opens a tab; loading the list does not execute an untrusted credential helper. Preserve
-        helper review and actionable authentication errors in the product flow. When nothing is connected, show the same cluster picker as
-        the useful empty state, not a choice between development modes.
+        Use a compact header with brand, cluster tabs, an existing-context selector, Settings and Ask AI; below it keep the active context,
+        connection status, namespace and resource location visible. Remove slogans, the “Cluster workspace” subtitle, raw preview IDs,
+        development-phase labels and the inline environment-label editor. Environment labels are edited in Settings and displayed compactly
+        on tabs. Tab overflow must leave cluster selection accessible.
       </p>
       <p>
-        Use distinct, consistent resource icons in the left navigation instead of repeated diamond placeholders. Keep text labels,
-        selected/focus states and accessible names; decorative icons are hidden from assistive technology. Collapsed navigation needs
-        tooltips and accessible names. Do not use unexplained dots to represent unavailable resources.
+        Use distinct resource icons in left navigation rather than repeated diamonds. Keep text labels and visible selected/focus states.
+        Decorative icons are hidden from assistive technology; collapsed entries have tooltips and accessible names. Unexplained dots must
+        not stand for unavailable resource types.
+      </p>
+      <h3>Connection status and recovery</h3>
+      <ul>
+        <li>
+          Gray dot + “Not connected” before an attempt or after explicit disconnect; amber progress indicator + “Connecting” during an
+          attempt.
+        </li>
+        <li>
+          Green dot + “Connected” only after a successful authenticated API request for that explicit connection generation. Loading
+          kubeconfig or constructing a client is not proof of connection. Connected does not mean every workload is healthy or every
+          resource is permitted.
+        </li>
+        <li>
+          Red dot + a specific failure label when connection fails: “Authentication required”, “Unreachable”, “Certificate error” or a safe
+          generic “Connection failed” when the cause is unknown. Do not label every error as an expired token.
+        </li>
+        <li>
+          Permission denial for a particular resource shows “Access denied” on that view and leaves other accessible resources usable. If
+          the initial check is forbidden and no authenticated read has succeeded, show “Access restricted”; do not claim that credentials
+          expired or that the cluster is fully usable.
+        </li>
+        <li>
+          After loss of connectivity, mark displayed data stale and show the last successful check time. Do not retain a green indicator
+          indefinitely on the strength of an old read. Bound checks/retries; no background connections to unopened contexts.
+        </li>
+      </ul>
+      <p>
+        Users perform OpenShift, AWS and Azure login or renewal themselves in their own terminal. The app explains the observed failure and
+        offers Retry; it has no token-entry form, login command runner, embedded authentication terminal or browser/device-login flow. After
+        external renewal, Retry reloads the selected kubeconfig source and credentials, rechecks helper trust if configuration changed and
+        invalidates stale requests/targets as required by the architecture. Never replay commands or mutations when reconnecting.
       </p>
       <p>
-        These changes belong to the proposed first live-explorer increment, rather than a separate temporary UI milestone. Detailed layout
-        and connection behavior will be reviewed in the Phase 1C specification. Existing approved reference images remain historical visual
-        references; they do not override this feedback.
+        Configured, approved credential helpers may retrieve credentials for an explicitly selected connection under the existing trust
+        policy. This is separate from an app-managed interactive login. If a helper requires login or interaction, report that the user must
+        complete it externally. Do not silently open a browser or prompt for credentials.
+      </p>
+      <p>
+        The complete Phase 1C specification and task plan remain to be reviewed. Existing reference screenshots document the earlier visual
+        direction; this approved entry flow supersedes their development-mode navigation.
       </p>
       <h2>Application shell and cluster identity</h2>
       <p>

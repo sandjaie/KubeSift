@@ -11,3 +11,5 @@ Updated 2026-11-06. Branch: `develop`.
 
 - Phase 1C UI feedback captured: obvious cluster picker, no preview/validation entry points in normal product navigation, compact header and meaningful sidebar icons. Proposed integration in 1C.1; specification approval remains pending.
 - Local fixture expansion is planned only for kind-dev-local-a and kind-dev-local-b; see the local-development guide. No cluster resources were changed in this planning update.
+
+- Approved 1C.1 direction: cluster-list startup, existing kubeconfig context selection, setup/configuration only in Settings, no product validation/preview screens, compact header/sidebar icons, accurate connection/error indicators. Users perform cloud/OpenShift login externally; Retry reloads credentials. Full specification/task plan still pending.
