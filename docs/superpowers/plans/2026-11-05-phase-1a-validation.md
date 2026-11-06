@@ -39,7 +39,7 @@ No runtime installation, app scaffolding, cluster creation or code is performed 
 
 Use a `feature/phase-1a-validation` branch from `develop`. At the first implementation start, create `develop` from the latest reviewed planning commit if absent; never reset an existing integration branch. Follow the Git workflow's bootstrap exception for planning-only commits. Do not push, change rulesets, merge, tag or release unless authorized in the implementation session.
 
-Version selection is a bounded preflight decision, not an invitation to use floating dependencies: start with the official Wails v3 stable release and its required Go toolchain; use a supported Node LTS compatible with Vite, matching Kubernetes `client-go`/API/apimachinery versions, and a stable kind release with its published node image digest. Resolve exact versions/checksums once in Task 1, record them in `docs/validation/toolchain.html`, and commit `go.sum` and `package-lock.json`. Do not copy old alpha examples into a v3 stable project. If a required stable release cannot be verified, stop and report the discrepancy before scaffolding.
+Version selection is a bounded preflight decision, not an invitation to use floating dependencies: start with the official Wails v3 stable release and its required Go toolchain; use a supported Node LTS compatible with Vite, matching Kubernetes `client-go`/API/apimachinery versions, and a stable kind release with its published node image digest. Resolve exact versions/checksums once in Task 1, record them in `docs/engineering/toolchain.html`, and commit `go.sum` and `package-lock.json`. Do not copy old alpha examples into a v3 stable project. If a required stable release cannot be verified, stop and report the discrepancy before scaffolding.
 
 Sources for preflight: [Wails FAQ](https://wails.io/faq/), [Wails CLI](https://v3.wails.io/guides/cli), [kind quick start](https://kind.sigs.k8s.io/docs/user/quick-start/), [client-go compatibility](https://github.com/kubernetes/client-go#compatibility-matrix), [kubeconfig API](https://kubernetes.io/docs/reference/config-api/kubeconfig.v1/). Verify exact APIs against the pinned releases at execution time.
 
@@ -65,7 +65,7 @@ These files are future deliverables, not files created by this planning change. 
 | `scripts/local-clusters.sh`, `scripts/check.sh`, `scripts/check-docs.py`, `scripts/source-descriptions.py` | Explicit test-cluster lifecycle and repeatable checks |
 | `.gitignore`, `.husky/pre-commit`, `.github/workflows/check.yml`, `.github/pull_request_template.md` | Hygiene, hooks and checks |
 | `.cursor/rules/ponytail-lite.mdc`, `.agents/skills/{kubesift-code-review,kubesift-code-hygiene,release-this}/SKILL.md` | Repo-specific engineering handoff |
-| `docs/validation/toolchain.html`, `docs/validation/phase-1a.html`, `docs/validation/measurements.json` | Actual environment, results and measurements |
+| `docs/engineering/toolchain.html`, `docs/superpowers/validation/phase-1a.html`, `docs/superpowers/validation/measurements.json` | Actual environment, results and measurements |
 
 Add a concise `README.html` in each handwritten source directory per the engineering playbook (root, frontend/src, internal and its packages, tests/integration, tests/fixtures/helper, scripts). Do not duplicate module maps in generated bindings or dependencies. No README is required for an empty placeholder directory; do not create speculative directories.
 
@@ -96,7 +96,7 @@ Use a small typed error with `Code` and a safe `Message`: `invalid`, `forbidden`
 
 ## Task 1: Reproducible desktop shell and engineering checks
 
-**Files:** create root/build/frontend scaffolding, hook/check/CI/template/skill files and `docs/validation/toolchain.html` from the map. Modify engineering docs only if actual generated paths differ.
+**Files:** create root/build/frontend scaffolding, hook/check/CI/template/skill files and `docs/engineering/toolchain.html` from the map. Modify engineering docs only if actual generated paths differ.
 
 **Interfaces:** produce `internal/desktop.Service.Ping() string` returning `ready`; root npm workspace scripts `test`, `lint`, `typecheck`, `build`; `scripts/check.sh` for Go and frontend gates. The service is registered by `internal/desktop/app.go`; `main.go` only starts it.
 
@@ -203,7 +203,7 @@ Execution revision (2026-11-05, resumed after reporting the native refresh failu
 
 ## Task 7: Packaged acceptance, load evidence and handoff
 
-**Files:** create `docs/validation/phase-1a.html`, `measurements.json`; finalize `toolchain.html`, source README files and docs index. Modify adapters only for issues demonstrated by validation.
+**Files:** create `docs/superpowers/validation/phase-1a.html`, `measurements.json`; finalize `toolchain.html`, source README files and docs index. Modify adapters only for issues demonstrated by validation.
 
 **Interfaces:** the report records spec cases A01–A10 as pass/fail/not-run with command or manual procedure, expected/actual result and evidence reference. `measurements.json` records host summary, exact versions, elapsed durations, startup/latency samples, memory samples, session/queue/drop counts and limitations; no fabricated measurements.
 

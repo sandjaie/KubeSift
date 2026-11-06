@@ -8,3 +8,5 @@
 - Checks: Task 6 pinned-Node full gates, focused race and seven-part local integration passed. Native/linker diagnostic noise carried into Task 7; packaged/load acceptance pending.
 - Acceptance: incomplete. Packaged UI/resize/inert strings human-confirmed; partial load226.868s, prescribed rates not reached. User authorized current-branch push for handoff; no merge/release/Phase 1B.
 - Decisions: [D13 owned helper execution](../docs/architecture/decisions.html); activate sessions after UI registration and acknowledge terminal output.
+
+- Documentation: reports/handoff/evidence moved under docs/superpowers/; toolchain in docs/engineering/. Verified all current doc links, 49 raw evidence files byte-for-byte and git diff --check.

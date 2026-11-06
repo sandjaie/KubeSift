@@ -121,6 +121,6 @@ First assess batching, cancellation and flow control when performance is inadequ
 
 ## Deliverables for the implementation chat
 
-An approved execution plan, minimal integration source/tests/fixtures, reproducible local verification instructions and a validation report under docs/validation/ (HTML summary with synthetic machine-readable measurements as appropriate). The report must list actual versions, pass/fail/not-run cases, measured results, limitations and recommendation. Use synthetic evidence in the report.
+An approved execution plan, minimal integration source/tests/fixtures, reproducible local verification instructions and a validation report under docs/superpowers/validation/ (HTML summary with synthetic machine-readable measurements as appropriate). The report must list actual versions, pass/fail/not-run cases, measured results, limitations and recommendation. Use synthetic evidence in the report.
 
 The user approved this specification. Create and review its detailed Superpowers plan in this planning chat before implementation. The implementation chat should receive links to this spec, the approved plan, parent design and AGENTS.md; it should verify the checked-out commit and execute only Phase 1A. Decisions that change scope return to this planning chat rather than being silently expanded.

@@ -3,7 +3,7 @@
 ## Planning and scope
 - Read .superpowers/progress.md for current task status; keep it short and update it after verified progress. Do not put the shared progress.md in per-task scratch folders.
 - Start at docs/index.html. Product scope, architecture, safeguards, decisions, UX and roadmap each have an owning HTML document.
-- Markdown Superpowers specifications live in docs/superpowers/specs/; detailed execution plans belong in docs/superpowers/plans/.
+- Follow docs/engineering/engineering.html#documentation-layout for documentation placement. Superpowers specs, plans, handoffs, phase validation reports and retained synthetic evidence belong under docs/superpowers/. Local scratch belongs in ignored .superpowers/; only its shared progress.md is tracked.
 - Keep requirements in their owning document and link to them; avoid duplicating instructions across files.
 - Planning approval is not implementation authorization. Use Superpowers planning/spec workflows and begin code only when the user requests implementation.
 - Do not claim Lens/K9s parity without reviewed capability coverage and evidence.
