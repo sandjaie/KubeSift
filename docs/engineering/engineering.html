@@ -251,10 +251,10 @@ npx tsc --noEmit</code></pre>
       </p>
       <p>
         Start at <a href="../index.html">the planning index</a> for durable
-        status. For local execution state, read
-        <code>.superpowers/sdd/status.md</code> and the active plan ledger if
-        present. A fresh clone uses the permanent plan and phase validation
-        report. Update local status only after verification.
+        status. For a portable resume checkpoint, read tracked
+        <code>.superpowers/sdd/status.md</code>, then the local active plan
+        ledger if present. A fresh clone uses the permanent plan and phase
+        validation report. Update local status only after verification.
       </p>
       <h3 id="documentation-layout">Documentation layout</h3>
       <p>
@@ -279,8 +279,10 @@ npx tsc --noEmit</code></pre>
         <li>
           <code>.superpowers/sdd/</code>: ignored local execution ledgers,
           progress, checks, diffs, logs, reviews, handoffs, working notes and
-          temporary Markdown. Archive generated operational outputs here after
-          each run.
+          temporary Markdown. The concise <code>status.md</code> checkpoint is
+          tracked for resuming on another machine; it links permanent plans and
+          reports and contains no machine-local evidence. Archive generated
+          operational outputs here after each run.
         </li>
       </ul>
       <p>
