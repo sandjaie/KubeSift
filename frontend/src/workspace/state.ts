@@ -9,10 +9,12 @@ export type UiAction=
  |{type:'preview';tabs:TabView[];resources:ResourceView[]}|{type:'mode';mode:WorkspaceMode}|{type:'page';page:UiState['page']}
  |{type:'selectTab';id:string}|{type:'tab';id:string;patch:Partial<Omit<TabView,'id'>>}|{type:'closeTab';id:string}
  |{type:'review';action:'restart'|'delete';target:ResourceKey}|{type:'confirmReview';id:string}|{type:'dismissReview'}
- |{type:'startSession';kind:'logs'|'terminal'|'forward';target:ResourceKey}|{type:'stopSession';id:string}|{type:'dock';open:boolean}|{type:'cancelClose'}|{type:'confirmClose';id:string};
+ |{type:'startSession';kind:'logs'|'terminal'|'forward';target:ResourceKey}|{type:'stopSession';id:string}|{type:'dock';open:boolean}|{type:'cancelClose'}|{type:'confirmClose';id:string}|{type:'ai';open:boolean}|{type:'investigate';target:ResourceKey|null};
 export function initialUiState():UiState{return {mode:'welcome',page:'resources',activeTab:null,tabs:[],resources:[],sessions:[],review:null,dockOpen:true,aiOpen:false,investigation:null,notice:'',pendingClose:null};}
 export function reduceUi(state:UiState,action:UiAction):UiState{
  switch(action.type){
+ case 'ai':return {...state,aiOpen:action.open};
+ case 'investigate':{const resource=state.resources.find(r=>sameKey(r.key,action.target));if(action.target&&!resource)return state;return {...state,aiOpen:true,investigation:{id:crypto.randomUUID(),target:resource?{...resource.key}:null,collectedAt:'2026-11-06T10:42:03Z',evidenceIds:resource?[...resource.events.map(e=>e.id),...resource.logs.map(l=>l.id)]:[]}};}
  case 'preview':return state.tabs.length?{...state,mode:'preview',page:'resources'}:{...state,...action,mode:'preview',page:'resources',activeTab:action.tabs[0]?.id??null};
  case 'mode':return {...state,mode:action.mode,page:'resources'};
  case 'page':return {...state,page:action.page};
