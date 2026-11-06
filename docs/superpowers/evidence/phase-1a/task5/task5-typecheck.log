@@ -1,8 +1,0 @@
-
-> typecheck
-> npm run typecheck --workspace frontend
-
-
-> @kubesift/frontend@0.0.0 typecheck
-> tsc --noEmit
-

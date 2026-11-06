@@ -1,9 +1,9 @@
 # KubeSift repository instructions
 
 ## Planning and scope
-- Read .superpowers/progress.md for current task status; keep it short and update it after verified progress. Do not put the shared progress.md in per-task scratch folders.
-- Start at docs/index.html. Product scope, architecture, safeguards, decisions, UX and roadmap each have an owning HTML document.
-- Follow docs/engineering/engineering.html#documentation-layout for documentation placement. Superpowers specs, plans, handoffs, phase validation reports and retained synthetic evidence belong under docs/superpowers/. Local scratch belongs in ignored .superpowers/; only its shared progress.md is tracked.
+- Start at docs/index.html for durable status and document ownership. If local SDD state exists, read .superpowers/sdd/status.md and the active plan ledger; fresh clones use the permanent plan and validation report. Update local progress after verified work.
+- Product scope, architecture, safeguards, decisions, UX and roadmap each have an owning HTML document linked from the index.
+- Follow docs/engineering/engineering.html#documentation-layout for documentation placement. Permanent specs, plans, phase validation reports and narrowly curated proof belong under docs/superpowers/. All execution logs, progress, diffs, checks, handoffs, working notes and temporary Markdown belong in ignored .superpowers/sdd/. Archive generated operational outputs there after runs.
 - Keep requirements in their owning document and link to them; avoid duplicating instructions across files.
 - Planning approval is not implementation authorization. Use Superpowers planning/spec workflows and begin code only when the user requests implementation.
 - Do not claim Lens/K9s parity without reviewed capability coverage and evidence.

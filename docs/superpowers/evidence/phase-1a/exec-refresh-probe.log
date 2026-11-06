@@ -1,7 +1,0 @@
-=== RUN   TestRevocationBeforeNative401Refresh
-    kubesift-exec-refresh-probe_test.go:32: request guard checks=1, helper invocations=2, trust revoked=true
-    kubesift-exec-refresh-probe_test.go:33: helper executed after revocation: got 2 invocations, want 1
---- FAIL: TestRevocationBeforeNative401Refresh (0.43s)
-FAIL
-FAIL	command-line-arguments	0.946s
-FAIL

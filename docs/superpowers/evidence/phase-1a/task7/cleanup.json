@@ -1,9 +1,0 @@
-{
-  "forwardPort": 58323,
-  "listenerClosed": true,
-  "packagedProcessPresent": false,
-  "partialRendererElapsedMs": 226868,
-  "recordCount": 46,
-  "lastNativeSessionsBeforeShutdown": 8,
-  "completion": "interrupted-for-user-handoff"
-}

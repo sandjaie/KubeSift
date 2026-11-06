@@ -1,6 +1,0 @@
-=== RUN   TestHelperTrustLifecycle
-    guard_test.go:71: argument preview disclosed a value embedded in flag-like text
---- FAIL: TestHelperTrustLifecycle (0.01s)
-FAIL
-FAIL	github.com/sandjaie/KubeSift/internal/trust	1.474s
-FAIL

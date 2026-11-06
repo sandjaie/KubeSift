@@ -1,1 +1,0 @@
-5294f1d1a022c8b9bd0217825b7fe62118966f043d5a1c874c8dcb704a22f657  bin/kubesift.app/Contents/MacOS/kubesift

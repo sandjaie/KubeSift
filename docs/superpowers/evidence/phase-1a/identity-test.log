@@ -1,8 +1,0 @@
-=== RUN   TestLoadAndConnectionIdentity
-=== RUN   TestLoadAndConnectionIdentity/a
-=== RUN   TestLoadAndConnectionIdentity/b
---- PASS: TestLoadAndConnectionIdentity (0.01s)
-    --- PASS: TestLoadAndConnectionIdentity/a (0.00s)
-    --- PASS: TestLoadAndConnectionIdentity/b (0.00s)
-PASS
-ok  	github.com/sandjaie/KubeSift/internal/config	1.085s

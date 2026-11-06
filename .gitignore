@@ -5,5 +5,4 @@ bin/
 .DS_Store
 .task/
 internal/desktop/assets/dist/
-.superpowers/*
-!.superpowers/progress.md
+.superpowers/
