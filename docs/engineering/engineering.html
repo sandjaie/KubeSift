@@ -42,7 +42,7 @@ go vet ./...</code></pre>
 npx eslint .
 npx tsc --noEmit</code></pre>
 <p>Commit runs linters and formatters only. See <a href="#hooks">Hooks</a>. Tests are run by the agent, by <code>scripts/check.sh</code>, and by CI. <code>go vet</code> and <code>tsc --noEmit</code> stay review and pull-request checks.</p>
-<p>No coverage threshold. The frontend has no Prettier. Frontend lint is ESLint plus typescript-eslint recommended. Go formatting is <code>gofmt</code>, because the Go toolchain owns it. Planned CI runs the same lint, unit, vet and type checks for the modules that exist. Packaging, signing, notarizing, publishing, and version bumps stay in the release skill.</p>
+<p>No coverage threshold. The frontend has no Prettier. Frontend lint is ESLint plus typescript-eslint recommended. Go formatting is <code>gofmt</code>, because the Go toolchain owns it. CI runs on pull requests and pushes to develop, main and master; feature pushes wait for a pull request to avoid duplicate runs. Superseded runs are cancelled. Code changes run bindings generation, the frontend build and scripts/check.sh, with Go, npm and Wails CLI caches. Changes confined to docs/, AGENTS.md and root README files run source-description and documentation-link checks in the same check job. Unknown comparison bases receive the full checks. Packaging, signing, notarizing, publishing, and version bumps stay in the release skill.</p>
 
 <h3 id="hooks">Hooks</h3>
 <p>Husky installs the commit hook on <code>npm install</code> via the <code>prepare</code> script. There is no push hook.</p>
