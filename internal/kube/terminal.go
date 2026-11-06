@@ -74,7 +74,7 @@ func (s *Service) Exec(ctx context.Context, t model.Target) (model.SessionRef, e
 			return model.Fail("invalid", "Cannot create terminal client")
 		}
 		request := client.CoreV1().RESTClient().Post().Namespace(t.Namespace).Resource("pods").Name(t.Name).SubResource("exec").VersionedParams(&corev1.PodExecOptions{Container: t.Container, Command: []string{"/bin/sh"}, Stdin: true, Stdout: true, Stderr: false, TTY: true}, scheme.ParameterCodec)
-		executor, err := remotecommand.NewWebSocketExecutor(cfg, "GET", request.URL().String())
+		executor, err := remotecommand.NewSPDYExecutor(cfg, "POST", request.URL())
 		if err != nil {
 			return model.Fail("disconnected", "Cannot create terminal transport")
 		}

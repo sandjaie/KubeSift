@@ -12,6 +12,7 @@ import (
 	"github.com/sandjaie/KubeSift/internal/config"
 	"github.com/sandjaie/KubeSift/internal/model"
 	"io"
+	utilnet "k8s.io/apimachinery/pkg/util/net"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"net/http"
@@ -124,6 +125,8 @@ type guarded struct {
 	check func() error
 	owned context.Context
 }
+
+func (g guarded) WrappedRoundTripper() http.RoundTripper { return g.next }
 
 func (g guarded) RoundTrip(req *http.Request) (*http.Response, error) {
 	if err := g.check(); err != nil {
@@ -257,6 +260,11 @@ func (m *Manager) StreamConfig(ctx context.Context, ref model.ConnectionRef) (*r
 			return nil
 		}, e.ctx}
 	})
+	transport, err := rest.TransportFor(cfg)
+	if err != nil {
+		return nil, model.Fail("invalid", "Cannot create streaming transport")
+	}
+	context.AfterFunc(ctx, func() { utilnet.CloseIdleConnectionsFor(transport) })
 	return cfg, nil
 }
 
