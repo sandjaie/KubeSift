@@ -47,7 +47,7 @@
               "-c"
             ],
             "args": [
-              "httpd -f -p 8080 -h /www &\nhttp_pid=$!\ntrap \"kill $http_pid 2>/dev/null || true\" EXIT TERM INT\necho 100 > /tmp/rate\ncount=0\nwhile :; do\n rate=$(cat /tmp/rate); case \"$rate\" in 100|2000) ;; *) rate=100 ;; esac\n i=0; batch=$((rate / 100))\n while [ \"$i\" -lt \"$batch\" ]; do\n  printf \"%-255s\\n\" \"$MARKER synthetic-line-$count <script>window.__kubesiftInjected=true</script>\"\n  count=$((count+1)); i=$((i+1))\n done\n sleep 0.01\ndone"
+              "httpd -f -p 8080 -h /www &\nhttp_pid=$!\ntrap \"kill $http_pid 2>/dev/null || true\" EXIT TERM INT\necho 100 > /tmp/rate\ncount=0; remainder=0\nread -r up ignored < /proc/uptime\nlast=${up%.*}${up#*.}\nwhile :; do\n read -r rate < /tmp/rate; case \"$rate\" in 100|2000) ;; *) rate=100 ;; esac\n read -r up ignored < /proc/uptime\n now=${up%.*}${up#*.}; ticks=$((now-last)); last=$now\n [ \"$ticks\" -le 100 ] || ticks=100\n credit=$((ticks*rate+remainder)); batch=$((credit/100)); remainder=$((credit%100))\n i=0\n while [ \"$i\" -lt \"$batch\" ]; do\n  printf \"%-255s\\n\" \"$MARKER synthetic-line-$count <script>window.__kubesiftInjected=true</script>\"\n  count=$((count+1)); i=$((i+1))\n done\n sleep 0.01\ndone"
             ],
             "readinessProbe": {
               "httpGet": {
