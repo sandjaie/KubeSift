@@ -64,7 +64,9 @@ jobs:
         if: steps.changes.outputs.full == 'true' && steps.wails.outputs.cache-hit != 'true'
       - run: wails3 task bindings
         if: steps.changes.outputs.full == 'true'
-      - run: npm run build
+      # scripts/check.sh runs TypeScript checking; only bundle here.
+      - name: Build frontend assets
+        run: npm exec --workspace frontend -- vite build --mode production
         if: steps.changes.outputs.full == 'true'
       - run: scripts/check.sh
         if: steps.changes.outputs.full == 'true'
