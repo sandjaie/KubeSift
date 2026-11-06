@@ -1,8 +1,8 @@
 # Phase 1B — UI foundation
 
-**Status:** Draft for user review. No implementation authorization.
+**Status:** Approved by the user on 2026-11-06. Implementation will occur in a separate session using the detailed plan.
 **Date:** 2026-11-06
-**Prerequisite:** reviewed Phase 1A architecture gate before implementation; planning can proceed while its final task finishes.
+**Prerequisite:** Phase 1A local architecture validation is complete with reviewed follow-ups; retain the limits in its validation report.
 
 ## Intent
 
@@ -20,11 +20,11 @@ The [roadmap](../../roadmap/roadmap.html#phase-1b) owns sequence: UI is now 1B, 
 
 ## Approach and tradeoffs
 
-The user selected UI work before the next live explorer phase. This draft proposes a reusable shell with an explicit synthetic preview mode. It lets the user review real selection, resizing, keyboard and theme behavior before API expansion.
+The user selected UI work before the next live explorer phase. The approved approach uses a reusable shell with an explicit synthetic preview mode. It lets the user review real selection, resizing, keyboard and theme behavior before API expansion.
 
 A static mock-only milestone would not validate those interactions. Building the full live explorer together with the UI would combine the two milestones the user asked to separate. Replacing the existing validation services would discard tested integration work. The proposed approach keeps stable 1A service interfaces and isolates preview data from live adapters.
 
-**Proposal awaiting approval:** use synthetic previews to cover future screens, including AI, while connecting only already-validated services where that does not expand 1B. The detailed plan must list every live versus preview surface. Demo operation controls never invoke live mutation/session tools. Do not mix fixture rows into a live cluster list or silently substitute demo data on errors.
+**Approved boundary:** use synthetic previews to cover future screens, including AI, while connecting only already-validated services where that does not expand 1B. The detailed plan must list every live versus preview surface. Demo operation controls never invoke live mutation/session tools. Do not mix fixture rows into a live cluster list or silently substitute demo data on errors.
 
 ## Deliverable
 
@@ -93,6 +93,6 @@ Use existing type/build checks, a small state test covering tab/target isolation
 
 ## Approval and subsequent planning
 
-Review the proposed preview boundary and candidate window sizes. After approval, create the detailed Superpowers implementation plan here in the planning session or in a later planning session; no need to rediscover the design in the implementation session. The plan should sequence tokens/components → shell/state → resource/session previews → settings/adaptive behavior → AI preview → focused validation, with reviewable tasks and explicit files after inspecting the current tree.
+The user approved the preview boundary and candidate validation sizes on 2026-11-06. The [detailed implementation plan](../plans/2026-11-06-phase-1b-ui-foundation.md) is prepared for a separate implementation session; no implementation was performed in this planning session. The plan should sequence tokens/components → shell/state → resource/session previews → settings/adaptive behavior → AI preview → focused validation, with reviewable tasks and explicit files after inspecting the current tree.
 
 The implementation session must receive the approved spec, plan, current 1A report and engineering instructions. Completion produces a UI validation report with tested dimensions, screenshots, live/preview boundaries and remaining issues. User UI review is the handoff gate to 1C.
