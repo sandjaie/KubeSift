@@ -4,15 +4,134 @@ Used by: App for the active connection tab.
 Responsibilities: Render honest read states and preserve tab-owned filter and UID selection.
 Important: Broader kinds and operations remain unavailable; no synthetic fallback is used.
 */
-import {useState} from 'react';
-import type {ConnectionTab} from '../connections/model';
-import type {ConnectionsController} from '../connections/useConnections';
-import {visibleState} from '../connections/state';
-import {ResourceNavigation} from './ResourceNavigation';
-import {ResourceTable} from './ResourceTable';
-import {ResourceDetail} from './ResourceDetail';
-import {ResizeHandle} from '../ui/ResizeHandle';
-export function Workspace({tab,tabId,controller,navigationWidth,onResize,onCommitSize}:{tab:ConnectionTab;tabId:string;controller:ConnectionsController;navigationWidth:number;onResize:(n:number)=>void;onCommitSize:()=>void}){
- const [kind,setKind]=useState('Pod');const [navOpen,setNavOpen]=useState(true);const view=tab.view;const stale=tab.pollFailed||visibleState(view)!=='connected';const rows=(view?.pods??[]).filter(p=>p.name.toLowerCase().includes(tab.filter.toLowerCase()));const selected=view?.pods?.find(p=>p.uid===tab.selected);
- return <div className="workspace live-workspace"><div className="workspace-tools"><button aria-label="Toggle resource navigation" aria-expanded={navOpen} onClick={()=>setNavOpen(!navOpen)}>☰ Resources</button><span className="muted">{kind==='Pod'?'Workloads / Pods':kind}</span><span className="spacer"/><button disabled={!view?.ref||view.podLoading||!!view.problem&&view.problem.code!=='forbidden'} onClick={()=>void controller.readPods(tabId,tab.namespace)}>Refresh Pods</button></div><div className="explorer">{navOpen&&<><div className="navigation-host"><ResourceNavigation kind={kind} onSelect={k=>setKind(k)}/></div><ResizeHandle label="Navigation width" value={navigationWidth} min={160} max={320} onChange={onResize} onCommit={onCommitSize}/></>}{kind!=='Pod'?<div className="state-message"><h2>{kind}</h2><p>This resource view is not available yet. Choose Pods for live basic data. Cluster-scoped and all-namespace browsing are not available.</p></div>:<div className="resource-area"><section className="list-pane"><div className="pane-heading"><h2>Pods</h2><span className="muted">{rows.length} shown · {tab.namespace}</span></div><div className="filter-bar"><input aria-label="Filter Pods" placeholder="Filter Pods…" value={tab.filter} onChange={e=>controller.commit({type:'filter',key:tabId,filter:e.target.value})}/></div>{stale&&view?.pods?.length? <p className="warning table-hint">Retained data — connection evidence is not current.</p>:null}<p className="table-hint">↑ ↓ Select a Pod · Lists above 100 Pods require future pagination.</p>{view?.podLoading?<p className="state-message">Loading Pods…</p>:view?.podProblem?<p role="alert" className="state-message">{view.podProblem.message}</p>:rows.length?<ResourceTable rows={rows} selected={tab.selected} onSelect={uid=>controller.commit({type:'select',key:tabId,uid})}/>:<p className="state-message">{view?.state==='connected'?(tab.filter?'No matching Pods.':'No Pods in this namespace.'):'Connect or Retry to read Pods.'}</p>}</section><section className="detail-pane">{selected?<ResourceDetail pod={selected} context={tab.entry.context} source={tab.entry.sourceDisplay} stale={stale}/>:<div className="state-message"><h2>Select a Pod</h2><p>Inspect basic fields from this context and namespace.</p></div>}</section></div>}</div><details className="empty-sessions"><summary>Sessions · 0</summary><p>No active sessions. Product log, terminal and forwarding sessions are not available yet.</p></details></div>;
+import { useState } from "react";
+import type { ConnectionTab } from "../connections/model";
+import type { ConnectionsController } from "../connections/useConnections";
+import { visibleState } from "../connections/state";
+import { ResourceNavigation } from "./ResourceNavigation";
+import { ResourceTable } from "./ResourceTable";
+import { ResourceDetail } from "./ResourceDetail";
+import { ResizeHandle } from "../ui/ResizeHandle";
+export function Workspace({
+  tab,
+  tabId,
+  controller,
+  navigationWidth,
+  onResize,
+  onCommitSize,
+}: {
+  tab: ConnectionTab;
+  tabId: string;
+  controller: ConnectionsController;
+  navigationWidth: number;
+  onResize: (n: number) => void;
+  onCommitSize: () => void;
+}) {
+  const [kind, setKind] = useState("Pod");
+  const [navOpen, setNavOpen] = useState(true);
+  const view = tab.view;
+  const stale = tab.pollFailed || visibleState(view) !== "connected";
+  const rows = (view?.pods ?? []).filter((p) => p.name.toLowerCase().includes(tab.filter.toLowerCase()));
+  const selected = view?.pods?.find((p) => p.uid === tab.selected);
+  return (
+    <div className="workspace live-workspace">
+      <div className="workspace-tools">
+        <button aria-label="Toggle resource navigation" aria-expanded={navOpen} onClick={() => setNavOpen(!navOpen)}>
+          ☰ Resources
+        </button>
+        <span className="muted">{kind === "Pod" ? "Workloads / Pods" : kind}</span>
+        <span className="spacer" />
+        <button
+          disabled={!view?.ref || view.podLoading || (!!view.problem && view.problem.code !== "forbidden")}
+          onClick={() => void controller.readPods(tabId, tab.namespace)}
+        >
+          Refresh Pods
+        </button>
+      </div>
+      <div className="explorer">
+        {navOpen && (
+          <>
+            <div className="navigation-host">
+              <ResourceNavigation kind={kind} onSelect={(k) => setKind(k)} />
+            </div>
+            <ResizeHandle
+              label="Navigation width"
+              value={navigationWidth}
+              min={160}
+              max={320}
+              onChange={onResize}
+              onCommit={onCommitSize}
+            />
+          </>
+        )}
+        {kind !== "Pod" ? (
+          <div className="state-message">
+            <h2>{kind}</h2>
+            <p>
+              This resource view is not available yet. Choose Pods for live basic data. Cluster-scoped and all-namespace browsing are not
+              available.
+            </p>
+          </div>
+        ) : (
+          <div className="resource-area">
+            <section className="list-pane">
+              <div className="pane-heading">
+                <h2>Pods</h2>
+                <span className="muted">
+                  {rows.length} shown · {tab.namespace}
+                </span>
+              </div>
+              <div className="filter-bar">
+                <input
+                  aria-label="Filter Pods"
+                  placeholder="Filter Pods…"
+                  value={tab.filter}
+                  onChange={(e) => controller.commit({ type: "filter", key: tabId, filter: e.target.value })}
+                />
+              </div>
+              {stale && view?.pods?.length ? (
+                <p className="warning table-hint">Retained data — connection evidence is not current.</p>
+              ) : null}
+              <p className="table-hint">↑ ↓ Select a Pod · Lists above 100 Pods require future pagination.</p>
+              {view?.podLoading ? (
+                <p className="state-message">Loading Pods…</p>
+              ) : view?.podProblem ? (
+                <p role="alert" className="state-message">
+                  {view.podProblem.message}
+                </p>
+              ) : rows.length ? (
+                <ResourceTable
+                  rows={rows}
+                  selected={tab.selected}
+                  onSelect={(uid) => controller.commit({ type: "select", key: tabId, uid })}
+                />
+              ) : (
+                <p className="state-message">
+                  {view?.state === "connected"
+                    ? tab.filter
+                      ? "No matching Pods."
+                      : "No Pods in this namespace."
+                    : "Connect or Retry to read Pods."}
+                </p>
+              )}
+            </section>
+            <section className="detail-pane">
+              {selected ? (
+                <ResourceDetail pod={selected} context={tab.entry.context} source={tab.entry.sourceDisplay} stale={stale} />
+              ) : (
+                <div className="state-message">
+                  <h2>Select a Pod</h2>
+                  <p>Inspect basic fields from this context and namespace.</p>
+                </div>
+              )}
+            </section>
+          </div>
+        )}
+      </div>
+      <details className="empty-sessions">
+        <summary>Sessions · 0</summary>
+        <p>No active sessions. Product log, terminal and forwarding sessions are not available yet.</p>
+      </details>
+    </div>
+  );
 }

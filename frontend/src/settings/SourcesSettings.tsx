@@ -4,18 +4,169 @@ Used by: SettingsPage.
 Responsibilities: Add/reload sources and confirm affected tabs before disabling or removing them.
 Important: Removing a source never deletes kubeconfig; failed saves remain visible.
 */
-import {useState} from 'react';
-import {api,message,type CatalogEntry} from '../connections/api';
-import type {ConnectionsController} from '../connections/useConnections';
-import {tabKey} from '../connections/state';
-import {Modal} from '../ui/ReviewDialog';
-export function SourcesSettings({controller}:{controller:ConnectionsController}){
- const {state,refreshSources}=controller;const [path,setPath]=useState('');const [error,setError]=useState('');const [busy,setBusy]=useState(false);const [confirm,setConfirm]=useState<{title:string;affected:string[];run:()=>Promise<void>}|null>(null);
- async function run(action:()=>Promise<unknown>){setBusy(true);setError('');try{await action();await refreshSources();await controller.poll();}catch(e){setError(message(e));}finally{setBusy(false);}}
- function remove(source:string,disable:boolean){const affected=Object.entries(state.tabs).filter(([,t])=>t.entry.sourceId===source);const action=async()=>{if(disable)await api.SetSourceEnabled(source,false,true);else await api.RemoveSource(source,true);for(const [key]of affected)await controller.cancel(key);};setConfirm({title:disable?'Disable source?':'Remove source?',affected:affected.map(([,t])=>t.entry.context),run:action});}
- return <section><h2>Kubernetes sources</h2><p className="muted">Default uses KUBECONFIG from the desktop process, or ~/.kube/config. Shell startup files are not read. Additional paths stay independent; kubeconfig files are never edited.</p>{(error||state.error)&&<div role="alert" className="settings-error">{error||state.error}{state.error&&<button disabled={busy} onClick={()=>setConfirm({title:'Reset invalid source settings?',affected:[],run:async()=>{await api.ResetSources();}})}>Reset invalid source settings</button>}</div>}<form className="source-add" onSubmit={e=>{e.preventDefault();void run(async()=>{await api.AddSource(path.trim());setPath('');});}}><label>Kubeconfig path<input value={path} onChange={e=>setPath(e.target.value)} placeholder="/absolute/path/to/config" required/></label><button disabled={busy||!path.trim()}>Add source</button></form>
- {state.sources.map(s=><div className="source-row" key={s.sourceId}><strong>{s.sourceId==='default'?'Default source':s.path}</strong><p className="source-path">{s.path}</p><p>{s.enabled?`${s.contexts?.length??0} contexts`:'Disabled'}{s.problem&&` · ${s.problem.message}`}</p><div className="button-row"><button disabled={busy||!s.enabled} onClick={()=>void run(()=>api.ReloadSource(s.sourceId))}>Reload</button>{s.enabled?<button disabled={busy} onClick={()=>remove(s.sourceId,true)}>Disable</button>:<button disabled={busy} onClick={()=>void run(()=>api.SetSourceEnabled(s.sourceId,true,false))}>{s.sourceId==='default'?'Restore default source':'Enable'}</button>}{s.sourceId!=='default'&&<button disabled={busy} onClick={()=>remove(s.sourceId,false)}>Remove</button>}</div></div>)}
- <h2>Cluster labels</h2><p className="muted">Labels are your descriptions, not permissions. Confirm them again after endpoint or user identity changes.</p>{state.sources.flatMap(s=>s.contexts??[]).map(entry=><LabelEditor key={tabKey(entry)+entry.environment+entry.labelNeedsReview} entry={entry} busy={busy} onSave={label=>run(()=>api.SetLabel(entry.sourceId,entry.context,label))}/>)}
- {confirm&&<Modal title={confirm.title} onCancel={()=>setConfirm(null)}><p>{confirm.affected.length?`Close these contexts and their owned work: ${confirm.affected.join(', ')}`:'No open contexts are affected.'}</p><p>Kubeconfig files and appearance preferences are preserved. Reset preserves a copy of invalid source settings.</p><button disabled={busy} onClick={()=>{const action=confirm.run;setConfirm(null);void run(action);}}>Confirm</button></Modal>}</section>;
+import { useState } from "react";
+import { api, message, type CatalogEntry } from "../connections/api";
+import type { ConnectionsController } from "../connections/useConnections";
+import { tabKey } from "../connections/state";
+import { Modal } from "../ui/ReviewDialog";
+export function SourcesSettings({ controller }: { controller: ConnectionsController }) {
+  const { state, refreshSources } = controller;
+  const [path, setPath] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [confirm, setConfirm] = useState<{ title: string; affected: string[]; run: () => Promise<void> } | null>(null);
+  async function run(action: () => Promise<unknown>) {
+    setBusy(true);
+    setError("");
+    try {
+      await action();
+      await refreshSources();
+      await controller.poll();
+    } catch (e) {
+      setError(message(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+  function remove(source: string, disable: boolean) {
+    const affected = Object.entries(state.tabs).filter(([, t]) => t.entry.sourceId === source);
+    const action = async () => {
+      if (disable) await api.SetSourceEnabled(source, false, true);
+      else await api.RemoveSource(source, true);
+      for (const [key] of affected) await controller.cancel(key);
+    };
+    setConfirm({ title: disable ? "Disable source?" : "Remove source?", affected: affected.map(([, t]) => t.entry.context), run: action });
+  }
+  return (
+    <section>
+      <h2>Kubernetes sources</h2>
+      <p className="muted">
+        Default uses KUBECONFIG from the desktop process, or ~/.kube/config. Shell startup files are not read. Additional paths stay
+        independent; kubeconfig files are never edited.
+      </p>
+      {(error || state.error) && (
+        <div role="alert" className="settings-error">
+          {error || state.error}
+          {state.error && (
+            <button
+              disabled={busy}
+              onClick={() =>
+                setConfirm({
+                  title: "Reset invalid source settings?",
+                  affected: [],
+                  run: async () => {
+                    await api.ResetSources();
+                  },
+                })
+              }
+            >
+              Reset invalid source settings
+            </button>
+          )}
+        </div>
+      )}
+      <form
+        className="source-add"
+        onSubmit={(e) => {
+          e.preventDefault();
+          void run(async () => {
+            await api.AddSource(path.trim());
+            setPath("");
+          });
+        }}
+      >
+        <label>
+          Kubeconfig path
+          <input value={path} onChange={(e) => setPath(e.target.value)} placeholder="/absolute/path/to/config" required />
+        </label>
+        <button disabled={busy || !path.trim()}>Add source</button>
+      </form>
+      {state.sources.map((s) => (
+        <div className="source-row" key={s.sourceId}>
+          <strong>{s.sourceId === "default" ? "Default source" : s.path}</strong>
+          <p className="source-path">{s.path}</p>
+          <p>
+            {s.enabled ? `${s.contexts?.length ?? 0} contexts` : "Disabled"}
+            {s.problem && ` · ${s.problem.message}`}
+          </p>
+          <div className="button-row">
+            <button disabled={busy || !s.enabled} onClick={() => void run(() => api.ReloadSource(s.sourceId))}>
+              Reload
+            </button>
+            {s.enabled ? (
+              <button disabled={busy} onClick={() => remove(s.sourceId, true)}>
+                Disable
+              </button>
+            ) : (
+              <button disabled={busy} onClick={() => void run(() => api.SetSourceEnabled(s.sourceId, true, false))}>
+                {s.sourceId === "default" ? "Restore default source" : "Enable"}
+              </button>
+            )}
+            {s.sourceId !== "default" && (
+              <button disabled={busy} onClick={() => remove(s.sourceId, false)}>
+                Remove
+              </button>
+            )}
+          </div>
+        </div>
+      ))}
+      <h2>Cluster labels</h2>
+      <p className="muted">Labels are your descriptions, not permissions. Confirm them again after endpoint or user identity changes.</p>
+      {state.sources
+        .flatMap((s) => s.contexts ?? [])
+        .map((entry) => (
+          <LabelEditor
+            key={tabKey(entry) + entry.environment + entry.labelNeedsReview}
+            entry={entry}
+            busy={busy}
+            onSave={(label) => run(() => api.SetLabel(entry.sourceId, entry.context, label))}
+          />
+        ))}
+      {confirm && (
+        <Modal title={confirm.title} onCancel={() => setConfirm(null)}>
+          <p>
+            {confirm.affected.length
+              ? `Close these contexts and their owned work: ${confirm.affected.join(", ")}`
+              : "No open contexts are affected."}
+          </p>
+          <p>Kubeconfig files and appearance preferences are preserved. Reset preserves a copy of invalid source settings.</p>
+          <button
+            disabled={busy}
+            onClick={() => {
+              const action = confirm.run;
+              setConfirm(null);
+              void run(action);
+            }}
+          >
+            Confirm
+          </button>
+        </Modal>
+      )}
+    </section>
+  );
 }
-function LabelEditor({entry,busy,onSave}:{entry:CatalogEntry;busy:boolean;onSave:(label:string)=>Promise<void>}){const [label,setLabel]=useState(entry.environment);return <form className="label-row" onSubmit={e=>{e.preventDefault();void onSave(label);}}><label>{entry.context}<small className="source-path">{entry.sourceDisplay}</small><input aria-label={`Environment label for ${entry.context} from ${entry.sourceDisplay}`} maxLength={30} value={label} onChange={e=>setLabel(e.target.value)}/></label>{entry.labelNeedsReview&&<span className="warning">Identity changed — review label</span>}<button disabled={busy}>Save label</button></form>;}
+function LabelEditor({ entry, busy, onSave }: { entry: CatalogEntry; busy: boolean; onSave: (label: string) => Promise<void> }) {
+  const [label, setLabel] = useState(entry.environment);
+  return (
+    <form
+      className="label-row"
+      onSubmit={(e) => {
+        e.preventDefault();
+        void onSave(label);
+      }}
+    >
+      <label>
+        {entry.context}
+        <small className="source-path">{entry.sourceDisplay}</small>
+        <input
+          aria-label={`Environment label for ${entry.context} from ${entry.sourceDisplay}`}
+          maxLength={30}
+          value={label}
+          onChange={(e) => setLabel(e.target.value)}
+        />
+      </label>
+      {entry.labelNeedsReview && <span className="warning">Identity changed — review label</span>}
+      <button disabled={busy}>Save label</button>
+    </form>
+  );
+}
