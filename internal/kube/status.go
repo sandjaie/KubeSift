@@ -109,6 +109,7 @@ func checkClient(ctx context.Context, client kubernetes.Interface, ns, probe str
 		}
 	}
 	if probe == "namespaces" {
+		r.Problem = nsProblem
 		return r
 	}
 	list, e := client.CoreV1().Pods(ns).List(ctx, metav1.ListOptions{Limit: 100})

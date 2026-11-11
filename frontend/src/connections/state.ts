@@ -12,6 +12,7 @@ export type ConnectionsAction =
   | { type: "open"; entry: CatalogEntry; request: number }
   | { type: "focus"; key: string | null }
   | { type: "close"; key: string }
+  | { type: "entry"; key: string; request: number; entry: CatalogEntry }
   | { type: "attempt"; key: string; request: number; id: string }
   | { type: "snapshot"; key: string; epoch: number; view: ConnectionView }
   | { type: "failure"; key: string; request: number; error: string }
@@ -28,7 +29,16 @@ export function visibleState(view: ConnectionView | null, now = Date.now()): str
   return !Number.isFinite(stamp) || now - stamp > 90000 ? "stale" : "connected";
 }
 export function reduceConnections(s: ConnectionsState, a: ConnectionsAction): ConnectionsState {
-  if (a.type === "sources") return { ...s, sources: a.sources, error: "", loading: false };
+  if (a.type === "sources") {
+    const entries = new Map(a.sources.flatMap((source) => (source.contexts ?? []).map((entry) => [tabKey(entry), entry] as const)));
+    const tabs = Object.fromEntries(
+      Object.entries(s.tabs).map(([key, tab]) => [
+        key,
+        { ...tab, entry: entries.get(key) ?? { ...tab.entry, environment: "", labelNeedsReview: true } },
+      ]),
+    );
+    return { ...s, tabs, sources: a.sources, error: "", loading: false };
+  }
   if (a.type === "error") return { ...s, error: a.error, loading: false };
   if (a.type === "focus") return { ...s, active: a.key };
   if (a.type === "open") {
@@ -62,6 +72,10 @@ export function reduceConnections(s: ConnectionsState, a: ConnectionsAction): Co
   }
   let next = t;
   switch (a.type) {
+    case "entry":
+      if (t.request !== a.request) return s;
+      next = { ...t, entry: a.entry };
+      break;
     case "attempt":
       if (t.request !== a.request) return s;
       next = { ...t, attemptId: a.id };

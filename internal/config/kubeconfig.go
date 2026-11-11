@@ -37,6 +37,7 @@ type Snapshot struct {
 type Resolved struct {
 	source, name        string
 	sources, helperPath string
+	identity            string
 	cfg                 *rest.Config
 }
 
@@ -138,7 +139,19 @@ func (s *Snapshot) Resolve(name string) (Resolved, error) {
 	cfg.CertFile = ""
 	cfg.KeyFile = ""
 	cfg.Timeout = 0
-	return Resolved{source: s.source, name: name, cfg: rest.CopyConfig(cfg), sources: s.sources}, nil
+	// Hash serializable kubeconfig fields, including proxy/helper settings and loaded TLS files.
+	// rest.Config contains function fields and cannot be JSON encoded.
+	data, err := json.Marshal(struct {
+		Cluster              *api.Cluster
+		User                 *api.AuthInfo
+		Namespace            string
+		CA, Certificate, Key []byte
+	}{s.raw.Clusters[c.Cluster], s.raw.AuthInfos[c.AuthInfo], c.Namespace, cfg.CAData, cfg.CertData, cfg.KeyData})
+	if err != nil {
+		return Resolved{}, model.Fail("invalid", "Cannot resolve configuration identity")
+	}
+	sum := sha256.Sum256(data)
+	return Resolved{source: s.source, name: name, cfg: rest.CopyConfig(cfg), sources: s.sources, identity: hex.EncodeToString(sum[:])}, nil
 }
 
 // WithSource gives independently configured groups distinct connection/trust ownership.
@@ -150,9 +163,7 @@ func (r Resolved) Anonymous() bool {
 
 // SafetyIdentity stays native and includes credential changes; never persist it as a label.
 func (r Resolved) SafetyIdentity() string {
-	data, _ := json.Marshal(r.cfg)
-	sum := sha256.Sum256(data)
-	return hex.EncodeToString(sum[:])
+	return r.identity
 }
 func (s *Snapshot) SourceDisplay() string { return s.sources }
 

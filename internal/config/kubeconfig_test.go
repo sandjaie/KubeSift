@@ -207,3 +207,33 @@ contexts:
 	})
 
 }
+
+func TestSafetyIdentityTracksConfiguration(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config")
+	resolve := func(endpoint, token string) config.Resolved {
+		t.Helper()
+		data := fmt.Sprintf("apiVersion: v1\nkind: Config\nclusters:\n- name: c\n  cluster: {server: %s}\ncontexts:\n- name: c\n  context: {cluster: c, user: u}\nusers:\n- name: u\n  user: {token: %s}\n", endpoint, token)
+		if e := os.WriteFile(path, []byte(data), 0600); e != nil {
+			t.Fatal(e)
+		}
+		snapshot, e := config.Load([]string{path})
+		if e != nil {
+			t.Fatal(e)
+		}
+		r, e := snapshot.Resolve("c")
+		if e != nil {
+			t.Fatal(e)
+		}
+		return r
+	}
+	first := resolve("https://a.invalid", "first")
+	unchanged := resolve("https://a.invalid", "first")
+	endpoint := resolve("https://b.invalid", "first")
+	credential := resolve("https://a.invalid", "renewed")
+	if first.SafetyIdentity() != unchanged.SafetyIdentity() {
+		t.Fatal("unchanged config identity differs")
+	}
+	if first.SafetyIdentity() == endpoint.SafetyIdentity() || first.SafetyIdentity() == credential.SafetyIdentity() {
+		t.Fatal("changed endpoint or credentials share safety identity")
+	}
+}

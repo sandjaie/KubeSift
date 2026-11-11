@@ -37,7 +37,9 @@ func (p *heldProbe) ProbeAccess(ctx context.Context, _ model.ConnectionRef, ns, 
 	return kube.AccessResult{AuthorizedRead: true, Namespace: ns, Probe: "pods"}, nil
 }
 func TestConnectionLifecycle(t *testing.T) {
-	t.Run("external renewal and stale evidence", testRenewal)
+	t.Run("external renewal and stale namespace evidence", func(t *testing.T) { testRenewal(t, true) })
+	t.Run("external renewal and stale Pod evidence", func(t *testing.T) { testRenewal(t, false) })
+	t.Run("two pending contexts in one source", testPendingContexts)
 	dir := t.TempDir()
 	t.Setenv("KUBECONFIG", filepath.Join(dir, "missing"))
 	path := filepath.Join(dir, "a")
@@ -94,16 +96,24 @@ func TestConnectionLifecycle(t *testing.T) {
 }
 
 // Exercise actual guarded HTTP reads, with an injected scheduler rather than wall-clock waits.
-func testRenewal(t *testing.T) {
+func testRenewal(t *testing.T, namespaceListing bool) {
+	var lastPath atomic.Value
 	var expected atomic.Value
 	expected.Store("Bearer first")
 	var requests atomic.Int64
+	var forbidPods atomic.Bool
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requests.Add(1)
+		lastPath.Store(r.URL.Path)
 		w.Header().Set("Content-Type", "application/json")
 		if r.Header.Get("Authorization") != expected.Load().(string) {
 			w.WriteHeader(401)
 			fmt.Fprint(w, `{"kind":"Status","apiVersion":"v1","status":"Failure","reason":"Unauthorized","code":401}`)
+			return
+		}
+		if (!namespaceListing && r.URL.Path == "/api/v1/namespaces") || (forbidPods.Load() && r.URL.Path != "/api/v1/namespaces") {
+			w.WriteHeader(403)
+			fmt.Fprint(w, `{"kind":"Status","apiVersion":"v1","status":"Failure","reason":"Forbidden","code":403}`)
 			return
 		}
 		if r.URL.Path == "/api/v1/namespaces" {
@@ -171,6 +181,29 @@ func testRenewal(t *testing.T) {
 	if connected.LastSuccessAt == "" {
 		t.Fatal("resource evidence missing")
 	}
+
+	forbidPods.Store(true)
+	if _, e := c.ReadPods(*connected.Ref, "denied"); e != nil {
+		t.Fatal(e)
+	}
+	waitDenied := time.After(2 * time.Second)
+	for {
+		v, _ := c.GetAttempt(a.ID)
+		if !v.PodLoading {
+			if v.State != "connected" || v.PodProblem == nil || v.PodProblem.Code != "forbidden" {
+				t.Fatal("Pod 403 discarded established namespace evidence", v.State)
+			}
+			break
+		}
+		select {
+		case <-waitDenied:
+			t.Fatal("Pod read not completed")
+		default:
+			runtime.Gosched()
+		}
+	}
+	<-scheduled
+	forbidPods.Store(false)
 	c.mu.Lock()
 	now = now.Add(91 * time.Second)
 	c.mu.Unlock()
@@ -178,6 +211,9 @@ func testRenewal(t *testing.T) {
 	expected.Store("Bearer renewed")
 	ticks <- now
 	await(a, "auth_required")
+	if !namespaceListing && lastPath.Load() != "/api/v1/namespaces/default/pods" {
+		t.Fatal("periodic check lost successful namespace", lastPath.Load())
+	}
 	count := requests.Load()
 	c.GetAttempt(a.ID)
 	c.GetConnection(*connected.Ref)
@@ -191,6 +227,7 @@ func testRenewal(t *testing.T) {
 	}
 	write("renewed")
 	source, _ = c.ReloadSource(source.SourceID)
+	await(a, "stale")
 	b := start(source)
 	<-scheduled
 	replacement := await(b, "connected")
@@ -204,4 +241,55 @@ func testRenewal(t *testing.T) {
 		t.Fatal(e)
 	}
 	await(b, "not_connected")
+}
+
+func testPendingContexts(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("KUBECONFIG", filepath.Join(dir, "absent"))
+	path := filepath.Join(dir, "config")
+	data := `apiVersion: v1
+kind: Config
+clusters:
+- name: c
+  cluster: {server: "https://synthetic.invalid"}
+users:
+- name: u
+  user: {token: synthetic}
+contexts:
+- name: a
+  context: {cluster: c, user: u}
+- name: b
+  context: {cluster: c, user: u}
+`
+	os.WriteFile(path, []byte(data), 0600)
+	r, _ := sources.NewRegistry(filepath.Join(dir, "sources.json"))
+	source, _ := r.Add(path)
+	probe := &heldProbe{make(chan context.Context, 4), make(chan struct{}, 4)}
+	c := NewCoordinator(r, connection.NewManager(nil), probe)
+	defer c.Close()
+	a, e := c.StartConnection(ConnectRequest{SourceID: source.SourceID, SnapshotID: source.SnapshotID, Context: "a"})
+	if e != nil {
+		t.Fatal(e)
+	}
+	ctx := <-probe.entered
+	sources, _ := c.ListSources()
+	for _, item := range sources {
+		if item.SourceID == source.SourceID {
+			source = item
+		}
+	}
+	b, e := c.StartConnection(ConnectRequest{SourceID: source.SourceID, SnapshotID: source.SnapshotID, Context: "b"})
+	if e != nil {
+		probe.release <- struct{}{}
+		t.Fatal(e)
+	}
+	<-probe.entered
+	cancelled := ctx.Err() != nil
+	c.CancelAttempt(a.ID)
+	c.CancelAttempt(b.ID)
+	probe.release <- struct{}{}
+	probe.release <- struct{}{}
+	if cancelled {
+		t.Fatal("opening B cancelled unchanged pending A")
+	}
 }

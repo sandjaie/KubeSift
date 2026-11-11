@@ -59,3 +59,28 @@ it("isolates connection attempts and namespaces", () => {
   s = reduceConnections(s, { type: "snapshot", key: tabKey(a), epoch: 0, view });
   expect(s.tabs[tabKey(a)]).toBeUndefined();
 });
+
+it("refreshes open tab labels without losing namespace or filter", () => {
+  const entry: CatalogEntry = {
+    sourceId: "a",
+    snapshotId: "old",
+    context: "same",
+    namespace: "default",
+    endpoint: "https://a.invalid",
+    sourceDisplay: "a",
+    environment: "Production",
+    labelNeedsReview: false,
+  };
+  let s = reduceConnections(initialConnections(), { type: "open", entry, request: 1 });
+  const key = tabKey(entry);
+  s = reduceConnections(s, { type: "filter", key, filter: "keep" });
+  const changed = { ...entry, snapshotId: "fresh", endpoint: "https://b.invalid", environment: "", labelNeedsReview: true };
+  s = reduceConnections(s, {
+    type: "sources",
+    sources: [{ sourceId: "a", snapshotId: "fresh", path: "a", enabled: true, problem: null, contexts: [changed] }],
+  });
+  expect(s.tabs[key].entry.environment).toBe("");
+  expect(s.tabs[key].entry.labelNeedsReview).toBe(true);
+  expect(s.tabs[key].filter).toBe("keep");
+  expect(s.tabs[key].namespace).toBe("default");
+});

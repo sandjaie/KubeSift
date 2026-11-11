@@ -5,12 +5,14 @@ Responsibilities: Bind every response to its source, attempt and namespace epoch
 Important: Polls do not trigger Kubernetes reads, and closing during Start cancels the returned attempt.
 */
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createAttemptQueue } from "./attempts";
 import { api, message, type CatalogEntry } from "./api";
 import { initialConnections, reduceConnections, tabKey, type ConnectionsAction } from "./state";
 export function useConnections() {
   const [state, setState] = useState(initialConnections);
   const current = useRef(state);
   const serial = useRef(0);
+  const attempts = useRef(createAttemptQueue());
   const sourceEpoch = useRef(0);
   const mounted = useRef(true);
   const commit = useCallback((a: ConnectionsAction) => {
@@ -79,39 +81,45 @@ export function useConnections() {
     const request = ++serial.current;
     const ns = current.current.tabs[key]?.namespace ?? entry.namespace;
     commit({ type: "open", entry, request });
-    try {
-      let selected = entry;
-      if (retry) {
-        const old = await api.ReloadSource(entry.sourceId);
-        const fresh = old.contexts?.find((c) => c.context === entry.context);
-        if (!fresh) throw new Error(old.problem?.message ?? "Context is no longer in this source. Check Settings.");
-        selected = fresh;
+    return attempts.current(key, async () => {
+      if (!mounted.current || current.current.tabs[key]?.request !== request) return;
+      try {
+        let selected = entry;
+        if (retry) {
+          const old = await api.ReloadSource(entry.sourceId);
+          const fresh = old.contexts?.find((c) => c.context === entry.context);
+          if (!fresh) throw new Error(old.problem?.message ?? "Context is no longer in this source. Check Settings.");
+          selected = fresh;
+        }
+        if (current.current.tabs[key]?.request !== request) return;
+        commit({ type: "entry", key, request, entry: selected });
+        const attempt = await api.StartConnection({
+          sourceId: selected.sourceId,
+          snapshotId: selected.snapshotId,
+          context: selected.context,
+          namespace: ns,
+        });
+        if (!mounted.current || current.current.tabs[key]?.request !== request) {
+          await api.CancelAttempt(attempt.id);
+          return;
+        }
+        commit({ type: "attempt", key, request, id: attempt.id });
+        await poll();
+      } catch (e) {
+        commit({ type: "failure", key, request, error: message(e) });
+      } finally {
+        void refreshSources();
       }
-      if (current.current.tabs[key]?.request !== request) return;
-      const attempt = await api.StartConnection({
-        sourceId: selected.sourceId,
-        snapshotId: selected.snapshotId,
-        context: selected.context,
-        namespace: ns,
-      });
-      if (!mounted.current || current.current.tabs[key]?.request !== request) {
-        await api.CancelAttempt(attempt.id);
-        return;
-      }
-      commit({ type: "attempt", key, request, id: attempt.id });
-      await poll();
-    } catch (e) {
-      commit({ type: "failure", key, request, error: message(e) });
-    } finally {
-      void refreshSources();
-    }
+    });
   }
   async function cancel(key: string) {
     const t = current.current.tabs[key];
     commit({ type: "close", key });
     if (t?.attemptId) {
       try {
-        await api.CancelAttempt(t.attemptId);
+        await attempts.current(key, async () => {
+          await api.CancelAttempt(t.attemptId);
+        });
       } catch (e) {
         commit({ type: "error", error: message(e) });
       }

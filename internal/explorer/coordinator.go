@@ -47,15 +47,17 @@ type Probe interface {
 	ProbeAccess(context.Context, model.ConnectionRef, string, string) (kube.AccessResult, error)
 }
 type work struct {
-	view          ConnectionView
-	identity      string
-	ctx           context.Context
-	cancel        context.CancelFunc
-	requestCancel context.CancelFunc
-	epoch         uint64
-	probe         string
-	wake          chan struct{}
-	done          chan struct{}
+	view           ConnectionView
+	identity       string
+	ctx            context.Context
+	cancel         context.CancelFunc
+	requestCancel  context.CancelFunc
+	epoch          uint64
+	probe          string
+	probeNamespace string
+	readPods       bool
+	wake           chan struct{}
+	done           chan struct{}
 }
 type cached struct {
 	view ConnectionView
@@ -93,7 +95,7 @@ func (c *Coordinator) SetLabel(source, name, label string) error {
 	defer c.mu.Unlock()
 	return c.registry.SetLabel(source, name, label)
 }
-func (c *Coordinator) reload(id, except string) (sources.SourceResult, error) {
+func (c *Coordinator) reload(id, except string, invalidatePending bool) (sources.SourceResult, error) {
 	result, e := c.registry.Reload(id)
 	if e != nil {
 		return result, e
@@ -103,7 +105,7 @@ func (c *Coordinator) reload(id, except string) (sources.SourceResult, error) {
 			continue
 		}
 		r, e := c.registry.Resolve(id, result.SnapshotID, w.view.Context)
-		if e != nil || r.SafetyIdentity() != w.identity || w.view.State == "connecting" {
+		if e != nil || r.SafetyIdentity() != w.identity || (invalidatePending && w.view.State == "connecting") {
 			c.halt(w, "stale", &model.Problem{Code: "stale_target", Message: "Source changed or its pending selection was refreshed. Review the source, then Retry"})
 		}
 	}
@@ -112,7 +114,7 @@ func (c *Coordinator) reload(id, except string) (sources.SourceResult, error) {
 func (c *Coordinator) ReloadSource(id string) (sources.SourceResult, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	return c.reload(id, "")
+	return c.reload(id, "", true)
 }
 func (c *Coordinator) StartConnection(req ConnectRequest) (Attempt, error) {
 	c.mu.Lock()
@@ -137,7 +139,7 @@ func (c *Coordinator) StartConnection(req ConnectRequest) (Attempt, error) {
 		c.remember(old.view)
 		delete(c.active, k)
 	}
-	fresh, e := c.reload(req.SourceID, "")
+	fresh, e := c.reload(req.SourceID, "", false)
 	if e != nil {
 		return Attempt{}, e
 	}
@@ -223,6 +225,13 @@ func (c *Coordinator) run(w *work) {
 			return
 		}
 		epoch, ns, mode, ref := w.epoch, w.view.Namespace, w.probe, *w.view.Ref
+		readingPods := w.readPods
+		w.readPods = false
+		if readingPods {
+			mode = "pods"
+		} else if w.probeNamespace != "" {
+			ns = w.probeNamespace
+		}
 		request, cancel := context.WithTimeout(w.ctx, 30*time.Second)
 		w.requestCancel = cancel
 		c.mu.Unlock()
@@ -244,14 +253,21 @@ func (c *Coordinator) run(w *work) {
 			continue
 		}
 		w.view.PodLoading = false
+		// A denied view does not revoke evidence established by a different resource path.
+		if readingPods && problem != nil && problem.Code == "forbidden" && w.probe != "" {
+			problem = nil
+		}
 		w.view.Problem = problem
 		w.view.State = state(problem)
 		if result.AuthorizedRead && problem == nil {
 			w.view.LastSuccessAt = c.now().UTC().Format(time.RFC3339Nano)
-			w.probe = result.Probe
+			if w.probe == "" || !readingPods {
+				w.probe = result.Probe
+				w.probeNamespace = ns
+			}
 			delay = 30 * time.Second
 		}
-		if mode != "namespaces" {
+		if mode != "namespaces" && ns == w.view.Namespace {
 			w.view.Pods = result.Pods
 			w.view.PodProblem = result.PodProblem
 		}
@@ -405,7 +421,7 @@ func (c *Coordinator) ReadPods(ref model.ConnectionRef, ns string) (ConnectionVi
 	w.view.Pods = []kube.PodSummary{}
 	w.view.PodProblem = nil
 	w.view.PodLoading = true
-	w.probe = "pods"
+	w.readPods = true
 	if w.requestCancel != nil {
 		w.requestCancel()
 	}
@@ -468,7 +484,7 @@ func (c *Coordinator) ApproveHelper(g *trust.Guard, source, snapshot, name, revi
 	if e != nil {
 		return e
 	}
-	fresh, e := c.reload(source, "")
+	fresh, e := c.reload(source, "", true)
 	if e != nil {
 		return e
 	}
