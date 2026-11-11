@@ -9,3 +9,5 @@ Updated 2026-11-06. Branch: `develop`.
 - Local targets: only kind-dev-local-a and kind-dev-local-b. Fixture expansion is specified, not applied in planning.
 - Preserve [Phase 1A limitations](../../docs/superpowers/validation/phase-1a.html), including backgrounded WebKit log loss. No provider/platform compatibility claims beyond actual evidence.
 - [Roadmap](../../docs/roadmap/roadmap.html#phase-1c) owns increment order. Planning goes directly to develop; implementation uses a feature branch. Detailed execution notes remain ignored.
+
+- 2026-11-11: Updated release-this and the canonical Git release procedure; CONTRIBUTING.md links the process. Invocation authorizes completion after gates pass. Documentation/source-description checks passed; skill quick validator unavailable (missing PyYAML). No release performed.
