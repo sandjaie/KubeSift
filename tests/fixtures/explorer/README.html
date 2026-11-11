@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" /><title>Explorer fixtures</title>
+  <h1>Explorer fixtures</h1>
+  <p>
+    inventory.json defines 26 owned objects per cluster in kubesift-explorer plus the owned widgets.explorer.kubesift.dev CRD.
+    scripts/dev-clusters.sh --explorer checks collisions before applying to kind-dev-local-a/b only. It never replaces shop/billing or
+    creates clusters.
+  </p>
+  <p>
+    BusyBox 1.37.0 is pinned to sha256:a7dbc319b1438115a207e11930dc4bb3e643dcb3ec0bdd694bb36cd8fad289ec. Heartbeats occur every 30 seconds.
+    missing-image, missing-setting, failed-job and pending-storage are intentional failures; CronJob is suspended. Secrets are fake. A/B
+    same-pod markers are local-a and local-b. Broader fixtures do not imply product browsing coverage.
+  </p>
+  <p>
+    The pod-reader ServiceAccount can only get/list Pods in this namespace. Short-lived token kubeconfigs belong in ignored .local storage,
+    never here.
+  </p>
+</html>

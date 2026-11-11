@@ -25,6 +25,14 @@ if ! command -v kubectl >/dev/null 2>&1; then
   exit 1
 fi
 
+if [ "${1:-}" = "--explorer" ]; then
+  exec python3 "$(dirname "$0")/explorer-fixtures.py"
+fi
+if [ "$#" -gt 0 ]; then
+  echo "Usage: scripts/dev-clusters.sh [--explorer]" >&2
+  exit 1
+fi
+
 previous=$(kubectl config current-context 2>/dev/null || true)
 
 restore_context() {

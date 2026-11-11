@@ -8,12 +8,20 @@ package explorer
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/pem"
+	"fmt"
 	"github.com/sandjaie/KubeSift/internal/connection"
 	"github.com/sandjaie/KubeSift/internal/kube"
 	"github.com/sandjaie/KubeSift/internal/model"
+	"github.com/sandjaie/KubeSift/internal/session"
 	"github.com/sandjaie/KubeSift/internal/sources"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"runtime"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -29,6 +37,7 @@ func (p *heldProbe) ProbeAccess(ctx context.Context, _ model.ConnectionRef, ns, 
 	return kube.AccessResult{AuthorizedRead: true, Namespace: ns, Probe: "pods"}, nil
 }
 func TestConnectionLifecycle(t *testing.T) {
+	t.Run("external renewal and stale evidence", testRenewal)
 	dir := t.TempDir()
 	t.Setenv("KUBECONFIG", filepath.Join(dir, "missing"))
 	path := filepath.Join(dir, "a")
@@ -82,4 +91,117 @@ func TestConnectionLifecycle(t *testing.T) {
 	if _, e = c.GetAttempt(a.ID); e == nil {
 		t.Fatal("completed attempt did not expire")
 	}
+}
+
+// Exercise actual guarded HTTP reads, with an injected scheduler rather than wall-clock waits.
+func testRenewal(t *testing.T) {
+	var expected atomic.Value
+	expected.Store("Bearer first")
+	var requests atomic.Int64
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests.Add(1)
+		w.Header().Set("Content-Type", "application/json")
+		if r.Header.Get("Authorization") != expected.Load().(string) {
+			w.WriteHeader(401)
+			fmt.Fprint(w, `{"kind":"Status","apiVersion":"v1","status":"Failure","reason":"Unauthorized","code":401}`)
+			return
+		}
+		if r.URL.Path == "/api/v1/namespaces" {
+			fmt.Fprint(w, `{"kind":"NamespaceList","apiVersion":"v1","items":[{"metadata":{"name":"default"}}]}`)
+		} else {
+			fmt.Fprint(w, `{"kind":"PodList","apiVersion":"v1","items":[]}`)
+		}
+	}))
+	defer server.Close()
+	dir := t.TempDir()
+	t.Setenv("KUBECONFIG", filepath.Join(dir, "missing"))
+	path := filepath.Join(dir, "source")
+	write := func(token string) {
+		t.Helper()
+		data := fmt.Sprintf("apiVersion: v1\nkind: Config\nclusters:\n- name: c\n  cluster:\n    server: %s\n    certificate-authority-data: %s\ncontexts:\n- name: same\n  context:\n    cluster: c\n    user: u\nusers:\n- name: u\n  user:\n    token: %s\n", server.URL, base64.StdEncoding.EncodeToString(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: server.Certificate().Raw})), token)
+		if err := os.WriteFile(path, []byte(data), 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	write("first")
+	r, _ := sources.NewRegistry(filepath.Join(dir, "sources.json"))
+	source, _ := r.Add(path)
+	manager := connection.NewManager(nil)
+	sessions := session.NewManager(func(model.Event) {})
+	defer sessions.Close()
+	c := NewCoordinator(r, manager, kube.NewService(manager, sessions))
+	defer c.Close()
+	now := time.Date(2026, 11, 6, 0, 0, 0, 0, time.UTC)
+	c.now = func() time.Time { return now }
+	ticks := make(chan time.Time, 4)
+	scheduled := make(chan time.Duration, 4)
+	c.after = func(d time.Duration) <-chan time.Time { scheduled <- d; return ticks }
+	start := func(source sources.SourceResult) Attempt {
+		t.Helper()
+		a, e := c.StartConnection(ConnectRequest{SourceID: source.SourceID, SnapshotID: source.SnapshotID, Context: "same"})
+		if e != nil {
+			t.Fatal(e)
+		}
+		return a
+	}
+	await := func(a Attempt, want string) ConnectionView {
+		t.Helper()
+		deadline := time.After(3 * time.Second)
+		for {
+			v, e := c.GetAttempt(a.ID)
+			if e != nil {
+				t.Fatal(e)
+			}
+			if v.State == want {
+				return v
+			}
+			select {
+			case <-deadline:
+				t.Fatalf("wanted %s got %s %+v", want, v.State, v.Problem)
+			default:
+				runtime.Gosched()
+			}
+		}
+	}
+	a := start(source)
+	if d := <-scheduled; d != 30*time.Second {
+		t.Fatal("check cadence", d)
+	}
+	connected := await(a, "connected")
+	if connected.LastSuccessAt == "" {
+		t.Fatal("resource evidence missing")
+	}
+	c.mu.Lock()
+	now = now.Add(91 * time.Second)
+	c.mu.Unlock()
+	await(a, "stale")
+	expected.Store("Bearer renewed")
+	ticks <- now
+	await(a, "auth_required")
+	count := requests.Load()
+	c.GetAttempt(a.ID)
+	c.GetConnection(*connected.Ref)
+	if requests.Load() != count {
+		t.Fatal("snapshot polling made API requests")
+	}
+	select {
+	case <-scheduled:
+		t.Fatal("terminal auth failure scheduled retry")
+	default:
+	}
+	write("renewed")
+	source, _ = c.ReloadSource(source.SourceID)
+	b := start(source)
+	<-scheduled
+	replacement := await(b, "connected")
+	if *replacement.Ref == *connected.Ref {
+		t.Fatal("Retry reused old generation")
+	}
+	if manager.Validate(*connected.Ref) == nil {
+		t.Fatal("old reference survived Retry")
+	}
+	if e := c.Disconnect(*replacement.Ref); e != nil {
+		t.Fatal(e)
+	}
+	await(b, "not_connected")
 }

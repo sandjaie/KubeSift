@@ -8,4 +8,10 @@
     the recorded A ks-marker UID in the ownership journal; the original marker value is restored. Refresh expired one-hour tokens with the
     already-authorized fixture setup before rerunning.
   </p>
+  <p>
+    explorer_test.go is the opt-in two-cluster product scenario. Set KUBESIFT_EXPLORER_INTEGRATION=1 and an absolute
+    KUBESIFT_EXPLORER_CONFIG_DIR containing a.kubeconfig, b.kubeconfig and restricted.kubeconfig. Run go test -tags integration
+    ./tests/integration -run TestExplorerConnections. Configurations must refer only to the approved loopback clusters; credentials remain
+    ignored.
+  </p>
 </html>
