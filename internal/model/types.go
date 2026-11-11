@@ -46,3 +46,6 @@ func ID() string {
 	}
 	return hex.EncodeToString(b[:])
 }
+
+// Problem is the safe, structured failure shared by product snapshots.
+type Problem = Error
