@@ -49,7 +49,7 @@ func (r Resolved) FreezeHelper() (Resolved, error) {
 	}
 	path, err := exec.LookPath(r.cfg.ExecProvider.Command)
 	if err != nil {
-		return r, model.Fail("invalid", "Credential helper executable is missing")
+		return r, model.Fail("helper_missing", "Credential helper executable is missing")
 	}
 	path, err = filepath.Abs(path)
 	if err != nil {
