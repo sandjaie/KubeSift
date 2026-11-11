@@ -97,6 +97,18 @@ npx tsc --noEmit</code></pre>
         signing, notarizing, publishing, and version bumps stay in the release skill.
       </p>
 
+      <h3 id="authoring-style">Authoring and formatting</h3>
+      <p>
+        Write readable, consistently indented code and markup from the first edit, following the surrounding file and repository formatter
+        configuration. Use natural line breaks; do not deliberately write compact or minified source for a formatter to expand later. Aim to
+        match the configured style without spending time manually reproducing every formatter wrapping rule.
+      </p>
+      <p>
+        After editing, normalize only the changed files with the applicable repository tools: Prettier for HTML and frontend TypeScript,
+        ESLint for frontend lint fixes, and <code>gofmt</code> for Go. Review the resulting diff and avoid unrelated formatting churn. Keep
+        the commit hooks as the final safeguard; they do not replace readable authoring.
+      </p>
+
       <h3 id="hooks">Hooks</h3>
       <p>Husky installs the commit hook on <code>npm install</code> via the <code>prepare</code> script. There is no push hook.</p>
       <p><strong>pre-commit</strong> — <code>.husky/pre-commit</code> runs <code>npx lint-staged</code>.</p>
