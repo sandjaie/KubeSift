@@ -5,5 +5,7 @@ bin/
 .DS_Store
 .task/
 internal/desktop/assets/dist/
-.superpowers/
+.superpowers/*
+!.superpowers/sdd/
+.superpowers/sdd/*
 !.superpowers/sdd/status.md

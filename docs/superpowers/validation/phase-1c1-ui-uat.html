@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>UI UAT checklist · KubeSift</title>
+    <link rel="stylesheet" href="../../assets/planning.css" />
+    <script src="../../assets/theme.js"></script>
+    <style>
+      fieldset {
+        display: grid;
+        gap: 12px;
+        border: 1px solid var(--line, #aaa);
+        padding: 16px;
+      }
+      label {
+        display: block;
+        margin: 10px 0;
+      }
+      input,
+      select,
+      textarea {
+        font: inherit;
+        max-width: 100%;
+        padding: 7px;
+      }
+      textarea {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      .uat-case {
+        border-top: 1px solid #aaa;
+        padding-top: 12px;
+        margin-top: 22px;
+      }
+      button {
+        padding: 10px 16px;
+      }
+      pre {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+      @media print {
+        .rail,
+        button {
+          display: none !important;
+        }
+        body {
+          background: white !important;
+          color: black !important;
+        }
+        header,
+        main {
+          margin: 0 !important;
+          padding: 12px !important;
+          max-width: none !important;
+        }
+        section {
+          break-inside: avoid;
+        }
+        input,
+        select,
+        textarea {
+          color: black !important;
+          background: white !important;
+          border: 1px solid #888;
+        }
+        textarea {
+          min-height: 65px;
+        }
+        a {
+          color: black !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <aside class="rail">
+      <a class="skip" href="#content">Skip to content</a><a class="mark" href="../../index.html">KubeSift</a>
+      <h2>Phase 1C.1</h2>
+      <a href="phase-1c1.html">Technical validation</a><a href="phase-1c1-ui-uat.html">User UAT checklist</a
+      ><a href="../../engineering/local-development.html">Local development</a
+      ><a href="../specs/2026-11-06-phase-1c1-cluster-connections-design.md">Approved specification</a>
+    </aside>
+    <header>
+      <p>KubeSift / Phase 1C.1</p>
+      <h1>UI UAT checklist</h1>
+    </header>
+    <main id="content">
+      <p>
+        <strong>User acceptance is pending.</strong> Every result below starts Not tested. Agent checks are recorded separately in the
+        <a href="phase-1c1.html">technical report</a>; they do not fill this form.
+      </p>
+      <p>
+        <strong>This form does not save after reload.</strong> Print or save the completed checklist as PDF before closing. Do not enter
+        tokens, passwords, kubeconfig bodies or private provider details in notes.
+      </p>
+      <button type="button" onclick="window.print()">Print / save as PDF</button>
+      <h2>Launch and prerequisites</h2>
+      <ol>
+        <li>
+          Use only <code>kind-dev-local-a</code> and <code>kind-dev-local-b</code>. Start Docker if needed; preserve both clusters and
+          existing resources.
+        </li>
+        <li>
+          From the repository, build with <code>wails3 task package</code> if needed. In Finder open <code>bin/kubesift.app</code>. Quit an
+          older instance first.
+        </li>
+        <li>
+          The agent prepared <code>kubesift-explorer</code> on both local clusters. Discover actual Pods with the explicit commands below.
+          <code>same-pod</code> is the fixed A/B identity case; Job/Deployment names have generated suffixes.
+        </li>
+        <li>
+          If using a fresh machine, follow <a href="../../engineering/local-development.html">local development</a>, then run
+          <code>scripts/dev-clusters.sh --explorer</code>. That command only expands fixtures in the two existing clusters.
+        </li>
+      </ol>
+      <pre><code>kubectl --context kind-dev-local-a -n kubesift-explorer get pods
+kubectl --context kind-dev-local-b -n kubesift-explorer get pods
+
+# Optional isolated source copies; private files stay in ignored .local storage.
+mkdir -p .local/phase1c1
+umask 077
+kubectl --context kind-dev-local-a config view --minify --raw --flatten &gt; .local/phase1c1/uat-a.kubeconfig
+kubectl --context kind-dev-local-b config view --minify --raw --flatten &gt; .local/phase1c1/uat-b.kubeconfig</code></pre>
+      <p>
+        Add those absolute paths in Settings. Never publish their contents. Restricted helper/auth/capacity scenarios are optional unless a
+        safe fixture is prepared; mark Blocked and explain the missing prerequisite. Do not disrupt normal kubeconfig or real cloud
+        credentials.
+      </p>
+      <form>
+        <fieldset>
+          <legend>Test session</legend>
+          <label>Tester <input name="tester" /></label><label>Date <input name="date" type="date" /></label
+          ><label>App commit <input name="commit" placeholder="git rev-parse --short HEAD" /></label
+          ><label>macOS / display <input name="os" /></label>
+        </fieldset>
+        <section class="uat-case" id="uat-01">
+          <h2>UAT-01 · Startup and selection</h2>
+          <p><strong>Prerequisite:</strong> Packaged app; no previous instance running.</p>
+          <ol>
+            <li>Open bin/kubesift.app from Finder.</li>
+            <li>Confirm the Clusters page has 0 open contexts. Search for kind-dev-local.</li>
+            <li>If no contexts appear, choose Configure sources and add the isolated local kubeconfig path.</li>
+          </ol>
+          <p>
+            <strong>Expected:</strong> No preview, marketing or validation choices. Contexts are Not connected until selected. A missing
+            source has a visible error and Settings link.
+          </p>
+          <label
+            >Result
+            <select name="UAT-01-result">
+              <option selected>Not tested</option>
+              <option>Pass</option>
+              <option>Fail</option>
+              <option>Blocked</option>
+            </select></label
+          ><label>Notes <textarea name="UAT-01-notes" rows="3"></textarea></label>
+        </section>
+        <section class="uat-case" id="uat-02">
+          <h2>UAT-02 · Connect local A</h2>
+          <p><strong>Prerequisite:</strong> kind-dev-local-a available.</p>
+          <ol>
+            <li>Select kind-dev-local-a.</li>
+            <li>
+              Wait for Connecting to become Connected, then choose kubesift-explorer in Discovered namespace (or enter it in Manual
+              namespace and press Go).
+            </li>
+            <li>Select same-pod.</li>
+          </ol>
+          <p>
+            <strong>Expected:</strong> A single A tab shows real Pods. The detail identifies A / kubesift-explorer, a nonempty UID and
+            marker local-a. Failed fixture Pods do not turn the connection red.
+          </p>
+          <label
+            >Result
+            <select name="UAT-02-result">
+              <option selected>Not tested</option>
+              <option>Pass</option>
+              <option>Fail</option>
+              <option>Blocked</option>
+            </select></label
+          ><label>Notes <textarea name="UAT-02-notes" rows="3"></textarea></label>
+        </section>
+        <section class="uat-case" id="uat-03">
+          <h2>UAT-03 · Independent local B</h2>
+          <p><strong>Prerequisite:</strong> A is open on same-pod.</p>
+          <ol>
+            <li>Choose cluster, then kind-dev-local-b.</li>
+            <li>Set B to kubesift-explorer and select same-pod.</li>
+            <li>Switch between A and B.</li>
+          </ol>
+          <p>
+            <strong>Expected:</strong> B has marker local-b and a different UID. A retains its own namespace, filter and selection. Neither
+            tab displays the other cluster’s data.
+          </p>
+          <label
+            >Result
+            <select name="UAT-03-result">
+              <option selected>Not tested</option>
+              <option>Pass</option>
+              <option>Fail</option>
+              <option>Blocked</option>
+            </select></label
+          ><label>Notes <textarea name="UAT-03-notes" rows="3"></textarea></label>
+        </section>
+        <section class="uat-case" id="uat-04">
+          <h2>UAT-04 · Focus existing context</h2>
+          <p><strong>Prerequisite:</strong> Both tabs open.</p>
+          <ol>
+            <li>Choose cluster and select A again.</li>
+            <li>Repeat for B.</li>
+            <li>Enter Settings and return using Back to workspace.</li>
+          </ol>
+          <p>
+            <strong>Expected:</strong> Existing tabs gain focus without duplicates. Namespace and selected Pod remain associated with the
+            correct tab.
+          </p>
+          <label
+            >Result
+            <select name="UAT-04-result">
+              <option selected>Not tested</option>
+              <option>Pass</option>
+              <option>Fail</option>
+              <option>Blocked</option>
+            </select></label
+          ><label>Notes <textarea name="UAT-04-notes" rows="3"></textarea></label>
+        </section>
+        <section class="uat-case" id="uat-05">
+          <h2>UAT-05 · Discovered and manual namespaces</h2>
+          <p><strong>Prerequisite:</strong> A open; optional prepared restricted source for extra check.</p>
+          <ol>
+            <li>Use Discovered namespace to choose default.</li>
+            <li>Enter kubesift-explorer in Manual namespace and press Go.</li>
+            <li>Optional: connect the prepared pod-reader source, first in default, then kubesift-explorer.</li>
+          </ol>
+          <p>
+            <strong>Expected:</strong> One explicit namespace is visible. Allowed manual reads work. Restricted source cannot list
+            namespaces/default Pods but can read fixture Pods; it never claims a complete namespace inventory.
+          </p>
+          <label
+            >Result
+            <select name="UAT-05-result">
+              <option selected>Not tested</option>
+              <option>Pass</option>
+              <option>Fail</option>
+              <option>Blocked</option>
+            </select></label
+          ><label>Notes <textarea name="UAT-05-notes" rows="3"></textarea></label>
+        </section>
+        <section class="uat-case" id="uat-06">
+          <h2>UAT-06 · Filters, empty and bounded lists</h2>
+          <p><strong>Prerequisite:</strong> Fixture Pods loaded.</p>
+          <ol>
+            <li>Filter Pods with same-pod, then a name that does not exist.</li>
+            <li>Clear the filter and press Refresh Pods.</li>
+            <li>Optional only if a prepared namespace exceeds 100 Pods: open that namespace. Do not create a flood for UAT.</li>
+          </ol>
+          <p>
+            <strong>Expected:</strong> Filter affects only this tab. No match and empty namespace are honest empty states. Over-capacity
+            reads display the pagination limitation rather than a complete-looking truncated list.
+          </p>
+          <label
+            >Result
+            <select name="UAT-06-result">
+              <option selected>Not tested</option>
+              <option>Pass</option>
+              <option>Fail</option>
+              <option>Blocked</option>
+            </select></label
+          ><label>Notes <textarea name="UAT-06-notes" rows="3"></textarea></label>
+        </section>
+        <section class="uat-case" id="uat-07">
+          <h2>UAT-07 · Independent sources and source errors</h2>
+          <p><strong>Prerequisite:</strong> Use isolated copies prepared below, never edit normal kubeconfig.</p>
+          <ol>
+            <li>In Settings add an absolute isolated A kubeconfig path not already configured.</li>
+            <li>Add an intentionally nonexistent path under .local/phase1c1.</li>
+            <li>Reload the added valid source, then return to the cluster list.</li>
+          </ol>
+          <p>
+            <strong>Expected:</strong> Equal context names remain distinguishable by source. Missing source error remains visible; valid
+            sources and unrelated connections remain usable. No connection starts merely by adding or reloading.
+          </p>
+          <label
+            >Result
+            <select name="UAT-07-result">
+              <option selected>Not tested</option>
+              <option>Pass</option>
+              <option>Fail</option>
+              <option>Blocked</option>
+            </select></label
+          ><label>Notes <textarea name="UAT-07-notes" rows="3"></textarea></label>
+        </section>
+        <section class="uat-case" id="uat-08">
+          <h2>UAT-08 · Remove, disable and restore</h2>
+          <p><strong>Prerequisite:</strong> A disposable added source has an open tab.</p>
+          <ol>
+            <li>In Settings press Remove for that source. Check affected context names; press Cancel.</li>
+            <li>Repeat and Confirm. Verify its tab closes and its kubeconfig file remains on disk.</li>
+            <li>Re-add the file. Optionally Disable/Restore default source after checking affected tabs.</li>
+          </ol>
+          <p>
+            <strong>Expected:</strong> Cancel preserves connections. Confirm closes only the source-owned tabs/work. Removing metadata never
+            deletes kubeconfig; default loading can be restored.
+          </p>
+          <label
+            >Result
+            <select name="UAT-08-result">
+              <option selected>Not tested</option>
+              <option>Pass</option>
+              <option>Fail</option>
+              <option>Blocked</option>
+            </select></label
+          ><label>Notes <textarea name="UAT-08-notes" rows="3"></textarea></label>
+        </section>
+        <section class="uat-case" id="uat-09">
+          <h2>UAT-09 · Labels and target review</h2>
+          <p><strong>Prerequisite:</strong> A disposable added source available.</p>
+          <ol>
+            <li>In Settings save a label for A. Return to Clusters and its tab.</li>
+            <li>Restart and confirm the saved label.</li>
+            <li>
+              Optional safe fixture only: change endpoint or user identity in a separate disposable source copy, then Reload. Do not edit
+              real credentials.
+            </li>
+          </ol>
+          <p>
+            <strong>Expected:</strong> Only user-assigned labels appear. Changed identity suppresses the old label and requests review. A
+            stale target cannot silently continue as the newly configured cluster.
+          </p>
+          <label
+            >Result
+            <select name="UAT-09-result">
+              <option selected>Not tested</option>
+              <option>Pass</option>
+              <option>Fail</option>
+              <option>Blocked</option>
+            </select></label
+          ><label>Notes <textarea name="UAT-09-notes" rows="3"></textarea></label>
+        </section>
+        <section class="uat-case" id="uat-10">
+          <h2>UAT-10 · Appearance and restart</h2>
+          <p><strong>Prerequisite:</strong> Any page; note original appearance to restore afterward.</p>
+          <ol>
+            <li>In Settings select Light, Dark and System.</li>
+            <li>Choose your preferred appearance, quit and relaunch the packaged app.</li>
+            <li>Check the chosen appearance and source settings remain; reopen a context explicitly.</li>
+          </ol>
+          <p>
+            <strong>Expected:</strong> Saved appearance and existing pane preferences survive. Source operations do not reset appearance.
+            Connections are not automatically restored on launch.
+          </p>
+          <label
+            >Result
+            <select name="UAT-10-result">
+              <option selected>Not tested</option>
+              <option>Pass</option>
+              <option>Fail</option>
+              <option>Blocked</option>
+            </select></label
+          ><label>Notes <textarea name="UAT-10-notes" rows="3"></textarea></label>
+        </section>
+        <section class="uat-case" id="uat-11">
+          <h2>UAT-11 · Helper review and revocation — optional</h2>
+          <p>
+            <strong>Prerequisite:</strong> Requires a prepared harmless synthetic helper source. If absent, record Blocked; do not approve
+            unfamiliar or real cloud helpers for this test.
+          </p>
+          <ol>
+            <li>Select the synthetic helper context; open Review helper in Settings.</li>
+            <li>Inspect executable/source and redacted argument/environment fields. Approve helper, then explicitly Connect.</li>
+            <li>Revoke the test helper approval after reading its close-all warning.</li>
+          </ol>
+          <p>
+            <strong>Expected:</strong> Unapproved helper does not run. Approval itself does not connect. Explicit Connect runs only approved
+            retrieval. Revocation closes all owned connections and changes displayed states. Changed helper configuration requires review.
+          </p>
+          <label
+            >Result
+            <select name="UAT-11-result">
+              <option selected>Not tested</option>
+              <option>Pass</option>
+              <option>Fail</option>
+              <option>Blocked</option>
+            </select></label
+          ><label>Notes <textarea name="UAT-11-notes" rows="3"></textarea></label>
+        </section>
+        <section class="uat-case" id="uat-12">
+          <h2>UAT-12 · External renewal and Retry — optional</h2>
+          <p><strong>Prerequisite:</strong> Requires a controlled synthetic authentication fixture. If absent, record Blocked.</p>
+          <ol>
+            <li>Observe the prepared authentication rejection.</li>
+            <li>Have the fixture’s credential file renewed externally without changing a real account.</li>
+            <li>Press Retry in the affected tab.</li>
+          </ol>
+          <p>
+            <strong>Expected:</strong> Failure says authentication was rejected and directs external credential refresh. Retry rereads only
+            that source and replaces the old generation. No login terminal, token form or automatic command replay appears.
+          </p>
+          <label
+            >Result
+            <select name="UAT-12-result">
+              <option selected>Not tested</option>
+              <option>Pass</option>
+              <option>Fail</option>
+              <option>Blocked</option>
+            </select></label
+          ><label>Notes <textarea name="UAT-12-notes" rows="3"></textarea></label>
+        </section>
+        <section class="uat-case" id="uat-13">
+          <h2>UAT-13 · Connection failures and stale evidence — optional</h2>
+          <p><strong>Prerequisite:</strong> Use an isolated prepared unreachable/TLS fixture; healthy clusters stay running.</p>
+          <ol>
+            <li>Select the isolated failing context and read its status/explanation.</li>
+            <li>Cancel a pending connection, then ensure it does not reopen later.</li>
+            <li>For a prepared controlled transport loss, observe stale/error status after prior success.</li>
+          </ol>
+          <p>
+            <strong>Expected:</strong> Timeout, unreachable, certificate and authentication failures are distinct from forbidden resource
+            access. Old success cannot remain green indefinitely. No instruction to bypass TLS validation appears. Do not stop either shared
+            cluster.
+          </p>
+          <label
+            >Result
+            <select name="UAT-13-result">
+              <option selected>Not tested</option>
+              <option>Pass</option>
+              <option>Fail</option>
+              <option>Blocked</option>
+            </select></label
+          ><label>Notes <textarea name="UAT-13-notes" rows="3"></textarea></label>
+        </section>
+        <section class="uat-case" id="uat-14">
+          <h2>UAT-14 · Navigation, keyboard, layout and AI</h2>
+          <p><strong>Prerequisite:</strong> Healthy A/B tabs. Use your normal laptop or external-monitor window size.</p>
+          <ol>
+            <li>
+              Use arrow keys and Enter to select Pods. Press Cmd/Ctrl-K outside an input, then Escape. Try it while typing in Filter Pods.
+            </li>
+            <li>Visit a Soon resource destination and return to Pods.</li>
+            <li>Toggle Ask AI / Hide AI on Clusters, workspace and Settings; test its × close button.</li>
+          </ol>
+          <p>
+            <strong>Expected:</strong> Distinct icons have text. Selection/focus work; input typing does not launch commands. Unavailable
+            kinds show no synthetic data or operations. AI states future availability and sends no data. Explicit context/namespace remain
+            readable; no exhaustive resizing required.
+          </p>
+          <label
+            >Result
+            <select name="UAT-14-result">
+              <option selected>Not tested</option>
+              <option>Pass</option>
+              <option>Fail</option>
+              <option>Blocked</option>
+            </select></label
+          ><label>Notes <textarea name="UAT-14-notes" rows="3"></textarea></label>
+        </section>
+        <section class="uat-case" id="uat-15">
+          <h2>UAT-15 · Disconnect, close and relaunch</h2>
+          <p><strong>Prerequisite:</strong> Two open local tabs; no external contexts.</p>
+          <ol>
+            <li>Disconnect A and confirm B remains usable.</li>
+            <li>Close the final tab with ×; reopen a local context.</li>
+            <li>
+              Quit, relaunch and verify 0 open contexts. Remove disposable test sources and restore original appearance/default-source
+              preference.
+            </li>
+          </ol>
+          <p>
+            <strong>Expected:</strong> Closing the last tab returns to Clusters. No hidden validation workspace or sample sessions remain.
+            Reopening is an explicit fresh connection; no terminal input, mutations or forwards replay.
+          </p>
+          <label
+            >Result
+            <select name="UAT-15-result">
+              <option selected>Not tested</option>
+              <option>Pass</option>
+              <option>Fail</option>
+              <option>Blocked</option>
+            </select></label
+          ><label>Notes <textarea name="UAT-15-notes" rows="3"></textarea></label>
+        </section>
+      </form>
+      <p>
+        <strong>Acceptance decision:</strong> Record your UAT outcome in the PR. The PR remains unmerged until you accept it. This checklist
+        does not authorize Phase 1C.2 or a release.
+      </p>
+    </main>
+  </body>
+</html>

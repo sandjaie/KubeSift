@@ -92,11 +92,14 @@ kubectl --context kind-dev-local-a get nodes</code></pre>
         Missing Docker, kind, or kubectl stops the script. Running it again applies the workloads and does not delete the clusters. It
         restores the previous current context when that context still exists.
       </p>
-      <h2 id="explorer-fixtures">Phase 1C fixture expansion · planned</h2>
+      <h2 id="explorer-fixtures">Phase 1C.1 fixture expansion · installed locally</h2>
       <p>
         Use only kind-dev-local-a and kind-dev-local-b for new development and validation. The existing shop/billing inventory above is the
-        documented baseline, not a claim that the expanded fixtures have been installed. Add fixtures during the implementation session; do
-        not delete or replace existing resources to make a test pass.
+        preserved baseline. On 11 November 2026, <code>scripts/dev-clusters.sh --explorer</code> applied 26 owned manifest objects per
+        cluster (including namespace and CRD), twice successfully after collision checks. Each cluster showed nine resulting Pods. See the
+        <a href="../superpowers/validation/phase-1c1.html">actual validation results</a>. On a fresh machine create the two clusters with
+        the standard script first, then run its <code>--explorer</code> expansion. The expansion never creates clusters or replaces
+        unrelated objects.
       </p>
       <ul>
         <li>
@@ -126,11 +129,12 @@ kubectl --context kind-dev-local-a get nodes</code></pre>
         </li>
       </ul>
       <p>
-        Extend the existing development setup with idempotent, resource-bounded fixtures and report the actual inventory after applying
-        them. Discover existing namespaces, object names and storage capabilities before choosing additions. Keep cleanup limited to owned
-        fixtures and preserve both clusters. Cover representative discoverable resource types, not an installation of every possible
-        Kubernetes extension. OpenShift-specific resources require a supported OpenShift environment later; kind does not prove those
-        workflows.
+        The owned inventory is in <a href="../../tests/fixtures/explorer/README.html">tests/fixtures/explorer</a>. <code>same-pod</code> has
+        marker <code>local-a</code> or <code>local-b</code> in <code>kubesift-explorer</code>. Missing-setting/image Pods, failed Job and
+        Pending PVC are intentional; the CronJob is suspended. BusyBox is digest-pinned and log heartbeats occur every 30 seconds. Discover
+        existing namespaces, object names and storage capabilities before choosing additions. Keep cleanup limited to owned fixtures and
+        preserve both clusters. Cover representative discoverable resource types, not an installation of every possible Kubernetes
+        extension. OpenShift-specific resources require a supported OpenShift environment later; kind does not prove those workflows.
       </p>
       <h2>Phase 1A fixtures</h2>
       <p>
