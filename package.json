@@ -18,7 +18,10 @@
     "prettier": "3.6.2"
   },
   "lint-staged": {
-    "frontend/**/*.{ts,tsx}": "npm exec --workspace frontend -- eslint --fix",
+    "frontend/**/*.{ts,tsx}": [
+      "prettier --write",
+      "npm exec --workspace frontend -- eslint --fix"
+    ],
     "*.go": "gofmt -w",
     "*.html": "prettier --write"
   }

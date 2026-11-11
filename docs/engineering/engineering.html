@@ -88,13 +88,13 @@ npx tsc --noEmit</code></pre>
         <code>scripts/check.sh</code>, and by CI. <code>go vet</code> and <code>tsc --noEmit</code> stay review and pull-request checks.
       </p>
       <p>
-        No coverage threshold. Prettier formats HTML only. It does not format frontend TypeScript. Frontend lint is ESLint plus
-        typescript-eslint recommended. Go formatting is <code>gofmt</code>, because the Go toolchain owns it. CI runs on pull requests and
-        pushes to develop, main and master; feature pushes wait for a pull request to avoid duplicate runs. Superseded runs are cancelled.
-        Code changes run bindings generation, the Vite production bundle and scripts/check.sh, with Go, npm and Wails CLI caches. TypeScript
-        checking runs once through scripts/check.sh; local npm run build still includes it. Changes confined to docs/, AGENTS.md and root
-        README files run source-description and documentation-link checks in the same check job. Unknown comparison bases receive the full
-        checks. Packaging, signing, notarizing, publishing, and version bumps stay in the release skill.
+        No coverage threshold. Prettier formats HTML and frontend TypeScript. Frontend lint is ESLint plus typescript-eslint recommended. Go
+        formatting is <code>gofmt</code>, because the Go toolchain owns it. CI runs on pull requests and pushes to develop, main and master;
+        feature pushes wait for a pull request to avoid duplicate runs. Superseded runs are cancelled. Code changes run bindings generation,
+        the Vite production bundle and scripts/check.sh, with Go, npm and Wails CLI caches. TypeScript checking runs once through
+        scripts/check.sh; local npm run build still includes it. Changes confined to docs/, AGENTS.md and root README files run
+        source-description and documentation-link checks in the same check job. Unknown comparison bases receive the full checks. Packaging,
+        signing, notarizing, publishing, and version bumps stay in the release skill.
       </p>
 
       <h3 id="hooks">Hooks</h3>
@@ -102,9 +102,10 @@ npx tsc --noEmit</code></pre>
       <p><strong>pre-commit</strong> — <code>.husky/pre-commit</code> runs <code>npx lint-staged</code>.</p>
       <p>
         <code>lint-staged</code> looks only at files already staged for this commit. For <code>*.html</code> it runs
-        <code>prettier --write</code> with print width 140. For <code>*.ts</code> and <code>*.tsx</code> it runs <code>eslint --fix</code>.
-        For <code>*.go</code> it runs <code>gofmt -w</code>. Other files are left alone. When a fixer rewrites a file, lint-staged puts that
-        rewrite back into the index, so the commit contains the fixed code. A remaining lint error aborts the commit.
+        <code>prettier --write</code> with print width 140. For <code>*.ts</code> and <code>*.tsx</code> it runs
+        <code>prettier --write</code>, then <code>eslint --fix</code>. For <code>*.go</code> it runs <code>gofmt -w</code>. Other files are
+        left alone. When a fixer rewrites a file, lint-staged puts that rewrite back into the index, so the commit contains the fixed code.
+        A remaining lint error aborts the commit.
       </p>
       <p>
         This is the fast check. It does not lint the rest of the working tree, it does not typecheck, and it does not run tests. A commit of
@@ -122,7 +123,7 @@ npx tsc --noEmit</code></pre>
           template.
         </li>
         <li>
-          No coverage gate and no TypeScript format-on-commit. Fixture and credential-handling requirements are review rules. See the
+          No coverage gate. Fixture and credential-handling requirements are review rules. See the
           <a href="../security/security-model.html">security model</a>.
         </li>
       </ul>
@@ -386,8 +387,8 @@ npx tsc --noEmit</code></pre>
       <ul>
         <li><code>.cursor/rules/ponytail-lite.mdc</code>, always on.</li>
         <li>
-          Husky on commit only, as in <a href="#hooks">Hooks</a>: <code>lint-staged</code> with <code>prettier --write</code> for HTML,
-          <code>eslint --fix</code>, and <code>gofmt -w</code>. No test hook.
+          Husky on commit only, as in <a href="#hooks">Hooks</a>: <code>lint-staged</code> with <code>prettier --write</code> for HTML and
+          TypeScript, <code>eslint --fix</code>, and <code>gofmt -w</code>. No test hook.
         </li>
         <li>
           A pull request template whose validation box is the Go and frontend commands, plus a post-review section that lists findings as
