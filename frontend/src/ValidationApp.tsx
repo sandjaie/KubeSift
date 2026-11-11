@@ -1,6 +1,6 @@
 /*
 Purpose: Present the narrow Phase 1A validation workspace.
-Used by: The product shell after explicit local validation entry.
+Used by: The development-only validation.html entry.
 Responsibilities: Keep explicit target controls, helper trust, independent tabs and bounded sessions visible.
 Important: Render cluster strings as text, register session routes before activation and cancel backend work before removing UI state.
 */

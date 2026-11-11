@@ -1,8 +1,8 @@
 /*
-Purpose: Mount the React validation interface.
+Purpose: Mount the live product interface.
 Used by: The frontend HTML entry point and Vite.
 Responsibilities: Create the React root and render App with development lifecycle checks.
-Important: Normal startup never opens a connection; an explicit fixture-guarded validation environment may run the packaged profile.
+Important: Normal startup only loads local source summaries; development diagnostics have a separate entry.
 */
 import React from 'react'
 import ReactDOM from 'react-dom/client'

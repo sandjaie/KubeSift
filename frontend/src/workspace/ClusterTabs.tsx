@@ -1,8 +1,8 @@
 /*
-Purpose: Render independent synthetic cluster tabs.
-Used by: Workspace.
-Responsibilities: Select or request closure of an explicit tab.
-Important: Environment labels are user labels, not health assertions.
+Purpose: Render independently owned live context tabs.
+Used by: The compact product header.
+Responsibilities: Focus or close an explicit source/context identity with overflow scrolling.
+Important: Equal context names remain distinct through their source tooltips and keys.
 */
-import type {TabView} from './model';
-export function ClusterTabs({tabs,active,onSelect,onClose}:{tabs:TabView[];active:string|null;onSelect:(id:string)=>void;onClose:(id:string)=>void}){return <nav className="cluster-tabs" aria-label="Preview clusters">{tabs.map(t=><div className={t.id===active?'active':''} key={t.id}><button aria-pressed={t.id===active} onClick={()=>onSelect(t.id)}>{t.label} <span className="muted">[{t.environment||'Unlabeled'}]</span></button><button aria-label={`Close ${t.label}`} onClick={e=>{e.currentTarget.focus();onClose(t.id);}}>×</button></div>)}</nav>;}
+import type {ConnectionTab} from '../connections/model';
+export function ClusterTabs({tabs,active,onSelect,onClose}:{tabs:Record<string,ConnectionTab>;active:string|null;onSelect:(id:string)=>void;onClose:(id:string)=>void}){return <nav className="cluster-tabs" aria-label="Open clusters">{Object.entries(tabs).map(([key,t])=><div className={key===active?'active':''} key={key}><button title={t.entry.sourceDisplay} aria-pressed={key===active} onClick={()=>onSelect(key)}>{t.entry.context}{t.entry.environment&&<small> · {t.entry.environment}</small>}</button><button aria-label={`Close ${t.entry.context} from ${t.entry.sourceDisplay}`} onClick={()=>onClose(key)}>×</button></div>)}</nav>;}

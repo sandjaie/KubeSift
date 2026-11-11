@@ -13,6 +13,10 @@ it('isolates connection attempts and namespaces',()=>{
  s=reduceConnections(s,{type:'attempt',key:tabKey(a),request:1,id:'attempt-a'});
  const view:ConnectionView={sourceId:'a',context:'same',attemptId:'attempt-a',namespace:'alpha',state:'connected',ref:{id:'ref-a',generation:1},problem:null,lastSuccessAt:'2026-11-06T00:00:00Z',namespaces:['alpha'],namespacesComplete:true,pods:[],podProblem:null,podLoading:false};
  s=reduceConnections(s,{type:'snapshot',key:tabKey(a),epoch:0,view});expect(s.tabs[tabKey(a)].view?.ref?.id).toBe('ref-a');
+ s=reduceConnections(s,{type:'filter',key:tabKey(a),filter:'same'});s=reduceConnections(s,{type:'select',key:tabKey(a),uid:'uid-a'});
+ s=reduceConnections(s,{type:'focus',key:null});s=reduceConnections(s,{type:'focus',key:tabKey(b)});
+ expect(s.tabs[tabKey(a)].filter).toBe('same');expect(s.tabs[tabKey(a)].selected).toBe('uid-a');expect(s.tabs[tabKey(b)].selected).toBeNull();
+ s=reduceConnections(s,{type:'snapshot',key:tabKey(a),epoch:0,view});expect(s.tabs[tabKey(a)].selected).toBeNull();
  s=reduceConnections(s,{type:'namespace',key:tabKey(a),namespace:'new'});s=reduceConnections(s,{type:'snapshot',key:tabKey(a),epoch:0,view});expect(s.tabs[tabKey(a)].namespace).toBe('new');expect(s.tabs[tabKey(b)].namespace).toBe('beta');
  expect(visibleState(view,Date.parse('2026-11-06T00:02:00Z'))).toBe('stale');
  s=reduceConnections(s,{type:'close',key:tabKey(a)});s=reduceConnections(s,{type:'snapshot',key:tabKey(a),epoch:0,view});expect(s.tabs[tabKey(a)]).toBeUndefined();

@@ -25,7 +25,7 @@ export function reduceConnections(s:ConnectionsState,a:ConnectionsAction):Connec
  let next=t;
  switch(a.type){
  case 'attempt':if(t.request!==a.request)return s;next={...t,attemptId:a.id};break;
- case 'snapshot':if(t.attemptId!==a.view.attemptId||t.epoch!==a.epoch||t.namespace!==a.view.namespace||a.view.sourceId!==t.entry.sourceId||a.view.context!==t.entry.context)return s;if(t.view?.ref&&a.view.ref&&(t.view.ref.id!==a.view.ref.id||t.view.ref.generation!==a.view.ref.generation))return s;next={...t,view:a.view,error:'',pollFailed:false};break;
+ case 'snapshot':if(t.attemptId!==a.view.attemptId||t.epoch!==a.epoch||t.namespace!==a.view.namespace||a.view.sourceId!==t.entry.sourceId||a.view.context!==t.entry.context)return s;if(t.view?.ref&&a.view.ref&&(t.view.ref.id!==a.view.ref.id||t.view.ref.generation!==a.view.ref.generation))return s;next={...t,view:a.view,selected:a.view.podLoading?t.selected:(a.view.pods?.some(p=>p.uid===t.selected)?t.selected:null),error:'',pollFailed:false};break;
  case 'failure':if(t.request!==a.request)return s;next={...t,error:a.error};break;
  case 'pollFailed':if(t.attemptId!==a.attemptId)return s;next={...t,pollFailed:true};break;
  case 'namespace':next={...t,epoch:t.epoch+1,namespace:a.namespace,selected:null,view:t.view?{...t.view,namespace:a.namespace,pods:[],podLoading:true,podProblem:null}:null};break;
