@@ -1,14 +1,14 @@
 # KubeSift resumable status
 
-Updated 2026-11-11. Branch: `feature/phase-1c1-cluster-connections`. In-place branch from develop `4ef7a9b`; never create a worktree.
+Updated 2026-11-11. Branch: `develop`. In-place branch from develop `4ef7a9b`; never create a worktree.
 
-- [PR #3](https://github.com/sandjaie/KubeSift/pull/3) targets develop and remains open/unmerged pending user UAT. Validation handoff commit: `7208b22`.
+- [PR #3](https://github.com/sandjaie/KubeSift/pull/3) was squash-merged into develop as `395ef7a` on 2026-11-11 after explicit maintainer authorization; exact-head CI passed. Validation handoff commit: `7208b22`.
 - Phase 1C.1 implemented through application commit `e23c02e`; seven-task [plan](../../docs/superpowers/plans/2026-11-06-phase-1c1-cluster-connections.md).
 - Full repository checks, focused race tests, two-cluster integration and final macOS package passed. Five independent review findings fixed with focused regressions.
 - [Technical report and screenshots](../../docs/superpowers/validation/phase-1c1.html) record actual checks, artifact hash, toolchain difference and limitations.
-- [UI UAT checklist](../../docs/superpowers/validation/phase-1c1-ui-uat.html): all user results Not tested. [Agent walkthrough](../../docs/superpowers/validation/phase-1c1-agent-uat.html) on 2026-11-11 passed 12 core/UI cases; 3 optional cases blocked, with further optional subcases untested. Next: user acceptance; print/save completed form. Keep PR unmerged pending acceptance. No Phase 1C.2 or release.
+- [UI UAT checklist](../../docs/superpowers/validation/phase-1c1-ui-uat.html): all user results Not tested. [Agent walkthrough](../../docs/superpowers/validation/phase-1c1-agent-uat.html) on 2026-11-11 passed 12 core/UI cases; 3 optional cases blocked, with further optional subcases untested. Maintainer authorized merge with these coverage limits disclosed; the separate user form remains blank. No Phase 1C.2 or release.
 - Only kind-dev-local-a/b used. Fixture expansion installed in kubesift-explorer; existing shop/billing preserved. Private kubeconfigs stay ignored locally. Fresh laptop: standard cluster setup, then `scripts/dev-clusters.sh --explorer`.
-- Temporary app sources removed after screenshots, default source restored, original Light appearance restored; app exited. Start `bin/kubesift.app` (build with `wails3 task package` if absent), search kind-dev-local and connect explicitly.
+- Final agent UAT left the app on Clusters with zero connections, original Dark appearance and default source enabled; temporary source entries removed. Start `bin/kubesift.app` (build with `wails3 task package` if absent), search kind-dev-local and connect explicitly.
 - Preserve [Phase 1A limitations](../../docs/superpowers/validation/phase-1a.html), including backgrounded WebKit log loss. No cloud compatibility or distribution-readiness claim.
 - Detailed execution/review logs remain ignored under .superpowers/sdd/2026-11-06-phase-1c1-cluster-connections/. This concise checkpoint is tracked for another laptop.
 
