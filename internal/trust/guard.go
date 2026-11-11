@@ -59,7 +59,7 @@ func Preview(r config.Resolved) (PreviewRecord, error) {
 	helper := cfg.ExecProvider
 	path, err := exec.LookPath(helper.Command)
 	if err != nil {
-		return PreviewRecord{}, model.Fail("invalid", "Credential helper executable is missing")
+		return PreviewRecord{}, model.Fail("helper_missing", "Credential helper executable is missing")
 	}
 	path, err = filepath.Abs(path)
 	if err != nil {
@@ -182,7 +182,7 @@ func (g *Guard) Authenticate(ctx context.Context, r config.Resolved) (*rest.Conf
 		return nil, model.Fail("invalid", "Unsupported credential protocol")
 	}
 	if helper.InteractiveMode == "Always" {
-		return nil, model.Fail("invalid", "Interactive credential helpers require an external sign-in")
+		return nil, model.Fail("external_login_required", "Refresh credentials in your terminal, then Retry; interactive helpers are unsupported")
 	}
 	info := map[string]any{"apiVersion": helper.APIVersion, "kind": "ExecCredential", "spec": map[string]any{"interactive": false}}
 	if helper.ProvideClusterInfo {
@@ -249,7 +249,7 @@ func (g *Guard) Authenticate(ctx context.Context, r config.Resolved) (*rest.Conf
 		if runCtx.Err() != nil {
 			return nil, model.Fail("cancelled", "Credential request cancelled or timed out")
 		}
-		return nil, model.Fail("forbidden", "Credential helper failed")
+		return nil, model.Fail("external_login_required", "Credential helper failed. Refresh credentials in your terminal, then Retry")
 	}
 	if len(data) > 1<<20 {
 		return nil, model.Fail("invalid", "Credential response too large")

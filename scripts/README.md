@@ -13,3 +13,5 @@
 `measure-packaged-selftest.py` injects restoration and process-stop failures using synthetic objects. It never launches the app or accesses a cluster. Its generated evidence remains ignored in `.local/phase1a`.
 
 `dev-clusters.sh` creates `dev-local-a` and `dev-local-b` when absent and applies their sample workloads. This validation does not delete those clusters.
+
+`dev-clusters.sh --explorer` calls `explorer-fixtures.py` to collision-check and apply the bounded explorer inventory only to the existing two local clusters, without reapplying shop/billing.

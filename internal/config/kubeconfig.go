@@ -10,6 +10,7 @@ package config
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"github.com/sandjaie/KubeSift/internal/model"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -36,6 +37,7 @@ type Snapshot struct {
 type Resolved struct {
 	source, name        string
 	sources, helperPath string
+	identity            string
 	cfg                 *rest.Config
 }
 
@@ -48,7 +50,7 @@ func (r Resolved) FreezeHelper() (Resolved, error) {
 	}
 	path, err := exec.LookPath(r.cfg.ExecProvider.Command)
 	if err != nil {
-		return r, model.Fail("invalid", "Credential helper executable is missing")
+		return r, model.Fail("helper_missing", "Credential helper executable is missing")
 	}
 	path, err = filepath.Abs(path)
 	if err != nil {
@@ -137,5 +139,45 @@ func (s *Snapshot) Resolve(name string) (Resolved, error) {
 	cfg.CertFile = ""
 	cfg.KeyFile = ""
 	cfg.Timeout = 0
-	return Resolved{source: s.source, name: name, cfg: rest.CopyConfig(cfg), sources: s.sources}, nil
+	// Hash serializable kubeconfig fields, including proxy/helper settings and loaded TLS files.
+	// rest.Config contains function fields and cannot be JSON encoded.
+	data, err := json.Marshal(struct {
+		Cluster              *api.Cluster
+		User                 *api.AuthInfo
+		Namespace            string
+		CA, Certificate, Key []byte
+	}{s.raw.Clusters[c.Cluster], s.raw.AuthInfos[c.AuthInfo], c.Namespace, cfg.CAData, cfg.CertData, cfg.KeyData})
+	if err != nil {
+		return Resolved{}, model.Fail("invalid", "Cannot resolve configuration identity")
+	}
+	sum := sha256.Sum256(data)
+	return Resolved{source: s.source, name: name, cfg: rest.CopyConfig(cfg), sources: s.sources, identity: hex.EncodeToString(sum[:])}, nil
+}
+
+// WithSource gives independently configured groups distinct connection/trust ownership.
+func (r Resolved) WithSource(id string) Resolved { r.source = id; return r }
+func (r Resolved) Anonymous() bool {
+	c := r.cfg
+	return c.ExecProvider == nil && c.BearerToken == "" && c.BearerTokenFile == "" && len(c.CertData) == 0 && c.Username == ""
+}
+
+// SafetyIdentity stays native and includes credential changes; never persist it as a label.
+func (r Resolved) SafetyIdentity() string {
+	return r.identity
+}
+func (s *Snapshot) SourceDisplay() string { return s.sources }
+
+// LabelIdentity excludes credentials and helper values; a label describes endpoint/user identity.
+func (s *Snapshot) LabelIdentity(name string) string {
+	c := s.raw.Contexts[name]
+	if c == nil {
+		return ""
+	}
+	cluster := s.raw.Clusters[c.Cluster]
+	data, _ := json.Marshal(struct {
+		Cluster *api.Cluster
+		User    string
+	}{cluster, c.AuthInfo})
+	sum := sha256.Sum256(data)
+	return hex.EncodeToString(sum[:])
 }

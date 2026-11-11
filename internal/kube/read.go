@@ -8,12 +8,10 @@ package kube
 
 import (
 	"context"
-	"errors"
 	"github.com/sandjaie/KubeSift/internal/connection"
 	"github.com/sandjaie/KubeSift/internal/model"
 	"github.com/sandjaie/KubeSift/internal/session"
 	corev1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/client-go/kubernetes"
@@ -84,27 +82,10 @@ func target(t model.Target, container bool) error {
 	return nil
 }
 func safeError(ctx context.Context, err error) error {
-	if err == nil {
-		return nil
+	if problem := ClassifyError(ctx, err); problem != nil {
+		return problem
 	}
-	if ctx.Err() != nil {
-		return model.Fail("cancelled", "Kubernetes request cancelled")
-	}
-	var safe *model.Error
-	if errors.As(err, &safe) {
-		return safe
-	}
-	switch {
-	case apierrors.IsForbidden(err):
-		return model.Fail("forbidden", "Kubernetes denied this action for the selected target")
-	case apierrors.IsUnauthorized(err):
-		return model.Fail("forbidden", "Kubernetes authentication was rejected")
-	case apierrors.IsNotFound(err):
-		return model.Fail("invalid", "Selected resource is unavailable")
-	case apierrors.IsConflict(err):
-		return model.Fail("stale_target", "Resource changed; refresh the target")
-	}
-	return model.Fail("disconnected", "Kubernetes connection interrupted")
+	return nil
 }
 func (s *Service) Pods(ctx context.Context, ref model.ConnectionRef, ns string) ([]corev1.Pod, error) {
 	if err := namespace(ns); err != nil {
@@ -119,7 +100,7 @@ func (s *Service) Pods(ctx context.Context, ref model.ConnectionRef, ns string) 
 		return nil, safeError(ctx, err)
 	}
 	if list.Continue != "" {
-		return nil, model.Fail("invalid", "Validation Pod list is limited to 100 resources")
+		return nil, model.Fail("capacity", "Pod lists above 100 resources are not supported yet")
 	}
 	return list.Items, nil
 }

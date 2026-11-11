@@ -1,19 +1,23 @@
 /*
-Purpose: Demonstrate a right-side, target-bound AI investigation.
-Used by: Product shell on every page.
-Responsibilities: Show synthetic responses, captured citations and payload examples.
-Important: No provider requests, redaction engine, keys or executable tools exist here.
+Purpose: Explain AI availability honestly from any product page.
+Used by: App's global right-side panel.
+Responsibilities: Provide an accessible close control and explain future live investigation.
+Important: No data collection, provider configuration or model request occurs here.
 */
-import {useState} from 'react';
-import {identity,sameKey,type InvestigationView,type ResourceView,type ResourceKey} from '../workspace/model';
-export function InvestigationPanel({investigation,resources,preview,onStartNew,onClose}:{investigation:InvestigationView|null;resources:ResourceView[];preview:boolean;onStartNew:(key:ResourceKey|null)=>void;onClose:()=>void}){
- const [draft,setDraft]=useState('');const [responseId,setResponseId]=useState('');const [evidence,setEvidence]=useState('');const [payload,setPayload]=useState('');const [choice,setChoice]=useState('');
- const resource=resources.find(r=>sameKey(r.key,investigation?.target??null));const responded=!!investigation&&responseId===investigation.id;
- const failing=resource?.status==='CrashLoopBackOff';
- return <aside className="ai-panel" aria-label="AI investigation"><header><h2>AI investigation</h2><span className="badge">Phase 2</span><button aria-label="Close AI panel" onClick={onClose}>×</button></header>
- {!preview?<div className="ai-content"><span className="eyebrow">NOT CONNECTED</span><h3>AI arrives in Phase 2</h3><p>No evidence is collected and no provider is contacted. Enter the explicitly labeled UI preview to explore the design.</p></div>:<div className="ai-content"><p className="preview-label">Synthetic design preview · nothing sent</p><p className="ai-target">{investigation?.target?identity(investigation.target):'No target selected'}</p><div className="provider-line"><strong>✳ Example provider</strong><span>Claude · sample model</span></div><label className="target-picker">Start a new investigation<select value={choice} onChange={e=>setChoice(e.target.value)}><option value="">Choose synthetic target…</option>{resources.map(r=><option key={r.key.uid} value={r.key.uid}>{r.key.clusterId} / {r.key.namespace} / {r.key.name}</option>)}</select></label><button onClick={()=>{onStartNew(resources.find(r=>r.key.uid===choice)?.key??null);setEvidence('');setPayload('');}}>Start new / rebind explicitly</button>
- {!resource?<p className="muted">Choose a preview target before requesting a sample response. Navigation never assigns a target automatically.</p>:<><p className="muted">Captured {investigation?.collectedAt} · fixed synthetic evidence</p>{responded?<><span className="eyebrow">SAMPLE RESPONSE</span><h3>{failing?'Likely cause: missing configuration':'Captured state looks healthy'}</h3><section><h4>Observations</h4><p>{failing?'The example container exits with code 1. Its log reports that DATABASE_URL is missing.':'This captured resource reports a ready state; it does not establish current health.'}</p><button className="citation" onClick={()=>setEvidence('logs')}>[1] View captured logs</button><button className="citation" onClick={()=>setEvidence('events')}>[2] View captured events</button></section><section><h4>Hypothesis</h4><p>{failing?'Missing startup configuration likely causes repeated failures. Exit code 1 supports this hypothesis; it does not prove the cause alone.':'No failure is demonstrated by this synthetic capture.'}</p></section><section><h4>Unknowns & next check</h4><p>Referenced ConfigMaps and envFrom sources have not been inspected. Verify effective environment configuration.</p><button className="citation" onClick={()=>setEvidence('yaml')}>[3] View captured YAML</button></section></>:<p>Request a sample response to see observations, hypotheses and evidence links.</p>}
- <form onSubmit={e=>{e.preventDefault();setResponseId(investigation!.id);}}><label htmlFor="ai-draft">Ask about this synthetic workload</label><textarea id="ai-draft" value={draft} maxLength={2000} placeholder="Why is this Pod restarting?" onChange={e=>setDraft(e.target.value)}/><button className="primary" type="submit">Show sample response</button></form></>}
- {evidence&&resource&&<section className="citation-detail"><h4>Captured {evidence}</h4><p className="muted">{identity(resource.key)} · {investigation?.collectedAt}</p><pre>{evidence==='yaml'?resource.yaml:evidence==='events'?resource.events.filter(e=>investigation?.evidenceIds.includes(e.id)).map(e=>`${e.at} ${e.reason}: ${e.message}`).join('\n'):resource.logs.filter(l=>investigation?.evidenceIds.includes(l.id)).map(l=>`${l.at} ${l.severity}: ${l.text}`).join('\n')}</pre><button onClick={()=>setEvidence('')}>Close evidence</button></section>}
- <div className="payload-actions"><button onClick={()=>setPayload('redacted')}>View redacted payload</button><button onClick={()=>setPayload('sent')}>View sent payload</button></div>{payload&&<section><h4>{payload==='sent'?'Sent payload layout':'Redacted payload layout'}</h4><p className="preview-label">Example only — nothing sent. Fixed example; no functioning redaction pipeline.</p><pre className="payload">{'{\n  "source": "synthetic example",\n  "message": "DATABASE_URL is missing",\n  "credential": "[EXAMPLE OMITTED]"\n}'}</pre><button onClick={()=>setPayload('')}>Close payload</button></section>}</div>}</aside>;
+export function InvestigationPanel({ onClose }: { onClose: () => void }) {
+  return (
+    <aside className="ai-panel" aria-label="AI investigation">
+      <header>
+        <h2>AI investigation</h2>
+        <button aria-label="Close AI panel" onClick={onClose}>
+          ×
+        </button>
+      </header>
+      <div className="ai-content">
+        <h3>Live investigation is not available yet.</h3>
+        <p>You can browse your clusters while this panel stays open. AI integration is planned for a later milestone.</p>
+        <p className="muted">No cluster data is collected or sent to an AI provider. There is no active model or sample diagnosis.</p>
+      </div>
+    </aside>
+  );
 }

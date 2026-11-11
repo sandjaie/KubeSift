@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Technical validation · KubeSift</title>
+    <link rel="stylesheet" href="../../assets/planning.css" />
+    <script src="../../assets/theme.js"></script>
+  </head>
+  <body>
+    <aside class="rail">
+      <a class="skip" href="#content">Skip to content</a><a class="mark" href="../../index.html">KubeSift</a>
+      <h2>Phase 1C.1</h2>
+      <a href="phase-1c1.html">Technical validation</a><a href="phase-1c1-ui-uat.html">User UAT checklist</a
+      ><a href="../../engineering/local-development.html">Local development</a
+      ><a href="../specs/2026-11-06-phase-1c1-cluster-connections-design.md">Approved specification</a>
+    </aside>
+    <header>
+      <p>KubeSift / Phase 1C.1</p>
+      <h1>Technical validation</h1>
+    </header>
+    <main id="content">
+      <p class="callout">
+        <strong>Implementation ready for user UAT; merge gate pending.</strong>
+        <a href="https://github.com/sandjaie/KubeSift/pull/3">PR #3 targets develop</a>. Phase 1C.1 implements live cluster entry,
+        independent kubeconfig sources, truthful connection evidence and basic namespace/Pod browsing. The PR must remain unmerged until the
+        user accepts the <a href="phase-1c1-ui-uat.html">UI UAT checklist</a>. No Phase 1C.2 work or release is included.
+      </p>
+      <h2>Build and provenance</h2>
+      <p>
+        Validated 11 November 2026 on macOS 26.7.1 (25G241), arm64. Branch <code>feature/phase-1c1-cluster-connections</code> starts at
+        develop <code>4ef7a9b</code>, including approved planning commit <code>5e2b73d</code>. Final application code: <code>e23c02e</code>;
+        later commits contain documentation/evidence only. No worktree or rebase.
+      </p>
+      <p>
+        Actual tools: Go 1.27.3, Wails CLI/module 3.1.0, Node 25.1.0 and npm 11.6.2. This run used the installed Node version; it does not
+        claim the documented Node 26.13.0 baseline was exercised. Local ad-hoc signed app: <code>bin/kubesift.app</code>, Finder launched
+        after the final build. Executable SHA-256: <code>5939c05d382e8489c97fb257f9ebbbb192da478873751504417bd58188d65000</code>. Signature
+        integrity check passed; notarization/distribution readiness was not tested.
+      </p>
+      <h2>Actual verification</h2>
+      <ul>
+        <li>
+          <code>scripts/check.sh</code>: source descriptions, documentation links, Go formatting/tests/vet, frontend tests (7 tests), ESLint
+          and TypeScript passed. An earlier run stopped at a development HTML script link; the relative link was corrected before the
+          passing run.
+        </li>
+        <li>
+          <code>go test -race ./internal/explorer ./internal/sources ./internal/connection</code>: passed; connection package has no direct
+          test files.
+        </li>
+        <li>
+          <code
+            >KUBESIFT_EXPLORER_INTEGRATION=1 KUBESIFT_EXPLORER_CONFIG_DIR="$PWD/.local/phase1c1" go test -tags integration
+            ./tests/integration -run TestExplorerConnections -count=1</code
+          >: passed against only kind-dev-local-a and kind-dev-local-b, including restricted namespaced reads. The opt-in guard was also
+          exercised without enabling the scenario.
+        </li>
+        <li>
+          <code>scripts/dev-clusters.sh --explorer</code>: applied twice successfully with ownership collision checks. Fixture configuration
+          and short-lived credentials remain ignored locally; no credential bodies are in this report.
+        </li>
+        <li>
+          <code>wails3 task package</code>: passed. Production asset inspection found no ValidationApp, runProfile, createPreviewInventory
+          or simulated-action entry. Development validation remains isolated in Vite's separate development page.
+        </li>
+        <li>
+          <code>codesign --verify --deep --strict bin/kubesift.app</code>: passed. Native Finder walkthrough used the resulting bundle, not
+          a Vite browser preview.
+        </li>
+      </ul>
+      <h2>Acceptance evidence</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Criterion</th>
+            <th>Agent result</th>
+            <th>Evidence and qualification</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>C11 · Product entry</td>
+            <td>Pass, qualified</td>
+            <td>
+              Finder launch of final package: zero open contexts, searchable source list and visible missing-source error. No product
+              preview/validation navigation. Code inspection confirms startup only reads summaries; no packet-capture claim.
+            </td>
+          </tr>
+          <tr>
+            <td>C12 · Settings</td>
+            <td>Pass</td>
+            <td>
+              Native add independent A/B files, missing-file isolation, reload, label save, removal Cancel and Confirm. Source store tests
+              cover strict parsing, independent snapshots, label invalidation and file preservation. Appearance persisted across relaunch.
+            </td>
+          </tr>
+          <tr>
+            <td>C13 · Explicit connection</td>
+            <td>Pass</td>
+            <td>
+              Native A/B tabs show real namespace Pods and distinct same-pod markers/UIDs. Switching and Settings return preserve targets.
+              Opt-in live test repeats A/B isolation; deferred-response and epoch regressions reject stale ownership.
+            </td>
+          </tr>
+          <tr>
+            <td>C14 · Auth and trust</td>
+            <td>Automated pass; native helper UAT unrun</td>
+            <td>
+              Existing guard tests protect approval, changed helper and execution boundaries. Synthetic TLS server rejects an old token;
+              external file renewal plus Retry creates a new generation. No cloud-provider or packaged helper approval/revocation
+              compatibility claim.
+            </td>
+          </tr>
+          <tr>
+            <td>C15 · Honest failures</td>
+            <td>Automated/live pass; native fault injection unrun</td>
+            <td>
+              Typed 401/403/TLS/network/deadline categories tested. Local least-privilege identity cannot list namespaces/default Pods but
+              succeeds in kubesift-explorer. Fake clock ages success past 90 seconds; Pod403 preserves another successful probe and its
+              namespace.
+            </td>
+          </tr>
+          <tr>
+            <td>C16 · UI</td>
+            <td>Agent walkthrough passed; user approval pending</td>
+            <td>
+              Light/Dark, keyboard row selection, command input guards, Settings return and Ask AI/Hide AI observed. Existing 1100×700
+              window and screen-sized 1512×949 content capture exercised on this Mac. No exhaustive monitor/OS testing.
+            </td>
+          </tr>
+          <tr>
+            <td>C17 · Cleanup/isolation</td>
+            <td>Automated pass; native exit observed</td>
+            <td>
+              Cancellation barriers, replacement generations, source removal and race checks pass. Native final-tab close returns to list;
+              app process exits and relaunch starts empty. No new long-duration memory/session-load measurements; Phase 1A qualifications
+              remain.
+            </td>
+          </tr>
+          <tr>
+            <td>C18 · Fixtures/boundaries</td>
+            <td>Pass</td>
+            <td>
+              26 owned manifest objects per cluster, including namespace and CRD; nine resulting Pods each at validation. Existing
+              shop/billing preserved. Only designated kind contexts contacted. Other resource destinations remain unavailable; no simulated
+              operations, login or AI traffic.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <h2>Independent review resolutions</h2>
+      <p>
+        A fresh read-only correctness/hygiene review covered <code>4ef7a9b..566e7e4</code>. Five Important findings were accepted and fixed
+        in <code>e23c02e</code>, with focused failing regressions followed by passing checks. No minor hygiene findings were reported.
+        Detailed review and execution logs stay ignored locally.
+      </p>
+      <ul>
+        <li>
+          <strong>KSF-001:</strong> hashing rest.Config silently failed on function fields. Identity now hashes explicit serializable
+          context configuration and loaded TLS data, with errors handled; changed endpoint/token is detected.
+        </li>
+        <li>
+          <strong>KSF-002:</strong> manual Pod403 replaced successful connection evidence. Resource errors now remain local to the view;
+          periodic checks retain the previously successful resource path and namespace.
+        </li>
+        <li>
+          <strong>KSF-003:</strong> opening a second same-source context cancelled an unchanged pending first context. Implicit refresh
+          preserves unchanged attempts; explicit reload or changed identity invalidates them.
+        </li>
+        <li>
+          <strong>KSF-004:</strong> open-tab environment labels stayed stale after source identity changes. Catalog refresh and Retry
+          reconcile tab metadata while preserving namespace/filter state.
+        </li>
+        <li>
+          <strong>KSF-005:</strong> close/reopen could cancel an attempt adopted by the replacement tab. Same-context Start/cancel
+          operations now settle in order; different contexts remain independent.
+        </li>
+      </ul>
+      <p>
+        Plan ruling: source metadata persistence occurs under the coordinator lock before cancellation. A failed write leaves existing tabs
+        intact; successful persistence is immediately followed by cancellation before lock release. This avoids claiming removal after a
+        failed save.
+      </p>
+      <h2>Curated UI evidence</h2>
+      <p>
+        Final packaged build, local-only source paths and fixture data. Default loading was temporarily disabled to keep unrelated local
+        context names out of screenshots. Temporary source metadata was removed afterward, default source and original Light appearance
+        restored, and the app exited. These are agent observations, not user acceptance.
+      </p>
+      <figure>
+        <img
+          style="max-width: 100%"
+          src="../evidence/phase-1c1/clusters-dark.png"
+          alt="Dark cluster list with local A and B, both disconnected"
+        />
+        <figcaption>Explicit cluster entry with no automatic connection.</figcaption>
+      </figure>
+      <figure>
+        <img
+          style="max-width: 100%"
+          src="../evidence/phase-1c1/settings-dark.png"
+          alt="Settings with independent local sources and a visible missing-file error"
+        />
+        <figcaption>Independent sources, labels and isolated source error.</figcaption>
+      </figure>
+      <figure>
+        <img style="max-width: 100%" src="../evidence/phase-1c1/workspace-b-dark.png" alt="Local B Pod details and AI availability panel" />
+        <figcaption>Real local-b identity, separate tabs and honest AI availability.</figcaption>
+      </figure>
+      <figure>
+        <img style="max-width: 100%" src="../evidence/phase-1c1/workspace-a-light.png" alt="Light workspace showing local A Pod identity" />
+        <figcaption>Local A identity retained while switching appearance and tabs.</figcaption>
+      </figure>
+      <h2>Limits and next acceptance</h2>
+      <ul>
+        <li>
+          Product resource browsing covers namespaces and basic Pods only: phase, readiness, containers, UID and fixture marker. Detailed
+          failure reasons, YAML, events, logs and operations remain later increments. A crash-looping Pod can show Kubernetes phase Running
+          with Not ready.
+        </li>
+        <li>
+          Namespace discovery is one bounded page with manual entry when incomplete. Pod lists above 100 return a capacity explanation;
+          pagination is not implemented. Source/context/connection bounds are visible product limits.
+        </li>
+        <li>
+          Users authenticate externally. No EKS/AKS/GKE/OpenShift login compatibility, packaged helper fault injection, external-monitor
+          matrix or accessibility certification is claimed. Optional UAT cases require safe prepared fixtures or a Blocked result.
+        </li>
+        <li>
+          AI is an availability panel only. No provider, sample diagnosis or cluster-data transmission. Existing domain/session guards
+          remain; Phase 1A backgrounded WebKit log-loss qualification is carried forward.
+        </li>
+        <li>
+          Packaged application menu still uses the inherited “My Product” label. Signing/notarization/updater and release readiness remain
+          open.
+        </li>
+        <li>
+          Checklist HTML structure and links were checked. Browser/print preview was not exercised: no Chrome surface was available, and the
+          in-app browser policy blocked local file URLs. Open the HTML locally in your browser for UAT.
+        </li>
+        <li>
+          User UAT results are all Not tested. Complete the linked form and print/save it before closing; the form does not persist results.
+          The PR remains open and unmerged pending that acceptance.
+        </li>
+      </ul>
+      <p>
+        See <a href="../../engineering/local-development.html#explorer-fixtures">fixture setup</a>,
+        <a href="phase-1a.html">Phase 1A qualifications</a> and
+        <a href="../plans/2026-11-06-phase-1c1-cluster-connections.md">approved implementation plan</a>.
+      </p>
+    </main>
+  </body>
+</html>

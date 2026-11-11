@@ -18,6 +18,7 @@
 - Use synthetic test data; follow the security model for credential handling.
 - Run meaningful checks appropriate to each change and distinguish completed validation from unrun checks.
 - Follow the project layout and plain-English source description contract in docs/engineering/engineering.html#source-layout.
+- Follow docs/engineering/engineering.html#authoring-style when writing and formatting changes.
 - Engineering practice lives in docs/engineering/engineering.html. Product scope, architecture, safeguards, and phase order stay in their owning documents.
 
 ## Git and publication
