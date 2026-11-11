@@ -9,7 +9,9 @@ Important: Wails generates this glue; change Go contracts and regenerate rather 
 
 export type {
     ConnectionRef,
+    Error,
     Event,
+    Problem,
     SessionRef,
     Target
 } from "./models.js";

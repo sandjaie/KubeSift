@@ -12,12 +12,22 @@ export interface ConnectionRef {
     "generation": number;
 }
 
+export interface Error {
+    "code": string;
+    "message": string;
+}
+
 export interface Event {
     "session": SessionRef;
     "sequence": number;
     "kind": string;
     "data": string | null;
 }
+
+/**
+ * Problem is the safe, structured failure shared by product snapshots.
+ */
+export type Problem = Error;
 
 export interface SessionRef {
     "id": string;

@@ -20,11 +20,12 @@ func init() { application.RegisterEvent[model.Event]("session") }
 func Run(assets fs.FS) error {
 	service := NewService()
 	prefs := newPreferencesService()
+	explorerService := newExplorerService(service)
 	var lock sync.Mutex
 	var timer *time.Timer
 	closing := false
 	restored := false
-	app := application.New(application.Options{Name: "KubeSift", Description: "Cluster workspace", Services: []application.Service{application.NewService(service), application.NewService(prefs)}, Assets: application.AssetOptions{Handler: application.AssetFileServerFS(assets)}, Mac: application.MacOptions{ApplicationShouldTerminateAfterLastWindowClosed: true}, OnShutdown: func() {
+	app := application.New(application.Options{Name: "KubeSift", Description: "Cluster workspace", Services: []application.Service{application.NewService(service), application.NewService(prefs), application.NewService(explorerService)}, Assets: application.AssetOptions{Handler: application.AssetFileServerFS(assets)}, Mac: application.MacOptions{ApplicationShouldTerminateAfterLastWindowClosed: true}, OnShutdown: func() {
 		lock.Lock()
 		closing = true
 		if timer != nil {
