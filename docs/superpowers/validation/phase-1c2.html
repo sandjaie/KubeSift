@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="../../assets/planning.css" />
+    <script src="../../assets/theme.js"></script>
+    <style>
+      main {
+        max-width: 1100px;
+        margin: auto;
+        padding: 24px;
+      }
+      input,
+      textarea,
+      select {
+        font: inherit;
+        max-width: 100%;
+      }
+      textarea {
+        width: 100%;
+        min-height: 55px;
+      }
+      article {
+        break-inside: avoid;
+        border-bottom: 1px solid #888;
+        padding: 16px 0;
+      }
+      @media print {
+        button {
+          display: none;
+        }
+        main {
+          padding: 0;
+        }
+        textarea {
+          border: 1px solid #aaa;
+        }
+        body {
+          background: white;
+          color: black;
+        }
+      }
+    </style>
+    <title>Phase 1C.2 technical validation</title>
+  </head>
+  <body>
+    <main>
+      <a href="../../index.html">Planning index</a>
+      <h1>Phase 1C.2 · Technical validation</h1>
+      <p>
+        Implementation branch: <code>feature/phase-1c2-workload-investigation</code>. Baseline <code>b19bff7</code>; tested implementation
+        commit <code>823a17e</code>; version remains 0.3.0. Tested on macOS 26.7.1 (25G241), 12 November 2026. Review corrections and final
+        check results are recorded below. No release or Phase 1C.3 work.
+      </p>
+      <p>
+        <strong>User acceptance is pending.</strong> Complete the separate <a href="phase-1c2-ui-uat.html">15-case UI UAT checklist</a>.
+        Every user result remains Not tested. Leave the PR unmerged.
+      </p>
+      <h2>Scope and checks</h2>
+      <p>
+        Typed bounded Pod/Deployment pages, UID-checked overview/YAML, controller-owned related Pods, UID events and bounded container logs
+        share the existing connection and session owners. No write, terminal, forwarding, AI or export control was added.
+      </p>
+      <ul>
+        <li>
+          Go full suite and vet passed after review corrections; kube/session/desktop race tests passed, including the periodic UID check.
+        </li>
+        <li>All 16 frontend tests across seven files, lint and TypeScript passed after review corrections.</li>
+        <li>Bindings, production bundle, scripts/check.sh and wails3 task package passed after review corrections.</li>
+        <li>
+          Opt-in TestWorkloadInvestigation passed against isolated kind-dev-local-a/b: actual lists/details/YAML/events, ownership
+          traversal, current/previous snapshots, Follow/acknowledge/Stop/Close and cleanup; same-named Pod UIDs differ.
+        </li>
+        <li>
+          Fixture inventory now has 29 owned objects per cluster. Added init-evidence, web-lookalike and scaled-zero only. Existing
+          restricted pod-reader preserved; no cluster-wide grants.
+        </li>
+      </ul>
+      <h2>Acceptance evidence</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Agent evidence</th>
+            <th>Limits</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>C21</td>
+            <td>Native A/B namespace/filter navigation, Pod and Deployment pages; service cursor and frontend isolation tests.</td>
+            <td>Live fixture pages are below 100; large/expired pages use synthetic tests.</td>
+          </tr>
+          <tr>
+            <td>C22</td>
+            <td>Native missing-setting conditions, current/last state, configuration and container groups; replacement/size tests.</td>
+            <td>No live ephemeral-container injection; restricted-section coverage uses synthetic service tests.</td>
+          </tr>
+          <tr>
+            <td>C23</td>
+            <td>Native web → bounded ReplicaSet page → owned Pod; web-lookalike excluded in integration.</td>
+            <td>Controller traversal is incremental, not a complete namespace cache.</td>
+          </tr>
+          <tr>
+            <td>C24</td>
+            <td>
+              Native YAML and managed-fields toggle; captured-version/size tests. Review caught missing GVK; corrected and regression
+              tested.
+            </td>
+            <td>Clipboard/search remain untested in the native app; no original-comment or secret-free claim.</td>
+          </tr>
+          <tr>
+            <td>C25</td>
+            <td>Native missing-setting events; UID filter/deduplication/403-no-fallback tests.</td>
+            <td>Ordering is page-local; no event retention guarantee.</td>
+          </tr>
+          <tr>
+            <td>C26</td>
+            <td>Native current snapshot and web Follow, Stop/Clear; UTF-8/retention/capacity tests.</td>
+            <td>
+              Previous endpoint sometimes returns runtime “unable to retrieve” text with HTTP 200. Historical evidence availability is not
+              guaranteed.
+            </td>
+          </tr>
+          <tr>
+            <td>C27</td>
+            <td>Native shared detail/dock across Settings/Light theme and A/B navigation; stop/close and periodic identity tests.</td>
+            <td>
+              Review caught Resume race; native walkthrough caught unsupported browser confirmation. Both corrected; the rebuilt-app
+              confirmation retest was blocked by the locked Mac.
+            </td>
+          </tr>
+          <tr>
+            <td>C28</td>
+            <td>
+              Existing neutral palette, phase/readiness distinctions, namespace menu and remembered 56% stacked split remained visible;
+              Light then original Dark restored.
+            </td>
+            <td>No new exhaustive screen-size study; external-monitor layout remains user UAT.</td>
+          </tr>
+          <tr>
+            <td>C29</td>
+            <td>Both native investigation journeys reached actual fixture evidence without mutations or AI calls.</td>
+            <td>
+              Automated integration does not instrument every request; service synthetic APIs constrain read routes. No Lens/K9s parity
+              claim.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <h2>Independent review</h2>
+      <p>
+        Fresh-context KubeSift correctness review examined the complete branch and callers. Five findings: KSF-001 concurrent
+        Resume/late-open ownership; KSF-002 repeated selection clearing evidence; KSF-003 missing YAML apiVersion/kind; KSF-004 Auto-scroll
+        not moving viewport; KSF-005 observed zero Deployment counts shown as Unknown. Focused regressions reproduced the issues; fixes and
+        final suite results are recorded with the final commit.
+      </p>
+      <p>
+        Additional native finding: window.confirm did not present a usable confirmation in the Wails webview. Reused the existing in-app
+        Modal for tab close and Resume. This is a functional correction, not a redesign. Hygiene review KSF-006 identified missing source
+        directory maps; added maps and updated owning directories. Optional unnecessary export modifiers on age and overviewObject remain
+        deferred; no behavioral risk.
+      </p>
+      <h2>Qualifications</h2>
+      <p>
+        Final native clipboard/search, keyboard-only selection, reconnect, confirmation-dialog cleanup, external-monitor sizing and
+        background-loss checks remain untested. The Mac was locked when attempting the rebuilt-app confirmation retest. User UAT must cover
+        these before merge. The integration walkthrough does not instrument every request to assert absence of Secret reads or mutations;
+        code review and synthetic route checks are narrower evidence, not a substitute for that assertion.
+      </p>
+      <p>
+        Only local kind clusters were used. Windows/Linux, managed providers and OpenShift are untested. Kubernetes logs remain
+        name-addressed; before/after/periodic UID checks do not make log retrieval atomic. Background WebKit loss risk from Phase 1A
+        remains. This is bounded investigation, not archival/lossless capture. Packaging is local ad-hoc signed, not notarized distribution
+        readiness. Test linking emitted existing deployment-target warnings; commands exited successfully.
+      </p>
+      <p>
+        Detailed execution outputs stay archived in ignored .superpowers/sdd/ under the repository documentation rule; this overrides the
+        skill’s cleanup default at the cost of local disk space. No credentials, full workload payloads or raw log histories are published
+        here.
+      </p>
+    </main>
+  </body>
+</html>
