@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Workspace refinement validation · KubeSift</title>
+    <link rel="stylesheet" href="../../assets/planning.css" />
+    <script src="../../assets/theme.js"></script>
+  </head>
+  <body>
+    <aside class="rail">
+      <a class="skip" href="#content">Skip to content</a>
+      <a class="mark" href="../../index.html">KubeSift</a>
+      <h2>Workspace refinement</h2>
+      <a href="../specs/2026-11-12-dark-palette-workspace-controls-design.md">Approved specification</a>
+      <a href="../plans/2026-11-12-dark-palette-workspace-controls.md">Implementation plan</a>
+      <a href="../../ux/mocks/index.html">Mock gallery</a>
+      <a href="../../ux/workflows.html">UX owner</a>
+    </aside>
+    <header>
+      <p>KubeSift / Workspace refinement</p>
+      <h1>Neutral dark palette and workspace controls</h1>
+      <p>Agent verification · 12 November 2026</p>
+    </header>
+    <main id="content">
+      <p class="callout">
+        Neutral dark surfaces, searchable namespace selection, remembered Pod-detail sizes and compact workspace controls are implemented.
+        Automated, packaged and independent review checks passed. Ready for user UI review in
+        <a href="https://github.com/sandjaie/KubeSift/pull/4">PR #4</a>, targeting develop. No merge, release or Phase 1C.2 work is
+        included.
+      </p>
+      <h2>Compact workspace follow-up</h2>
+      <p>
+        Implemented the approved two-row header, connection status disclosure, Refresh beside Pods, coloured phase dots, sticky table
+        headings and compact details with an Identity &amp; source disclosure. The same spec and plan cover this follow-up.
+      </p>
+      <p>
+        The corrected package passed scripts/check.sh (including nine frontend tests) and wails3 task package. Executable SHA-256:
+        <code>dc0ed7e3bad0820073ce179932514cd5263be86ee584c8a11a095c09d059193e</code>. The initial refinement provenance below is
+        historical.
+      </p>
+      <ul>
+        <li>
+          Native local A/B checks: switching preserved A’s namespace and selection; disconnecting B closed only B. Reconnect reloaded A and
+          its nine fixture Pods. Refresh loaded nine Pods.
+        </li>
+        <li>
+          Connection menu showed explicit context/source and action explanations; Escape and outside click dismissed it. Healthy connections
+          do not have a permanent Retry/action bar.
+        </li>
+        <li>
+          Running, Succeeded, Pending and Failed displayed distinct dots with text; Running/Not ready remained distinct from readiness.
+          UID/source expanded and collapsed.
+        </li>
+        <li>
+          Table headings stayed visible while rows scrolled in the stacked layout. Navigation toggled; keyboard resizing changed the detail
+          share from 54 to 56 percent.
+        </li>
+        <li>
+          Native testing found duplicate sibling React keys causing an extra namespace control after tab changes. Distinct keys fixed it;
+          repeated A/B switching and B disconnect on the rebuilt package retained one selector.
+        </li>
+      </ul>
+      <p>
+        Connecting Cancel was observed but not activated. Controlled failure Retry, helper-review recovery, and Light rendering of the new
+        compact controls were not exercised in this follow-up. No additional cluster resources or credentials were changed. Agent
+        observations are separate from user acceptance.
+      </p>
+      <p>
+        <a href="../evidence/workspace-refinement/compact-dark.png">Compact workspace</a> ·
+        <a href="../evidence/workspace-refinement/compact-connection.png">Connection menu</a> ·
+        <a href="../evidence/workspace-refinement/compact-stacked.png">Scrolled stacked layout</a> ·
+        <a href="../../ux/mocks/compact-workspace-controls.png">Approved compact mock</a>.
+      </p>
+      <h2>Initial refinement scope and provenance</h2>
+      <p>
+        Branch <code>feature/workspace-theme-and-controls</code> starts from develop <code>7664be8</code> in the existing checkout. No
+        worktree or rebase. Only kind-dev-local-a and kind-dev-local-b were connected, using existing synthetic fixtures in
+        kubesift-explorer. No cluster resources, kubeconfig files or helper approvals were changed.
+      </p>
+      <p>
+        macOS 26.7.1, arm64; Go 1.27.3, Wails 3.1.0, Node 25.1.0 and npm 11.6.2. The documented Node 26 baseline was not exercised locally.
+        Validation used the native packaged app, not a browser preview. Packaging is locally ad-hoc signed; this is not notarization or
+        distribution-readiness evidence. Executable SHA-256: <code>5e8120948c09f8809b042b144e09f147a2d997e5f7f9a29cd219a8c156e67b15</code>.
+        Signature integrity verification passed. Application source is committed in <code>f3d19d1</code>.
+      </p>
+      <h2>Automated and build checks</h2>
+      <ul>
+        <li>
+          <code>scripts/check.sh</code> passed: source descriptions, documentation links, Go formatting/tests/vet, nine frontend tests, lint
+          and typecheck.
+        </li>
+        <li>
+          <code>wails3 task package</code> passed. The final rebuilt package passed the corrected stacked limit and vertical pointer-drag
+          checks.
+        </li>
+        <li>Preference migration and namespace option tests were observed failing before implementation, then passing.</li>
+        <li>
+          Version 1 migrates in memory without rewriting the file; version 2 requires both integer percentages and preserves unrelated
+          appearance/window/pane fields.
+        </li>
+        <li>
+          Namespace tests cover case-insensitive filtering, retained explicit values, and valid manual names only when discovery is
+          incomplete.
+        </li>
+      </ul>
+      <h2>Observed native behavior</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Check</th>
+            <th>Agent result</th>
+            <th>Evidence and limits</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Namespace search and commit</td>
+            <td>Pass</td>
+            <td>
+              Typing filtered options without changing the active namespace. Enter selected default and kubesift-explorer; nine fixture Pods
+              loaded. An unmatched name and Enter left the current namespace unchanged.
+            </td>
+          </tr>
+          <tr>
+            <td>Dismissal and tab ownership</td>
+            <td>Pass</td>
+            <td>
+              Escape, outside click and switching tabs discarded an uncommitted query. A retained kubesift-explorer and same-pod; B
+              separately loaded nine fixture Pods. No separate manual input, Go button or duplicate identity-bar breadcrumb remained.
+            </td>
+          </tr>
+          <tr>
+            <td>Independent split persistence</td>
+            <td>Pass</td>
+            <td>
+              Keyboard adjusted side-by-side width from 50 to 52%, and stacked height from 50 to 56%. Restart restored both values in their
+              respective orientations. Startup restored zero connections. A later pointer drag changed width from 52 to 44%.
+            </td>
+          </tr>
+          <tr>
+            <td>Stacked limit consistency</td>
+            <td>Pass after correction</td>
+            <td>
+              Native testing found old CSS minimum heights disagreeing with the new separator value at the limit. Minimum allocation now
+              belongs to the split component; competing CSS constraints were removed. Repeating the same keyboard check clamped correctly at
+              66% in the observed window. Vertical pointer dragging then changed 66 to 54% without selecting page text.
+            </td>
+          </tr>
+          <tr>
+            <td>Themes and AI</td>
+            <td>Pass within exercised scope</td>
+            <td>
+              Light, System and Dark settings selected successfully; Dark restored. Light and Dark workspace screenshots were captured;
+              superseded images have since been removed. AI opens/closes without losing the resource selection and continues to state that
+              integration is unavailable. OS appearance changes were not forced.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <h2>Contrast measurements</h2>
+      <p>
+        Standard sRGB relative-luminance calculation across all four dark surfaces: primary text minimum 7.88:1, secondary 4.83:1,
+        interactive text 6.36:1, success 4.60:1, error 5.11:1 and warning 6.23:1. Dark text on the primary blue button is 5.37:1. These are
+        token-pair measurements, not a claim of full accessibility conformance. Lighter blue text and light red errors are deliberate
+        readability adjustments to the supplied palette.
+      </p>
+      <h2>Screenshot history</h2>
+      <p>
+        Superseded initial captures and mock images were removed after the compact follow-up. They documented neutral surfaces, searchable
+        namespaces and remembered side-by-side/stacked dividers. Current captures are linked above; historical validation observations
+        remain below.
+      </p>
+      <h2>Compact follow-up independent review</h2>
+      <p>
+        Fresh whole-branch correctness and hygiene review, including the compact follow-up, found no material defects. It confirmed explicit
+        tab callbacks and distinct sibling keys. KSF-001 resolved: Light Running now uses dedicated blue #1264a3 while Succeeded retains
+        green #007f72. Dark keeps its existing blue/green distinction. No behavior was declined for judgment. The reviewer performed no
+        additional tests or UI/cluster operations.
+      </p>
+      <h2>Initial refinement independent review</h2>
+      <p>
+        Fresh correctness and hygiene review of <code>7664be8..f3d19d1</code> identified no material defects or deferred minor findings. It
+        traced request ownership, strict migration and split geometry, inspected the screenshots and independently confirmed contrast. The
+        reviewer did not rerun tests or access clusters. No behaviors were declined for judgment.
+      </p>
+      <h2>Light colour correction and documentation cleanup</h2>
+      <p>
+        Dedicated Running token checked in Light, explicit Dark and System-dark CSS. Light blue contrast measured against the four Light
+        surfaces, including selection. Documentation links and diff checks passed. No full suite, rebuild or native UI verification repeated
+        for this CSS-only correction; packaged screenshots and executable hash above predate it.
+      </p>
+      <h2>Focused user review</h2>
+      <ol>
+        <li>
+          Open <code>bin/kubesift.app</code>, or build with <code>wails3 task package</code> first. Search kind-dev-local and select a local
+          context.
+        </li>
+        <li>
+          Open Namespace, type kubesift and press Enter. Expect kubesift-explorer Pods. Reopen, type without choosing, then Escape; expect
+          the original namespace.
+        </li>
+        <li>
+          Drag the divider between Pods and details. Open Ask AI to stack the panes and drag vertically. Quit/relaunch and reconnect; expect
+          independent remembered sizes.
+        </li>
+        <li>
+          Switch Light/Dark in Settings and inspect text, focus and selection. Open both local contexts and confirm namespace and Pod
+          selection remain independent.
+        </li>
+      </ol>
+      <h2>Coverage limits and follow-up</h2>
+      <p>
+        Passive shrinking/re-expanding with a saved share outside the effective range was not directly exercised; separate preferred and
+        displayed values were reviewed. The legacy migration test uses null window bounds; non-null preservation was checked in code rather
+        than exercised by that test.
+      </p>
+      <p>
+        Incomplete-discovery manual selection is unit-tested, but was not exercised with restricted native credentials in this run. No
+        exhaustive monitor/OS scaling, screen-reader or transport-failure matrix was run. Existing Phase 1A/1C.1 limitations remain; AI and
+        additional resource operations are not added. User acceptance remains separate from these agent observations.
+      </p>
+      <footer>12 November 2026 · <a href="../../index.html">Documentation index</a></footer>
+    </main>
+  </body>
+</html>

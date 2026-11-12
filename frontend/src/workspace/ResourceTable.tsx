@@ -5,6 +5,7 @@ Responsibilities: Show read fields and return the selected UID within the owning
 Important: This component never fabricates diagnostics or routes native requests.
 */
 import type { PodSummary } from "../../bindings/github.com/sandjaie/KubeSift/internal/kube/models";
+import { PodPhase } from "./PodPhase";
 import { ResourceIcon } from "../ui/ResourceIcon";
 export function ResourceTable({
   rows,
@@ -49,9 +50,10 @@ export function ResourceTable({
                 <strong>
                   <ResourceIcon kind="Pod" size={14} /> {pod.name}
                 </strong>
-                <small>{pod.namespace}</small>
               </td>
-              <td>{pod.phase || "Unknown"}</td>
+              <td>
+                <PodPhase phase={pod.phase} />
+              </td>
               <td>{pod.ready ? "Ready" : "Not ready"}</td>
             </tr>
           ))}
