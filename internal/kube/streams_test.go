@@ -355,3 +355,45 @@ func TestPodLogs(t *testing.T) {
 		refs = append(refs, r)
 	})
 }
+
+func TestPodLogsPeriodicIdentity(t *testing.T) {
+	var reads atomic.Int32
+	s, ref := workloadServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "/log") {
+			fmt.Fprintln(w, "synthetic follow")
+			w.(http.Flusher).Flush()
+			<-r.Context().Done()
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		uid := "pod"
+		if reads.Add(1) >= 4 {
+			uid = "replacement"
+		}
+		fmt.Fprintf(w, `{"apiVersion":"v1","kind":"Pod","metadata":{"uid":%q},"spec":{"containers":[{"name":"main"}]}}`, uid)
+	})
+	events := make(chan model.Event, 32)
+	s.sessions = session.NewManager(func(e model.Event) { events <- e })
+	stream, err := s.OpenPodLogs(context.Background(), LogRequest{Resource: ResourceRef{Connection: ref, Kind: "Pod", APIVersion: "v1", Namespace: "default", Name: "sample", UID: "pod"}, Container: "main", Follow: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.ClosePodLogs(stream)
+	if err = s.sessions.Activate(stream); err != nil {
+		t.Fatal(err)
+	}
+	deadline := time.After(20 * time.Second)
+	for {
+		select {
+		case e := <-events:
+			if e.Kind == "error" {
+				if !strings.Contains(string(e.Data), "resource_replaced") {
+					t.Fatal("identity cause lost", string(e.Data))
+				}
+				return
+			}
+		case <-deadline:
+			t.Fatal("periodic check did not stop stream")
+		}
+	}
+}

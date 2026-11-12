@@ -107,8 +107,7 @@ export function useWorkloads(tabID: string, connection: ConnectionRef | null, na
     const timer = setTimeout(() => patch({ refresh: inventory.refresh + 1 }), 15000);
     return () => clearTimeout(timer);
   }, [tabID, scope, kind, inventory.auto, inventory.loading, inventory.history.length, inventory.refresh, visible]);
-  const selectResource = (row: WorkloadRow) =>
-    patch({ selected: row, section: "Overview", sections: {}, sectionCursor: "", sectionEpoch: ++serial.current });
+  const selectResource = (row: WorkloadRow) => commit({ type: "select", tab: tabID, row, epoch: ++serial.current });
   return {
     kind,
     inventory,
@@ -119,7 +118,7 @@ export function useWorkloads(tabID: string, connection: ConnectionRef | null, na
     patch,
     selectResource,
     selectKind: (kind: Kind) => commit({ type: "kind", tab: tabID, kind }),
-    selectSection: (section: Section) => patch({ section, sectionCursor: "", sectionEpoch: ++serial.current }),
+    selectSection: (section: Section) => commit({ type: "section", tab: tabID, section, epoch: ++serial.current }),
     refresh: () => patch({ history: [""], refresh: inventory.refresh + 1 }),
     refreshSection: () => patch({ sectionCursor: "", sectionRefresh: inventory.sectionRefresh + 1 }),
     next: () => commit({ type: "next", tab: tabID, cursor: inventory.page?.page.nextCursor ?? "" }),

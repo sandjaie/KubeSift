@@ -136,7 +136,7 @@ func TestWorkloadDetails(t *testing.T) {
 				t.Fatal(detail, err)
 			}
 			doc, err := s.ReadResourceYAML(context.Background(), req)
-			if err != nil || doc.ResourceVersion != "9" || strings.Contains(doc.WithoutManagedFields, "managedFields") || !strings.Contains(doc.WithManagedFields, "managedFields") {
+			if err != nil || doc.ResourceVersion != "9" || !strings.Contains(doc.WithoutManagedFields, "apiVersion: v1") || !strings.Contains(doc.WithManagedFields, "kind: Pod") || strings.Contains(doc.WithoutManagedFields, "managedFields") || !strings.Contains(doc.WithManagedFields, "managedFields") {
 				t.Fatal(doc, err)
 			}
 		})

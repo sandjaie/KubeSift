@@ -19,6 +19,7 @@ import { NamespaceControl } from "./workspace/NamespaceControl";
 import { Workspace } from "./workspace/Workspace";
 import { CommandPalette } from "./workspace/CommandPalette";
 import { commandForKey } from "./workspace/commands";
+import { Modal } from "./ui/ReviewDialog";
 import { ResizeHandle } from "./ui/ResizeHandle";
 import { ResourceIcon } from "./ui/ResourceIcon";
 import { InvestigationPanel } from "./ai/InvestigationPanel";
@@ -103,9 +104,13 @@ export default function App() {
     setPage("workspace");
     void controller.connect(entry);
   }
+  const [closeTarget, setCloseTarget] = useState<{ key: string; count: number } | null>(null);
   function close(key: string) {
     const count = logs.sessions.filter((s) => s.tab === key).length;
-    if (count && !window.confirm(`Close this cluster tab and its ${count} retained log sessions?`)) return;
+    if (count) {
+      setCloseTarget({ key, count });
+      return;
+    }
     void logs.store.closeTab(key).then(() => {
       workloads.close(key);
       void controller.cancel(key);
@@ -297,6 +302,29 @@ export default function App() {
           />
         </div>
       </div>
+      {closeTarget && (
+        <Modal title="Close cluster tab?" onCancel={() => setCloseTarget(null)}>
+          <p>
+            Close {state.tabs[closeTarget.key]?.entry.context} and its {closeTarget.count} retained log sessions?
+          </p>
+          <button
+            className="primary"
+            onClick={() => {
+              const key = closeTarget.key;
+              setCloseTarget(null);
+              void logs.store
+                .closeTab(key)
+                .then(() => {
+                  workloads.close(key);
+                  void controller.cancel(key);
+                })
+                .catch(() => setStartupError("Could not close log sessions; retry closure."));
+            }}
+          >
+            Close tab and sessions
+          </button>
+        </Modal>
+      )}
       <SessionsDock
         controller={logs}
         connections={Object.fromEntries(Object.entries(state.tabs).map(([id, tab]) => [id, tab.view?.ref ?? null]))}

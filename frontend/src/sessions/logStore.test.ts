@@ -79,3 +79,79 @@ test("one shared subscription bounds UTF-8 retention, rejects late frames and se
   await store.dispose();
   expect(subscriptions).toBe(0);
 });
+
+test("concurrent Resume and late opens cannot orphan a native segment", async () => {
+  let serial = 0;
+  const releases: (() => void)[] = [];
+  const live = new Set<string>();
+  const bridge: LogBridge = {
+    subscribe: () => () => {},
+    open: async () => {
+      const id = `segment-${++serial}`;
+      live.add(id);
+      return { id, connection: req.resource.connection };
+    },
+    activate: async () => {},
+    ack: async () => {},
+    stop: async () => {},
+    close: async (ref) => {
+      if (ref.id === "segment-1")
+        await new Promise<void>((resolve) => {
+          releases.push(resolve);
+        });
+      live.delete(ref.id);
+    },
+  };
+  const store = createLogStore(bridge);
+  store.attach();
+  const id = await store.open(req, "A", "local-a");
+  await store.stop(id);
+  const first = store.resume(id),
+    second = store.resume(id);
+  await Promise.resolve();
+  releases.forEach((fn) => fn());
+  await Promise.all([first, second]);
+  expect(serial).toBe(2);
+  await store.close(id);
+  expect(live.size).toBe(0);
+  await store.dispose();
+});
+
+test("auto-scroll follows the viewport only while enabled", async () => {
+  const { scrollLogViewport } = await import("./logStore");
+  const viewport = { scrollTop: 10, scrollHeight: 500 };
+  scrollLogViewport(viewport, true);
+  expect(viewport.scrollTop).toBe(500);
+  viewport.scrollTop = 20;
+  scrollLogViewport(viewport, false);
+  expect(viewport.scrollTop).toBe(20);
+});
+
+test("a stopped pending open cannot attach to a resumed segment", async () => {
+  const pending: ((ref: { id: string; connection: typeof req.resource.connection }) => void)[] = [];
+  const closed: string[] = [];
+  const bridge: LogBridge = {
+    subscribe: () => () => {},
+    open: () => new Promise((resolve) => pending.push(resolve)),
+    activate: async () => {},
+    ack: async () => {},
+    stop: async () => {},
+    close: async (ref) => {
+      closed.push(ref.id);
+    },
+  };
+  const store = createLogStore(bridge);
+  store.attach();
+  const opening = store.open(req, "A", "local-a");
+  const id = store.snapshot()[0].id;
+  await store.stop(id);
+  const resuming = store.resume(id);
+  pending[1]({ id: "new", connection: req.resource.connection });
+  await resuming;
+  pending[0]({ id: "old", connection: req.resource.connection });
+  await opening;
+  expect(store.snapshot()[0].ref?.id).toBe("new");
+  expect(closed).toContain("old");
+  await store.dispose();
+  expect(closed).toContain("new");
+});

@@ -14,4 +14,9 @@
     ./tests/integration -run TestExplorerConnections. Configurations must refer only to the approved loopback clusters; credentials remain
     ignored.
   </p>
+  <p>
+    workloads_test.go exercises read-only Pod/Deployment investigation and log snapshot/follow cleanup. Use KUBESIFT_EXPLORER_INTEGRATION=1
+    and absolute KUBESIFT_EXPLORER_CONFIG_DIR with a.kubeconfig and b.kubeconfig, then go test -tags=integration ./tests/integration -run
+    TestWorkloadInvestigation -count=1. Only kind-dev-local-a/b loopback endpoints are accepted.
+  </p>
 </html>

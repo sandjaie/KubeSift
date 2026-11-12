@@ -12,6 +12,7 @@ import (
 	"github.com/sandjaie/KubeSift/internal/model"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/yaml"
 	"time"
@@ -48,6 +49,7 @@ func checkedObject(ctx context.Context, client kubernetes.Interface, ref Resourc
 	if string(object.GetUID()) != ref.UID {
 		return nil, model.Fail("resource_replaced", "Resource replaced; select again")
 	}
+	object.GetObjectKind().SetGroupVersionKind(schema.FromAPIVersionAndKind(ref.APIVersion, ref.Kind))
 	return object, nil
 }
 func checkPayload(value any) error {

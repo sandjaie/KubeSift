@@ -29,6 +29,9 @@ export interface LogSession {
   active: boolean;
 }
 const encoder = new TextEncoder();
+export function scrollLogViewport(viewport: { scrollTop: number; scrollHeight: number } | null, enabled: boolean) {
+  if (viewport && enabled) viewport.scrollTop = viewport.scrollHeight;
+}
 function boundedText(text: string, limit: number) {
   const bytes = encoder.encode(text);
   if (bytes.length <= limit) return { text, dropped: 0 };
@@ -49,6 +52,7 @@ export function createLogStore(bridge: LogBridge) {
   const listeners = new Set<() => void>();
   const decoders = new Map<string, TextDecoder>();
   const sequences = new Map<string, number>();
+  const operations = new Map<string, symbol>();
   let off: (() => void) | null = null;
   const notify = () => listeners.forEach((fn) => fn());
   const update = (id: string, patch: Partial<LogSession>) => {
@@ -92,10 +96,10 @@ export function createLogStore(bridge: LogBridge) {
       }
     }
   }
-  async function start(id: string, req: LogRequest) {
+  async function start(id: string, req: LogRequest, operation: symbol) {
     const ref = await bridge.open(req);
     const s = find(id);
-    if (!s || !s.active) {
+    if (!s || !s.active || operations.get(id) !== operation) {
       await bridge.close(ref);
       return;
     }
@@ -111,23 +115,27 @@ export function createLogStore(bridge: LogBridge) {
     ];
     decoders.set(id, new TextDecoder());
     notify();
+    const operation = Symbol();
+    operations.set(id, operation);
     try {
-      await start(id, request);
+      await start(id, request, operation);
     } catch (e) {
-      update(id, { status: "error", error: message(e), active: false });
+      if (operations.get(id) === operation) update(id, { status: "error", error: message(e), active: false });
     }
     return id;
   }
   async function stop(id: string) {
     const s = find(id);
     if (!s) return;
+    operations.delete(id);
     update(id, { active: false, status: "stopped" });
     if (s.ref) await bridge.stop(s.ref);
   }
   async function close(id: string) {
     const s = find(id);
     if (!s) return;
-    update(id, { active: false });
+    operations.delete(id);
+    update(id, { active: false, status: "closing" });
     if (s.ref) await bridge.close(s.ref);
     sessions = sessions.filter((s) => s.id !== id);
     decoders.delete(id);
@@ -154,8 +162,17 @@ export function createLogStore(bridge: LogBridge) {
     },
     resume: async (id: string, confirmedConnection?: ConnectionRef) => {
       const s = find(id);
-      if (!s || s.active) return;
-      if (s.ref) await bridge.close(s.ref);
+      if (!s || s.active || s.status === "closing") return;
+      const operation = Symbol();
+      operations.set(id, operation);
+      update(id, { active: true, status: "opening" });
+      try {
+        if (s.ref) await bridge.close(s.ref);
+      } catch (e) {
+        if (operations.get(id) === operation) update(id, { active: false, status: "error", error: message(e) });
+        return;
+      }
+      if (operations.get(id) !== operation || !find(id)?.active) return;
       const request = {
         ...s.request,
         resource: { ...s.request.resource, connection: confirmedConnection ?? s.request.resource.connection },
@@ -172,14 +189,15 @@ export function createLogStore(bridge: LogBridge) {
         loss: "Resumed segment; overlap or gaps are possible.",
       });
       try {
-        await start(id, request);
+        await start(id, request, operation);
       } catch (e) {
-        update(id, { status: "error", error: message(e), active: false });
+        if (operations.get(id) === operation) update(id, { status: "error", error: message(e), active: false });
       }
     },
     disconnected: (tab: string) => {
       for (const s of sessions)
         if (s.tab === tab && s.active) {
+          operations.delete(s.id);
           update(s.id, { active: false, status: "disconnected", loss: "Connection ended; explicit Resume required." });
           if (s.ref) void bridge.stop(s.ref).catch(() => {});
         }

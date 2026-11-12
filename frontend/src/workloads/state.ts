@@ -4,7 +4,7 @@ Used by: The workload controller and focused reducer tests.
 Responsibilities: Reject stale responses and cap page history without a growing payload cache.
 Important: Connection health snapshots never enter this reducer.
 */
-import type { Kind, KindState, WorkloadsState, WorkloadRow } from "./model";
+import type { Kind, KindState, WorkloadsState, WorkloadRow, Section } from "./model";
 export const initialWorkloads = (): WorkloadsState => ({});
 export const emptyKind = (): KindState => ({
   filter: "",
@@ -28,6 +28,8 @@ export function canAutoRefresh(s: KindState, visible: boolean) {
   return visible && s.auto && s.history.length === 1 && !s.loading;
 }
 export type Action =
+  | { type: "select"; tab: string; row: WorkloadRow; epoch: number }
+  | { type: "section"; tab: string; section: Section; epoch: number }
   | { type: "scope"; tab: string; scope: string }
   | { type: "close"; tab: string }
   | { type: "kind"; tab: string; kind: Kind }
@@ -49,10 +51,16 @@ export function reduceWorkloads(state: WorkloadsState, a: Action): WorkloadsStat
   if (!t) return state;
   if (a.type === "kind") return { ...state, [a.tab]: { ...t, kind: a.kind } };
   if (a.type === "back") return { ...state, [a.tab]: { ...t, back: a.row } };
-  const kind = a.type === "next" ? t.kind : a.kind;
+  const kind = a.type === "next" || a.type === "select" || a.type === "section" ? t.kind : a.kind;
   const k = t.kinds[kind];
   let patch: Partial<KindState>;
-  if (a.type === "next") {
+  if (a.type === "select") {
+    if (k.selected?.resource.uid === a.row.resource.uid) return state;
+    patch = { selected: a.row, section: "Overview", sections: {}, sectionCursor: "", sectionEpoch: a.epoch };
+  } else if (a.type === "section") {
+    if (k.section === a.section) return state;
+    patch = { section: a.section, sectionCursor: "", sectionEpoch: a.epoch };
+  } else if (a.type === "next") {
     if (!a.cursor || k.history.length >= 20) return state;
     patch = { history: [...k.history, a.cursor] };
   } else {

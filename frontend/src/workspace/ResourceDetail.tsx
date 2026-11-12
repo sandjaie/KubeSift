@@ -7,6 +7,7 @@ Important: Overview configuration is not measured usage and references never fet
 import type { ReactNode } from "react";
 import type { WorkloadController } from "../workloads/useWorkloads";
 import type { ResourceDetail as Detail, YAMLDocument, EventPage, RelatedPage, Section } from "../workloads/model";
+import { deploymentCounts } from "../workloads/model";
 import { ResourceYaml } from "./ResourceYaml";
 import { ResourceEvents } from "./ResourceEvents";
 import { DeploymentPods } from "./DeploymentPods";
@@ -42,6 +43,7 @@ function Overview({ data }: { data: Detail }) {
     spec = object(root.spec),
     status = object(root.status);
   const pod = data.resource.kind === "Pod";
+  const counts = deploymentCounts(status);
   const template = object(object(spec.template).spec);
   return (
     <div className="evidence-section">
@@ -105,10 +107,10 @@ function Overview({ data }: { data: Detail }) {
         <Facts
           values={{
             Desired: spec.replicas,
-            Updated: status.updatedReplicas,
-            Ready: status.readyReplicas,
-            Available: status.availableReplicas,
-            Unavailable: status.unavailableReplicas,
+            Updated: counts.updated,
+            Ready: counts.ready,
+            Available: counts.available,
+            Unavailable: counts.unavailable,
             "Desired generation": meta.generation,
             "Observed generation": status.observedGeneration,
             Conditions: status.conditions,

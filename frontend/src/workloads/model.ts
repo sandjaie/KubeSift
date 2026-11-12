@@ -55,3 +55,15 @@ export interface TabState {
   back: WorkloadRow | null;
 }
 export type WorkloadsState = Record<string, TabState>;
+
+// Observed typed Deployment status omits zero counters during JSON serialization.
+export function deploymentCounts(status: Record<string, unknown>) {
+  const observed = Number(status.observedGeneration ?? 0) > 0 || (Array.isArray(status.conditions) && status.conditions.length > 0);
+  const count = (name: string) => (typeof status[name] === "number" ? status[name] : observed ? 0 : undefined);
+  return {
+    updated: count("updatedReplicas"),
+    ready: count("readyReplicas"),
+    available: count("availableReplicas"),
+    unavailable: count("unavailableReplicas"),
+  };
+}

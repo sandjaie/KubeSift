@@ -25,3 +25,38 @@ test("A/B kinds retain selection, reject delayed responses and bound cursor hist
   expect(canAutoRefresh({ ...state.A.kinds.Pod, auto: true }, true)).toBe(false);
   expect(canAutoRefresh({ ...emptyKind(), auto: true }, false)).toBe(false);
 });
+
+test("reselecting the same resource or section preserves pending evidence", () => {
+  let s = reduceWorkloads(initialWorkloads(), { type: "scope", tab: "A", scope: "a/1/ns" });
+  const row = {
+    resource: { connection: { id: "a", generation: 1 }, apiVersion: "v1", kind: "Pod", namespace: "ns", name: "pod", uid: "uid" },
+    phase: "Running",
+    reason: "",
+    node: "",
+    ready: 1,
+    desired: 1,
+    restarts: 0,
+    available: null,
+    updated: null,
+    createdAt: null,
+  };
+  s = reduceWorkloads(s, { type: "select", tab: "A", row, epoch: 1 });
+  expect(s.A.kinds.Pod.selected?.resource.uid).toBe("uid");
+  s = reduceWorkloads(s, {
+    type: "patch",
+    tab: "A",
+    scope: "a/1/ns",
+    kind: "Pod",
+    patch: { sections: { Overview: { loading: true, error: "", data: null } }, sectionEpoch: 2 },
+  });
+  s = reduceWorkloads(s, { type: "select", tab: "A", row, epoch: 3 });
+  s = reduceWorkloads(s, { type: "section", tab: "A", section: "Overview", epoch: 4 });
+  expect(s.A.kinds.Pod.sectionEpoch).toBe(2);
+  expect(s.A.kinds.Pod.sections.Overview?.loading).toBe(true);
+});
+
+test("observed Deployment zero counts remain zero while sparse status stays unknown", async () => {
+  const { deploymentCounts } = await import("./model");
+  expect(deploymentCounts({ observedGeneration: 1 })).toEqual({ updated: 0, ready: 0, available: 0, unavailable: 0 });
+  expect(deploymentCounts({})).toEqual({ updated: undefined, ready: undefined, available: undefined, unavailable: undefined });
+});

@@ -4,14 +4,18 @@ Used by: Pod Logs and the global Sessions dock.
 Responsibilities: Separate Stop, Clear, scroll pause and explicit Resume with gap disclosure.
 Important: Rendering never subscribes or opens a native log reader.
 */
-import { useState } from "react";
-import { displayWindow, type LogSession, type LogStore } from "./logStore";
+import { useEffect, useRef, useState } from "react";
+import { displayWindow, scrollLogViewport, type LogSession, type LogStore } from "./logStore";
+import { Modal } from "../ui/ReviewDialog";
 import type { ConnectionRef } from "../bridge";
 export function LogViewer({ session: s, store, connection }: { session: LogSession; store: LogStore; connection?: ConnectionRef }) {
   const [follow, setFollow] = useState(true),
     [offset, setOffset] = useState(0),
     [query, setQuery] = useState(""),
     [notice, setNotice] = useState("");
+  const viewport = useRef<HTMLPreElement>(null);
+  const [resumeTarget, setResumeTarget] = useState<{ connection?: ConnectionRef; changed: boolean } | null>(null);
+  useEffect(() => scrollLogViewport(viewport.current, follow), [s.text, follow]);
   const bytes = new TextEncoder().encode(s.text).length;
   const start = follow ? Math.max(0, bytes - 65536) : Math.min(offset, Math.max(0, bytes - 1));
   const attempt = (fn: () => Promise<unknown>) => {
@@ -19,6 +23,25 @@ export function LogViewer({ session: s, store, connection }: { session: LogSessi
   };
   return (
     <div className="log-viewer">
+      {resumeTarget && (
+        <Modal title="Resume log session?" onCancel={() => setResumeTarget(null)}>
+          <p>
+            {resumeTarget.changed ? "Confirm the newly connected target. " : ""}
+            {s.label} / {s.request.resource.namespace} / {s.request.resource.name} / {s.request.container}
+          </p>
+          <p>The same Pod UID is revalidated. A new segment may overlap or omit logs.</p>
+          <button
+            className="primary"
+            onClick={() => {
+              const target = resumeTarget.connection;
+              setResumeTarget(null);
+              attempt(() => store.resume(s.id, target));
+            }}
+          >
+            Resume logs
+          </button>
+        </Modal>
+      )}
       <p className="detail-identity">
         {s.label} / {s.request.resource.namespace} / {s.request.resource.name} / {s.request.container} ·{" "}
         {s.request.previous ? "Previous" : "Current"} · UID {s.request.resource.uid} · generation {s.request.resource.connection.generation}
@@ -35,12 +58,7 @@ export function LogViewer({ session: s, store, connection }: { session: LogSessi
             const changed =
               connection &&
               (connection.id !== s.request.resource.connection.id || connection.generation !== s.request.resource.connection.generation);
-            if (
-              window.confirm(
-                `${changed ? "Confirm the newly connected target. " : ""}Resume validates the same Pod UID. A new segment can overlap or omit logs. Continue?`,
-              )
-            )
-              attempt(() => store.resume(s.id, connection));
+            setResumeTarget({ connection, changed: !!changed });
           }}
         >
           Resume
@@ -106,7 +124,9 @@ export function LogViewer({ session: s, store, connection }: { session: LogSessi
         </p>
       )}
       <p role="status">{notice}</p>
-      <pre className="log-text">{displayWindow(s.text, start) || "No retained log text."}</pre>
+      <pre ref={viewport} className="log-text">
+        {displayWindow(s.text, start) || "No retained log text."}
+      </pre>
     </div>
   );
 }
