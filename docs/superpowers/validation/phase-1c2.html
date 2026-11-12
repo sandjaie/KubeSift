@@ -180,6 +180,28 @@
         skill’s cleanup default at the cost of local disk space. No credentials, full workload payloads or raw log histories are published
         here.
       </p>
+      <h2 id="delegated-ui-uat">Delegated native UI acceptance · 2026-11-12</h2>
+      <p>
+        Codex exercised the <a href="phase-1c2-ui-uat.html">UI checklist</a> against the packaged 0.3.0 app on macOS 26.7.1. The test used
+        the synthetic kubesift-explorer namespace on kind-dev-local-a and kind-dev-local-b. The rebuilt-app confirmation retest passed.
+        Cancel preserved the tab and its retained sessions. Confirm removed all eight sessions from A, kept B open, and reduced the session
+        count to zero. Relaunch also showed zero sessions.
+      </p>
+      <p>
+        The walkthrough also verified separate A/B namespaces, nodes and filters, Pod phases and container groups, Deployment ownership
+        navigation, current and previous log snapshots, and rejection of a ninth retained session with recovery after closing one. YAML
+        search and the copy control were exercised. Clipboard contents were not compared.
+      </p>
+      <p>
+        The follow-up verified distinct Pod UIDs and restored tab selections, all five zero replica counters for scaled-zero, Clear on a
+        running log stream, and Resume with an overlap/gap warning and a second segment in the same session. One logical session stayed
+        visible across Light, System and Dark settings and a brief hide and restore.
+      </p>
+      <p>
+        Remaining coverage includes large workload pages, restricted-reader errors, high-volume overflow, background delivery completeness,
+        scroll positioning, full multi-container log selection, external-monitor layout and split persistence, and the optional
+        replacement/reconnect race. This records delegated observations. Maintainer sign-off remains pending.
+      </p>
     </main>
   </body>
 </html>
