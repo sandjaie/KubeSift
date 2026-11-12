@@ -1,6 +1,6 @@
 # Phase 1C.2 Workload Investigation Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. Implementation belongs in a separate session after plan review.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking. Implementation belongs in a separate session after plan review.
 
 **Goal:** Investigate actual Pods and Deployments through overview, read-only YAML, events and bounded container logs in the existing workspace.
 
@@ -69,13 +69,13 @@ Native reader methods use the same names and DTOs with `ctx context.Context` ins
 
 **Interfaces:** Produces `ReadWorkloads(ctx context.Context, req PageRequest) (WorkloadPage, error)` and its bridge method plus cancellation. Subsequent tasks use the same bounded client and immutable ResourceRef.
 
-- [ ] Add table cases to `TestWorkloadReads`: Pod/Deployment namespace list returns at most 100 rows and a continuation; changed namespace/generation rejects the old cursor; server 410 yields `list_changed`; missing status does not become zero. Use existing client fakes and an HTTP test server for response bounds; no live cluster.
-- [ ] Run `go test ./internal/kube -run TestWorkloadReads -count=1`; confirm the new assertions fail before implementation.
-- [ ] Implement `ReadWorkloads` with typed list calls, explicit namespace and Limit 100. Cursor is a versioned opaque envelope containing API token and full request scope; validate all fields and cap encoded length at 16 KiB. It is not an authorization token. No unbounded fallback. Return selected page only.
-- [ ] Implement `boundedReadClient(ctx context.Context, ref model.ConnectionRef) (kubernetes.Interface, error)` using a copied owned REST config and a response-body limiter that errors above 16 MiB per read response, including chunked/compressed responses. Preserve existing transport/auth behavior; never apply this limit to log streams. Reject excessive bodies during reading, not after unbounded decoding. Detail output has the stricter 2 MiB limit.
-- [ ] Add cancellable desktop read registry, complete/cancel cleanup and safe error normalization. Add one bridge lifecycle case in `internal/desktop/workloads_test.go`: cancelled request releases its slot and cannot cancel a different request. Ensure disconnect/generation validation still owns clients.
-- [ ] Run `go test ./internal/kube ./internal/desktop`, then `wails3 task bindings`; expect pass and generated read contracts. Inspect generated diff.
-- [ ] Commit task files only: `feat: add bounded workload inventory reads`.
+- [x] Add table cases to `TestWorkloadReads`: Pod/Deployment namespace list returns at most 100 rows and a continuation; changed namespace/generation rejects the old cursor; server 410 yields `list_changed`; missing status does not become zero. Use existing client fakes and an HTTP test server for response bounds; no live cluster.
+- [x] Run `go test ./internal/kube -run TestWorkloadReads -count=1`; confirm the new assertions fail before implementation.
+- [x] Implement `ReadWorkloads` with typed list calls, explicit namespace and Limit 100. Cursor is a versioned opaque envelope containing API token and full request scope; validate all fields and cap encoded length at 16 KiB. It is not an authorization token. No unbounded fallback. Return selected page only.
+- [x] Implement `boundedReadClient(ctx context.Context, ref model.ConnectionRef) (kubernetes.Interface, error)` using a copied owned REST config and a response-body limiter that errors above 16 MiB per read response, including chunked/compressed responses. Preserve existing transport/auth behavior; never apply this limit to log streams. Reject excessive bodies during reading, not after unbounded decoding. Detail output has the stricter 2 MiB limit.
+- [x] Add cancellable desktop read registry, complete/cancel cleanup and safe error normalization. Add one bridge lifecycle case in `internal/desktop/workloads_test.go`: cancelled request releases its slot and cannot cancel a different request. Ensure disconnect/generation validation still owns clients.
+- [x] Run `go test ./internal/kube ./internal/desktop`, then `wails3 task bindings`; expect pass and generated read contracts. Inspect generated diff.
+- [x] Commit task files only: `feat: add bounded workload inventory reads`.
 
 ## Task 2: UID-checked overview, YAML and Deployment relationships
 

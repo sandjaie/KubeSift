@@ -12,17 +12,57 @@ Important: Wails generates this glue; change Go contracts and regenerate rather 
 import * as model$0 from "../model/models.js";
 
 export interface ForwardResult {
-    "session": model$0.SessionRef;
-    "localPort": number;
+  session: model$0.SessionRef;
+  localPort: number;
+}
+
+export interface PageInfo {
+  nextCursor: string;
+  resourceVersion: string;
+  fetchedAt: string;
+}
+
+export interface PageRequest {
+  connection: model$0.ConnectionRef;
+  kind: string;
+  namespace: string;
+  cursor: string;
 }
 
 export interface PodSummary {
-    "name": string;
-    "namespace": string;
-    "uid": string;
-    "phase": string;
-    "ready": boolean;
-    "containers": string[] | null;
-    "marker": string;
-    "annotation": string;
+  name: string;
+  namespace: string;
+  uid: string;
+  phase: string;
+  ready: boolean;
+  containers: string[] | null;
+  marker: string;
+  annotation: string;
+}
+
+export interface ResourceRef {
+  connection: model$0.ConnectionRef;
+  apiVersion: string;
+  kind: string;
+  namespace: string;
+  name: string;
+  uid: string;
+}
+
+export interface WorkloadPage {
+  items: WorkloadRow[] | null;
+  page: PageInfo;
+}
+
+export interface WorkloadRow {
+  resource: ResourceRef;
+  phase: string;
+  reason: string;
+  node: string;
+  ready: number | null;
+  desired: number | null;
+  updated: number | null;
+  available: number | null;
+  restarts: number | null;
+  createdAt: string | null;
 }

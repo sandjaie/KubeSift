@@ -21,6 +21,7 @@ type ExplorerService struct {
 	mu          sync.Mutex
 	core        *Service
 	coordinator *explorer.Coordinator
+	reads       map[string]*workloadRead
 }
 
 func newExplorerService(core *Service) *ExplorerService { return &ExplorerService{core: core} }
