@@ -1,7 +1,7 @@
 /*
 Purpose: Wire the native Wails application to domain services.
 Used by: The desktop executable.
-Responsibilities: Register services, restore window geometry and publish session events.
+Responsibilities: Register services, restore display placement, maximise the window and publish session events.
 Important: Geometry persistence is independent of Kubernetes/session policy and uses logical bounds.
 */
 package desktop
@@ -61,6 +61,7 @@ func Run(assets fs.FS) error {
 			r = *p.Window
 		}
 		clamp(r)
+		window.Maximise()
 		lock.Lock()
 		restored = true
 		lock.Unlock()

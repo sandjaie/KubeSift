@@ -94,22 +94,24 @@ export function Workspace({
               />
               <button onClick={() => c.patch({ sort: i.sort === "asc" ? "desc" : "asc" })}>Name {i.sort === "asc" ? "↑" : "↓"}</button>
             </div>
-            <div className="filter-bar">
-              <button disabled={i.history.length === 1 || i.loading} onClick={c.previous}>
-                Previous
-              </button>
-              <span>Page {i.history.length}</span>
-              <button disabled={!i.page?.page.nextCursor || i.history.length >= 20 || i.loading} onClick={c.next}>
-                Next
-              </button>
-              <label>
+            <div className="inventory-controls">
+              <nav className="inventory-pagination" aria-label="Workload pages">
+                <button disabled={i.history.length === 1 || i.loading} onClick={c.previous}>
+                  Previous
+                </button>
+                <span className="inventory-page">Page {i.history.length}</span>
+                <button disabled={!i.page?.page.nextCursor || i.history.length >= 20 || i.loading} onClick={c.next}>
+                  Next
+                </button>
+              </nav>
+              <label className="inventory-auto-refresh">
                 <input type="checkbox" checked={i.auto} onChange={(e) => c.patch({ auto: e.target.checked })} /> Auto-refresh
               </label>
             </div>
             {i.history.length >= 20 && <p className="warning">History limit reached. Refresh to restart pagination.</p>}
             {i.auto && i.history.length > 1 && <p className="muted">Auto-refresh paused after page one.</p>}
             {stale && i.page && <p className="warning table-hint">Retained data — connection evidence is not current.</p>}
-            <p className="table-hint">↑ ↓ Select · Filter and sort apply to this page. {i.page && `Captured ${i.page.page.fetchedAt}`}</p>
+            <p className="table-hint">↑ ↓ Select · Filter and sort apply to this page.</p>
             {i.loading && <p>Loading {kind}s…</p>}
             {i.error && <p role="alert">{i.error}</p>}
             {rows.length ? (

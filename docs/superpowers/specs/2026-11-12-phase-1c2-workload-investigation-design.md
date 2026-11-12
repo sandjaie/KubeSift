@@ -159,3 +159,7 @@ The implementation session commits/pushes its feature branch and opens the PR to
 ## Approval and next step
 
 The user approved this specification on 2026-11-12. The [implementation plan](../plans/2026-11-12-phase-1c2-workload-investigation.md) defines seven tasks, minimal behavior-focused checks and the separate UI UAT deliverable. Implementation occurs in a separate session; no application code, cluster mutation or new fixture installation occurred during planning.
+
+## UAT refinement · 12 November 2026
+
+User requested desktop-work-area maximization at launch (not macOS full screen), aligned inventory pagination/Auto-refresh and removal of the inventory capture timestamp. Follow the [owning UX behavior](../../ux/workflows.html#detail-divider) and its Themes and window sizes section. Saved display placement and pane proportions remain; detail evidence timestamps and stale-data warnings remain. These are Phase 1C.2 UAT fixes, not Phase 1C.3 scope.

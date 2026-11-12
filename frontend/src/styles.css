@@ -375,6 +375,44 @@ summary:focus-visible {
   flex: 1;
   min-width: 140px;
 }
+.inventory-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  padding: 12px 20px 0;
+}
+.inventory-pagination {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.inventory-pagination button {
+  min-height: 32px;
+  padding: 6px 10px;
+}
+.inventory-page {
+  min-width: 54px;
+  text-align: center;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.inventory-auto-refresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  white-space: nowrap;
+}
+.inventory-auto-refresh input {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--accent);
+}
 .view-state {
   display: flex;
   gap: 6px;
