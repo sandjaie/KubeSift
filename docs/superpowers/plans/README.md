@@ -21,3 +21,5 @@ Plan completion tracking follows the [engineering documentation guidance](../../
 The [roadmap](../../roadmap/roadmap.html) owns phase order. This directory owns execution tasks. Future plans follow the Superpowers writing-plans workflow after the relevant design is approved. Keep scope, safeguards and permanent instructions in their owning documents and link to them.
 
 Implementation requires an explicit request after plan review; the user may authorize execution in the same session. Later milestones are not authorized by the Phase 1A plan.
+
+The [Phase 1C.2 workload investigation specification](../specs/2026-11-12-phase-1c2-workload-investigation-design.md) is drafted for review on 2026-11-12. Its detailed implementation plan follows approval; UI UAT is a required implementation deliverable.
