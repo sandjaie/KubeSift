@@ -1,49 +1,39 @@
 /*
-Purpose: Keep synthetic session ownership visible across navigation.
-Used by: Product shell in preview mode.
-Responsibilities: Collapse without deletion and stop individual captured sessions.
-Important: These inert previews never allocate backend sessions or network listeners.
+Purpose: Keep actual log sessions accessible across product navigation.
+Used by: App below the workspace and Settings content.
+Responsibilities: Collapse rendering without changing session ownership.
+Important: Detail and dock share the same native stream and retained history.
 */
-import { identity, type PreviewSession } from "../workspace/model";
+import { useState } from "react";
+import type { LogSessionsController } from "./useLogSessions";
+import type { ConnectionRef } from "../bridge";
+import { LogViewer } from "./LogViewer";
 export function SessionsDock({
-  sessions,
-  open,
-  onToggle,
-  onStop,
+  controller,
+  connections,
 }: {
-  sessions: PreviewSession[];
-  open: boolean;
-  onToggle: () => void;
-  onStop: (id: string) => void;
+  controller: LogSessionsController;
+  connections: Record<string, ConnectionRef | null>;
 }) {
+  const [open, setOpen] = useState(false);
   return (
-    <section className="sessions-dock">
+    <section className="sessions-dock product-sessions">
       <header>
-        <button onClick={onToggle} aria-expanded={open}>
-          {open ? "▾" : "▸"} Sessions <span className="muted">{sessions.length} · synthetic</span>
+        <button aria-expanded={open} onClick={() => setOpen(!open)}>
+          {open ? "▾" : "▸"} Sessions · {controller.sessions.length}
         </button>
-        <span className="muted">Targets stay fixed across tabs</span>
+        <span className="muted">Targets stay fixed across navigation</span>
       </header>
-      <div hidden={!open} className="session-cards">
-        {!sessions.length && <p className="muted">Open a logs, terminal or forward preview from a selected Pod.</p>}
-        {sessions.map((s) => (
-          <article key={s.id}>
-            <header>
-              <strong>{s.kind} preview</strong>
-              <span>{s.status}</span>
-              <button
-                disabled={s.status === "stopped"}
-                onClick={() => onStop(s.id)}
-                aria-label={`Stop ${s.kind} ${s.target.clusterId} ${s.target.name}`}
-              >
-                Stop
-              </button>
-            </header>
-            <p className="detail-identity">{identity(s.target)}</p>
-            <pre>{s.text}</pre>
-          </article>
-        ))}
-      </div>
+      {open && (
+        <div className="session-cards">
+          {!controller.sessions.length && <p>No log sessions. Select a Pod, then Logs.</p>}
+          {controller.sessions.map((s) => (
+            <article key={s.id}>
+              <LogViewer session={s} store={controller.store} connection={connections[s.tab] ?? undefined} />
+            </article>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

@@ -2,7 +2,7 @@
 Purpose: Read only the Kubernetes resources explicitly requested by a caller.
 Used by: The desktop adapter and local integration scenario.
 Responsibilities: Validate targets, build connection-bound clients and project safe Pod summaries.
-Important: Never send full Pod specs or credential-bearing client configuration across the desktop bridge.
+Important: Legacy summaries omit full specs; investigation reads separately cap local payloads. Credentials stay native.
 */
 package kube
 

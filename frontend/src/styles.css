@@ -1392,3 +1392,22 @@ textarea::placeholder {
   padding: 10px 0;
   border-bottom: 1px solid var(--border);
 }
+.product-sessions {
+  flex: 0 0 auto;
+  max-height: var(--dock-height);
+  overflow: auto;
+}
+.log-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 280px;
+  overflow: auto;
+  font-family: monospace;
+}
+.log-viewer {
+  padding: 8px 12px;
+  min-width: 0;
+}
+.log-viewer .filter-bar {
+  flex-wrap: wrap;
+}

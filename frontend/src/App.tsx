@@ -22,10 +22,14 @@ import { commandForKey } from "./workspace/commands";
 import { ResizeHandle } from "./ui/ResizeHandle";
 import { ResourceIcon } from "./ui/ResourceIcon";
 import { InvestigationPanel } from "./ai/InvestigationPanel";
+import { useLogSessions } from "./sessions/useLogSessions";
+import { PodLogs } from "./sessions/PodLogs";
+import { SessionsDock } from "./sessions/SessionsDock";
 import { useWorkloads } from "./workloads/useWorkloads";
 import "./styles.css";
 export default function App() {
   const controller = useConnections();
+  const logs = useLogSessions();
   const { state } = controller;
   const [page, setPage] = useState<"clusters" | "workspace" | "settings">("clusters");
   const [aiOpen, setAiOpen] = useState(false);
@@ -100,9 +104,25 @@ export default function App() {
     void controller.connect(entry);
   }
   function close(key: string) {
-    workloads.close(key);
-    void controller.cancel(key);
+    const count = logs.sessions.filter((s) => s.tab === key).length;
+    if (count && !window.confirm(`Close this cluster tab and its ${count} retained log sessions?`)) return;
+    void logs.store.closeTab(key).then(() => {
+      workloads.close(key);
+      void controller.cancel(key);
+    });
   }
+  useEffect(() => {
+    for (const session of logs.sessions) {
+      const ref = state.tabs[session.tab]?.view?.ref;
+      if (
+        !ref ||
+        ref.id !== session.request.resource.connection.id ||
+        ref.generation !== session.request.resource.connection.generation ||
+        state.tabs[session.tab]?.view?.state !== "connected"
+      )
+        logs.store.disconnected(session.tab);
+    }
+  }, [state.tabs, logs.store, logs.sessions]);
   function settings() {
     setTrustTarget(null);
     setPage("settings");
@@ -229,6 +249,17 @@ export default function App() {
                 tab={active}
                 navigationOpen={!hiddenNavigation[state.active!]}
                 controller={workloads}
+                logs={
+                  workloads.selection?.resource.kind === "Pod" && workloads.activeSection === "Logs" ? (
+                    <PodLogs
+                      key={JSON.stringify(workloads.selection.resource)}
+                      resource={workloads.selection.resource}
+                      tab={state.active!}
+                      label={active.entry.context}
+                      controller={logs}
+                    />
+                  ) : undefined
+                }
                 detailWidthPercent={preferences.detailWidthPercent}
                 detailHeightPercent={preferences.detailHeightPercent}
                 onDetailResize={(axis, value) => resize(axis === "x" ? "detailWidthPercent" : "detailHeightPercent", value)}
@@ -266,6 +297,10 @@ export default function App() {
           />
         </div>
       </div>
+      <SessionsDock
+        controller={logs}
+        connections={Object.fromEntries(Object.entries(state.tabs).map(([id, tab]) => [id, tab.view?.ref ?? null]))}
+      />
       {palette && <CommandPalette available={false} onCommand={() => setPage("clusters")} onClose={() => setPalette(false)} />}
     </div>
   );
