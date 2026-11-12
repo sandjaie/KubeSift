@@ -5,6 +5,7 @@
 - Product scope, architecture, safeguards, decisions, UX and roadmap each have an owning HTML document linked from the index.
 - Follow docs/engineering/engineering.html#documentation-layout for documentation placement. Permanent specs, plans, phase validation reports and narrowly curated proof belong under docs/superpowers/. Execution logs, detailed progress, diffs, checks, handoffs, working notes and temporary Markdown belong in ignored .superpowers/sdd/. The concise portable status.md checkpoint is the only tracked exception. Archive generated operational outputs there after runs.
 - Keep requirements in their owning document and link to them; avoid duplicating instructions across files.
+- Preserve the approved UI defined in [UX workflows](docs/ux/workflows.html), its linked approved specifications and [current visual references](docs/ux/mocks/index.html). Reuse existing colour tokens, surface hierarchy, layout, navigation and interaction patterns when extending features. Do not redesign or replace these conventions unless the user explicitly requests a UI change. For requested changes, update the owning UX documentation and relevant specs/mocks alongside implementation; historical or illustrative mocks do not override the current approved design.
 - Planning approval is not implementation authorization. Use Superpowers planning/spec workflows and begin code only when the user requests implementation.
 - Do not claim Lens/K9s parity without reviewed capability coverage and evidence.
 
