@@ -40,8 +40,8 @@ export function ResourceSplit({
     };
   }, []);
   const { axis, extent } = geometry;
-  const detailMinimum = axis === "x" ? 300 : 160;
-  const listMinimum = axis === "x" ? 280 : 160;
+  const detailMinimum = axis === "x" ? 300 : 280;
+  const listMinimum = axis === "x" ? 280 : 230;
   const min = Math.min(50, Math.max(20, Math.ceil((detailMinimum / extent) * 100)));
   const max = Math.max(min, Math.min(80, Math.floor(((extent - listMinimum) / extent) * 100)));
   const preferred = axis === "x" ? widthPercent : heightPercent;

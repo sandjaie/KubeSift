@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Workspace refinement validation · KubeSift</title>
+    <link rel="stylesheet" href="../../assets/planning.css" />
+    <script src="../../assets/theme.js"></script>
+  </head>
+  <body>
+    <aside class="rail">
+      <a class="skip" href="#content">Skip to content</a>
+      <a class="mark" href="../../index.html">KubeSift</a>
+      <h2>Workspace refinement</h2>
+      <a href="../specs/2026-11-12-dark-palette-workspace-controls-design.md">Approved specification</a>
+      <a href="../plans/2026-11-12-dark-palette-workspace-controls.md">Implementation plan</a>
+      <a href="../../ux/mocks/index.html">Mock gallery</a>
+      <a href="../../ux/workflows.html">UX owner</a>
+    </aside>
+    <header>
+      <p>KubeSift / Workspace refinement</p>
+      <h1>Neutral dark palette and workspace controls</h1>
+      <p>Agent verification · 12 November 2026</p>
+    </header>
+    <main id="content">
+      <p class="callout">
+        Neutral dark surfaces, searchable namespace selection and remembered Pod-detail sizes are implemented. Final review and verification
+        are in progress. No merge, release or Phase 1C.2 work is included.
+      </p>
+      <h2>Scope and provenance</h2>
+      <p>
+        Branch <code>feature/workspace-theme-and-controls</code> starts from develop <code>7664be8</code> in the existing checkout. No
+        worktree or rebase. Only kind-dev-local-a and kind-dev-local-b were connected, using existing synthetic fixtures in
+        kubesift-explorer. No cluster resources, kubeconfig files or helper approvals were changed.
+      </p>
+      <p>
+        macOS 26.7.1, arm64; Go 1.27.3, Wails 3.1.0, Node 25.1.0 and npm 11.6.2. The documented Node 26 baseline was not exercised locally.
+        Validation used the native packaged app, not a browser preview. Packaging is locally ad-hoc signed; this is not notarization or
+        distribution-readiness evidence. Executable SHA-256: <code>5e8120948c09f8809b042b144e09f147a2d997e5f7f9a29cd219a8c156e67b15</code>.
+        Signature integrity verification passed.
+      </p>
+      <h2>Automated and build checks</h2>
+      <ul>
+        <li>
+          <code>scripts/check.sh</code> passed: source descriptions, documentation links, Go formatting/tests/vet, nine frontend tests, lint
+          and typecheck.
+        </li>
+        <li>
+          <code>wails3 task package</code> passed before native checks. A final rebuild checks the subsequently corrected stacked pane
+          limit.
+        </li>
+        <li>Preference migration and namespace option tests were observed failing before implementation, then passing.</li>
+        <li>
+          Version 1 migrates in memory without rewriting the file; version 2 requires both integer percentages and preserves unrelated
+          appearance/window/pane fields.
+        </li>
+        <li>
+          Namespace tests cover case-insensitive filtering, retained explicit values, and valid manual names only when discovery is
+          incomplete.
+        </li>
+      </ul>
+      <h2>Observed native behavior</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Check</th>
+            <th>Agent result</th>
+            <th>Evidence and limits</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Namespace search and commit</td>
+            <td>Pass</td>
+            <td>
+              Typing filtered options without changing the active namespace. Enter selected default and kubesift-explorer; nine fixture Pods
+              loaded. An unmatched name and Enter left the current namespace unchanged.
+            </td>
+          </tr>
+          <tr>
+            <td>Dismissal and tab ownership</td>
+            <td>Pass</td>
+            <td>
+              Escape, outside click and switching tabs discarded an uncommitted query. A retained kubesift-explorer and same-pod; B
+              separately loaded nine fixture Pods. No separate manual input, Go button or duplicate identity-bar breadcrumb remained.
+            </td>
+          </tr>
+          <tr>
+            <td>Independent split persistence</td>
+            <td>Pass</td>
+            <td>
+              Keyboard adjusted side-by-side width from 50 to 52%, and stacked height from 50 to 56%. Restart restored both values in their
+              respective orientations. Startup restored zero connections. A later pointer drag changed width from 52 to 44%.
+            </td>
+          </tr>
+          <tr>
+            <td>Stacked limit consistency</td>
+            <td>Pass after correction</td>
+            <td>
+              Native testing found old CSS minimum heights disagreeing with the new separator value at the limit. Minimum allocation now
+              belongs to the split component; competing CSS constraints were removed.
+            </td>
+          </tr>
+          <tr>
+            <td>Themes and AI</td>
+            <td>Pass within exercised scope</td>
+            <td>
+              Light, System and Dark settings selected successfully; Dark restored. Light and Dark workspace screenshots retained. AI
+              opens/closes without losing the resource selection and continues to state that integration is unavailable. OS appearance
+              changes were not forced.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <h2>Contrast measurements</h2>
+      <p>
+        Standard sRGB relative-luminance calculation across all four dark surfaces: primary text minimum 7.88:1, secondary 4.83:1,
+        interactive text 6.36:1, success 4.60:1, error 5.11:1 and warning 6.23:1. Dark text on the primary blue button is 5.37:1. These are
+        token-pair measurements, not a claim of full accessibility conformance. Lighter blue text and light red errors are deliberate
+        readability adjustments to the supplied palette.
+      </p>
+      <h2>Screenshots and mock</h2>
+      <p>
+        <a href="../evidence/workspace-refinement/dark-wide.png">Dark, side by side</a> ·
+        <a href="../evidence/workspace-refinement/dark-stacked.png">Dark, stacked with AI</a> ·
+        <a href="../evidence/workspace-refinement/namespace-search.png">Namespace search</a> ·
+        <a href="../evidence/workspace-refinement/light-wide.png">Light</a>. Native captures use the final corrected package and existing
+        local fixtures. The
+        <a href="../../ux/mocks/neutral-dark-controls.png">approved generated mock</a>
+        is illustrative; historical Phase 1B mocks remain explicitly historical in the gallery.
+      </p>
+      <h2>Focused user review</h2>
+      <ol>
+        <li>
+          Open <code>bin/kubesift.app</code>, or build with <code>wails3 task package</code> first. Search kind-dev-local and select a local
+          context.
+        </li>
+        <li>
+          Open Namespace, type kubesift and press Enter. Expect kubesift-explorer Pods. Reopen, type without choosing, then Escape; expect
+          the original namespace.
+        </li>
+        <li>
+          Drag the divider between Pods and details. Open Ask AI to stack the panes and drag vertically. Quit/relaunch and reconnect; expect
+          independent remembered sizes.
+        </li>
+        <li>
+          Switch Light/Dark in Settings and inspect text, focus and selection. Open both local contexts and confirm namespace and Pod
+          selection remain independent.
+        </li>
+      </ol>
+      <h2>Coverage limits and follow-up</h2>
+      <p>
+        Incomplete-discovery manual selection is unit-tested, but was not exercised with restricted native credentials in this run. No
+        exhaustive monitor/OS scaling, screen-reader or transport-failure matrix was run. Existing Phase 1A/1C.1 limitations remain; AI and
+        additional resource operations are not added. User acceptance remains separate from these agent observations.
+      </p>
+      <p>
+        After this implementation, the maintainer requested further UI/UX discussion in the same plan, starting with coloured dots next to
+        Pod phase labels. Those dots are not included in this validation result; the follow-up remains separately identified in the plan.
+      </p>
+      <footer>12 November 2026 · <a href="../../index.html">Documentation index</a></footer>
+    </main>
+  </body>
+</html>

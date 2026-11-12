@@ -15,7 +15,7 @@ Reuse the existing React presentation, native preference store and accessible se
 
 ## Visual contract
 
-Dark and System-dark use base `#1A1D21`, panel `#22252A`, hover/selection `#2C2D30`, overlay `#35373B`, borders `#383A40`, primary text `#D1D2D3`, headings `#E8E8E8`, secondary text `#A3A5A8`, blue interactions `#1D9BD1`, green success `#2EB67D`, amber warning `#ECB22E`. Use dark text on blue buttons and light red `#FF839F` for error text. Faint disabled grey is never used for required metadata. All surfaces are flat; shading and invented row counts in the generated mock are not implementation requirements. Selected controls retain an indicator as well as colour. Floating dialogs and namespace options use the overlay level. Success is independent of the interaction accent.
+Dark and System-dark use base `#1A1D21`, panel `#22252A`, hover/selection `#2C2D30`, overlay `#35373B`, borders `#383A40`, primary text `#D1D2D3`, headings `#E8E8E8`, secondary text `#A3A5A8`, blue interactions `#1D9BD1`, green success `#2EB67D`, amber warning `#ECB22E`. Use lighter blue `#6FC8F0` for interactive foreground text on dark surfaces. Use dark text on blue buttons and light red `#FF839F` for error text. Faint disabled grey is never used for required metadata. All surfaces are flat; shading and invented row counts in the generated mock are not implementation requirements. Selected controls retain an indicator as well as colour. Floating dialogs and namespace options use the overlay level. Success is independent of the interaction accent.
 
 ## Namespace selector
 

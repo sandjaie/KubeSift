@@ -10,6 +10,11 @@
   color-scheme: light;
   --bg: #f4f6f7;
   --panel: #fff;
+  --overlay: #fff;
+  --heading: #18252e;
+  --success: #007f72;
+  --accent-ink: #007f72;
+  --backdrop: #07121bb0;
   --raised: #edf1f3;
   --text: #18252e;
   --muted: #5b6b76;
@@ -27,33 +32,43 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --bg: #0d141a;
-    --panel: #121c24;
-    --raised: #1b2731;
-    --text: #e5edf3;
-    --muted: #9aabb7;
-    --line: #2e3e4a;
-    --accent: #34d9bc;
-    --accent-text: #06261f;
-    --selection: #133e3b;
-    --danger: #ff8790;
-    --warning: #f4c66b;
+    --bg: #1a1d21;
+    --panel: #22252a;
+    --overlay: #35373b;
+    --heading: #e8e8e8;
+    --success: #2eb67d;
+    --accent-ink: #6fc8f0;
+    --backdrop: #0009;
+    --raised: #2c2d30;
+    --text: #d1d2d3;
+    --muted: #a3a5a8;
+    --line: #383a40;
+    --accent: #1d9bd1;
+    --accent-text: #1a1d21;
+    --selection: #2c2d30;
+    --danger: #ff839f;
+    --warning: #ecb22e;
     --shadow: 0 16px 60px #0008;
   }
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --bg: #0d141a;
-  --panel: #121c24;
-  --raised: #1b2731;
-  --text: #e5edf3;
-  --muted: #9aabb7;
-  --line: #2e3e4a;
-  --accent: #34d9bc;
-  --accent-text: #06261f;
-  --selection: #133e3b;
-  --danger: #ff8790;
-  --warning: #f4c66b;
+  --bg: #1a1d21;
+  --panel: #22252a;
+  --overlay: #35373b;
+  --heading: #e8e8e8;
+  --success: #2eb67d;
+  --accent-ink: #6fc8f0;
+  --backdrop: #0009;
+  --raised: #2c2d30;
+  --text: #d1d2d3;
+  --muted: #a3a5a8;
+  --line: #383a40;
+  --accent: #1d9bd1;
+  --accent-text: #1a1d21;
+  --selection: #2c2d30;
+  --danger: #ff839f;
+  --warning: #ecb22e;
   --shadow: 0 16px 60px #0008;
 }
 * {
@@ -135,7 +150,7 @@ summary:focus-visible {
   padding: 0;
 }
 .brand span {
-  color: var(--accent);
+  color: var(--accent-ink);
   font-size: 28px;
   vertical-align: middle;
   margin-right: 8px;
@@ -160,7 +175,7 @@ summary:focus-visible {
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 1.8px;
-  color: var(--accent);
+  color: var(--accent-ink);
   text-transform: uppercase;
 }
 .welcome h1 {
@@ -191,7 +206,7 @@ summary:focus-visible {
   white-space: nowrap;
 }
 .badge.success {
-  color: var(--accent);
+  color: var(--success);
 }
 .badge.warning {
   color: var(--warning);
@@ -220,7 +235,7 @@ summary:focus-visible {
 .preview-banner {
   padding: 7px 20px;
   background: var(--selection);
-  color: var(--accent);
+  color: var(--accent-ink);
   border-bottom: 1px solid var(--line);
   font-size: 11px;
   letter-spacing: 0.3px;
@@ -304,7 +319,7 @@ summary:focus-visible {
 }
 .resource-nav button[aria-pressed="true"] {
   background: var(--selection);
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 .nav-icon {
   font-size: 18px;
@@ -443,13 +458,7 @@ dd {
     flex-direction: column;
     overflow: auto;
   }
-  .list-pane {
-    min-height: 230px;
-    flex: 1;
-  }
   .detail-pane {
-    min-height: 280px;
-    flex: 1;
     border-left: 0;
     border-top: 1px solid var(--line);
   }
@@ -487,7 +496,7 @@ dd {
 }
 .detail-tabs button[aria-selected="true"] {
   border-color: var(--accent);
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 .detail-content {
   padding: 12px 20px 20px;
@@ -613,7 +622,7 @@ dd {
   padding: 4px 8px;
 }
 dialog {
-  background: var(--panel);
+  background: var(--overlay);
   color: var(--text);
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -623,7 +632,7 @@ dialog {
   padding: 24px;
 }
 dialog::backdrop {
-  background: #07121bb0;
+  background: var(--backdrop);
 }
 .modal-header {
   display: flex;
@@ -800,7 +809,7 @@ kbd {
   padding: 12px 0;
 }
 .preview-label {
-  color: var(--accent);
+  color: var(--accent-ink);
   font-size: 11px;
 }
 .ai-target {
@@ -818,7 +827,7 @@ kbd {
   font-size: 11px;
 }
 .provider-line strong {
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 .target-picker {
   display: grid;
@@ -849,7 +858,7 @@ kbd {
   padding: 3px 0;
   margin-right: 10px;
   background: none;
-  color: var(--accent);
+  color: var(--accent-ink);
   text-decoration: underline;
   font-size: 11px;
 }
@@ -879,11 +888,7 @@ kbd {
     flex-direction: column;
     overflow: auto;
   }
-  .main-columns:has(.ai-host:not([hidden])) .list-pane {
-    min-height: 230px;
-  }
   .main-columns:has(.ai-host:not([hidden])) .detail-pane {
-    min-height: 280px;
     border-left: 0;
     border-top: 1px solid var(--line);
   }
@@ -960,7 +965,7 @@ kbd {
   background: currentColor;
 }
 .good {
-  color: var(--accent);
+  color: var(--success);
 }
 .neutral {
   color: var(--muted);
@@ -1163,7 +1168,7 @@ kbd {
   padding: 10px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: var(--panel);
+  background: var(--overlay);
   box-shadow: var(--shadow);
 }
 .namespace-control .namespace-popover input {
@@ -1219,4 +1224,19 @@ kbd {
   width: 26px;
   top: 1px;
   left: calc(50% - 13px);
+}
+
+/* Text and surface hierarchy remains independent of status semantics. */
+h1,
+h2,
+h3 {
+  color: var(--heading);
+}
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+.resource-nav button:hover {
+  background: var(--raised);
 }

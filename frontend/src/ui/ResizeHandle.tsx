@@ -1,6 +1,6 @@
 /*
 Purpose: Resize panes by pointer or keyboard.
-Used by: Product navigation, AI and Sessions dock.
+Used by: Product navigation, Pod details, AI and Sessions dock.
 Responsibilities: Clamp preferred sizes and label accessible separators.
 Important: Effective layout clamping does not overwrite stored wide-screen preferences.
 */
@@ -42,6 +42,8 @@ export function ResizeHandle({
       aria-valuemax={max}
       aria-valuenow={value}
       onPointerDown={(e) => {
+        e.preventDefault();
+        e.currentTarget.focus();
         drag.current = { at: axis === "x" ? e.clientX : e.clientY, value };
         e.currentTarget.setPointerCapture(e.pointerId);
       }}

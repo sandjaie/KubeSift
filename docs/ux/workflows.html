@@ -31,7 +31,7 @@
     <header>
       <a href="../index.html">KubeSift / Planning</a>
       <h1>Workspace and interaction design</h1>
-      <p>Visual direction approved 2026-11-05 · <a href="mocks/index.html">Reference mockups</a></p>
+      <p>Visual direction refined 2026-11-12 · <a href="mocks/index.html">Reference mockups</a></p>
     </header>
     <main id="content">
       <h2 id="live-entry">Cluster-first entry · approved Phase 1C.1 direction</h2>
@@ -50,14 +50,22 @@
       </p>
       <p>
         Use a compact header with brand, cluster tabs, an existing-context selector, Settings and Ask AI; below it keep the active context,
-        connection status, namespace and resource location visible. Remove slogans, the “Cluster workspace” subtitle, raw preview IDs,
-        development-phase labels and the inline environment-label editor. Environment labels are edited in Settings and displayed compactly
-        on tabs. Tab overflow must leave cluster selection accessible.
+        connection status and namespace visible. Show resource location once in the resource toolbar. Remove slogans, the “Cluster
+        workspace” subtitle, raw preview IDs, development-phase labels and the inline environment-label editor. Environment labels are
+        edited in Settings and displayed compactly on tabs. Tab overflow must leave cluster selection accessible.
       </p>
       <p>
         Use distinct resource icons in left navigation rather than repeated diamonds. Keep text labels and visible selected/focus states.
         Decorative icons are hidden from assistive technology; collapsed entries have tooltips and accessible names. Unexplained dots must
         not stand for unavailable resource types.
+      </p>
+      <h3 id="namespace-selector">Searchable namespace selector</h3>
+      <p>
+        The active namespace opens a dropdown with its own search field. Typing filters available namespaces; click an option or press Enter
+        to select it. Arrow keys move through options. Escape or clicking outside dismisses without changing the namespace. There is no
+        separate text field or Go button in the identity bar. Each cluster tab retains its own namespace and selection. If discovery is
+        incomplete or denied, offer an explicit Use option for a valid typed namespace; a complete list does not invent matches. Keep the
+        current explicit namespace available even when discovery does not include it.
       </p>
       <h3>Connection status and recovery</h3>
       <ul>
@@ -96,8 +104,10 @@
         complete it externally. Do not silently open a browser or prompt for credentials.
       </p>
       <p>
-        The complete Phase 1C specification and task plan remain to be reviewed. Existing reference screenshots document the earlier visual
-        direction; this approved entry flow supersedes their development-mode navigation.
+        Phase 1C.1 is implemented. Later Phase 1C capabilities remain separate. The
+        <a href="../superpowers/specs/2026-11-12-dark-palette-workspace-controls-design.md">workspace refinement specification</a>
+        and <a href="../superpowers/validation/2026-11-12-workspace-refinement.html">validation report</a> describe the current controls;
+        historical mocks do not establish shipped resource capabilities.
       </p>
       <h2>Application shell and cluster identity</h2>
       <p>
@@ -157,8 +167,20 @@
       <h2>Themes and window sizes</h2>
       <p>
         Appearance lives in Settings, not the workspace header. Default to System; support persistent Light and Dark overrides. System
-        tracks OS changes. Theme switching preserves layout, sessions and selection. The graphite/teal dark and off-white/deep-teal light
-        mockups share the same component hierarchy; both work at every supported window size.
+        tracks OS changes. Theme switching preserves layout, sessions and selection. Dark uses neutral charcoal surfaces with blue
+        interactions and separate green success indicators; Light retains its off-white/deep-teal palette. Both share the same hierarchy.
+      </p>
+      <p id="dark-palette">
+        Dark surfaces progress from base #1A1D21 through panel #22252A, hover/selection #2C2D30 and floating overlay #35373B, with #383A40
+        dividers. Text uses #D1D2D3, headings #E8E8E8 and metadata #A3A5A8. Blue #1D9BD1 marks buttons and focus; lighter #6FC8F0 keeps
+        interactive text readable. Success uses #2EB67D, warning #ECB22E and error text #FF839F. Primary blue buttons use dark text. Flat
+        surfaces and textual status labels preserve meaning without relying on colour alone.
+      </p>
+      <p id="detail-divider">
+        Drag the visible divider between the Pod list and details, including the empty Select a Pod pane, to allocate space. It moves
+        left/right when panes sit side by side and up/down when they stack. A focused divider supports arrow keys. Remember width and height
+        shares independently across restart; window-size clamping must not overwrite the saved preference. The divider remains available
+        when the AI panel opens or closes.
       </p>
       <div class="table-scroll">
         <table>
@@ -206,7 +228,7 @@
         <a href="../superpowers/specs/2026-11-06-phase-1b-ui-design.md">approved UI specification</a>. The global AI panel and evidence
         sharing arrive in Phase 2. UI libraries, exact breakpoints and accessibility measurements still require implementation validation.
       </p>
-      <footer>2026-11-05 · Approved direction · <a href="../index.html">Planning index</a></footer>
+      <footer>2026-11-12 · Approved workspace refinement · <a href="../index.html">Planning index</a></footer>
     </main>
   </body>
 </html>
