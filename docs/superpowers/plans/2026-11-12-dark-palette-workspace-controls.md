@@ -54,7 +54,7 @@
 - [x] Launch package and exercise real A/B namespace selection, keyboard/dismissal, both split directions, themes and restart persistence. Save curated screenshots; label generated mock illustrative and keep historical image references.
 - [x] Update UX owner, current mock gallery and status; report actual results, unrun checks and source migration. Run docs/source-description/diff checks.
 - [x] Fresh whole-branch correctness/hygiene review; fix material findings with focused regressions. Result: no findings.
-- [ ] Commit/push, open PR to develop, no merge/release.
+- [x] Commit/push, open PR to develop, no merge/release. [PR #4](https://github.com/sandjaie/KubeSift/pull/4) remains open.
 
 Self-review: all approved changes are covered by the three tasks; persistence precedes its UI consumers; no new service or dependency is required. The user approved the mock and explicitly requested spec, plan and implementation in this session; proceed without another permission loop.
 

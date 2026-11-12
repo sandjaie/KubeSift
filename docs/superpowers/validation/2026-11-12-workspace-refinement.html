@@ -25,7 +25,8 @@
     <main id="content">
       <p class="callout">
         Neutral dark surfaces, searchable namespace selection and remembered Pod-detail sizes are implemented. Automated, packaged and
-        independent review checks passed. Ready for user UI review. No merge, release or Phase 1C.2 work is included.
+        independent review checks passed. Ready for user UI review in <a href="https://github.com/sandjaie/KubeSift/pull/4">PR #4</a>,
+        targeting develop. No merge, release or Phase 1C.2 work is included.
       </p>
       <h2>Scope and provenance</h2>
       <p>
@@ -156,6 +157,11 @@
         </li>
       </ol>
       <h2>Coverage limits and follow-up</h2>
+      <p>
+        Passive shrinking/re-expanding with a saved share outside the effective range was not directly exercised; separate preferred and
+        displayed values were reviewed. The legacy migration test uses null window bounds; non-null preservation was checked in code rather
+        than exercised by that test.
+      </p>
       <p>
         Incomplete-discovery manual selection is unit-tested, but was not exercised with restricted native credentials in this run. No
         exhaustive monitor/OS scaling, screen-reader or transport-failure matrix was run. Existing Phase 1A/1C.1 limitations remain; AI and

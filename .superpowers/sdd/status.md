@@ -2,9 +2,9 @@
 
 Updated 2026-11-12. Active branch: `feature/workspace-theme-and-controls`, created in place from develop `7664be8`; never create a worktree.
 
-- Current [workspace refinement plan](../../docs/superpowers/plans/2026-11-12-dark-palette-workspace-controls.md): Tasks 1–2 committed (`30aa27d`, `08a060d`); Task 3 palette, docs and native validation completed, final review/publication pending. Completed plan steps are checked; engineering now requires immediate verified checkbox updates.
+- Current [workspace refinement plan](../../docs/superpowers/plans/2026-11-12-dark-palette-workspace-controls.md): Tasks 1–3 completed; application code `f3d19d1`, validation handoff `7de0437`. Independent review found no material defects. [PR #4](https://github.com/sandjaie/KubeSift/pull/4) targets develop and remains unmerged. Completed plan steps are checked; engineering now requires immediate verified checkbox updates.
 - [Refinement validation and screenshots](../../docs/superpowers/validation/2026-11-12-workspace-refinement.html) and [updated mocks](../../docs/ux/mocks/index.html). Nine frontend tests and full repository gate passed; package and native namespace/divider checks passed. Only local A/B used.
-- Next: finish independent review, commit/push and open PR to develop without merging. Then discuss further UI/UX refinements in the same plan, beginning with coloured Pod phase dots; these are not implemented yet.
+- Next: discuss further UI/UX refinements in the same plan, beginning with coloured Pod phase dots; these are not implemented yet. Preserve the open PR and do not merge without a new instruction.
 - Ignored active ledger: .superpowers/sdd/2026-11-12-dark-palette-workspace-controls/progress.md.
 
 ## Accepted Phase 1C.1 history
