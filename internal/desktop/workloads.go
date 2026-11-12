@@ -93,3 +93,10 @@ func (s *ExplorerService) ReadResourceEvents(id string, req kube.EventRequest) (
 	defer done()
 	return s.core.kube.ReadResourceEvents(ctx, req)
 }
+
+func (s *ExplorerService) OpenPodLogs(req kube.LogRequest) (model.SessionRef, error) {
+	return s.core.kube.OpenPodLogs(s.core.ctx, req)
+}
+func (s *ExplorerService) ClosePodLogs(ref model.SessionRef) error {
+	return s.core.kube.ClosePodLogs(ref)
+}

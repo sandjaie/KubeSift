@@ -43,6 +43,10 @@ export function CancelWorkloadRead(id: string): $CancellablePromise<void> {
   return $Call.ByID(601396887, id);
 }
 
+export function ClosePodLogs(ref: model$0.SessionRef): $CancellablePromise<void> {
+  return $Call.ByID(1080239256, ref);
+}
+
 export function Disconnect(ref: model$0.ConnectionRef): $CancellablePromise<void> {
   return $Call.ByID(2590980822, ref);
 }
@@ -57,6 +61,10 @@ export function GetConnection(ref: model$0.ConnectionRef): $CancellablePromise<e
 
 export function ListSources(): $CancellablePromise<sources$0.SourceResult[] | null> {
   return $Call.ByID(3320858230);
+}
+
+export function OpenPodLogs(req: kube$0.LogRequest): $CancellablePromise<model$0.SessionRef> {
+  return $Call.ByID(1020417316, req);
 }
 
 export function ReadPods(ref: model$0.ConnectionRef, $namespace: string): $CancellablePromise<explorer$0.ConnectionView> {

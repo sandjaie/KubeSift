@@ -30,6 +30,14 @@ export interface ForwardResult {
   localPort: number;
 }
 
+export interface LogRequest {
+  resource: ResourceRef;
+  container: string;
+  previous: boolean;
+  follow: boolean;
+  tailLines: number;
+}
+
 export interface PageInfo {
   nextCursor: string;
   resourceVersion: string;

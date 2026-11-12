@@ -21,6 +21,7 @@ This planning exception does not authorize application code changes, merges to `
 ## Commits
 
 - Conventional Commits: `feat:`, `fix:`, `chore:`, `refactor:`, `docs:`, `test:`, `perf:`, `style:`, `ci:`. The branch prefix and the commit type are independent.
+- For phase implementation tasks, include the phase and task number in the subject, for example `feat: phase1c2-task1 add bounded workload inventory reads`. Use the actual phase identifier (such as `phase1c-task1` for Phase 1C task 1). When a commit contains several substantial updates, add a body with concise bullet points explaining the changes and relevant validation.
 - Git does not reject a message that breaks that style. There is no `commit-msg` hook.
 - Release notes come from commits since the last tag. `feat` → Added, `fix` → Fixed, `refactor` / `perf` / `style` → Changed, `docs` → Documentation. `chore`, `test`, and `ci` stay in the pull request commit list and stay out of the changelog body.
 

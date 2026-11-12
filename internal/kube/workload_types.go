@@ -96,3 +96,11 @@ type EventPage struct {
 	Items []ResourceEvent `json:"items"`
 	Page  PageInfo        `json:"page"`
 }
+
+type LogRequest struct {
+	Resource  ResourceRef `json:"resource"`
+	Container string      `json:"container"`
+	Previous  bool        `json:"previous"`
+	Follow    bool        `json:"follow"`
+	TailLines int64       `json:"tailLines"`
+}

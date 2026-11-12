@@ -12,6 +12,7 @@ export type {
   EventPage,
   EventRequest,
   ForwardResult,
+  LogRequest,
   PageInfo,
   PageRequest,
   PodSummary,

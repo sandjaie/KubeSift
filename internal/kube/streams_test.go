@@ -244,3 +244,114 @@ snapshotDelivered:
 		t.Fatalf("watch opened at RV %d after its snapshot was rejected", overflowList)
 	}
 }
+
+func TestPodLogs(t *testing.T) {
+	for _, tc := range []struct {
+		name                       string
+		follow, previous, replaced bool
+	}{
+		{"snapshot", false, false, false}, {"previous", false, true, false}, {"follow gap", true, false, false}, {"replacement", false, false, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var opened atomic.Bool
+			s, ref := workloadServer(t, func(w http.ResponseWriter, r *http.Request) {
+				if strings.HasSuffix(r.URL.Path, "/log") {
+					q := r.URL.Query()
+					if q.Get("container") != "main" || q.Get("timestamps") != "true" || q.Get("tailLines") != "200" || (q.Get("follow") == "true") != tc.follow || (q.Get("previous") == "true") != tc.previous {
+						t.Error("incorrect log options", q)
+					}
+					if !tc.follow && q.Get("limitBytes") != "1048576" {
+						t.Error("snapshot byte cap missing")
+					}
+					opened.Store(true)
+					fmt.Fprint(w, "fixture log\n")
+					return
+				}
+				w.Header().Set("Content-Type", "application/json")
+				uid := "pod"
+				if tc.replaced && opened.Load() {
+					uid = "replacement"
+				}
+				fmt.Fprintf(w, `{"apiVersion":"v1","kind":"Pod","metadata":{"name":"sample","namespace":"default","uid":%q},"spec":{"containers":[{"name":"main","image":"synthetic"}]}}`, uid)
+			})
+			events := make(chan model.Event, 32)
+			s.sessions = session.NewManager(func(e model.Event) { events <- e })
+			req := LogRequest{Resource: ResourceRef{Connection: ref, Kind: "Pod", APIVersion: "v1", Namespace: "default", Name: "sample", UID: "pod"}, Container: "main", Previous: tc.previous, Follow: tc.follow}
+			stream, err := s.OpenPodLogs(context.Background(), req)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer s.ClosePodLogs(stream)
+			if err = s.sessions.Activate(stream); err != nil {
+				t.Fatal(err)
+			}
+			found, data := "", false
+			timer := time.NewTimer(3 * time.Second)
+			defer timer.Stop()
+		loop:
+			for {
+				select {
+				case e := <-events:
+					if e.Kind == "data" {
+						data = true
+					}
+					if e.Kind == "error" || e.Kind == "state" && (strings.HasPrefix(string(e.Data), "gap:") || strings.HasPrefix(string(e.Data), "complete:")) {
+						found = e.Kind
+						if e.Kind == "state" {
+							found, _, _ = strings.Cut(string(e.Data), ":")
+						}
+						break loop
+					}
+				case <-timer.C:
+					t.Fatal("no terminal evidence")
+				}
+			}
+			want := "complete"
+			if tc.follow {
+				want = "gap"
+			}
+			if tc.replaced {
+				want = "error"
+			}
+			if found != want || (tc.replaced && data) {
+				t.Fatalf("result %s data=%v", found, data)
+			}
+		})
+	}
+	t.Run("retained slots", func(t *testing.T) {
+		s, ref := workloadServer(t, func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"apiVersion":"v1","kind":"Pod","metadata":{"uid":"pod"},"spec":{"containers":[{"name":"main"}]}}`)
+		})
+		req := LogRequest{Resource: ResourceRef{Connection: ref, Kind: "Pod", APIVersion: "v1", Namespace: "default", Name: "sample", UID: "pod"}, Container: "main"}
+		bad := req
+		bad.Previous = true
+		bad.Follow = true
+		if _, err := s.OpenPodLogs(context.Background(), bad); err == nil {
+			t.Fatal("previous follow accepted")
+		}
+		refs := []model.SessionRef{}
+		defer func() {
+			for _, r := range refs {
+				s.ClosePodLogs(r)
+			}
+		}()
+		for range 8 {
+			r, err := s.OpenPodLogs(context.Background(), req)
+			if err != nil {
+				t.Fatal(err)
+			}
+			refs = append(refs, r)
+			s.sessions.Stop(r)
+		}
+		if _, err := s.OpenPodLogs(context.Background(), req); err == nil {
+			t.Fatal("ninth retained session accepted")
+		}
+		s.ClosePodLogs(refs[0])
+		r, err := s.OpenPodLogs(context.Background(), req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		refs = append(refs, r)
+	})
+}
