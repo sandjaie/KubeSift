@@ -1,6 +1,13 @@
 # KubeSift resumable status
 
-Updated 2026-11-11. Branch: `develop`. In-place branch from develop `4ef7a9b`; never create a worktree.
+Updated 2026-11-12. Active branch: `feature/workspace-theme-and-controls`, created in place from develop `7664be8`; never create a worktree.
+
+- Current [workspace refinement plan](../../docs/superpowers/plans/2026-11-12-dark-palette-workspace-controls.md): Tasks 1–6 completed, including compact headers, connection menu, phase dots and compact details. Initial refinement application code `f3d19d1`, validation handoff `7de0437`; compact follow-up is in the current branch head. Independent review found no material defects. [PR #4](https://github.com/sandjaie/KubeSift/pull/4) targets develop and remains unmerged. Completed plan steps are checked; engineering now requires immediate verified checkbox updates.
+- [Refinement validation and screenshots](../../docs/superpowers/validation/2026-11-12-workspace-refinement.html) and [updated mocks](../../docs/ux/mocks/index.html). Nine frontend tests and full repository gate passed; package and native namespace/divider checks passed. Only local A/B used.
+- Next: user UI review of PR #4. Compact follow-up passed repository checks and packaged native checks. Light Running/Succeeded colour distinction fixed with a dedicated blue token; superseded screenshots removed in favour of text history. Controlled failure recovery, activated cancellation and compact Light rendering were not exercised. Preserve the open PR and do not merge without a new instruction.
+- Ignored active ledger: .superpowers/sdd/2026-11-12-dark-palette-workspace-controls/progress.md.
+
+## Accepted Phase 1C.1 history
 
 - [PR #3](https://github.com/sandjaie/KubeSift/pull/3) was squash-merged into develop as `395ef7a` on 2026-11-11 after explicit maintainer authorization; exact-head CI passed. Validation handoff commit: `7208b22`.
 - Phase 1C.1 implemented through application commit `e23c02e`; seven-task [plan](../../docs/superpowers/plans/2026-11-06-phase-1c1-cluster-connections.md).

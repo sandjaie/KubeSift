@@ -90,11 +90,13 @@ npx tsc --noEmit</code></pre>
       <p>
         No coverage threshold. Prettier formats HTML and frontend TypeScript. Frontend lint is ESLint plus typescript-eslint recommended. Go
         formatting is <code>gofmt</code>, because the Go toolchain owns it. CI runs on pull requests and pushes to develop, main and master;
-        feature pushes wait for a pull request to avoid duplicate runs. Superseded runs are cancelled. Code changes run bindings generation,
-        the Vite production bundle and scripts/check.sh, with Go, npm and Wails CLI caches. TypeScript checking runs once through
-        scripts/check.sh; local npm run build still includes it. Changes confined to docs/, AGENTS.md and root README files run
-        source-description and documentation-link checks in the same check job. Unknown comparison bases receive the full checks. Packaging,
-        signing, notarizing, publishing, and version bumps stay in the release skill.
+        feature pushes wait for a pull request to avoid duplicate runs. Superseded runs are cancelled. Code changes run the Vite production
+        bundle and then scripts/check.sh on Ubuntu. The bundle fills internal/desktop/assets/dist, which the desktop executable embeds and a
+        clean checkout does not contain. Go is compiled with CGO disabled and the purego tag so that package needs neither a macOS runner
+        nor GTK. Bindings generation stays on the local and release checks. TypeScript checking runs once through scripts/check.sh; local
+        npm run build still includes it. Changes confined to docs/, AGENTS.md and root README files run source-description and
+        documentation-link checks in the same check job. Unknown comparison bases receive the full checks. Packaging, signing, notarizing,
+        publishing, and version bumps stay in the release skill.
       </p>
 
       <h3 id="authoring-style">Authoring and formatting</h3>
@@ -188,6 +190,12 @@ npx tsc --noEmit</code></pre>
         Start at <a href="../index.html">the planning index</a> for durable status. For a portable resume checkpoint, read tracked
         <code>.superpowers/sdd/status.md</code>, then the local active plan ledger if present. A fresh clone uses the permanent plan and
         phase validation report. Update local status only after verification.
+      </p>
+      <p>
+        Keep permanent implementation plans current: change each completed step from <code>[ ]</code> to <code>[x]</code> immediately after
+        its required verification succeeds, in the same work session. Check off a task only when all its required steps are complete. Leave
+        pending or blocked checks unchecked and explain their status; an execution ledger alone is not a substitute for updating the plan.
+        Commit these checkbox updates with the related work so another laptop can resume accurately.
       </p>
       <h3 id="documentation-layout">Documentation layout</h3>
       <p>

@@ -4,6 +4,7 @@ Used by: App for the active connection tab.
 Responsibilities: Render honest read states and preserve tab-owned filter and UID selection.
 Important: Broader kinds and operations remain unavailable; no synthetic fallback is used.
 */
+import { ResourceSplit } from "./ResourceSplit";
 import { useState } from "react";
 import type { ConnectionTab } from "../connections/model";
 import type { ConnectionsController } from "../connections/useConnections";
@@ -17,6 +18,10 @@ export function Workspace({
   tabId,
   controller,
   navigationWidth,
+  navigationOpen,
+  detailWidthPercent,
+  detailHeightPercent,
+  onDetailResize,
   onResize,
   onCommitSize,
 }: {
@@ -24,32 +29,23 @@ export function Workspace({
   tabId: string;
   controller: ConnectionsController;
   navigationWidth: number;
+  navigationOpen: boolean;
+  detailWidthPercent: number;
+  detailHeightPercent: number;
+  onDetailResize: (axis: "x" | "y", value: number) => void;
   onResize: (n: number) => void;
   onCommitSize: () => void;
 }) {
   const [kind, setKind] = useState("Pod");
-  const [navOpen, setNavOpen] = useState(true);
+
   const view = tab.view;
   const stale = tab.pollFailed || visibleState(view) !== "connected";
   const rows = (view?.pods ?? []).filter((p) => p.name.toLowerCase().includes(tab.filter.toLowerCase()));
   const selected = view?.pods?.find((p) => p.uid === tab.selected);
   return (
     <div className="workspace live-workspace">
-      <div className="workspace-tools">
-        <button aria-label="Toggle resource navigation" aria-expanded={navOpen} onClick={() => setNavOpen(!navOpen)}>
-          ☰ Resources
-        </button>
-        <span className="muted">{kind === "Pod" ? "Workloads / Pods" : kind}</span>
-        <span className="spacer" />
-        <button
-          disabled={!view?.ref || view.podLoading || (!!view.problem && view.problem.code !== "forbidden")}
-          onClick={() => void controller.readPods(tabId, tab.namespace)}
-        >
-          Refresh Pods
-        </button>
-      </div>
       <div className="explorer">
-        {navOpen && (
+        {navigationOpen && (
           <>
             <div className="navigation-host">
               <ResourceNavigation kind={kind} onSelect={(k) => setKind(k)} />
@@ -73,13 +69,23 @@ export function Workspace({
             </p>
           </div>
         ) : (
-          <div className="resource-area">
+          <ResourceSplit
+            widthPercent={detailWidthPercent}
+            heightPercent={detailHeightPercent}
+            onResize={onDetailResize}
+            onCommit={onCommitSize}
+          >
             <section className="list-pane">
               <div className="pane-heading">
                 <h2>Pods</h2>
-                <span className="muted">
-                  {rows.length} shown · {tab.namespace}
-                </span>
+                <span className="muted">{rows.length} shown</span>
+                <button
+                  aria-label="Refresh Pods"
+                  disabled={!view?.ref || view.podLoading || (!!view.problem && view.problem.code !== "forbidden")}
+                  onClick={() => void controller.readPods(tabId, tab.namespace)}
+                >
+                  ↻ Refresh
+                </button>
               </div>
               <div className="filter-bar">
                 <input
@@ -125,7 +131,7 @@ export function Workspace({
                 </div>
               )}
             </section>
-          </div>
+          </ResourceSplit>
         )}
       </div>
       <details className="empty-sessions">

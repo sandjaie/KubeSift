@@ -31,32 +31,60 @@
     <header>
       <a href="../workflows.html">KubeSift / UX specification</a>
       <h1>Approved visual direction</h1>
-      <p>2026-11-05 · Explorer with contextual AI · Dark and light</p>
+      <p>2026-11-12 · Neutral dark palette and workspace controls</p>
     </header>
     <main id="content">
       <p>
         The selected layout combines the resource explorer and evidence-based right-side AI panel. AI remains Phase 2. These static
         references guide visual implementation; behavior is owned by the <a href="../workflows.html">UX specification</a>.
       </p>
-      <h2>Wide layout · Dark</h2>
-      <img src="wide-dark.png" alt="Dark wide explorer with resource list, evidence and right-side AI" style="width: 100%; height: auto" />
-      <h2>Laptop layout · Light</h2>
+      <h2>Current approved mock · Compact workspace</h2>
+      <p>
+        Approved on 12 November 2026: two header rows, connection actions inside the status disclosure, Refresh beside Pods, coloured phase
+        dots and compact details. The generated image is illustrative; flat semantic colours and actual data remain authoritative. Running
+        is blue to distinguish phase from readiness.
+      </p>
       <img
-        src="laptop-light.png"
-        alt="Light laptop workspace with list above evidence and AI on the right"
+        src="compact-workspace-controls.png"
+        alt="Approved compact workspace with connection disclosure and coloured Pod phase dots"
         style="width: 100%; height: auto"
       />
-      <h2>Reference limitations</h2>
+      <h2>Implemented compact workspace</h2>
       <p>
-        Both themes support either layout. Generated dimensions are illustrative, not breakpoint specifications. Final code must validate
-        accessibility and resizing. In the laptop image, exit code 1 indicates unsuccessful termination; final AI copy should say it
-        supports, rather than confirms, the startup-failure hypothesis. Mock alert counts are fictional and require real observations in the
-        application.
+        Native packaged captures with existing local fixtures. See the
+        <a href="../../superpowers/validation/2026-11-12-workspace-refinement.html">validation report</a> for coverage limits.
       </p>
+      <img
+        src="../../superpowers/evidence/workspace-refinement/compact-dark.png"
+        alt="Implemented compact header and Pod phase dots"
+        style="width: 100%; height: auto"
+      />
+      <img
+        src="../../superpowers/evidence/workspace-refinement/compact-connection.png"
+        alt="Connection source and actions in a disclosure"
+        style="width: 100%; height: auto"
+      />
+      <img
+        src="../../superpowers/evidence/workspace-refinement/compact-stacked.png"
+        alt="Sticky table headings in the stacked workspace"
+        style="width: 100%; height: auto"
+      />
+      <h2>What changed</h2>
+      <ul>
+        <li>5 November: initial wide Dark and stacked Light concepts established the explorer and right-side AI layout.</li>
+        <li>
+          12 November: neutral dark surfaces, searchable namespaces and remembered detail dividers replaced the initial styling and
+          controls.
+        </li>
+        <li>
+          Compact follow-up: two header rows replaced the extra toolbars; connection actions moved into the status menu, Refresh moved
+          beside Pods, and phase dots and compact details improved scanning.
+        </li>
+        <li>Light correction: Running now uses a dedicated blue token; Succeeded retains green. Dark colours are unchanged.</li>
+      </ul>
       <p>
-        Generated with the built-in image tool from the selected explorer and AI references. The wide prompt combined graphite explorer
-        navigation, explicit cluster identity, user labels, keyboard selection and payload inspection; the laptop prompt preserved the
-        right-side AI while stacking list/detail and switching to light tokens. Requested framing: 1920 × 1080 and 1440 × 900 respectively.
+        Superseded images were removed; the approved current mock and three current native captures remain. Generated examples are
+        illustrative, not capability evidence. AI remains unavailable.
       </p>
     </main>
   </body>

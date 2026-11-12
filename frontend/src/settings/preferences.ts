@@ -8,12 +8,14 @@ import { PreferencesService } from "../../bindings/github.com/sandjaie/KubeSift/
 import type { Preferences } from "../../bindings/github.com/sandjaie/KubeSift/internal/preferences/models";
 export type { Preferences };
 export const defaultPreferences = (): Preferences => ({
-  version: 1,
+  version: 2,
   appearance: "system",
   window: null,
   navigationWidth: 220,
   aiWidth: 360,
   dockHeight: 220,
+  detailWidthPercent: 50,
+  detailHeightPercent: 50,
 });
 export async function loadPreferences(): Promise<Preferences> {
   return PreferencesService.GetPreferences();

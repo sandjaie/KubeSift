@@ -23,19 +23,24 @@ type Rect struct {
 	Height int `json:"height"`
 }
 type Preferences struct {
-	Version         int    `json:"version"`
-	Appearance      string `json:"appearance"`
-	Window          *Rect  `json:"window"`
-	NavigationWidth int    `json:"navigationWidth"`
-	AIWidth         int    `json:"aiWidth"`
-	DockHeight      int    `json:"dockHeight"`
+	Version             int    `json:"version"`
+	Appearance          string `json:"appearance"`
+	Window              *Rect  `json:"window"`
+	NavigationWidth     int    `json:"navigationWidth"`
+	AIWidth             int    `json:"aiWidth"`
+	DockHeight          int    `json:"dockHeight"`
+	DetailWidthPercent  int    `json:"detailWidthPercent"`
+	DetailHeightPercent int    `json:"detailHeightPercent"`
 }
 
 func Default() Preferences {
-	return Preferences{Version: 1, Appearance: "system", NavigationWidth: 220, AIWidth: 360, DockHeight: 220}
+	return Preferences{
+		Version: 2, Appearance: "system", NavigationWidth: 220, AIWidth: 360, DockHeight: 220,
+		DetailWidthPercent: 50, DetailHeightPercent: 50,
+	}
 }
 func Validate(p Preferences) error {
-	if p.Version != 1 {
+	if p.Version != 2 {
 		return errors.New("unsupported preferences version")
 	}
 	if p.Appearance != "system" && p.Appearance != "light" && p.Appearance != "dark" {
@@ -43,6 +48,9 @@ func Validate(p Preferences) error {
 	}
 	if p.NavigationWidth < 160 || p.NavigationWidth > 320 || p.AIWidth < 300 || p.AIWidth > 560 || p.DockHeight < 120 || p.DockHeight > 480 {
 		return errors.New("invalid pane dimensions")
+	}
+	if p.DetailWidthPercent < 20 || p.DetailWidthPercent > 80 || p.DetailHeightPercent < 20 || p.DetailHeightPercent > 80 {
+		return errors.New("invalid detail split dimensions")
 	}
 	if r := p.Window; r != nil && (r.Width < 1 || r.Width > 32768 || r.Height < 1 || r.Height > 32768 || r.X < -100000 || r.X > 100000 || r.Y < -100000 || r.Y > 100000) {
 		return errors.New("invalid window bounds")
@@ -81,6 +89,20 @@ func Load(path string) (Preferences, error) {
 	var extra any
 	if decoder.Decode(&extra) != io.EOF {
 		return fallback, errors.New("trailing preferences data")
+	}
+	if p.Version == 1 {
+		var fields map[string]json.RawMessage
+		if err := json.Unmarshal(data, &fields); err != nil {
+			return fallback, err
+		}
+		if _, ok := fields["detailWidthPercent"]; ok {
+			return fallback, errors.New("unexpected version-1 detail split")
+		}
+		if _, ok := fields["detailHeightPercent"]; ok {
+			return fallback, errors.New("unexpected version-1 detail split")
+		}
+		p.Version = 2
+		p.DetailWidthPercent, p.DetailHeightPercent = 50, 50
 	}
 	if err = Validate(p); err != nil {
 		return fallback, err
