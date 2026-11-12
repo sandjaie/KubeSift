@@ -7,5 +7,5 @@ Updated 2026-11-12. Active branch: `feature/phase-1c2-workload-investigation`. W
 - Five independent correctness findings fixed with regression evidence; source-map hygiene finding fixed. Optional export-modifier cleanup deferred.
 - [User UI UAT checklist](../../docs/superpowers/validation/phase-1c2-ui-uat.html): all 15 results Not tested. Final native confirmation retest blocked by locked Mac; other native limits and missing integration request instrumentation recorded in the report. Do not treat agent checks as user acceptance.
 - Preserve approved post-1C.1 UI refinements. No 1C.3, release, provider expansion or lossless-log claim. Version remains 0.3.0.
-- Push this branch and open PR to develop; leave unmerged pending user UI UAT unless explicitly authorized otherwise.
+- [PR #7](https://github.com/sandjaie/KubeSift/pull/7) is open to develop and unmerged. Leave unmerged pending user UI UAT unless explicitly authorized otherwise.
 - Operational logs, review rulings and detailed progress stay archived under ignored `.superpowers/sdd/2026-11-12-phase-1c2-workload-investigation/`.
