@@ -11,6 +11,10 @@ Important: Wails generates this glue; change Go contracts and regenerate rather 
 // @ts-ignore: Unused imports
 import * as model$0 from "../model/models.js";
 
+export interface DetailRequest {
+  resource: ResourceRef;
+}
+
 export interface ForwardResult {
   session: model$0.SessionRef;
   localPort: number;
@@ -40,6 +44,30 @@ export interface PodSummary {
   annotation: string;
 }
 
+export interface RelatedPage {
+  items: RelatedPod[] | null;
+  page: PageInfo;
+  complete: boolean;
+  problem: model$0.Problem | null;
+}
+
+export interface RelatedPod {
+  pod: WorkloadRow;
+  replicaSet: ResourceRef;
+}
+
+export interface RelatedRequest {
+  resource: ResourceRef;
+  cursor: string;
+}
+
+export interface ResourceDetail {
+  resource: ResourceRef;
+  resourceVersion: string;
+  fetchedAt: string;
+  objectJSON: string;
+}
+
 export interface ResourceRef {
   connection: model$0.ConnectionRef;
   apiVersion: string;
@@ -65,4 +93,12 @@ export interface WorkloadRow {
   available: number | null;
   restarts: number | null;
   createdAt: string | null;
+}
+
+export interface YAMLDocument {
+  resource: ResourceRef;
+  resourceVersion: string;
+  fetchedAt: string;
+  withoutManagedFields: string;
+  withManagedFields: string;
 }

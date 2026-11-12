@@ -46,3 +46,34 @@ type WorkloadPage struct {
 	Items []WorkloadRow `json:"items"`
 	Page  PageInfo      `json:"page"`
 }
+
+type DetailRequest struct {
+	Resource ResourceRef `json:"resource"`
+}
+type ResourceDetail struct {
+	Resource        ResourceRef `json:"resource"`
+	ResourceVersion string      `json:"resourceVersion"`
+	FetchedAt       time.Time   `json:"fetchedAt"`
+	ObjectJSON      string      `json:"objectJSON"`
+}
+type YAMLDocument struct {
+	Resource             ResourceRef `json:"resource"`
+	ResourceVersion      string      `json:"resourceVersion"`
+	FetchedAt            time.Time   `json:"fetchedAt"`
+	WithoutManagedFields string      `json:"withoutManagedFields"`
+	WithManagedFields    string      `json:"withManagedFields"`
+}
+type RelatedRequest struct {
+	Resource ResourceRef `json:"resource"`
+	Cursor   string      `json:"cursor"`
+}
+type RelatedPod struct {
+	Pod        WorkloadRow `json:"pod"`
+	ReplicaSet ResourceRef `json:"replicaSet"`
+}
+type RelatedPage struct {
+	Items    []RelatedPod   `json:"items"`
+	Page     PageInfo       `json:"page"`
+	Complete bool           `json:"complete"`
+	Problem  *model.Problem `json:"problem"`
+}

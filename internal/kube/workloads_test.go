@@ -107,3 +107,78 @@ func TestWorkloadReads(t *testing.T) {
 		}
 	})
 }
+
+func TestWorkloadDetails(t *testing.T) {
+	for _, tc := range []struct {
+		name, uid string
+		huge      bool
+	}{
+		{"captured YAML", "uid-1", false}, {"replacement", "old", false}, {"oversize", "uid-1", true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			s, ref := workloadServer(t, func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				annotation := "fixture"
+				if tc.huge {
+					annotation = strings.Repeat("x", 2<<20)
+				}
+				fmt.Fprintf(w, `{"apiVersion":"v1","kind":"Pod","metadata":{"name":"sample","namespace":"default","uid":"uid-1","resourceVersion":"9","annotations":{"note":%q},"managedFields":[{"manager":"fixture"}]},"spec":{"containers":[{"name":"main","image":"synthetic"}]}}`, annotation)
+			})
+			req := DetailRequest{Resource: ResourceRef{Connection: ref, APIVersion: "v1", Kind: "Pod", Namespace: "default", Name: "sample", UID: tc.uid}}
+			detail, err := s.ReadResource(context.Background(), req)
+			if tc.uid == "old" || tc.huge {
+				if err == nil {
+					t.Fatal("unsafe detail accepted")
+				}
+				return
+			}
+			if err != nil || !strings.Contains(detail.ObjectJSON, "synthetic") {
+				t.Fatal(detail, err)
+			}
+			doc, err := s.ReadResourceYAML(context.Background(), req)
+			if err != nil || doc.ResourceVersion != "9" || strings.Contains(doc.WithoutManagedFields, "managedFields") || !strings.Contains(doc.WithManagedFields, "managedFields") {
+				t.Fatal(doc, err)
+			}
+		})
+	}
+	t.Run("owned Pods and forbidden coverage", func(t *testing.T) {
+		denied := false
+		s, ref := workloadServer(t, func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			switch {
+			case strings.HasSuffix(r.URL.Path, "deployments/sample"):
+				fmt.Fprint(w, `{"apiVersion":"apps/v1","kind":"Deployment","metadata":{"name":"sample","namespace":"default","uid":"deploy"},"spec":{"replicas":0}}`)
+			case strings.HasSuffix(r.URL.Path, "replicasets/rs"):
+				fmt.Fprint(w, `{"apiVersion":"apps/v1","kind":"ReplicaSet","metadata":{"name":"rs","namespace":"default","uid":"rs","ownerReferences":[{"uid":"deploy","controller":true}]},"spec":{"selector":{"matchLabels":{"app":"fixture"}}}}`)
+			case strings.HasSuffix(r.URL.Path, "replicasets"):
+				if denied {
+					w.WriteHeader(403)
+					fmt.Fprint(w, `{"apiVersion":"v1","kind":"Status","reason":"Forbidden","code":403}`)
+					return
+				}
+				fmt.Fprint(w, `{"apiVersion":"apps/v1","kind":"ReplicaSetList","items":[{"metadata":{"name":"rs","namespace":"default","uid":"rs","ownerReferences":[{"uid":"deploy","controller":true}]},"spec":{"selector":{"matchLabels":{"app":"fixture"}}}}]}`)
+			case strings.HasSuffix(r.URL.Path, "pods"):
+				if r.URL.Query().Get("labelSelector") != "app=fixture" {
+					t.Error("selector missing")
+				}
+				fmt.Fprint(w, `{"apiVersion":"v1","kind":"PodList","items":[{"metadata":{"name":"owned","namespace":"default","uid":"owned","ownerReferences":[{"uid":"rs","controller":true}]}},{"metadata":{"name":"lookalike","namespace":"default","uid":"other"}}]}`)
+			default:
+				t.Error("unexpected read", r.URL.Path)
+			}
+		})
+		resource := ResourceRef{Connection: ref, APIVersion: "apps/v1", Kind: "Deployment", Namespace: "default", Name: "sample", UID: "deploy"}
+		page, err := s.ReadRelatedPods(context.Background(), RelatedRequest{Resource: resource})
+		if err != nil || page.Complete || page.Page.NextCursor == "" {
+			t.Fatal(page, err)
+		}
+		page, err = s.ReadRelatedPods(context.Background(), RelatedRequest{Resource: resource, Cursor: page.Page.NextCursor})
+		if err != nil || !page.Complete || len(page.Items) != 1 || page.Items[0].Pod.Resource.Name != "owned" {
+			t.Fatal(page, err)
+		}
+		denied = true
+		page, err = s.ReadRelatedPods(context.Background(), RelatedRequest{Resource: resource})
+		if err != nil || page.Complete || page.Problem == nil || page.Problem.Code != "forbidden" {
+			t.Fatal(page, err)
+		}
+	})
+}

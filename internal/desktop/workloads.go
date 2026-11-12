@@ -57,3 +57,30 @@ func (s *ExplorerService) ReadWorkloads(id string, req kube.PageRequest) (kube.W
 	defer done()
 	return s.core.kube.ReadWorkloads(ctx, req)
 }
+
+func (s *ExplorerService) ReadResource(id string, req kube.DetailRequest) (kube.ResourceDetail, error) {
+	ctx, done, err := s.beginWorkloadRead(id)
+	if err != nil {
+		return kube.ResourceDetail{}, err
+	}
+	defer done()
+	return s.core.kube.ReadResource(ctx, req)
+}
+
+func (s *ExplorerService) ReadResourceYAML(id string, req kube.DetailRequest) (kube.YAMLDocument, error) {
+	ctx, done, err := s.beginWorkloadRead(id)
+	if err != nil {
+		return kube.YAMLDocument{}, err
+	}
+	defer done()
+	return s.core.kube.ReadResourceYAML(ctx, req)
+}
+
+func (s *ExplorerService) ReadRelatedPods(id string, req kube.RelatedRequest) (kube.RelatedPage, error) {
+	ctx, done, err := s.beginWorkloadRead(id)
+	if err != nil {
+		return kube.RelatedPage{}, err
+	}
+	defer done()
+	return s.core.kube.ReadRelatedPods(ctx, req)
+}

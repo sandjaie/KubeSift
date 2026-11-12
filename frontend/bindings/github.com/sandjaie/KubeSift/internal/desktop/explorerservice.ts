@@ -63,6 +63,18 @@ export function ReadPods(ref: model$0.ConnectionRef, $namespace: string): $Cance
   return $Call.ByID(4095964600, ref, $namespace);
 }
 
+export function ReadRelatedPods(id: string, req: kube$0.RelatedRequest): $CancellablePromise<kube$0.RelatedPage> {
+  return $Call.ByID(429677435, id, req);
+}
+
+export function ReadResource(id: string, req: kube$0.DetailRequest): $CancellablePromise<kube$0.ResourceDetail> {
+  return $Call.ByID(1281873028, id, req);
+}
+
+export function ReadResourceYAML(id: string, req: kube$0.DetailRequest): $CancellablePromise<kube$0.YAMLDocument> {
+  return $Call.ByID(1865491731, id, req);
+}
+
 export function ReadWorkloads(id: string, req: kube$0.PageRequest): $CancellablePromise<kube$0.WorkloadPage> {
   return $Call.ByID(415147446, id, req);
 }
