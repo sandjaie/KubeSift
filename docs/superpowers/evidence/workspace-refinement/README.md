@@ -8,3 +8,11 @@ Native packaged-app captures from 12 November 2026, using only existing local ki
 - `light-wide.png`: preserved Light palette with the updated selector and divider.
 
 These are observations of the implemented UI, not synthetic preview modes. No credential bodies or external context details are present. The generated mock lives separately under docs/ux/mocks/.
+
+Compact follow-up (corrected final package):
+
+- `compact-dark.png`: two-row header, inline Refresh, phase dots and compact details.
+- `compact-connection.png`: explicit connection source and reconnect/disconnect menu.
+- `compact-stacked.png`: scrolled Pod rows with sticky headings and AI unavailable pane.
+
+The four earlier captures above document the initial refinement, before the compact follow-up.

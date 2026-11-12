@@ -24,11 +24,55 @@
     </header>
     <main id="content">
       <p class="callout">
-        Neutral dark surfaces, searchable namespace selection and remembered Pod-detail sizes are implemented. Automated, packaged and
-        independent review checks passed. Ready for user UI review in <a href="https://github.com/sandjaie/KubeSift/pull/4">PR #4</a>,
-        targeting develop. No merge, release or Phase 1C.2 work is included.
+        Neutral dark surfaces, searchable namespace selection, remembered Pod-detail sizes and compact workspace controls are implemented.
+        Automated, packaged and independent review checks passed. Ready for user UI review in
+        <a href="https://github.com/sandjaie/KubeSift/pull/4">PR #4</a>, targeting develop. No merge, release or Phase 1C.2 work is
+        included.
       </p>
-      <h2>Scope and provenance</h2>
+      <h2>Compact workspace follow-up</h2>
+      <p>
+        Implemented the approved two-row header, connection status disclosure, Refresh beside Pods, coloured phase dots, sticky table
+        headings and compact details with an Identity &amp; source disclosure. The same spec and plan cover this follow-up.
+      </p>
+      <p>
+        The corrected package passed scripts/check.sh (including nine frontend tests) and wails3 task package. Executable SHA-256:
+        <code>dc0ed7e3bad0820073ce179932514cd5263be86ee584c8a11a095c09d059193e</code>. The initial refinement provenance below is
+        historical.
+      </p>
+      <ul>
+        <li>
+          Native local A/B checks: switching preserved A’s namespace and selection; disconnecting B closed only B. Reconnect reloaded A and
+          its nine fixture Pods. Refresh loaded nine Pods.
+        </li>
+        <li>
+          Connection menu showed explicit context/source and action explanations; Escape and outside click dismissed it. Healthy connections
+          do not have a permanent Retry/action bar.
+        </li>
+        <li>
+          Running, Succeeded, Pending and Failed displayed distinct dots with text; Running/Not ready remained distinct from readiness.
+          UID/source expanded and collapsed.
+        </li>
+        <li>
+          Table headings stayed visible while rows scrolled in the stacked layout. Navigation toggled; keyboard resizing changed the detail
+          share from 54 to 56 percent.
+        </li>
+        <li>
+          Native testing found duplicate sibling React keys causing an extra namespace control after tab changes. Distinct keys fixed it;
+          repeated A/B switching and B disconnect on the rebuilt package retained one selector.
+        </li>
+      </ul>
+      <p>
+        Connecting Cancel was observed but not activated. Controlled failure Retry, helper-review recovery, and Light rendering of the new
+        compact controls were not exercised in this follow-up. No additional cluster resources or credentials were changed. Agent
+        observations are separate from user acceptance.
+      </p>
+      <p>
+        <a href="../evidence/workspace-refinement/compact-dark.png">Compact workspace</a> ·
+        <a href="../evidence/workspace-refinement/compact-connection.png">Connection menu</a> ·
+        <a href="../evidence/workspace-refinement/compact-stacked.png">Scrolled stacked layout</a> ·
+        <a href="../../ux/mocks/compact-workspace-controls.png">Approved compact mock</a>.
+      </p>
+      <h2>Initial refinement scope and provenance</h2>
       <p>
         Branch <code>feature/workspace-theme-and-controls</code> starts from develop <code>7664be8</code> in the existing checkout. No
         worktree or rebase. Only kind-dev-local-a and kind-dev-local-b were connected, using existing synthetic fixtures in
@@ -121,7 +165,7 @@
         token-pair measurements, not a claim of full accessibility conformance. Lighter blue text and light red errors are deliberate
         readability adjustments to the supplied palette.
       </p>
-      <h2>Screenshots and mock</h2>
+      <h2>Initial refinement screenshots and mock</h2>
       <p>
         <a href="../evidence/workspace-refinement/dark-wide.png">Dark, side by side</a> ·
         <a href="../evidence/workspace-refinement/dark-stacked.png">Dark, stacked with AI</a> ·
@@ -131,7 +175,14 @@
         <a href="../../ux/mocks/neutral-dark-controls.png">approved generated mock</a>
         is illustrative; historical Phase 1B mocks remain explicitly historical in the gallery.
       </p>
-      <h2>Independent review</h2>
+      <h2>Compact follow-up independent review</h2>
+      <p>
+        Fresh whole-branch correctness and hygiene review, including the compact follow-up, found no material defects. It confirmed explicit
+        tab callbacks and distinct sibling keys. Deferred minor KSF-001: in Light, Running and Succeeded currently share the same accent
+        colour; text labels remain distinct. The approved blue/green distinction is implemented in Dark. No behavior was declined for
+        judgment. The reviewer performed no additional tests or UI/cluster operations.
+      </p>
+      <h2>Initial refinement independent review</h2>
       <p>
         Fresh correctness and hygiene review of <code>7664be8..f3d19d1</code> identified no material defects or deferred minor findings. It
         traced request ownership, strict migration and split geometry, inspected the screenshots and independently confirmed contrast. The
@@ -166,10 +217,6 @@
         Incomplete-discovery manual selection is unit-tested, but was not exercised with restricted native credentials in this run. No
         exhaustive monitor/OS scaling, screen-reader or transport-failure matrix was run. Existing Phase 1A/1C.1 limitations remain; AI and
         additional resource operations are not added. User acceptance remains separate from these agent observations.
-      </p>
-      <p>
-        After this implementation, the maintainer requested further UI/UX discussion in the same plan, starting with coloured dots next to
-        Pod phase labels. Those dots are not included in this validation result; the follow-up remains separately identified in the plan.
       </p>
       <footer>12 November 2026 · <a href="../../index.html">Documentation index</a></footer>
     </main>

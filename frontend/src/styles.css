@@ -1024,23 +1024,6 @@ kbd {
   color: var(--muted);
   overflow-wrap: anywhere;
 }
-.connection-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 16px;
-  border-bottom: 1px solid var(--line);
-  flex-shrink: 0;
-}
-.connection-actions > span:first-child {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.connection-actions button {
-  padding: 5px 9px;
-  white-space: nowrap;
-}
 .connection-problem {
   padding: 10px 16px;
   color: var(--warning);
@@ -1056,16 +1039,6 @@ kbd {
   height: auto;
   flex: 1;
   min-height: 360px;
-}
-.workspace-tools {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 7px 16px;
-  border-bottom: 1px solid var(--line);
-}
-.workspace-tools button {
-  padding: 5px 9px;
 }
 .empty-sessions {
   border-top: 1px solid var(--line);
@@ -1239,4 +1212,138 @@ textarea::placeholder {
 }
 .resource-nav button:hover {
   background: var(--raised);
+}
+
+/* Context actions stay beside their status; resource refresh belongs to its heading. */
+.compact-identity {
+  min-height: 42px;
+  padding: 5px 12px;
+  gap: 12px;
+}
+.compact-identity > button {
+  padding: 4px 8px;
+}
+.connection-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.connection-controls button {
+  padding: 5px 9px;
+}
+.connection-disclosure {
+  position: relative;
+}
+.connection-disclosure > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  list-style: none;
+  padding: 6px;
+}
+.connection-disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+.connection-popover {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 30;
+  width: min(350px, 85vw);
+  max-height: 65vh;
+  overflow: auto;
+  padding: 16px;
+  background: var(--overlay);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+.connection-popover h3 {
+  margin: 0 0 10px;
+}
+.connection-popover dl {
+  padding: 0;
+  margin: 0;
+}
+.connection-popover dl > div {
+  padding: 8px 0;
+}
+.connection-popover p {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.connection-buttons {
+  display: flex;
+  gap: 8px;
+}
+.live-workspace .pane-heading {
+  padding: 12px 16px;
+  flex-wrap: wrap;
+}
+.list-pane .pane-heading h2 {
+  margin-right: auto;
+}
+
+/* Keep headings visible in the resource list's own scroll container. */
+.resource-list {
+  min-height: 0;
+}
+.resource-list thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bg);
+  box-shadow: inset 0 -1px var(--line);
+}
+.resource-list td {
+  padding: 11px 8px;
+}
+.pod-phase {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+.phase-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+.running {
+  color: var(--accent-ink);
+}
+.compact-pod-detail .detail-identity {
+  margin: 0 0 12px;
+  padding: 0 16px;
+}
+.pod-facts {
+  margin: 12px 16px;
+  padding: 0;
+}
+.pod-facts > div {
+  display: grid;
+  grid-template-columns: 100px minmax(0, 1fr);
+  gap: 12px;
+  align-items: baseline;
+  padding: 10px 0;
+}
+.pod-facts dt {
+  margin: 0;
+}
+.pod-identity-disclosure {
+  margin: 12px 16px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 12px;
+}
+.pod-identity-disclosure summary {
+  cursor: pointer;
+}
+.pod-identity-disclosure dl {
+  padding: 0;
+  font-family: var(--mono);
+  user-select: text;
 }

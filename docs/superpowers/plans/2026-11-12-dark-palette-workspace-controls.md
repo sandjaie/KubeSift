@@ -62,5 +62,33 @@ Self-review: all approved changes are covered by the three tasks; persistence pr
 
 Requested by the maintainer during implementation on 12 November 2026. Keep further UI/UX refinements in this plan after the current implementation is complete; propose and confirm their scope before adding executable tasks.
 
-- [ ] Review coloured dots beside Pod phase labels from the mock. Preserve the text label, distinguish phase from readiness, and agree on semantic colour mapping.
-- [ ] Present other focused UI/UX improvements based on the implemented workspace, then record the selected scope here.
+- [x] Review coloured dots beside Pod phase labels from the mock. Preserve the text label, distinguish phase from readiness, and agree on semantic colour mapping.
+- [x] Present other focused UI/UX improvements based on the implemented workspace, then record the selected scope here.
+
+
+### Task 4: Compact context and connection controls
+
+**Files:** App.tsx, connections/ConnectionControls.tsx, workspace/Workspace.tsx, styles.css and source map.
+**Interfaces:** ConnectionControls receives tab and explicit retry/cancel callbacks. Workspace receives navigation visibility. Preserve existing connection controller behavior.
+
+- [x] Implement two header rows and status disclosure; keep failure Retry, connecting Cancel and helper review visible. Remove source/action bar and separate resource toolbar; move Refresh into Pods heading.
+- [x] Run lint/typecheck and native checks in Task 6. Verify menu dismissal and target ownership; commit the compact controls.
+
+### Task 5: Readable Pod inventory and compact details
+
+**Files:** workspace/PodPhase.tsx, ResourceTable.tsx, ResourceDetail.tsx, styles.css and source map.
+**Interfaces:** PodPhase renders actual phase text with a decorative semantic dot, including unknown fallback; no health inference.
+
+- [x] Add semantic phase dots, sticky table headings and compact single-namespace rows. Collapse UID/source into a labeled disclosure; preserve context/namespace and readiness.
+- [x] Run frontend tests/lint/typecheck. Verify scrolling, disclosure and phase/readiness distinctions in Task 6; commit.
+
+### Task 6: Packaged review and existing PR handoff
+
+**Files:** Same spec/plan, UX owner, mock gallery, validation report, curated screenshots and portable status.
+
+- [x] Build package and run repository checks. Native local A/B: two header rows, namespace selection, status disclosure/dismissal, reconnect/disconnect/cancel, Refresh, phase dots, sticky headings, compact detail disclosure and existing divider behavior. Record unrun cases separately.
+- [x] Update current mock gallery and final screenshots; update report and portable checkpoint. Fresh independent review, fix material findings, check completed plan steps and push to PR #4. No merge or release.
+
+Follow-up test strategy: these presentation changes reuse already-tested target routing; use focused native behavior checks rather than mirrored markup tests or new test dependencies. Existing suites remain required.
+
+Final follow-up review: no material defects. Deferred minor KSF-001: Light uses the same colour for Running and Succeeded; labels remain distinct. Native failure recovery, activated cancellation and compact Light presentation remain unrun as recorded in the validation report.

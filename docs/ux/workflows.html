@@ -59,6 +59,19 @@
         Decorative icons are hidden from assistive technology; collapsed entries have tooltips and accessible names. Unexplained dots must
         not stand for unavailable resource types.
       </p>
+      <h3 id="compact-workspace">Compact workspace controls</h3>
+      <p>
+        Use two header rows: global navigation, then the resource-navigation toggle, active cluster, namespace and connection status. The
+        status opens a disclosure with context, source, last successful read and Reconnect/Disconnect. Reconnect reloads credentials;
+        Disconnect stops the connection and closes its tab. Show Retry directly when recovery is needed and Cancel during connection; helper
+        review and error text remain visible when applicable. Dismiss the disclosure with Escape or outside focus.
+      </p>
+      <p>
+        Refresh belongs beside the Pods heading, without a separate toolbar. Column headings stay visible within the scrolling table.
+        Single-namespace rows omit repeated namespace subtitles. Phase dots supplement labels: Running blue, Succeeded green, Pending amber,
+        Failed red and unknown grey. Keep readiness separate. Selected details use compact label/value rows with context and namespace
+        visible; Identity &amp; source expands selectable UID and full source text.
+      </p>
       <h3 id="namespace-selector">Searchable namespace selector</h3>
       <p>
         The active namespace opens a dropdown with its own search field. Typing filters available namespaces; click an option or press Enter

@@ -8,7 +8,7 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Service } from "../bindings/github.com/sandjaie/KubeSift/internal/desktop";
 import { useConnections } from "./connections/useConnections";
 import { ClusterList } from "./connections/ClusterList";
-import { ConnectionStatus } from "./connections/ConnectionStatus";
+import { ConnectionControls } from "./connections/ConnectionControls";
 import type { CatalogEntry } from "./connections/api";
 import { SettingsPage } from "./settings/SettingsPage";
 import { SourcesSettings } from "./settings/SourcesSettings";
@@ -28,6 +28,7 @@ export default function App() {
   const { state } = controller;
   const [page, setPage] = useState<"clusters" | "workspace" | "settings">("clusters");
   const [aiOpen, setAiOpen] = useState(false);
+  const [hiddenNavigation, setHiddenNavigation] = useState<Record<string, boolean>>({});
   const aiButton = useRef<HTMLButtonElement>(null);
   const [palette, setPalette] = useState(false);
   const [trustTarget, setTrustTarget] = useState<CatalogEntry | null>(null);
@@ -147,8 +148,15 @@ export default function App() {
       <div className="identity-bar compact-identity">
         {page === "workspace" && active ? (
           <>
+            <button
+              aria-label="Toggle resource navigation"
+              aria-expanded={!hiddenNavigation[state.active!]}
+              title="Show or hide resources"
+              onClick={() => setHiddenNavigation((old) => ({ ...old, [state.active!]: !old[state.active!] }))}
+            >
+              ☰
+            </button>
             <strong title={active.entry.sourceDisplay}>{active.entry.context}</strong>
-            <ConnectionStatus view={active.view} unknown={active.pollFailed} />
             <NamespaceControl
               key={state.active}
               namespace={active.namespace}
@@ -160,6 +168,17 @@ export default function App() {
                 (!!active.view.problem && active.view.problem.code !== "forbidden")
               }
               onSelect={(namespace) => void controller.readPods(state.active!, namespace)}
+            />
+            <span className="spacer" />
+            <ConnectionControls
+              key={`connection-${state.active}`}
+              tab={active}
+              onRetry={() => void controller.retry(state.active!)}
+              onCancel={() => close(state.active!)}
+              onReview={() => {
+                setTrustTarget(active.entry);
+                setPage("settings");
+              }}
             />
           </>
         ) : (
@@ -195,28 +214,6 @@ export default function App() {
             </SettingsPage>
           ) : page === "workspace" && active ? (
             <>
-              <div className="connection-actions">
-                <span className="source-path">{active.entry.sourceDisplay}</span>
-                <span className="spacer" />
-                {active.view?.state === "connecting" ? (
-                  <button onClick={() => close(state.active!)}>Cancel connection</button>
-                ) : (
-                  <>
-                    <button onClick={() => void controller.retry(state.active!)}>Retry</button>
-                    <button onClick={() => close(state.active!)}>Disconnect</button>
-                  </>
-                )}
-                {active.view?.problem?.code === "trust_required" && (
-                  <button
-                    onClick={() => {
-                      setTrustTarget(active.entry);
-                      setPage("settings");
-                    }}
-                  >
-                    Review helper in Settings
-                  </button>
-                )}
-              </div>
               {(active.error || active.view?.problem || active.pollFailed) && (
                 <div role="alert" className="connection-problem">
                   {active.error ||
@@ -228,6 +225,7 @@ export default function App() {
                 key={state.active}
                 tab={active}
                 tabId={state.active!}
+                navigationOpen={!hiddenNavigation[state.active!]}
                 controller={controller}
                 detailWidthPercent={preferences.detailWidthPercent}
                 detailHeightPercent={preferences.detailHeightPercent}
