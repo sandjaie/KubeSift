@@ -53,7 +53,11 @@ jobs:
           cache: npm
       - run: npm ci
         if: steps.changes.outputs.full == 'true'
-      # ponytail: Linux purego compile, not a macOS package or production bundle. Restore those if a release-only break escapes.
+      # scripts/check.sh typechecks. This only fills the dist directory the Go embed requires.
+      - name: Build frontend assets
+        if: steps.changes.outputs.full == 'true'
+        run: npm exec --workspace frontend -- vite build --mode production
+      # ponytail: Linux purego compile, not a macOS package. Bindings stay on the local and release checks.
       - name: Run checks
         if: steps.changes.outputs.full == 'true'
         env:
