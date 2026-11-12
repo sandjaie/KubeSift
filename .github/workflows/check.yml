@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   check:
-    runs-on: macos-15
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
@@ -51,22 +51,12 @@ jobs:
         with:
           node-version: '26.13.0'
           cache: npm
-      - name: Cache Wails CLI
-        if: steps.changes.outputs.full == 'true'
-        id: wails
-        uses: actions/cache@v4
-        with:
-          path: ~/go/bin/wails3
-          key: wails-${{ runner.os }}-${{ runner.arch }}-go1.27.3-v3.1.0
       - run: npm ci
         if: steps.changes.outputs.full == 'true'
-      - run: go install github.com/wailsapp/wails/v3/cmd/wails3@v3.1.0
-        if: steps.changes.outputs.full == 'true' && steps.wails.outputs.cache-hit != 'true'
-      - run: wails3 task bindings
+      # ponytail: Linux purego compile, not a macOS package or production bundle. Restore those if a release-only break escapes.
+      - name: Run checks
         if: steps.changes.outputs.full == 'true'
-      # scripts/check.sh runs TypeScript checking; only bundle here.
-      - name: Build frontend assets
-        run: npm exec --workspace frontend -- vite build --mode production
-        if: steps.changes.outputs.full == 'true'
-      - run: scripts/check.sh
-        if: steps.changes.outputs.full == 'true'
+        env:
+          CGO_ENABLED: "0"
+          GOFLAGS: -tags=purego
+        run: scripts/check.sh

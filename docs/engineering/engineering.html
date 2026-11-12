@@ -90,8 +90,9 @@ npx tsc --noEmit</code></pre>
       <p>
         No coverage threshold. Prettier formats HTML and frontend TypeScript. Frontend lint is ESLint plus typescript-eslint recommended. Go
         formatting is <code>gofmt</code>, because the Go toolchain owns it. CI runs on pull requests and pushes to develop, main and master;
-        feature pushes wait for a pull request to avoid duplicate runs. Superseded runs are cancelled. Code changes run bindings generation,
-        the Vite production bundle and scripts/check.sh, with Go, npm and Wails CLI caches. TypeScript checking runs once through
+        feature pushes wait for a pull request to avoid duplicate runs. Superseded runs are cancelled. Code changes run scripts/check.sh on
+        Ubuntu, with Go compiled using CGO disabled and the purego tag so the desktop package needs neither a macOS runner nor GTK. Bindings
+        generation and the Vite production bundle stay on the local and release checks. TypeScript checking runs once through
         scripts/check.sh; local npm run build still includes it. Changes confined to docs/, AGENTS.md and root README files run
         source-description and documentation-link checks in the same check job. Unknown comparison bases receive the full checks. Packaging,
         signing, notarizing, publishing, and version bumps stay in the release skill.
