@@ -1,6 +1,6 @@
 # Phase 1C.2 — Workload investigation
 
-**Status:** Draft for user review; no implementation authorization.
+**Status:** Approved by the user on 2026-11-12; implementation belongs in a separate session.
 **Date:** 2026-11-12
 **Scope:** Pods, Deployments, resource details, read-only YAML, events and container logs.
 
@@ -28,9 +28,9 @@ Current product code has live basic Pod summaries and single-namespace connectio
 
 ## Approach
 
-**Recommended for this draft:** extend the current typed Pod services, add typed Deployment/ReplicaSet reads, and reuse the owned session transport for logs. Preserve current presentation components and explicit connection generations. For inventories/details use bounded page reads, manual Refresh and an optional visible-page auto-refresh; do not introduce a new cluster-wide cache or generic informer framework in this increment.
+**Approved approach:** extend the current typed Pod services, add typed Deployment/ReplicaSet reads, and reuse the owned session transport for logs. Preserve current presentation components and explicit connection generations. For inventories/details use bounded page reads, manual Refresh and an optional visible-page auto-refresh; do not introduce a new cluster-wide cache or generic informer framework in this increment.
 
-Alternatives considered: building generic discovery first delays the requested investigation journey and belongs to 1C.3; building cluster-wide watches plus cache infrastructure now increases synchronization/large-list complexity without being required to inspect one workload. The chosen scope is the user's requested Pod/Deployment investigation; exact bounded defaults below are proposed design decisions for spec review.
+Alternatives considered: building generic discovery first delays the requested investigation journey and belongs to 1C.3; building cluster-wide watches plus cache infrastructure now increases synchronization/large-list complexity without being required to inspect one workload. The chosen scope is the user's requested Pod/Deployment investigation; exact bounded defaults below are approved design decisions.
 
 ## Scope boundaries
 
@@ -103,7 +103,7 @@ Every opened request/stream has a native session ID and captured connection gene
 
 Use the existing pending-session/register-before-activate, credit/acknowledgement and bounded-buffer lifecycle. Create no second log reader for the same visible session. The Logs detail tab and dock reference the same session/store; switching detail tabs must not duplicate subscriptions. Selecting a different Pod does not retarget an existing log session. Namespace/kind/tab navigation keeps explicit sessions visible in the global dock with their original identities.
 
-Proposed bounds: maximum eight log sessions application-wide (including retained stopped snapshots); 1 MiB retained UTF-8 text per session; bounded native queue using existing session limits; a 64 KiB display chunk/window with navigation/search over retained text rather than an unbounded DOM. Bound incomplete lines and decode split UTF-8 sequences correctly. Initial snapshots request a byte cap as well as line tail; follow uses stream backpressure/retention rather than a total-lifetime byte cap. Surface truncation/dropped bytes and time gaps; never silently imply complete logs. Adding a ninth session asks the user to close one, never evicts another cluster's session without consent.
+Approved bounds: maximum eight log sessions application-wide (including retained stopped snapshots); 1 MiB retained UTF-8 text per session; bounded native queue using existing session limits; a 64 KiB display chunk/window with navigation/search over retained text rather than an unbounded DOM. Bound incomplete lines and decode split UTF-8 sequences correctly. Initial snapshots request a byte cap as well as line tail; follow uses stream backpressure/retention rather than a total-lifetime byte cap. Surface truncation/dropped bytes and time gaps; never silently imply complete logs. Adding a ninth session asks the user to close one, never evicts another cluster's session without consent.
 
 Stopping cancels native work while retaining bounded displayed text; closing releases both native ownership and retained text. Clear view empties display history without restarting the stream or resetting the target, and does not erase loss indicators. Pause auto-scroll is a presentation action, not Stop. Current snapshot EOF is a normal completed state; permission/server errors are not “no logs.”
 
@@ -158,4 +158,4 @@ The implementation session commits/pushes its feature branch and opens the PR to
 
 ## Approval and next step
 
-This spec captures the requested scope; bounded refresh/pagination, explicit log Resume and ownership/security details are proposed design decisions for review. After user approval, use Superpowers writing-plans to produce small implementation tasks and the separate-session prompt. No application code, cluster mutation or new fixture installation occurs while writing this specification.
+The user approved this specification on 2026-11-12. The [implementation plan](../plans/2026-11-12-phase-1c2-workload-investigation.md) defines seven tasks, minimal behavior-focused checks and the separate UI UAT deliverable. Implementation occurs in a separate session; no application code, cluster mutation or new fixture installation occurred during planning.

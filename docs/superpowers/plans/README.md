@@ -22,4 +22,6 @@ The [roadmap](../../roadmap/roadmap.html) owns phase order. This directory owns 
 
 Implementation requires an explicit request after plan review; the user may authorize execution in the same session. Later milestones are not authorized by the Phase 1A plan.
 
-The [Phase 1C.2 workload investigation specification](../specs/2026-11-12-phase-1c2-workload-investigation-design.md) is drafted for review on 2026-11-12. Its detailed implementation plan follows approval; UI UAT is a required implementation deliverable.
+The [Phase 1C.2 workload investigation specification](../specs/2026-11-12-phase-1c2-workload-investigation-design.md) was approved on 2026-11-12.
+
+- [Phase 1C.2 implementation plan](2026-11-12-phase-1c2-workload-investigation.md): seven tasks for bounded workloads/details/events/logs, focused tests and a separate HTML user UI UAT checklist. Ready for review and implementation in a separate session; no implementation performed by this planning update.

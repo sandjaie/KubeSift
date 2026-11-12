@@ -52,9 +52,11 @@
         </p>
         <p>
           Workspace refinement PR #4 and the 0.3.0 release merge are now in repository history. The
-          <a href="../superpowers/specs/2026-11-12-phase-1c2-workload-investigation-design.md">Phase 1C.2 specification</a> is drafted for
-          review, preserving those UI improvements. It includes minimal verification and a post-implementation UI UAT checklist. No Phase
-          1C.2 implementation or new release is authorized by this planning update.
+          <a href="../superpowers/specs/2026-11-12-phase-1c2-workload-investigation-design.md">Phase 1C.2 specification</a> was approved on
+          2026-11-12, preserving those UI improvements. Its
+          <a href="../superpowers/plans/2026-11-12-phase-1c2-workload-investigation.md">seven-task implementation plan</a>
+          includes minimal verification and a separate post-implementation UI UAT checklist. Implementation belongs in a separate session;
+          no implementation or new release occurred in this planning update.
         </p>
         <div class="table-scroll">
           <table>
@@ -300,6 +302,100 @@
         <p>
           <strong>Artifacts:</strong> approved explorer spec and task plan, resource coverage table, validation report and service contracts
           reusable by operations and AI.
+        </p>
+      </section>
+      <section id="resource-coverage">
+        <h2>Resource coverage to carry into future specifications</h2>
+        <p>
+          Phase 1C.2 remains focused on Pods and Deployments. The following inventory is the planning obligation for 1C.3 and later
+          increments, not a claim of implemented parity. Before planning 1C.3, review these groups with the maintainer and split them into
+          independently useful increments. Each kind needs an explicit coverage row for discovery, list/detail, YAML, relationships, events
+          where available, RBAC/error states, applicable operations and UAT evidence.
+        </p>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Area</th>
+                <th>Resources and useful relationships</th>
+                <th>Planned ownership</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Namespace policy and configuration</td>
+                <td>
+                  Namespaces, ResourceQuotas, LimitRanges, ConfigMaps and Secrets. Show quota used/hard values, scopes and default/min/max
+                  requests and limits when configured; distinguish missing policy from permission denial. Link workloads to namespace policy
+                  without treating quota allocation as measured CPU/memory usage. Secret reveal follows the security model.
+                </td>
+                <td>1C.3 reads; reviewed edits in 1D.</td>
+              </tr>
+              <tr>
+                <td>Access control</td>
+                <td>
+                  ServiceAccounts, Roles, RoleBindings, ClusterRoles and ClusterRoleBindings. Show subjects, role references and namespace
+                  versus cluster scope. Call this Access control, not a general user-account manager: external human identities are not
+                  ordinary Kubernetes User objects. Role views alone must not claim complete effective permissions.
+                </td>
+                <td>1C.3 reads; permission-changing writes require a separately reviewed 1D action design.</td>
+              </tr>
+              <tr>
+                <td>Storage</td>
+                <td>
+                  PersistentVolumes, PersistentVolumeClaims, StorageClasses, VolumeAttachments, CSIDrivers and CSINodes where served. Follow
+                  Pod volume → PVC → PV → StorageClass relationships and show claim/binding/provisioning evidence. Pod volumes are embedded
+                  configuration, not a standalone Volume API. VolumeSnapshot, VolumeSnapshotContent and VolumeSnapshotClass appear through
+                  installed custom APIs; no CSI or snapshot-controller installation by KubeSift.
+                </td>
+                <td>1C.3 read coverage; destructive storage operations explicitly reviewed in 1D.</td>
+              </tr>
+              <tr>
+                <td>Networking</td>
+                <td>
+                  Services, EndpointSlices, legacy Endpoints if served, Ingresses, IngressClasses and NetworkPolicies. Link service
+                  selectors and endpoint readiness to Pods. Discover Gateway API kinds such as GatewayClass, Gateway, HTTPRoute, GRPCRoute
+                  and ReferenceGrant when installed. Show policy configuration without claiming CNI enforcement or live connectivity proof.
+                </td>
+                <td>1C.3 reads and generic installed APIs; dedicated OpenShift Routes in 1F.</td>
+              </tr>
+              <tr>
+                <td>Remaining workloads and availability</td>
+                <td>
+                  StatefulSets, DaemonSets, ReplicaSets, Jobs, CronJobs, HorizontalPodAutoscalers, PodDisruptionBudgets and
+                  ReplicationControllers when served. Follow controller ownership, scheduled Job history, scale targets and disruption
+                  allowance. ReplicaSets used internally in 1C.2 do not count as a standalone explorer. VerticalPodAutoscalers and other
+                  extensions use discovery when installed.
+                </td>
+                <td>1C.3 dedicated reads; scale/restart/rollback in 1D; metrics interpretation in 1E.</td>
+              </tr>
+              <tr>
+                <td>Cluster, scheduling and API extension resources</td>
+                <td>
+                  Nodes, cluster-wide namespace inventory, Events, PriorityClasses, RuntimeClasses, Leases, CustomResourceDefinitions and
+                  APIService registrations. Admission webhooks and admission-policy kinds are discoverable when served and authorized.
+                  Generic discovery/list/detail/YAML provides access to additional advertised kinds and custom resources, respecting scope,
+                  supported versions and partial discovery failures.
+                </td>
+                <td>1C.3 browsing/discovery; node cordon/drain in 1E. Dedicated extension editors require separate scope review.</td>
+              </tr>
+              <tr>
+                <td>Helm and OpenShift</td>
+                <td>
+                  Helm release inspection/management and dedicated Routes, Projects, Builds and Operators remain committed Phase 1 scope.
+                  Discover installed OpenShift/operator APIs without assuming they exist on kind. User-initiated installations are distinct
+                  from installing dependencies for KubeSift itself.
+                </td>
+                <td>1E Helm and 1F OpenShift workflows, building on 1C.3 discovery and 1D operation safeguards.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          At the next planning discussion, settle navigation grouping, dedicated versus generic views, cross-resource links and the order of
+          1C.3 increments. Validate served API versions from the target cluster and current official documentation at implementation time.
+          An absent API, forbidden API and empty collection must remain distinct. Do not promise every extension a dedicated editor or every
+          resource a meaningful log view. Keep a reviewed coverage matrix and record deferred gaps before claiming broad coverage.
         </p>
       </section>
       <section id="phase-1d">
