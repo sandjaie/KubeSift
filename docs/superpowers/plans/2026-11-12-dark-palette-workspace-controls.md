@@ -91,4 +91,10 @@ Requested by the maintainer during implementation on 12 November 2026. Keep furt
 
 Follow-up test strategy: these presentation changes reuse already-tested target routing; use focused native behavior checks rather than mirrored markup tests or new test dependencies. Existing suites remain required.
 
-Final follow-up review: no material defects. Deferred minor KSF-001: Light uses the same colour for Running and Succeeded; labels remain distinct. Native failure recovery, activated cancellation and compact Light presentation remain unrun as recorded in the validation report.
+Final follow-up review: no material defects. KSF-001 subsequently resolved: dedicated blue Running token in Light; Succeeded remains green. Native failure recovery, activated cancellation and compact Light presentation remain unrun as recorded in the validation report.
+
+### Task 7: Light phase colour correction and curated screenshots
+
+- [x] Give Running a dedicated blue token in Light while preserving Dark and green Succeeded.
+- [x] Keep the current approved mock and three compact captures; remove superseded images and replace historical gallery content with text. Update report and portable checkpoint.
+- [x] Check token contrast and documentation links, commit and push to PR #4. No repeat full UI verification.

@@ -21,7 +21,7 @@ Light and dark themes share the same workspace layout, with the system appearanc
 
 ### Design reference
 
-![KubeSift workspace design reference in dark theme](docs/ux/mocks/wide-dark.png)
+![KubeSift workspace design reference in dark theme](docs/ux/mocks/compact-workspace-controls.png)
 
 *Design reference, not a screenshot of the current application.* See the [light-theme reference and workspace mockups](docs/ux/mocks/index.html).
 

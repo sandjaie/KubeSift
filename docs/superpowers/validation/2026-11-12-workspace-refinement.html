@@ -151,9 +151,9 @@
             <td>Themes and AI</td>
             <td>Pass within exercised scope</td>
             <td>
-              Light, System and Dark settings selected successfully; Dark restored. Light and Dark workspace screenshots retained. AI
-              opens/closes without losing the resource selection and continues to state that integration is unavailable. OS appearance
-              changes were not forced.
+              Light, System and Dark settings selected successfully; Dark restored. Light and Dark workspace screenshots were captured;
+              superseded images have since been removed. AI opens/closes without losing the resource selection and continues to state that
+              integration is unavailable. OS appearance changes were not forced.
             </td>
           </tr>
         </tbody>
@@ -165,28 +165,30 @@
         token-pair measurements, not a claim of full accessibility conformance. Lighter blue text and light red errors are deliberate
         readability adjustments to the supplied palette.
       </p>
-      <h2>Initial refinement screenshots and mock</h2>
+      <h2>Screenshot history</h2>
       <p>
-        <a href="../evidence/workspace-refinement/dark-wide.png">Dark, side by side</a> ·
-        <a href="../evidence/workspace-refinement/dark-stacked.png">Dark, stacked with AI</a> ·
-        <a href="../evidence/workspace-refinement/namespace-search.png">Namespace search</a> ·
-        <a href="../evidence/workspace-refinement/light-wide.png">Light</a>. Native captures use the final corrected package and existing
-        local fixtures. The
-        <a href="../../ux/mocks/neutral-dark-controls.png">approved generated mock</a>
-        is illustrative; historical Phase 1B mocks remain explicitly historical in the gallery.
+        Superseded initial captures and mock images were removed after the compact follow-up. They documented neutral surfaces, searchable
+        namespaces and remembered side-by-side/stacked dividers. Current captures are linked above; historical validation observations
+        remain below.
       </p>
       <h2>Compact follow-up independent review</h2>
       <p>
         Fresh whole-branch correctness and hygiene review, including the compact follow-up, found no material defects. It confirmed explicit
-        tab callbacks and distinct sibling keys. Deferred minor KSF-001: in Light, Running and Succeeded currently share the same accent
-        colour; text labels remain distinct. The approved blue/green distinction is implemented in Dark. No behavior was declined for
-        judgment. The reviewer performed no additional tests or UI/cluster operations.
+        tab callbacks and distinct sibling keys. KSF-001 resolved: Light Running now uses dedicated blue #1264a3 while Succeeded retains
+        green #007f72. Dark keeps its existing blue/green distinction. No behavior was declined for judgment. The reviewer performed no
+        additional tests or UI/cluster operations.
       </p>
       <h2>Initial refinement independent review</h2>
       <p>
         Fresh correctness and hygiene review of <code>7664be8..f3d19d1</code> identified no material defects or deferred minor findings. It
         traced request ownership, strict migration and split geometry, inspected the screenshots and independently confirmed contrast. The
         reviewer did not rerun tests or access clusters. No behaviors were declined for judgment.
+      </p>
+      <h2>Light colour correction and documentation cleanup</h2>
+      <p>
+        Dedicated Running token checked in Light, explicit Dark and System-dark CSS. Light blue contrast measured against the four Light
+        surfaces, including selection. Documentation links and diff checks passed. No full suite, rebuild or native UI verification repeated
+        for this CSS-only correction; packaged screenshots and executable hash above predate it.
       </p>
       <h2>Focused user review</h2>
       <ol>
