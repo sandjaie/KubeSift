@@ -1,0 +1,26 @@
+# Local Wails development configuration; packaging is defined in Taskfile.yml.
+version: '3'
+info:
+  companyName: KubeSift
+  productName: KubeSift
+  productIdentifier: dev.kubesift.validation
+  description: Phase 1A desktop validation
+  copyright: Copyright KubeSift contributors
+  version: '0.2.0'
+dev_mode:
+  root_path: .
+  log_level: warn
+  debounce: 1000
+  ignore:
+    dir: [.git, node_modules, frontend, bin, internal/desktop/assets/dist]
+    file: ['*_test.go']
+  watched_extension: ['*.go']
+  git_ignore: true
+  executes:
+    - cmd: wails3 build DEV=true
+      type: blocking
+    - cmd: wails3 task frontend:dev
+      type: background
+    - cmd: wails3 task run
+      type: primary
+      exit_policy: shutdown

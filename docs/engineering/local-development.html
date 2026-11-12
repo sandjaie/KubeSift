@@ -1,2 +1,147 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Local development environment · KubeSift</title><link rel="stylesheet" href="../assets/planning.css"></head><body><header><a href="../index.html">KubeSift / Engineering</a><h1>Local development and validation</h1><p>User-provided target · 2026-11-05</p></header><main><h2>Primary existing target</h2><table><tr><th>Context</th><th>Namespace</th><th>Workloads reported</th></tr><tr><td>kind-dev-local</td><td>payments</td><td>checkout-api, payments-db</td></tr></table><p>Use this existing local cluster for development, inspection and validation. The supplied Pod listing showed ContainerCreating; this is a user-reported snapshot, not a current readiness check. Discover current Pod names rather than hardcoding rollout suffixes. Check status/events first; running-container log/exec checks must wait for the relevant container or report why they cannot run.</p><pre><code>kubectl --context kind-dev-local -n payments get pods
-kubectl --context kind-dev-local -n payments get events --sort-by=.metadata.creationTimestamp</code></pre><h2>Ownership and cleanup</h2><p>Treat the cluster and existing workloads as user-owned. Do not delete/recreate the cluster, reset its namespace, overwrite existing deployments or rerun setup scripts as part of test setup. Track validation-created resources by run ownership and clean up only those resources. Put mutation checks on a dedicated fixture ConfigMap; use separate named fixture resources when load/log/HTTP behavior is needed. Inspect existing name collisions rather than adopting or replacing resources.</p><h2>Two-cluster validation</h2><p>Phase 1A still needs two distinct API servers. Use kind-dev-local as A and a separately managed disposable kind cluster kubesift-b as B, with context kind-kubesift-b. Create matching validation-owned resource names in payments on each, with distinct markers. Record both identities in isolated ignored test configuration. Never treat two contexts for the same API server as two clusters.</p><p>Test setup reuses A; it creates B only if absent and records ownership. If B already exists without test ownership, stop setup rather than replace it. Teardown may delete B only if the current run created it; it must never delete A or the payments namespace on A. Fault injection that stops a cluster or container runtime belongs on disposable B; exercise A through cancellable requests or local transport simulation.</p><h2>Execution boundary</h2><p>This page records the target for the implementation session. No cluster queries or mutations were performed while writing it. Keep kubeconfig/current-context unchanged. Integration commands must explicitly supply context and namespace; generated test configuration remains outside tracked files. The application installs no supporting infrastructure for its own functionality.</p></main></body></html>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Local development environment · KubeSift</title>
+    <link rel="stylesheet" href="../assets/planning.css" />
+    <script src="../assets/theme.js"></script>
+  </head>
+  <body>
+    <aside class="rail">
+      <a class="skip" href="#content">Skip to content</a>
+      <a class="mark" href="../index.html"><span class="mark-name">KubeSift</span><span class="mark-sub">Planning</span></a>
+      <h2>Index</h2>
+      <a href="../index.html">Planning index</a>
+      <h2>Product</h2>
+      <a href="../product/requirements.html">Requirements</a>
+      <a href="../product/feature-matrix.html">Capabilities</a>
+      <h2>Architecture</h2>
+      <a href="../architecture/overview.html">Overview</a>
+      <a href="../architecture/decisions.html">Decisions</a>
+      <h2>Safeguards</h2>
+      <a href="../security/security-model.html">Security and AI</a>
+      <h2>Delivery</h2>
+      <a href="../roadmap/roadmap.html">Roadmap</a>
+      <a href="../ux/workflows.html">UX workflows</a>
+      <a href="../ux/mocks/index.html">Mockups</a>
+      <h2>Engineering</h2>
+      <a href="../engineering/engineering.html">Playbook</a>
+      <a href="../engineering/local-development.html" aria-current="page">Local development</a>
+      <a href="../engineering/toolchain.html">Toolchain</a>
+      <h2>Working</h2>
+      <a href="../superpowers/validation/phase-1a.html">Phase 1A validation</a>
+    </aside>
+    <header>
+      <a href="../index.html">KubeSift / Engineering</a>
+      <h1>Local development</h1>
+      <p>Two kind clusters · 2026-11-06</p>
+    </header>
+    <main id="content">
+      <h2>Development clusters</h2>
+      <p>
+        <code>kind-dev-local-a</code> and <code>kind-dev-local-b</code> are the only clusters for day-to-day development. They are merged
+        into the default kubeconfig, so a blank kubeconfig path in the app lists both contexts. Do not create another cluster for routine
+        development, and do not use any other context in this kubeconfig for KubeSift work.
+      </p>
+      <div class="table-scroll">
+        <table>
+          <tr>
+            <th>Context</th>
+            <th>Namespace</th>
+            <th>What you should see</th>
+          </tr>
+          <tr>
+            <td>kind-dev-local-a</td>
+            <td>shop</td>
+            <td>
+              Deployments web-frontend and cart-api, two replicas each. Services with the same names. ConfigMaps web-settings and
+              catalog-copy. Secrets web-tls and cart-db. DaemonSet node-log-agent. Ingresses storefront and cart. One control-plane node.
+            </td>
+          </tr>
+          <tr>
+            <td>kind-dev-local-b</td>
+            <td>billing</td>
+            <td>
+              Deployments invoice-api and ledger-worker, two replicas each. Services with the same names. ConfigMaps invoice-settings and
+              tax-rates. Secrets billing-db and payment-token. DaemonSet metric-agent. Ingresses invoices and ledger. One control-plane
+              node.
+            </td>
+          </tr>
+        </table>
+      </div>
+      <p>
+        Workloads run <code>registry.k8s.io/pause:3.10</code> with tiny CPU and memory requests. Ingress objects are the routes; no ingress
+        controller is installed, so they have no external address. Secret values are fake local placeholders. Pod names gain a rollout
+        suffix; read them from the cluster instead of hardcoding them.
+      </p>
+      <pre><code>kubectl --context kind-dev-local-a -n shop get deploy,ds,svc,cm,secret,ingress,pods
+kubectl --context kind-dev-local-b -n billing get deploy,ds,svc,cm,secret,ingress,pods
+kubectl --context kind-dev-local-a get nodes</code></pre>
+      <h2>Agent actions</h2>
+      <p>
+        Agents may get, describe, log, exec, apply, create, and delete resources in these two clusters when the work requires it. Every call
+        passes <code>--context</code> and, for a namespaced resource, the namespace. Do not rely on the current context. Do not read or
+        change any other context, including shared or production contexts in the same kubeconfig. Do not delete <code>dev-local-a</code> or
+        <code>dev-local-b</code> unless the user asks.
+      </p>
+      <h2>Resume</h2>
+      <p>
+        <code>scripts/dev-clusters.sh</code> creates <code>dev-local-a</code> and <code>dev-local-b</code> when either is absent, then
+        applies the sample workloads embedded in the script. Each new cluster has one control-plane node and the pinned kind node image.
+        Missing Docker, kind, or kubectl stops the script. Running it again applies the workloads and does not delete the clusters. It
+        restores the previous current context when that context still exists.
+      </p>
+      <h2 id="explorer-fixtures">Phase 1C.1 fixture expansion · installed locally</h2>
+      <p>
+        Use only kind-dev-local-a and kind-dev-local-b for new development and validation. The existing shop/billing inventory above is the
+        preserved baseline. On 11 November 2026, <code>scripts/dev-clusters.sh --explorer</code> applied 26 owned manifest objects per
+        cluster (including namespace and CRD), twice successfully after collision checks. Each cluster showed nine resulting Pods. See the
+        <a href="../superpowers/validation/phase-1c1.html">actual validation results</a>. On a fresh machine create the two clusters with
+        the standard script first, then run its <code>--explorer</code> expansion. The expansion never creates clusters or replaces
+        unrelated objects.
+      </p>
+      <ul>
+        <li>
+          Healthy serving/log-producing workloads plus missing-configuration CrashLoopBackOff and missing-image Pods. Include a
+          multi-container Pod and completed/failed Jobs so container selection, previous logs and failure explanations have useful evidence.
+        </li>
+        <li>
+          Deployments, StatefulSets, DaemonSets, Jobs and CronJobs; Services and Ingresses; ConfigMaps and fake-value Secrets. Keep
+          predictable small resource requests, bounded log rates and safe CronJob schedules.
+        </li>
+        <li>
+          PVCs and storage inspection: show Pending honestly when no provisioner exists. Any static local storage fixture must be explicitly
+          planned and owned; do not install a storage stack just for browsing.
+        </li>
+        <li>
+          ServiceAccounts, namespace Roles/RoleBindings, ResourceQuotas, LimitRanges, NetworkPolicies and PodDisruptionBudgets for
+          inspection and limited-permission scenarios. Denied-RBAC checks use explicit restricted credentials and read requests, never trial
+          mutations.
+        </li>
+        <li>
+          One small synthetic CRD and custom resources to exercise generic discovery. This is deliberate local test setup, not
+          infrastructure installed by the shipped application. No Operator or monitoring stack is needed.
+        </li>
+        <li>
+          Same-named resources in both clusters with different markers to prove tab isolation. Namespaced objects receive clear fixture
+          ownership labels; any cluster-scoped fixture gets an explicit inventory and collision check.
+        </li>
+      </ul>
+      <p>
+        The owned inventory is in <a href="../../tests/fixtures/explorer/README.html">tests/fixtures/explorer</a>. <code>same-pod</code> has
+        marker <code>local-a</code> or <code>local-b</code> in <code>kubesift-explorer</code>. Missing-setting/image Pods, failed Job and
+        Pending PVC are intentional; the CronJob is suspended. BusyBox is digest-pinned and log heartbeats occur every 30 seconds. Discover
+        existing namespaces, object names and storage capabilities before choosing additions. Keep cleanup limited to owned fixtures and
+        preserve both clusters. Cover representative discoverable resource types, not an installation of every possible Kubernetes
+        extension. OpenShift-specific resources require a supported OpenShift environment later; kind does not prove those workflows.
+      </p>
+      <h2>Phase 1A fixtures</h2>
+      <p>
+        <code>scripts/local-clusters.sh</code> remains the opt-in Phase 1A fixture tool. It is not the development cluster setup, and it
+        still expects the historical <code>kind-dev-local</code> and <code>kind-kubesift-b</code> names recorded by that validation. Do not
+        use it in place of <code>scripts/dev-clusters.sh</code>.
+      </p>
+    </main>
+  </body>
+</html>

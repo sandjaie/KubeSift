@@ -1,0 +1,7 @@
+# Wails discovers this entry point at the repository root.
+# The desktop build tasks themselves live under build/.
+version: '3'
+includes:
+  desktop:
+    taskfile: ./build/Taskfile.yml
+    flatten: true

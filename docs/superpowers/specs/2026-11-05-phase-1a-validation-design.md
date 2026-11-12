@@ -31,7 +31,9 @@ All permanent safeguards are owned by [the security model](../../security/securi
 
 Initial validation target: this development Mac's arm64 architecture. Host inspection found macOS 26.7.1, Node and a Docker executable; Go and kind/minikube/k3d were not on PATH. This does not establish a running container engine or minimum supported macOS version.
 
-Local target update (2026-11-05): use the existing `kind-dev-local` context and `payments` namespace for primary development/validation. Treat its workloads as user-owned. Use a separate disposable second cluster for the two-server checks. [Local development](../../engineering/local-development.html) owns target details, setup and teardown rules. Do not recreate the primary cluster or namespace.
+Local target update (2026-11-05): Phase 1A validation used the existing `kind-dev-local` context and `payments` namespace, plus a separate disposable second cluster for the two-server checks. That paragraph is the historical validation record.
+
+Dev target update (2026-11-06): day-to-day development uses `kind-dev-local-a` and `kind-dev-local-b` only. [Local development](../../engineering/local-development.html) owns those contexts, the sample workloads, and what an agent may change.
 
 Use two genuinely different API servers, each containing an identically named namespace and workload. Give their synthetic responses different marker values so cross-cluster mistakes are observable. Store test kubeconfigs outside tracked paths and pass an explicit isolated kubeconfig to fixture tooling. Do not alter the user's default kubeconfig or current-context.
 
@@ -121,6 +123,6 @@ First assess batching, cancellation and flow control when performance is inadequ
 
 ## Deliverables for the implementation chat
 
-An approved execution plan, minimal integration source/tests/fixtures, reproducible local verification instructions and a validation report under docs/validation/ (HTML summary with synthetic machine-readable measurements as appropriate). The report must list actual versions, pass/fail/not-run cases, measured results, limitations and recommendation. Use synthetic evidence in the report.
+An approved execution plan, minimal integration source/tests/fixtures, reproducible local verification instructions and a validation report under docs/superpowers/validation/ (HTML summary with synthetic machine-readable measurements as appropriate). The report must list actual versions, pass/fail/not-run cases, measured results, limitations and recommendation. Use synthetic evidence in the report.
 
 The user approved this specification. Create and review its detailed Superpowers plan in this planning chat before implementation. The implementation chat should receive links to this spec, the approved plan, parent design and AGENTS.md; it should verify the checked-out commit and execute only Phase 1A. Decisions that change scope return to this planning chat rather than being silently expanded.

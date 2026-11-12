@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Phase 1C.1 agent UAT results · KubeSift</title>
+    <link rel="stylesheet" href="../../assets/planning.css" />
+    <script src="../../assets/theme.js"></script>
+  </head>
+  <body>
+    <header>
+      <p>KubeSift / Phase 1C.1</p>
+      <h1>Agent UAT results</h1>
+    </header>
+    <main>
+      <p>
+        <strong>11 November 2026: 12 core/UI cases passed, 3 optional cases blocked; no failures observed in exercised steps.</strong> Pass
+        applies only to the observations below. Optional untested subcases are explicitly excluded. User acceptance remains pending; this
+        run does not merge PR #3 or authorize the next phase.
+      </p>
+      <p>
+        Requested walkthrough of the <a href="phase-1c1-ui-uat.html">UI UAT checklist</a>, performed by Codex through the native packaged
+        app using accessibility controls and screenshots. The separate user form remains blank. See also the
+        <a href="phase-1c1.html">technical validation report</a>.
+      </p>
+      <h2>Environment and provenance</h2>
+      <p>
+        macOS 26.7.1 (25G241). Checkout f288008cd49cfe23a2dcc5f96037f1016788dbb3; packaged application code e23c02e as recorded in the
+        technical report. Executable SHA-256 matched that report:
+        <code>5939c05d382e8489c97fb257f9ebbbb192da478873751504417bd58188d65000</code>. No rebuild or code changes were made. Existing window
+        screenshot was 2642 × 1800 pixels; no exhaustive display matrix.
+      </p>
+      <p>
+        Only kind-dev-local-a and kind-dev-local-b were connected. Explicit-context kubectl reads confirmed nine Pods per fixture namespace.
+        Existing cluster resources and normal kubeconfig were preserved. A private disposable local-A source copy remains in ignored
+        .local/phase1c1/uat-agent-a.kubeconfig; its app metadata was removed. No credential bodies or external provider details are included
+        here.
+      </p>
+      <h2>Case results</h2>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Case</th>
+              <th>Result</th>
+              <th>Observed evidence and limits</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><a href="phase-1c1-ui-uat.html#uat-01">UAT-01</a> · Startup and selection</td>
+              <td>Pass</td>
+              <td>
+                Fresh Finder launch showed Clusters with 0 open contexts. Local contexts were Not connected until selected. Search worked.
+                Missing-source error and Settings link were verified in UAT-07.
+              </td>
+            </tr>
+            <tr>
+              <td><a href="phase-1c1-ui-uat.html#uat-02">UAT-02</a> · Connect local A</td>
+              <td>Pass</td>
+              <td>
+                Connected to kind-dev-local-a and manually selected kubesift-explorer. Nine real Pods loaded. same-pod showed marker local-a
+                and UID 787de22f-8cc3-4c52-920e-a3b6cdb56fed. Failed fixture Pods did not change connection health.
+              </td>
+            </tr>
+            <tr>
+              <td><a href="phase-1c1-ui-uat.html#uat-03">UAT-03</a> · Independent local B</td>
+              <td>Pass</td>
+              <td>
+                B showed nine Pods and same-pod marker local-b, UID d11b905e-6a76-4cd9-86c7-815b1a57307b. Switching back retained A
+                namespace, filter and selection. No cross-cluster data observed.
+              </td>
+            </tr>
+            <tr>
+              <td><a href="phase-1c1-ui-uat.html#uat-04">UAT-04</a> · Focus existing context</td>
+              <td>Pass</td>
+              <td>
+                Selecting A and B again through Choose cluster focused their existing tabs without duplicates. Settings / Back to workspace
+                preserved the selected Pod and namespace.
+              </td>
+            </tr>
+            <tr>
+              <td><a href="phase-1c1-ui-uat.html#uat-05">UAT-05</a> · Discovered and manual namespaces</td>
+              <td>Pass — core</td>
+              <td>
+                Discovered namespace selection loaded B fixture Pods; manual namespace entry loaded A and B fixture Pods. Default namespace
+                showed an honest empty state. Optional restricted-source UI subcase blocked: the existing private restricted credential
+                returned Unauthorized during prerequisite verification. It was not renewed or added to the app.
+              </td>
+            </tr>
+            <tr>
+              <td><a href="phase-1c1-ui-uat.html#uat-06">UAT-06</a> · Filters, empty and bounded lists</td>
+              <td>Pass — core</td>
+              <td>
+                same-pod filter returned one row; an unmatched filter showed No matching Pods. Clearing and Refresh Pods restored nine rows.
+                A filter did not change B. No Pods in this namespace appeared for default. Over-100 pagination behavior was not exercised:
+                no prepared capacity fixture, and no flood created.
+              </td>
+            </tr>
+            <tr>
+              <td><a href="phase-1c1-ui-uat.html#uat-07">UAT-07</a> · Independent sources and errors</td>
+              <td>Pass</td>
+              <td>
+                Added a disposable copy of the existing local-A kubeconfig and an intentionally missing path. Same-named A contexts were
+                distinguished by source. Reload/add did not connect automatically. The missing-file error remained visible in Settings and
+                Clusters while original A/B remained usable.
+              </td>
+            </tr>
+            <tr>
+              <td><a href="phase-1c1-ui-uat.html#uat-08">UAT-08</a> · Remove, disable and restore</td>
+              <td>Pass — core</td>
+              <td>
+                Removal dialog named the affected A context. Cancel retained all three tabs; Confirm removed only the disposable source tab.
+                The source file remained on disk and could be re-added. Optional default Disable/Restore was not exercised; original
+                default-source loading stayed enabled.
+              </td>
+            </tr>
+            <tr>
+              <td><a href="phase-1c1-ui-uat.html#uat-09">UAT-09</a> · Labels and target review</td>
+              <td>Pass — core</td>
+              <td>
+                Saved UAT local A on the disposable source. Label appeared on its card and tab, and survived quit/relaunch. Original A/B
+                labels stayed unchanged. Optional endpoint/user identity-change review was not exercised; no prepared identity-change
+                fixture was used.
+              </td>
+            </tr>
+            <tr>
+              <td><a href="phase-1c1-ui-uat.html#uat-10">UAT-10</a> · Appearance and restart</td>
+              <td>Pass</td>
+              <td>
+                Selected Light, System and Dark in Settings; selection state updated. Restored the original Dark preference before restart.
+                Dark, source entries, saved label and the observed navigation/AI pane widths survived restart. Launch restored no
+                connections. Source operations did not reset appearance.
+              </td>
+            </tr>
+            <tr>
+              <td><a href="phase-1c1-ui-uat.html#uat-11">UAT-11</a> · Helper review and revocation</td>
+              <td>Blocked</td>
+              <td>
+                No prepared harmless synthetic helper source was available. No helper approval was granted or revoked. This run does not
+                verify helper execution or revocation.
+              </td>
+            </tr>
+            <tr>
+              <td><a href="phase-1c1-ui-uat.html#uat-12">UAT-12</a> · External renewal and Retry</td>
+              <td>Blocked</td>
+              <td>
+                No controlled synthetic authentication-renewal fixture was available. The expired/rejected restricted credential
+                prerequisite check is not a substitute for exercising UI Retry and generation replacement.
+              </td>
+            </tr>
+            <tr>
+              <td><a href="phase-1c1-ui-uat.html#uat-13">UAT-13</a> · Connection failures and stale evidence</td>
+              <td>Blocked</td>
+              <td>
+                No prepared isolated timeout/TLS/controlled transport-loss fixture was available. Shared clusters were not stopped or
+                disrupted. Cancellation and stale-evidence transitions were not verified in this run.
+              </td>
+            </tr>
+            <tr>
+              <td><a href="phase-1c1-ui-uat.html#uat-14">UAT-14</a> · Navigation, keyboard, layout and AI</td>
+              <td>Pass — UI scope</td>
+              <td>
+                Arrow Down and Enter changed Pod selection. Cmd-K opened Workspace commands outside an input and Escape closed it; Cmd-K
+                inside Filter Pods did not open commands. Deployments Soon showed an unavailable message without synthetic resources. Ask AI
+                and its close button worked on workspace, Settings and Clusters; its text stated future availability and no provider/data
+                collection. No network trace was captured, so the no-transmission statement is a UI observation, not independent network
+                verification. Existing window layout showed readable context/namespace and labeled distinct icons; exhaustive resizing was
+                not performed.
+              </td>
+            </tr>
+            <tr>
+              <td><a href="phase-1c1-ui-uat.html#uat-15">UAT-15</a> · Disconnect, close and relaunch</td>
+              <td>Pass</td>
+              <td>
+                Disconnect A left B connected; B then read nine fixture Pods. Closing the last B tab returned to Clusters. Explicitly
+                reopening A made a fresh connection. Final quit/relaunch showed 0 open contexts. Both disposable source entries and their
+                temporary label were removed; original Dark/default-source settings were retained.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <h2>Outcome and remaining coverage</h2>
+      <p>
+        No core-flow defect was observed. Helper trust/revocation, external renewal/Retry, transport failure/cancellation/staleness,
+        restricted-source UI, over-capacity lists, default-source disable/restore and identity-change review remain unverified by this
+        walkthrough. Prior automated results are not substituted for these missing UI observations.
+      </p>
+      <p>
+        The app was left open on Clusters with zero connections, original Dark appearance, default source enabled, and no temporary source
+        entries. No merge, release or new-phase work was performed.
+      </p>
+    </main>
+  </body>
+</html>

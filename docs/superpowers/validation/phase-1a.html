@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Phase 1A local validation · KubeSift</title>
+    <link rel="stylesheet" href="../../assets/planning.css" />
+    <script src="../../assets/theme.js"></script>
+  </head>
+  <body>
+    <aside class="rail">
+      <a class="skip" href="#content">Skip to content</a
+      ><a class="mark" href="../../index.html"><span class="mark-name">KubeSift</span><span class="mark-sub">Planning</span></a>
+      <h2>Index</h2>
+      <a href="../../index.html">Planning index</a>
+      <h2>Product</h2>
+      <a href="../../product/requirements.html">Requirements</a><a href="../../product/feature-matrix.html">Capabilities</a>
+      <h2>Architecture</h2>
+      <a href="../../architecture/overview.html">Overview</a><a href="../../architecture/decisions.html">Decisions</a>
+      <h2>Safeguards</h2>
+      <a href="../../security/security-model.html">Security and AI</a>
+      <h2>Delivery</h2>
+      <a href="../../roadmap/roadmap.html">Roadmap</a><a href="../../ux/workflows.html">UX workflows</a
+      ><a href="../../ux/mocks/index.html">Mockups</a>
+      <h2>Engineering</h2>
+      <a href="../../engineering/engineering.html">Playbook</a><a href="../../engineering/local-development.html">Local development</a
+      ><a href="../../engineering/toolchain.html">Toolchain</a>
+      <h2>Working</h2>
+      <a href="../../superpowers/validation/phase-1a.html" aria-current="page">Phase 1A validation</a>
+    </aside>
+    <header>
+      <a href="../../index.html">KubeSift / Planning</a>
+      <h1>Phase 1A local validation</h1>
+      <p>2026-11-06 · feature/phase-1a-validation · reviewed local validation complete</p>
+    </header>
+    <main id="content">
+      <p>Local macOS 26.7.1 / Apple M2 Pro · source branch <code>feature/phase-1a-validation</code></p>
+      <p class="callout">
+        <strong>Recommendation: proceed with follow-ups for the local Phase 1A architecture.</strong> All A01–A10 local outcomes have
+        evidence, with bounded degradation and explicit recovery behavior described below. Independent final source and evidence review
+        approved this local result; controller signoff is complete. This does not authorize Phase 1B, a merge, a release, or production
+        readiness.
+      </p>
+      <h2>Artifacts and evidence</h2>
+      <p>
+        Earlier native source, helper, targeting, mutation, forward-conflict and B-outage observations used a pre-SPDY executable, SHA256
+        <code>7892f47a107bc36aacde6c7293e974dd38e941306545d66f1a026e2f54c44a5c</code>. The full runtime profile used source commit
+        <code>8b2de54</code>, executable SHA256 <code>1c3cfb25175afaacf958117738c23fa68e402c5dec2a2b8256254f9204106140</code>. A later
+        UI-only close-confirmation fix at <code>de25fcf</code> produced the final targeted manual package, executable SHA256
+        <code>9f1d39fcf29f72d3a8e366bacf8dc8706f6166d3b08265527d7155fd6b6d3c29</code>. Its Finder ready, explicit A/B opens, native keyboard
+        and inline close/setup cancellation checks passed; the earlier workflows were not all rerun on it. The helper, mutation, source and
+        ordinary read paths were unchanged in the later fixes. Independent scoped source review approved targeted validation for the UI-only
+        change instead of another full load because the stream, session-registration and profile paths did not change. See the
+        <a href="measurements.json">per-scenario artifact mapping</a>. These packages passed deep/strict ad hoc signature verification and
+        packaged LICENSE/NOTICE byte comparison. Signing, notarization and updater readiness are separate release work.
+      </p>
+      <p>
+        <a href="measurements.json">Measurement summary, raw samples and proposed budgets</a> ·
+        <a href="../evidence/phase-1a/README.md">Curated runtime proof</a> ·
+        <a href="../evidence/phase-1a/native-acceptance.md">Native acceptance observations</a> ·
+        <a href="../../engineering/toolchain.html">Toolchain and host</a> ·
+        <a href="../plans/2026-11-05-phase-1a-validation.md">Phase 1A plan</a>.
+      </p>
+      <h2>Packaged load and cleanup</h2>
+      <p>
+        The actual renderer ran two Pod watches, four log follows, one xterm terminal and one loopback forward across the two approved local
+        clusters. Its measured load span was <strong>600.001 seconds</strong>; the disposable B flood lasted
+        <strong>64.876 seconds</strong>. Fixed 55-second windows of CRI timestamps measured A and B baseline at
+        <strong>100.0 lines/sec</strong> each and the B flood at <strong>2000.364 lines/sec</strong>, all with 256-byte lines and within the
+        declared ±2% tolerance. Twenty terminal probes passed through xterm's parse callback: median <strong>50 ms</strong>, nearest-rank
+        p95 <strong>52 ms</strong>. Ten starts of the final UI package reached frontend Ping: median <strong>696.6 ms</strong>, nearest-rank
+        p95 <strong>3888.1 ms</strong>, retaining the cold first sample.
+      </p>
+      <p>
+        All twenty explicit start/stop cycles completed. After cycle 20, native sessions, queued bytes and in-flight bytes were zero; native
+        goroutines were 15 versus 14 before load, and cycle samples ranged 13–15. All twenty stopped forward ports were unreachable. Native
+        RSS first/last/max was 122,814,464 / 52,314,112 / 127,385,600 bytes; WebKit XPC memory is excluded. Four active log histories
+        remained capped at 1 MiB each. The corrected cumulative observed-session-error counter stayed at zero.
+      </p>
+      <p>
+        <strong>Observed degradation:</strong> native log drops totaled 67,920,384 bytes. While WebKit was backgrounded or occluded,
+        renderer receipt stayed at 52,527,616 bytes from roughly 192–599 seconds and native queues rose to about 4.2 MiB. Bringing only the
+        package window forward around 600 seconds resumed acknowledgements; the queue drained by about 605 seconds. Truncation and native
+        drops were visible and bounded. The run does not establish uninterrupted foreground throughput or lossless logs. Proposed one-host
+        budgets are labeled as proposals in <a href="measurements.json">the numeric summary</a>, not retrospective pass thresholds.
+      </p>
+      <h2>Acceptance matrix</h2>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Case</th>
+              <th>Local outcome</th>
+              <th>Basis and limit</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>A01 · Build and Finder</td>
+              <td>Pass locally</td>
+              <td>
+                Final package launched from Finder to ready with an empty workspace and no implicit connection. Ten sanitized starts reached
+                Ping. Missing helper executable surfaced a visible error. Local ad hoc signature and license checks passed; release signing
+                is open.
+              </td>
+            </tr>
+            <tr>
+              <td>A02 · Kubeconfig</td>
+              <td>Pass locally</td>
+              <td>
+                Blank/default and explicit isolated sources returned summaries; no ambient context was opened and default kubeconfig hash
+                was unchanged. Only approved fixture contexts were opened.
+              </td>
+            </tr>
+            <tr>
+              <td>A03 · Helper lifecycle</td>
+              <td>Pass locally</td>
+              <td>
+                Unapproved Open and preview left invocation counter at 8; approval then separate Open read the fixture. Trust persisted
+                across restart, revocation blocked the next Open, changed configuration required review, and fail/expired/missing modes were
+                visible. Synthetic approvals were revoked.
+              </td>
+            </tr>
+            <tr>
+              <td>A04 · Two clusters</td>
+              <td>Pass locally</td>
+              <td>
+                Identically named A/B fixtures showed distinct markers. A target remained A after B selection; sessions and prepared writes
+                carried issued identities.
+              </td>
+            </tr>
+            <tr>
+              <td>A05 · Concurrent sessions</td>
+              <td>Pass locally, resize qualification</td>
+              <td>
+                Eight actual renderer sessions and 20 parsed terminal probes completed. Native keyboard input on the final package returned
+                a marker and prompt. Earlier native resize changed remote 16×128 to 16×102; final SPDY service Resize(100,32) returned
+                remote 32×100. Automation could not issue a second native command after the final package's window drag.
+              </td>
+            </tr>
+            <tr>
+              <td>A06 · Forwarding</td>
+              <td>Pass locally</td>
+              <td>
+                A loopback endpoint returned its marker, a port conflict was explained, normal stop released the listener, and 20/20 cycle
+                listeners plus final blocked-setup forward port were unreachable after close.
+              </td>
+            </tr>
+            <tr>
+              <td>A07 · Prepared mutation</td>
+              <td>Pass locally</td>
+              <td>
+                Review fixed A endpoint, generation, UID/resourceVersion and values. Opening B before confirmation still changed only A; A
+                was restored. Focused safety/integration checks covered stale and duplicate confirmation.
+              </td>
+            </tr>
+            <tr>
+              <td>A08 · Recovery</td>
+              <td>Pass local slice, compatibility follow-up</td>
+              <td>
+                B outage and stale watch were visible; an initial watch ended forbidden during control-plane boot. Explicit Refresh and a
+                new watch recovered after B returned. Synthetic 410/Expired watch relisted and restarted from a fresh snapshot. Denied RBAC
+                was visible; no command or mutation replay occurred. Physical sleep/wake was deferred by the user and remains untested.
+              </td>
+            </tr>
+            <tr>
+              <td>A09 · Untrusted content</td>
+              <td>Pass locally</td>
+              <td>
+                Hostile fixture annotation and log strings were rendered inertly; malformed/stale session paths were rejected by focused
+                checks.
+              </td>
+            </tr>
+            <tr>
+              <td>A10 · Cleanup and load</td>
+              <td>Pass with performance follow-up</td>
+              <td>
+                600.001-second load, 64.876-second flood and 20 cycles completed with bounded queues/history and stable post-stop
+                workers/listeners. The final UI confirmation closed the exact captured B connection during blocked setup while A stayed
+                usable. Backgrounded log delivery paused and dropped bytes; foreground recovery was observed.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <h2>Checks, decision and remaining limits</h2>
+      <p>
+        <code>scripts/check.sh</code>, <code>go test -race ./internal/...</code>, the single seven-part opt-in local integration scenario,
+        GET-only synthetic expired-watch/backpressure regressions, frontend test/lint/typecheck and pinned Wails packaging passed after the
+        source fixes. Independent source reviews approved the corrected watch lifecycle, snapshot overflow handling and inline close
+        confirmation; final independent <em>evidence</em> review approved the qualified local result. Operational logs and review notes stay
+        in ignored local SDD storage under the repository documentation policy.
+      </p>
+      <p>
+        Proceed with explicit follow-ups for foreground/occluded log behavior, the untested physical sleep/wake case, real cloud/OpenShift
+        authentication, WebKit memory attribution, minimum macOS and other OS support, and release signing/notarization/updater work. B
+        fault recovery required an explicit new read/watch after a forbidden boot-time end; automatic recovery of that ended watch is not
+        claimed. No Lens/K9s parity claim is made.
+      </p>
+    </main>
+  </body>
+</html>

@@ -1,17 +1,117 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Capability inventory · KubeSift</title><link rel="stylesheet" href="../assets/planning.css"></head><body><header><a href="../index.html">KubeSift / Planning</a><h1>Capability inventory</h1><p>Delivery commitments and explicit gaps, not a claim of competitor parity.</p></header><main>
-<p>This is a requirements inventory from our discussion. It is not yet a sourced feature-by-feature comparison against specific Lens/K9s versions. Complete that comparison before freezing Phase 1 release scope.</p>
-<table><tr><th>Capability</th><th>Status</th><th>Acceptance focus</th></tr>
-<tr><td>Multi-cluster tabs, kubeconfig, CLI credentials</td><td>Required</td><td>Concurrent connections; independent targets; credential renewal failures</td></tr>
-<tr><td>Core resources + generic CRs</td><td>Required</td><td>Discovery, partial RBAC, supported verbs, absent API handling</td></tr>
-<tr><td>Details, YAML, logs, events, exec, port forwards</td><td>Required</td><td>Correct container/target; bounded streams; explicit stop and cleanup</td></tr>
-<tr><td>Edits, restarts, scaling, deletion, rollback</td><td>Required</td><td>Review, conflicts, exact target; no unsafe automatic retry</td></tr>
-<tr><td>Helm lifecycle</td><td>Required</td><td>Install/upgrade/rollback/uninstall; values and hooks impact review</td></tr>
-<tr><td>Node maintenance</td><td>Required</td><td>Eviction/PDB behavior; local data warnings; no default bypass</td></tr>
-<tr><td>Current/historical CPU and memory</td><td>Required when sources available</td><td>Source/freshness labeling; no data vs zero; missing-source fallback</td></tr>
-<tr><td>Dedicated OpenShift workflows</td><td>Required</td><td>Routes, Projects, Builds, Operators; API/version detection</td></tr>
-<tr><td>AI providers and evidence-based diagnosis</td><td>Phase 2</td><td>Provider profiles; citations and controlled sharing</td></tr>
-<tr><td>Bulk actions, local shell, file copy, extensions</td><td>Unresolved</td><td>Explicitly include or defer during scope review</td></tr>
-<tr><td>GitOps integrations, cost/security scanning</td><td>Uncommitted</td><td>Not implied by broad resource access</td></tr>
-<tr><td>AI mutations/remediation</td><td>Later, uncommitted</td><td>Separate authorization and safety design</td></tr></table>
-<p>Future comparison entries must record competitor/version/source, user value, inclusion decision and a verifiable acceptance criterion. The roadmap owns ordering; this inventory owns capability coverage.</p><footer>2026-11-05 · Draft for review · <a href="../index.html">Planning index</a></footer></main></body></html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Capability inventory · KubeSift</title>
+    <link rel="stylesheet" href="../assets/planning.css" />
+    <script src="../assets/theme.js"></script>
+  </head>
+  <body>
+    <aside class="rail">
+      <a class="skip" href="#content">Skip to content</a
+      ><a class="mark" href="../index.html"><span class="mark-name">KubeSift</span><span class="mark-sub">Planning</span></a>
+      <h2>Index</h2>
+      <a href="../index.html">Planning index</a>
+      <h2>Product</h2>
+      <a href="../product/requirements.html">Requirements</a><a href="../product/feature-matrix.html" aria-current="page">Capabilities</a>
+      <h2>Architecture</h2>
+      <a href="../architecture/overview.html">Overview</a><a href="../architecture/decisions.html">Decisions</a>
+      <h2>Safeguards</h2>
+      <a href="../security/security-model.html">Security and AI</a>
+      <h2>Delivery</h2>
+      <a href="../roadmap/roadmap.html">Roadmap</a><a href="../ux/workflows.html">UX workflows</a
+      ><a href="../ux/mocks/index.html">Mockups</a>
+      <h2>Engineering</h2>
+      <a href="../engineering/engineering.html">Playbook</a><a href="../engineering/local-development.html">Local development</a
+      ><a href="../engineering/toolchain.html">Toolchain</a>
+      <h2>Working</h2>
+      <a href="../superpowers/validation/phase-1a.html">Phase 1A validation</a>
+    </aside>
+    <header>
+      <a href="../index.html">KubeSift / Planning</a>
+      <h1>Capability inventory</h1>
+      <p>Delivery commitments and explicit gaps, not a claim of competitor parity.</p>
+    </header>
+    <main id="content">
+      <p>
+        This is a requirements inventory from our discussion. It is not yet a sourced feature-by-feature comparison against specific
+        Lens/K9s versions. Complete that comparison before freezing Phase 1 release scope.
+      </p>
+      <div class="table-scroll">
+        <table>
+          <tr>
+            <th>Capability</th>
+            <th>Status</th>
+            <th>Acceptance focus</th>
+          </tr>
+          <tr>
+            <td>Multi-cluster tabs, kubeconfig, CLI credentials</td>
+            <td>Required</td>
+            <td>Concurrent connections; independent targets; credential renewal failures</td>
+          </tr>
+          <tr>
+            <td>Core resources + generic CRs</td>
+            <td>Required</td>
+            <td>Discovery, partial RBAC, supported verbs, absent API handling</td>
+          </tr>
+          <tr>
+            <td>Details, YAML, logs, events, exec, port forwards</td>
+            <td>Required</td>
+            <td>Correct container/target; bounded streams; explicit stop and cleanup</td>
+          </tr>
+          <tr>
+            <td>Edits, restarts, scaling, deletion, rollback</td>
+            <td>Required</td>
+            <td>Review, conflicts, exact target; no unsafe automatic retry</td>
+          </tr>
+          <tr>
+            <td>Helm lifecycle</td>
+            <td>Required</td>
+            <td>Install/upgrade/rollback/uninstall; values and hooks impact review</td>
+          </tr>
+          <tr>
+            <td>Node maintenance</td>
+            <td>Required</td>
+            <td>Eviction/PDB behavior; local data warnings; no default bypass</td>
+          </tr>
+          <tr>
+            <td>Current/historical CPU and memory</td>
+            <td>Required when sources available</td>
+            <td>Source/freshness labeling; no data vs zero; missing-source fallback</td>
+          </tr>
+          <tr>
+            <td>Dedicated OpenShift workflows</td>
+            <td>Required</td>
+            <td>Routes, Projects, Builds, Operators; API/version detection</td>
+          </tr>
+          <tr>
+            <td>AI providers and evidence-based diagnosis</td>
+            <td>Phase 2</td>
+            <td>Provider profiles; citations and controlled sharing</td>
+          </tr>
+          <tr>
+            <td>Bulk actions, local shell, file copy, extensions</td>
+            <td>Unresolved</td>
+            <td>Explicitly include or defer during scope review</td>
+          </tr>
+          <tr>
+            <td>GitOps integrations, cost/security scanning</td>
+            <td>Uncommitted</td>
+            <td>Not implied by broad resource access</td>
+          </tr>
+          <tr>
+            <td>AI mutations/remediation</td>
+            <td>Later, uncommitted</td>
+            <td>Separate authorization and safety design</td>
+          </tr>
+        </table>
+      </div>
+      <p>
+        Future comparison entries must record competitor/version/source, user value, inclusion decision and a verifiable acceptance
+        criterion. The roadmap owns ordering; this inventory owns capability coverage.
+      </p>
+      <footer>2026-11-05 · Draft for review · <a href="../index.html">Planning index</a></footer>
+    </main>
+  </body>
+</html>

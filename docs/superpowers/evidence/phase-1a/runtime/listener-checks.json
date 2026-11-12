@@ -1,0 +1,102 @@
+[
+  {
+    "cycle": 1,
+    "forwardPort": 54881,
+    "reachableAfterStop": false
+  },
+  {
+    "cycle": 2,
+    "forwardPort": 54899,
+    "reachableAfterStop": false
+  },
+  {
+    "cycle": 3,
+    "forwardPort": 54916,
+    "reachableAfterStop": false
+  },
+  {
+    "cycle": 4,
+    "forwardPort": 54927,
+    "reachableAfterStop": false
+  },
+  {
+    "cycle": 5,
+    "forwardPort": 54966,
+    "reachableAfterStop": false
+  },
+  {
+    "cycle": 6,
+    "forwardPort": 54983,
+    "reachableAfterStop": false
+  },
+  {
+    "cycle": 7,
+    "forwardPort": 54996,
+    "reachableAfterStop": false
+  },
+  {
+    "cycle": 8,
+    "forwardPort": 55011,
+    "reachableAfterStop": false
+  },
+  {
+    "cycle": 9,
+    "forwardPort": 55024,
+    "reachableAfterStop": false
+  },
+  {
+    "cycle": 10,
+    "forwardPort": 55035,
+    "reachableAfterStop": false
+  },
+  {
+    "cycle": 11,
+    "forwardPort": 55050,
+    "reachableAfterStop": false
+  },
+  {
+    "cycle": 12,
+    "forwardPort": 55076,
+    "reachableAfterStop": false
+  },
+  {
+    "cycle": 13,
+    "forwardPort": 55114,
+    "reachableAfterStop": false
+  },
+  {
+    "cycle": 14,
+    "forwardPort": 55130,
+    "reachableAfterStop": false
+  },
+  {
+    "cycle": 15,
+    "forwardPort": 55149,
+    "reachableAfterStop": false
+  },
+  {
+    "cycle": 16,
+    "forwardPort": 55157,
+    "reachableAfterStop": false
+  },
+  {
+    "cycle": 17,
+    "forwardPort": 55173,
+    "reachableAfterStop": false
+  },
+  {
+    "cycle": 18,
+    "forwardPort": 55186,
+    "reachableAfterStop": false
+  },
+  {
+    "cycle": 19,
+    "forwardPort": 55203,
+    "reachableAfterStop": false
+  },
+  {
+    "cycle": 20,
+    "forwardPort": 55211,
+    "reachableAfterStop": false
+  }
+]

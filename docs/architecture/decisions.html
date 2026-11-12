@@ -1,17 +1,180 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Decision register · KubeSift</title><link rel="stylesheet" href="../assets/planning.css"></head><body><header><a href="../index.html">KubeSift / Planning</a><h1>Decision register</h1><p>Accepted direction is distinct from implementation detail and release readiness.</p></header><main>
-<table><tr><th>ID</th><th>Decision</th><th>Status / rationale</th></tr>
-<tr><td>D01</td><td>Operations client in Phase 1; AI in Phase 2</td><td>Accepted. Broad daily-use functionality before AI integration.</td></tr>
-<tr><td>D02</td><td>Wails + Go + React/TypeScript</td><td>Accepted with validation gate. Tauri + Go considered; reduced integration complexity favors Wails.</td></tr>
-<tr><td>D03</td><td>macOS first; OpenShift/EKS/AKS</td><td>Accepted. Other desktop platforms later.</td></tr>
-<tr><td>D04</td><td>Concurrent cluster tabs, explicit targets</td><td>Accepted. Prevent accidental wrong-cluster operations.</td></tr>
-<tr><td>D05</td><td>Reuse kubeconfig/CLI credentials</td><td>Accepted. Remember reviewed helper trust, re-review executable configuration changes, allow revocation.</td></tr>
-<tr><td>D06</td><td>No infrastructure for app functionality</td><td>Accepted. User-initiated Helm/Operator installs remain supported.</td></tr>
-<tr><td>D07</td><td>Existing current and historical metrics sources</td><td>Accepted. Graceful degradation when absent or inaccessible.</td></tr>
-<tr><td>D08</td><td>AI default plus per-cluster profiles</td><td>Accepted. Configurable provider credentials with application defaults and per-cluster overrides.</td></tr>
-<tr><td>D09</td><td>Disposable local development clusters</td><td>Accepted. Reuse kind-dev-local/payments as primary; retain a separate disposable server for multi-cluster checks. See <a href="../engineering/local-development.html">local development</a>.</td></tr>
-<tr><td>D10</td><td>Open-source repository</td><td>Accepted. Destination: <a href="https://github.com/sandjaie/KubeSift">sandjaie/KubeSift</a>. Verify author and remote authentication separately. Licensed under Apache-2.0.</td></tr>
-<tr><td>D11</td><td>HTML docs; Markdown Superpowers specs/plans</td><td>Accepted. Documentation only until implementation separately requested.</td></tr><tr><td>D12</td><td>Approved explorer + contextual AI visual direction</td><td>Dark/Light/System (System default), global right-side AI and adaptive desktop layouts. See <a href="../ux/workflows.html">UX specification</a>.</td></tr></table>
-<h2>License</h2><p>Apache-2.0 was selected on 2026-11-05 for permissive reuse and an explicit contributor patent grant. It permits reuse and redistribution subject to its conditions and includes an explicit contributor patent grant. The root <a href="../../LICENSE">LICENSE</a> is authoritative; review dependency notices before distribution.</p><h2>Proposed engineering defaults</h2><ul><li>Wails v3 baseline, client-go adapters, bounded session events and in-memory resource caches.</li><li>No silent cross-provider fallback; OS credential storage; explicit review of sensitive evidence sharing.</li><li>Helper trust keyed to resolved executable path, arguments and configured environment overrides; policy details in the security model.</li><li>Candidate UI stack: Tailwind/shadcn, terminal component and YAML editor. Specific dependencies not yet selected.</li></ul>
-<h2>Open decisions and when to settle them</h2><table><tr><th>Decision</th><th>Gate</th></tr><tr><td>Exact versions, minimum macOS and CPU architecture support</td><td>Before validation execution</td></tr><tr><td>Numerical performance budgets and realistic cluster scale</td><td>After baseline measurements, before performance acceptance</td></tr><tr><td>Competitor feature inventory and unresolved capabilities</td><td>Before Phase 1 scope freeze</td></tr><tr><td>OpenShift/Helm compatibility and lifecycle API coverage</td><td>Before their detailed milestone plans</td></tr><tr><td>Provider protocols, exact models and evidence-sharing policy</td><td>Before Phase 2 integration with real data</td></tr><tr><td>Code signing, updater and release publication</td><td>Before distribution/publication</td></tr></table>
-<p>Release readiness is evaluated against the roadmap gates.</p><footer>2026-11-05 · Draft for review · <a href="../index.html">Planning index</a></footer></main></body></html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Decision register · KubeSift</title>
+    <link rel="stylesheet" href="../assets/planning.css" />
+    <script src="../assets/theme.js"></script>
+  </head>
+  <body>
+    <aside class="rail">
+      <a class="skip" href="#content">Skip to content</a
+      ><a class="mark" href="../index.html"><span class="mark-name">KubeSift</span><span class="mark-sub">Planning</span></a>
+      <h2>Index</h2>
+      <a href="../index.html">Planning index</a>
+      <h2>Product</h2>
+      <a href="../product/requirements.html">Requirements</a><a href="../product/feature-matrix.html">Capabilities</a>
+      <h2>Architecture</h2>
+      <a href="../architecture/overview.html">Overview</a><a href="../architecture/decisions.html" aria-current="page">Decisions</a>
+      <h2>Safeguards</h2>
+      <a href="../security/security-model.html">Security and AI</a>
+      <h2>Delivery</h2>
+      <a href="../roadmap/roadmap.html">Roadmap</a><a href="../ux/workflows.html">UX workflows</a
+      ><a href="../ux/mocks/index.html">Mockups</a>
+      <h2>Engineering</h2>
+      <a href="../engineering/engineering.html">Playbook</a><a href="../engineering/local-development.html">Local development</a
+      ><a href="../engineering/toolchain.html">Toolchain</a>
+      <h2>Working</h2>
+      <a href="../superpowers/validation/phase-1a.html">Phase 1A validation</a>
+    </aside>
+    <header>
+      <a href="../index.html">KubeSift / Planning</a>
+      <h1>Decision register</h1>
+      <p>Accepted direction is distinct from implementation detail and release readiness.</p>
+    </header>
+    <main id="content">
+      <div class="table-scroll">
+        <table>
+          <tr>
+            <th>ID</th>
+            <th>Decision</th>
+            <th>Status / rationale</th>
+          </tr>
+          <tr>
+            <td>D01</td>
+            <td>Operations client in Phase 1; AI in Phase 2</td>
+            <td>Accepted. Broad daily-use functionality before AI integration.</td>
+          </tr>
+          <tr>
+            <td>D02</td>
+            <td>Wails + Go + React/TypeScript</td>
+            <td>Accepted with validation gate. Tauri + Go considered; reduced integration complexity favors Wails.</td>
+          </tr>
+          <tr>
+            <td>D03</td>
+            <td>macOS first; OpenShift/EKS/AKS</td>
+            <td>Accepted. Other desktop platforms later.</td>
+          </tr>
+          <tr>
+            <td>D04</td>
+            <td>Concurrent cluster tabs, explicit targets</td>
+            <td>Accepted. Prevent accidental wrong-cluster operations.</td>
+          </tr>
+          <tr>
+            <td>D05</td>
+            <td>Reuse kubeconfig/CLI credentials</td>
+            <td>Accepted. Remember reviewed helper trust, re-review executable configuration changes, allow revocation.</td>
+          </tr>
+          <tr>
+            <td>D06</td>
+            <td>No infrastructure for app functionality</td>
+            <td>Accepted. User-initiated Helm/Operator installs remain supported.</td>
+          </tr>
+          <tr>
+            <td>D07</td>
+            <td>Existing current and historical metrics sources</td>
+            <td>Accepted. Graceful degradation when absent or inaccessible.</td>
+          </tr>
+          <tr>
+            <td>D08</td>
+            <td>AI default plus per-cluster profiles</td>
+            <td>Accepted. Configurable provider credentials with application defaults and per-cluster overrides.</td>
+          </tr>
+          <tr>
+            <td>D09</td>
+            <td>Disposable local development clusters</td>
+            <td>
+              Accepted. Day-to-day development uses kind-dev-local-a and kind-dev-local-b. Agents may change resources in those two
+              clusters. Do not create additional clusters for routine development. See
+              <a href="../engineering/local-development.html">local development</a>.
+            </td>
+          </tr>
+          <tr>
+            <td>D10</td>
+            <td>Open-source repository</td>
+            <td>
+              Accepted. Destination: <a href="https://github.com/sandjaie/KubeSift">sandjaie/KubeSift</a>. Verify author and remote
+              authentication separately. Licensed under Apache-2.0.
+            </td>
+          </tr>
+          <tr>
+            <td>D11</td>
+            <td>HTML docs; Markdown Superpowers specs/plans</td>
+            <td>Accepted. Documentation only until implementation separately requested.</td>
+          </tr>
+          <tr>
+            <td>D12</td>
+            <td>Approved explorer + contextual AI visual direction</td>
+            <td>
+              Dark/Light/System (System default), global right-side AI and adaptive desktop layouts. See
+              <a href="../ux/workflows.html">UX specification</a>.
+            </td>
+          </tr>
+          <tr>
+            <td>D13</td>
+            <td>Owned credential-helper execution</td>
+            <td>
+              Phase 1A adapter revision: client-go 0.37.0 native exec refresh can run internally after HTTP 401 without an execution-time
+              revocation check. Go owns each helper invocation, holds trust authorization through process start, and supplies
+              token/certificate results to client-go with native exec disabled. There is no automatic 401 write/request replay.
+              Authentication and direct stream starts use the same guard.
+              <a href="../superpowers/validation/phase-1a.html">Evidence and validation</a>.
+            </td>
+          </tr>
+        </table>
+      </div>
+      <h2>License</h2>
+      <p>
+        Apache-2.0 was selected on 2026-11-05 for permissive reuse and an explicit contributor patent grant. It permits reuse and
+        redistribution subject to its conditions and includes an explicit contributor patent grant. The root
+        <a href="../../LICENSE">LICENSE</a> is authoritative; review dependency notices before distribution.
+      </p>
+      <h2>Proposed engineering defaults</h2>
+      <ul>
+        <li>Wails v3 baseline, client-go adapters, bounded session events and in-memory resource caches.</li>
+        <li>No silent cross-provider fallback; OS credential storage; explicit review of sensitive evidence sharing.</li>
+        <li>
+          Helper trust keyed to resolved executable path, arguments and configured environment overrides; policy details in the security
+          model.
+        </li>
+        <li>Candidate UI stack: Tailwind/shadcn, terminal component and YAML editor. Specific dependencies not yet selected.</li>
+      </ul>
+      <h2>Open decisions and when to settle them</h2>
+      <div class="table-scroll">
+        <table>
+          <tr>
+            <th>Decision</th>
+            <th>Gate</th>
+          </tr>
+          <tr>
+            <td>Exact versions, minimum macOS and CPU architecture support</td>
+            <td>Before validation execution</td>
+          </tr>
+          <tr>
+            <td>Numerical performance budgets and realistic cluster scale</td>
+            <td>After baseline measurements, before performance acceptance</td>
+          </tr>
+          <tr>
+            <td>Competitor feature inventory and unresolved capabilities</td>
+            <td>Before Phase 1 scope freeze</td>
+          </tr>
+          <tr>
+            <td>OpenShift/Helm compatibility and lifecycle API coverage</td>
+            <td>Before their detailed milestone plans</td>
+          </tr>
+          <tr>
+            <td>Provider protocols, exact models and evidence-sharing policy</td>
+            <td>Before Phase 2 integration with real data</td>
+          </tr>
+          <tr>
+            <td>Code signing, updater and release publication</td>
+            <td>Before distribution/publication</td>
+          </tr>
+        </table>
+      </div>
+      <p>Release readiness is evaluated against the roadmap gates.</p>
+      <footer>2026-11-05 · Draft for review · <a href="../index.html">Planning index</a></footer>
+    </main>
+  </body>
+</html>

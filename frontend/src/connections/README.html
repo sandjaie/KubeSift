@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" /><title>Live connections</title>
+  <h1>Live connections</h1>
+  <p>
+    api.ts uses generated native contracts. model/state own transient source/context tabs and request epochs. useConnections owns RPC
+    polling and cleanup. attempts.ts serializes same-context Start/cancel ownership; attempts.test.ts covers deferred responses. ClusterList
+    and ConnectionStatus present safe catalogs and evidence. Tests protect stale-response rejection.
+  </p>
+</html>
