@@ -89,14 +89,15 @@ npx tsc --noEmit</code></pre>
       </p>
       <p>
         No coverage threshold. Prettier formats HTML and frontend TypeScript. Frontend lint is ESLint plus typescript-eslint recommended. Go
-        formatting is <code>gofmt</code>, because the Go toolchain owns it. CI runs on pull requests and pushes to develop, main and master;
-        feature pushes wait for a pull request to avoid duplicate runs. Superseded runs are cancelled. Code changes run the Vite production
-        bundle and then scripts/check.sh on Ubuntu. The bundle fills internal/desktop/assets/dist, which the desktop executable embeds and a
-        clean checkout does not contain. Go is compiled with CGO disabled and the purego tag so that package needs neither a macOS runner
-        nor GTK. Bindings generation stays on the local and release checks. TypeScript checking runs once through scripts/check.sh; local
-        npm run build still includes it. Changes confined to docs/, AGENTS.md and root README files run source-description and
-        documentation-link checks in the same check job. Unknown comparison bases receive the full checks. Packaging, signing, notarizing,
-        publishing, and version bumps stay in the release skill.
+        formatting is <code>gofmt</code>, because the Go toolchain owns it. CI runs only for release-producing pull requests into main from
+        release/* or hotfix/* branches. Feature pull requests into develop and all push events do not run CI; agents still run the
+        applicable local checks before publication. Superseded runs are cancelled. Code changes run the Vite production bundle and then
+        scripts/check.sh on Ubuntu. The bundle fills internal/desktop/assets/dist, which the desktop executable embeds and a clean checkout
+        does not contain. Go is compiled with CGO disabled and the purego tag so that package needs neither a macOS runner nor GTK. Bindings
+        generation stays on the local and release checks. TypeScript checking runs once through scripts/check.sh; local npm run build still
+        includes it. Changes confined to docs/, AGENTS.md and root README files run source-description and documentation-link checks in the
+        same check job. Unknown comparison bases receive the full checks. Packaging, signing, notarizing, publishing, and version bumps stay
+        in the release skill.
       </p>
 
       <h3 id="authoring-style">Authoring and formatting</h3>
@@ -142,8 +143,8 @@ npx tsc --noEmit</code></pre>
         </li>
       </ul>
       <p>
-        Once implemented, CI runs lint and the unit suites again. Skipping a hook with <code>--no-verify</code> does not skip the pipeline.
-        Use <code>--no-verify</code> only when you mean to, and say so.
+        On release-producing pull requests, CI runs lint and the unit suites again. Skipping a hook with <code>--no-verify</code> does not
+        skip the pipeline. Use <code>--no-verify</code> only when you mean to, and say so.
       </p>
       <p>
         No automated native Wails UI end-to-end suite is planned for Phase 1A. Use unit tests with injected clients/session fakes, explicit

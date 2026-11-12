@@ -108,7 +108,10 @@
               Native YAML and managed-fields toggle; captured-version/size tests. Review caught missing GVK; corrected and regression
               tested.
             </td>
-            <td>Clipboard/search remain untested in the native app; no original-comment or secret-free claim.</td>
+            <td>
+              Delegated native YAML search and Copy control were exercised; clipboard contents were not compared. No original-comment or
+              secret-free claim.
+            </td>
           </tr>
           <tr>
             <td>C25</td>
@@ -127,8 +130,8 @@
             <td>C27</td>
             <td>Native shared detail/dock across Settings/Light theme and A/B navigation; stop/close and periodic identity tests.</td>
             <td>
-              Review caught Resume race; native walkthrough caught unsupported browser confirmation. Both corrected; the rebuilt-app
-              confirmation retest was blocked by the locked Mac.
+              Review caught Resume race; native walkthrough caught unsupported browser confirmation. Both corrected; the later delegated
+              rebuilt-app confirmation and cleanup retest passed (see below).
             </td>
           </tr>
           <tr>
@@ -164,10 +167,11 @@
       </p>
       <h2>Qualifications</h2>
       <p>
-        Final native clipboard/search, keyboard-only selection, reconnect, confirmation-dialog cleanup, external-monitor sizing and
-        background-loss checks remain untested. The Mac was locked when attempting the rebuilt-app confirmation retest. User UAT must cover
-        these before merge. The integration walkthrough does not instrument every request to assert absence of Secret reads or mutations;
-        code review and synthetic route checks are narrower evidence, not a substitute for that assertion.
+        Later delegated testing resolved the earlier locked-screen confirmation blocker and exercised YAML search and the Copy control.
+        Clipboard contents, keyboard-only selection, reconnect/replacement, external-monitor sizing, split persistence and background
+        delivery completeness remain unverified. The delegated observations below distinguish completed checks from remaining coverage.
+        Maintainer sign-off remains required before merge. The integration walkthrough does not instrument every request to assert absence
+        of Secret reads or mutations; code review and synthetic route checks are narrower evidence, not a substitute for that assertion.
       </p>
       <p>
         Only local kind clusters were used. Windows/Linux, managed providers and OpenShift are untested. Kubernetes logs remain
