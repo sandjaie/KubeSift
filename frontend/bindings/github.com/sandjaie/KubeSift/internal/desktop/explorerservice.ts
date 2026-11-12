@@ -71,6 +71,10 @@ export function ReadResource(id: string, req: kube$0.DetailRequest): $Cancellabl
   return $Call.ByID(1281873028, id, req);
 }
 
+export function ReadResourceEvents(id: string, req: kube$0.EventRequest): $CancellablePromise<kube$0.EventPage> {
+  return $Call.ByID(1494188029, id, req);
+}
+
 export function ReadResourceYAML(id: string, req: kube$0.DetailRequest): $CancellablePromise<kube$0.YAMLDocument> {
   return $Call.ByID(1865491731, id, req);
 }

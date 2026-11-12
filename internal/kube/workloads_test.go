@@ -182,3 +182,41 @@ func TestWorkloadDetails(t *testing.T) {
 		}
 	})
 }
+
+func TestWorkloadEvents(t *testing.T) {
+	for _, denied := range []bool{false, true} {
+		t.Run(fmt.Sprint(denied), func(t *testing.T) {
+			s, ref := workloadServer(t, func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				if strings.HasSuffix(r.URL.Path, "pods/sample") {
+					fmt.Fprint(w, `{"apiVersion":"v1","kind":"Pod","metadata":{"name":"sample","namespace":"default","uid":"pod"}}`)
+					return
+				}
+				if !strings.HasPrefix(r.URL.Path, "/apis/events.k8s.io/v1/") {
+					t.Error("unexpected core fallback")
+					w.WriteHeader(500)
+					return
+				}
+				if denied {
+					w.WriteHeader(403)
+					fmt.Fprint(w, `{"kind":"Status","apiVersion":"v1","reason":"Forbidden","code":403}`)
+					return
+				}
+				if r.URL.Query().Get("fieldSelector") != "regarding.uid=pod" {
+					t.Error("missing UID filter")
+				}
+				fmt.Fprint(w, `{"apiVersion":"events.k8s.io/v1","kind":"EventList","metadata":{"continue":"next"},"items":[{"metadata":{"uid":"event"},"regarding":{"uid":"pod"},"reason":"Waiting"},{"metadata":{"uid":"event"},"regarding":{"uid":"pod"},"reason":"Updated","series":{"count":3,"lastObservedTime":"2026-11-12T01:00:00.000000Z"}},{"metadata":{"uid":"other"},"regarding":{"uid":"replacement"}}]}`)
+			})
+			page, err := s.ReadResourceEvents(context.Background(), EventRequest{Resource: ResourceRef{Connection: ref, Kind: "Pod", APIVersion: "v1", Namespace: "default", Name: "sample", UID: "pod"}})
+			if denied {
+				if err == nil {
+					t.Fatal("denial hidden")
+				}
+				return
+			}
+			if err != nil || len(page.Items) != 1 || page.Page.NextCursor == "" || page.Items[0].Count == nil || *page.Items[0].Count != 3 || page.Items[0].FirstAt != nil {
+				t.Fatal(page, err)
+			}
+		})
+	}
+}

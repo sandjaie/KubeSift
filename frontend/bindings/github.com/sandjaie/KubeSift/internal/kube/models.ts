@@ -15,6 +15,16 @@ export interface DetailRequest {
   resource: ResourceRef;
 }
 
+export interface EventPage {
+  items: ResourceEvent[] | null;
+  page: PageInfo;
+}
+
+export interface EventRequest {
+  resource: ResourceRef;
+  cursor: string;
+}
+
 export interface ForwardResult {
   session: model$0.SessionRef;
   localPort: number;
@@ -66,6 +76,17 @@ export interface ResourceDetail {
   resourceVersion: string;
   fetchedAt: string;
   objectJSON: string;
+}
+
+export interface ResourceEvent {
+  uid: string;
+  type: string;
+  reason: string;
+  message: string;
+  reporter: string;
+  count: number | null;
+  firstAt: string | null;
+  lastAt: string | null;
 }
 
 export interface ResourceRef {

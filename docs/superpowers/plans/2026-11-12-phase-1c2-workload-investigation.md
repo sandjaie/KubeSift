@@ -96,10 +96,10 @@ Native reader methods use the same names and DTOs with `ctx context.Context` ins
 
 **Interfaces:** Produces `ReadResourceEvents(ctx context.Context, req EventRequest) (EventPage, error)` and bridge counterpart; consumes UID-checked Get and bounded client.
 
-- [ ] Extend the service table with same-name/different-UID event exclusion, event UID deduplication, optional timestamps, page continuation, and forbidden modern Events API causing no core API request. Run targeted tests; confirm new cases fail.
-- [ ] Implement modern event API request with namespace and `regarding.uid` selector; use core `involvedObject.uid` only when discovery/endpoint positively indicates unsupported modern API. Unknown discovery/403/network failure is surfaced, not fallback authorization. Bind event-family choice into continuation scope. Validate selected resource UID on every request and filter returned event identities defensively.
-- [ ] Normalize first time from deprecated firstTimestamp then eventTime then metadata.creationTimestamp; last time from series.lastObservedTime then deprecated lastTimestamp then eventTime then first time. Use analogous core fields. Missing remains unknown; series count precedes deprecated count. Deduplicate event UID on page, stable last-time descending sort with UID tie-breaker. Return page metadata; do not promise globally newest results.
-- [ ] Run `go test ./internal/kube ./internal/desktop`; expect pass. Regenerate bindings and commit: `feat: add UID-scoped workload events`.
+- [x] Extend the service table with same-name/different-UID event exclusion, event UID deduplication, optional timestamps, page continuation, and forbidden modern Events API causing no core API request. Run targeted tests; confirm new cases fail.
+- [x] Implement modern event API request with namespace and `regarding.uid` selector; use core `involvedObject.uid` only when discovery/endpoint positively indicates unsupported modern API. Unknown discovery/403/network failure is surfaced, not fallback authorization. Bind event-family choice into continuation scope. Validate selected resource UID on every request and filter returned event identities defensively.
+- [x] Normalize first time from deprecated firstTimestamp then eventTime then metadata.creationTimestamp; last time from series.lastObservedTime then deprecated lastTimestamp then eventTime then first time. Use analogous core fields. Missing remains unknown; series count precedes deprecated count. Deduplicate event UID on page, stable last-time descending sort with UID tie-breaker. Return page metadata; do not promise globally newest results.
+- [x] Run `go test ./internal/kube ./internal/desktop`; expect pass. Regenerate bindings and commit: `feat: add UID-scoped workload events`.
 
 ## Task 4: Product log lifecycle with explicit identity
 

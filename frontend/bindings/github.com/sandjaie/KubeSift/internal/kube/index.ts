@@ -9,6 +9,8 @@ Important: Wails generates this glue; change Go contracts and regenerate rather 
 
 export type {
   DetailRequest,
+  EventPage,
+  EventRequest,
   ForwardResult,
   PageInfo,
   PageRequest,
@@ -17,6 +19,7 @@ export type {
   RelatedPod,
   RelatedRequest,
   ResourceDetail,
+  ResourceEvent,
   ResourceRef,
   WorkloadPage,
   WorkloadRow,

@@ -77,3 +77,22 @@ type RelatedPage struct {
 	Complete bool           `json:"complete"`
 	Problem  *model.Problem `json:"problem"`
 }
+
+type EventRequest struct {
+	Resource ResourceRef `json:"resource"`
+	Cursor   string      `json:"cursor"`
+}
+type ResourceEvent struct {
+	UID      string     `json:"uid"`
+	Type     string     `json:"type"`
+	Reason   string     `json:"reason"`
+	Message  string     `json:"message"`
+	Reporter string     `json:"reporter"`
+	Count    *int32     `json:"count"`
+	FirstAt  *time.Time `json:"firstAt"`
+	LastAt   *time.Time `json:"lastAt"`
+}
+type EventPage struct {
+	Items []ResourceEvent `json:"items"`
+	Page  PageInfo        `json:"page"`
+}
