@@ -15,6 +15,7 @@ import { SourcesSettings } from "./settings/SourcesSettings";
 import { TrustSettings } from "./settings/TrustSettings";
 import { defaultPreferences, loadPreferences, savePreferences, type Preferences } from "./settings/preferences";
 import { ClusterTabs } from "./workspace/ClusterTabs";
+import { NamespaceControl } from "./workspace/NamespaceControl";
 import { Workspace } from "./workspace/Workspace";
 import { CommandPalette } from "./workspace/CommandPalette";
 import { commandForKey } from "./workspace/commands";
@@ -48,8 +49,10 @@ export default function App() {
       )
       .finally(() => setSaving(false));
   }
-  function resize(field: "navigationWidth" | "aiWidth" | "dockHeight", value: number) {
-    setPreferences((p) => ({ ...p, [field]: value }));
+  function resize(field: "navigationWidth" | "aiWidth" | "dockHeight" | "detailWidthPercent" | "detailHeightPercent", value: number) {
+    const next = { ...prefsRef.current, [field]: value };
+    prefsRef.current = next;
+    setPreferences(next);
   }
   function commitSize() {
     if (loaded && !settingsError) persist(prefsRef.current);
@@ -158,7 +161,6 @@ export default function App() {
               }
               onSelect={(namespace) => void controller.readPods(state.active!, namespace)}
             />
-            <span className="muted">Workloads / Pods</span>
           </>
         ) : (
           <>
@@ -227,6 +229,9 @@ export default function App() {
                 tab={active}
                 tabId={state.active!}
                 controller={controller}
+                detailWidthPercent={preferences.detailWidthPercent}
+                detailHeightPercent={preferences.detailHeightPercent}
+                onDetailResize={(axis, value) => resize(axis === "x" ? "detailWidthPercent" : "detailHeightPercent", value)}
                 navigationWidth={preferences.navigationWidth}
                 onResize={(n) => resize("navigationWidth", n)}
                 onCommitSize={commitSize}
@@ -263,50 +268,5 @@ export default function App() {
       </div>
       {palette && <CommandPalette available={false} onCommand={() => setPage("clusters")} onClose={() => setPalette(false)} />}
     </div>
-  );
-}
-function NamespaceControl({
-  namespace,
-  names,
-  complete,
-  disabled,
-  onSelect,
-}: {
-  namespace: string;
-  names: string[];
-  complete: boolean;
-  disabled: boolean;
-  onSelect: (namespace: string) => void;
-}) {
-  const [manual, setManual] = useState(namespace);
-  useEffect(() => setManual(namespace), [namespace]);
-  return (
-    <form
-      className="namespace-control"
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (manual.trim()) onSelect(manual.trim());
-      }}
-    >
-      <label>
-        Namespace
-        <select aria-label="Discovered namespace" disabled={disabled} value={namespace} onChange={(e) => onSelect(e.target.value)}>
-          {!names.includes(namespace) && <option value={namespace}>{namespace} (manual)</option>}
-          {names.map((name) => (
-            <option key={name}>{name}</option>
-          ))}
-        </select>
-      </label>
-      <input
-        aria-label="Manual namespace"
-        title={complete ? "Enter an explicit namespace" : "Namespace discovery incomplete or restricted; enter an explicit namespace"}
-        disabled={disabled}
-        value={manual}
-        onChange={(e) => setManual(e.target.value)}
-        placeholder="Namespace"
-      />
-      <button disabled={disabled || !manual.trim()}>Go</button>
-      {!complete && <span className="muted">Manual entry available</span>}
-    </form>
   );
 }

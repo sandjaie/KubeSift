@@ -12,6 +12,8 @@ export function ResizeHandle({
   max,
   axis = "x",
   reverse = false,
+  pixelsPerUnit = 1,
+  step = 10,
   onChange,
   onCommit,
 }: {
@@ -21,6 +23,8 @@ export function ResizeHandle({
   max: number;
   axis?: "x" | "y";
   reverse?: boolean;
+  pixelsPerUnit?: number;
+  step?: number;
   onChange: (n: number) => void;
   onCommit: () => void;
 }) {
@@ -30,6 +34,7 @@ export function ResizeHandle({
     <div
       className={`resize-handle ${axis}`}
       role="separator"
+      title="Drag to resize · size remembered"
       tabIndex={0}
       aria-label={label}
       aria-orientation={axis === "x" ? "vertical" : "horizontal"}
@@ -42,7 +47,9 @@ export function ResizeHandle({
       }}
       onPointerMove={(e) => {
         if (drag.current)
-          onChange(clamp(drag.current.value + ((axis === "x" ? e.clientX : e.clientY) - drag.current.at) * (reverse ? -1 : 1)));
+          onChange(
+            clamp(drag.current.value + (((axis === "x" ? e.clientX : e.clientY) - drag.current.at) / pixelsPerUnit) * (reverse ? -1 : 1)),
+          );
       }}
       onPointerUp={() => {
         drag.current = null;
@@ -53,7 +60,7 @@ export function ResizeHandle({
         onCommit();
       }}
       onKeyDown={(e) => {
-        const delta = e.key === "ArrowLeft" || e.key === "ArrowUp" ? -10 : e.key === "ArrowRight" || e.key === "ArrowDown" ? 10 : 0;
+        const delta = e.key === "ArrowLeft" || e.key === "ArrowUp" ? -step : e.key === "ArrowRight" || e.key === "ArrowDown" ? step : 0;
         if (delta) {
           e.preventDefault();
           onChange(clamp(value + delta * (reverse ? -1 : 1)));

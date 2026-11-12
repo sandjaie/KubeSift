@@ -4,6 +4,7 @@ Used by: App for the active connection tab.
 Responsibilities: Render honest read states and preserve tab-owned filter and UID selection.
 Important: Broader kinds and operations remain unavailable; no synthetic fallback is used.
 */
+import { ResourceSplit } from "./ResourceSplit";
 import { useState } from "react";
 import type { ConnectionTab } from "../connections/model";
 import type { ConnectionsController } from "../connections/useConnections";
@@ -17,6 +18,9 @@ export function Workspace({
   tabId,
   controller,
   navigationWidth,
+  detailWidthPercent,
+  detailHeightPercent,
+  onDetailResize,
   onResize,
   onCommitSize,
 }: {
@@ -24,6 +28,9 @@ export function Workspace({
   tabId: string;
   controller: ConnectionsController;
   navigationWidth: number;
+  detailWidthPercent: number;
+  detailHeightPercent: number;
+  onDetailResize: (axis: "x" | "y", value: number) => void;
   onResize: (n: number) => void;
   onCommitSize: () => void;
 }) {
@@ -73,7 +80,12 @@ export function Workspace({
             </p>
           </div>
         ) : (
-          <div className="resource-area">
+          <ResourceSplit
+            widthPercent={detailWidthPercent}
+            heightPercent={detailHeightPercent}
+            onResize={onDetailResize}
+            onCommit={onCommitSize}
+          >
             <section className="list-pane">
               <div className="pane-heading">
                 <h2>Pods</h2>
@@ -125,7 +137,7 @@ export function Workspace({
                 </div>
               )}
             </section>
-          </div>
+          </ResourceSplit>
         )}
       </div>
       <details className="empty-sessions">

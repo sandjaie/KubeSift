@@ -1,6 +1,6 @@
 # Neutral dark palette and workspace controls
 
-Approved direction: user chose the readability-adjusted neutral palette, searchable namespace selector, and remembered draggable Pod-details divider, then approved the illustrative mock and explicitly requested implementation on 12 November 2026. Work stays on `feature/slack-inspired-ui`, created from develop; no worktrees.
+Approved direction: user chose the readability-adjusted neutral palette, searchable namespace selector, and remembered draggable Pod-details divider, then approved the illustrative mock and explicitly requested implementation on 12 November 2026. Work stays on `feature/workspace-theme-and-controls`, created from develop; no worktrees.
 
 ## Intent and scope
 

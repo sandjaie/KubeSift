@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- No worktrees; use feature/slack-inspired-ui from develop.
+- No worktrees; use feature/workspace-theme-and-controls from develop.
 - Only kind-dev-local-a/b, explicit targets; no new capabilities or AI integration.
 - Flat neutral dark surfaces; preserve Light colours and existing layout apart from requested controls.
 - Source descriptions, readable formatting and ignored execution notes follow engineering practice.
