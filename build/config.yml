@@ -6,7 +6,7 @@ info:
   productIdentifier: dev.kubesift.validation
   description: Phase 1A desktop validation
   copyright: Copyright KubeSift contributors
-  version: '0.0.1'
+  version: '0.2.0'
 dev_mode:
   root_path: .
   log_level: warn
