@@ -18,7 +18,7 @@ const paths: Record<string, string> = {
   Role: "M12 2 3 6v6c0 5 9 10 9 10s9-5 9-10V6z M8 11l3 3 5-6",
   Widget: "M8 3h8v5h5v8h-5v5H8v-5H3V8h5z",
   Helm: "M12 2v20 M2 12h20 M5 5l14 14 M5 19 19 5 M18 12a6 6 0 1 1-12 0 6 6 0 0 1 12 0",
-  OpenShift: "M19 6a9 9 0 1 0 0 12 M3 9h6 M3 15h6",
+  OpenShift: "M8.2 6.2A8 8 0 0 1 18.6 8.4 M18.6 8.4l1.4-3.6-3.6.2 M15.8 17.8A8 8 0 0 1 5.4 15.6 M5.4 15.6l-1.4 3.6 3.6-.2",
 };
 export function ResourceIcon({ kind, size = 18 }: { kind: string; size?: number }) {
   return (
