@@ -24,8 +24,8 @@
     </header>
     <main id="content">
       <p class="callout">
-        Neutral dark surfaces, searchable namespace selection and remembered Pod-detail sizes are implemented. Final review and verification
-        are in progress. No merge, release or Phase 1C.2 work is included.
+        Neutral dark surfaces, searchable namespace selection and remembered Pod-detail sizes are implemented. Automated, packaged and
+        independent review checks passed. Ready for user UI review. No merge, release or Phase 1C.2 work is included.
       </p>
       <h2>Scope and provenance</h2>
       <p>
@@ -37,7 +37,7 @@
         macOS 26.7.1, arm64; Go 1.27.3, Wails 3.1.0, Node 25.1.0 and npm 11.6.2. The documented Node 26 baseline was not exercised locally.
         Validation used the native packaged app, not a browser preview. Packaging is locally ad-hoc signed; this is not notarization or
         distribution-readiness evidence. Executable SHA-256: <code>5e8120948c09f8809b042b144e09f147a2d997e5f7f9a29cd219a8c156e67b15</code>.
-        Signature integrity verification passed.
+        Signature integrity verification passed. Application source is committed in <code>f3d19d1</code>.
       </p>
       <h2>Automated and build checks</h2>
       <ul>
@@ -46,8 +46,8 @@
           and typecheck.
         </li>
         <li>
-          <code>wails3 task package</code> passed before native checks. A final rebuild checks the subsequently corrected stacked pane
-          limit.
+          <code>wails3 task package</code> passed. The final rebuilt package passed the corrected stacked limit and vertical pointer-drag
+          checks.
         </li>
         <li>Preference migration and namespace option tests were observed failing before implementation, then passing.</li>
         <li>
@@ -98,7 +98,8 @@
             <td>Pass after correction</td>
             <td>
               Native testing found old CSS minimum heights disagreeing with the new separator value at the limit. Minimum allocation now
-              belongs to the split component; competing CSS constraints were removed.
+              belongs to the split component; competing CSS constraints were removed. Repeating the same keyboard check clamped correctly at
+              66% in the observed window. Vertical pointer dragging then changed 66 to 54% without selecting page text.
             </td>
           </tr>
           <tr>
@@ -128,6 +129,12 @@
         local fixtures. The
         <a href="../../ux/mocks/neutral-dark-controls.png">approved generated mock</a>
         is illustrative; historical Phase 1B mocks remain explicitly historical in the gallery.
+      </p>
+      <h2>Independent review</h2>
+      <p>
+        Fresh correctness and hygiene review of <code>7664be8..f3d19d1</code> identified no material defects or deferred minor findings. It
+        traced request ownership, strict migration and split geometry, inspected the screenshots and independently confirmed contrast. The
+        reviewer did not rerun tests or access clusters. No behaviors were declined for judgment.
       </p>
       <h2>Focused user review</h2>
       <ol>
