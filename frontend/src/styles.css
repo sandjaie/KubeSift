@@ -1350,3 +1350,45 @@ textarea::placeholder {
   font-family: var(--mono);
   user-select: text;
 }
+
+/* Workload evidence extends the existing compact panes and theme tokens. */
+.detail-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 8px 12px;
+  flex-wrap: wrap;
+}
+.detail-tabs [aria-selected="true"] {
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 5px;
+}
+.evidence-section {
+  padding: 8px 12px;
+  overflow-wrap: anywhere;
+}
+.evidence-section pre,
+.fact-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: inherit;
+  margin: 0;
+}
+.evidence-section details {
+  margin: 8px 0;
+}
+.evidence-section h3 {
+  font-size: 13px;
+  margin: 12px 0 6px;
+}
+.yaml-view {
+  width: 100%;
+  min-height: 340px;
+  resize: vertical;
+  font-family: monospace;
+  white-space: pre;
+}
+.event-evidence {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}

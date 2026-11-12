@@ -22,6 +22,7 @@ import { commandForKey } from "./workspace/commands";
 import { ResizeHandle } from "./ui/ResizeHandle";
 import { ResourceIcon } from "./ui/ResourceIcon";
 import { InvestigationPanel } from "./ai/InvestigationPanel";
+import { useWorkloads } from "./workloads/useWorkloads";
 import "./styles.css";
 export default function App() {
   const controller = useConnections();
@@ -93,11 +94,13 @@ export default function App() {
     return () => window.removeEventListener("keydown", listener);
   }, []);
   const active = state.active ? state.tabs[state.active] : null;
+  const workloads = useWorkloads(state.active ?? "", active?.view?.ref ?? null, active?.namespace ?? "default", page === "workspace");
   function choose(entry: CatalogEntry) {
     setPage("workspace");
     void controller.connect(entry);
   }
   function close(key: string) {
+    workloads.close(key);
     void controller.cancel(key);
   }
   function settings() {
@@ -224,9 +227,8 @@ export default function App() {
               <Workspace
                 key={state.active}
                 tab={active}
-                tabId={state.active!}
                 navigationOpen={!hiddenNavigation[state.active!]}
-                controller={controller}
+                controller={workloads}
                 detailWidthPercent={preferences.detailWidthPercent}
                 detailHeightPercent={preferences.detailHeightPercent}
                 onDetailResize={(axis, value) => resize(axis === "x" ? "detailWidthPercent" : "detailHeightPercent", value)}

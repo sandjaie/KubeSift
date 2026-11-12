@@ -1,13 +1,13 @@
 /*
-Purpose: Show a live context's namespace and basic Pod inventory.
+Purpose: Show live Pod and Deployment investigation in the existing workspace.
 Used by: App for the active connection tab.
-Responsibilities: Render honest read states and preserve tab-owned filter and UID selection.
-Important: Broader kinds and operations remain unavailable; no synthetic fallback is used.
+Responsibilities: Render bounded page controls and preserve tab-owned navigation.
+Important: No synthetic fallback or write action is exposed.
 */
 import { ResourceSplit } from "./ResourceSplit";
-import { useState } from "react";
+import type { ReactNode } from "react";
+import type { WorkloadController } from "../workloads/useWorkloads";
 import type { ConnectionTab } from "../connections/model";
-import type { ConnectionsController } from "../connections/useConnections";
 import { visibleState } from "../connections/state";
 import { ResourceNavigation } from "./ResourceNavigation";
 import { ResourceTable } from "./ResourceTable";
@@ -15,8 +15,7 @@ import { ResourceDetail } from "./ResourceDetail";
 import { ResizeHandle } from "../ui/ResizeHandle";
 export function Workspace({
   tab,
-  tabId,
-  controller,
+  controller: c,
   navigationWidth,
   navigationOpen,
   detailWidthPercent,
@@ -24,10 +23,10 @@ export function Workspace({
   onDetailResize,
   onResize,
   onCommitSize,
+  logs,
 }: {
   tab: ConnectionTab;
-  tabId: string;
-  controller: ConnectionsController;
+  controller: WorkloadController;
   navigationWidth: number;
   navigationOpen: boolean;
   detailWidthPercent: number;
@@ -35,20 +34,26 @@ export function Workspace({
   onDetailResize: (axis: "x" | "y", value: number) => void;
   onResize: (n: number) => void;
   onCommitSize: () => void;
+  logs?: ReactNode;
 }) {
-  const [kind, setKind] = useState("Pod");
-
-  const view = tab.view;
-  const stale = tab.pollFailed || visibleState(view) !== "connected";
-  const rows = (view?.pods ?? []).filter((p) => p.name.toLowerCase().includes(tab.filter.toLowerCase()));
-  const selected = view?.pods?.find((p) => p.uid === tab.selected);
+  const i = c.inventory,
+    kind = c.kind;
+  const stale = tab.pollFailed || visibleState(tab.view) !== "connected";
+  const rows = [...(i.page?.items ?? [])]
+    .filter((row) => row.resource.name.toLowerCase().includes(i.filter.toLowerCase()))
+    .sort((a, b) => a.resource.name.localeCompare(b.resource.name) * (i.sort === "asc" ? 1 : -1));
   return (
     <div className="workspace live-workspace">
       <div className="explorer">
         {navigationOpen && (
           <>
             <div className="navigation-host">
-              <ResourceNavigation kind={kind} onSelect={(k) => setKind(k)} />
+              <ResourceNavigation
+                kind={kind}
+                onSelect={(k) => {
+                  if (k === "Pod" || k === "Deployment") c.selectKind(k);
+                }}
+              />
             </div>
             <ResizeHandle
               label="Navigation width"
@@ -60,84 +65,79 @@ export function Workspace({
             />
           </>
         )}
-        {kind !== "Pod" ? (
-          <div className="state-message">
-            <h2>{kind}</h2>
-            <p>
-              This resource view is not available yet. Choose Pods for live basic data. Cluster-scoped and all-namespace browsing are not
-              available.
-            </p>
-          </div>
-        ) : (
-          <ResourceSplit
-            widthPercent={detailWidthPercent}
-            heightPercent={detailHeightPercent}
-            onResize={onDetailResize}
-            onCommit={onCommitSize}
+        <ResourceSplit
+          widthPercent={detailWidthPercent}
+          heightPercent={detailHeightPercent}
+          onResize={onDetailResize}
+          onCommit={onCommitSize}
+        >
+          <section
+            className="list-pane"
+            onScroll={(e) => c.patch({ scroll: e.currentTarget.scrollTop })}
+            ref={(node) => {
+              if (node && Math.abs(node.scrollTop - i.scroll) > 2) node.scrollTop = i.scroll;
+            }}
           >
-            <section className="list-pane">
-              <div className="pane-heading">
-                <h2>Pods</h2>
-                <span className="muted">{rows.length} shown</span>
-                <button
-                  aria-label="Refresh Pods"
-                  disabled={!view?.ref || view.podLoading || (!!view.problem && view.problem.code !== "forbidden")}
-                  onClick={() => void controller.readPods(tabId, tab.namespace)}
-                >
-                  ↻ Refresh
-                </button>
-              </div>
-              <div className="filter-bar">
-                <input
-                  aria-label="Filter Pods"
-                  placeholder="Filter Pods…"
-                  value={tab.filter}
-                  onChange={(e) => controller.commit({ type: "filter", key: tabId, filter: e.target.value })}
-                />
-              </div>
-              {stale && view?.pods?.length ? (
-                <p className="warning table-hint">Retained data — connection evidence is not current.</p>
-              ) : null}
-              <p className="table-hint">↑ ↓ Select a Pod · Lists above 100 Pods require future pagination.</p>
-              {view?.podLoading ? (
-                <p className="state-message">Loading Pods…</p>
-              ) : view?.podProblem ? (
-                <p role="alert" className="state-message">
-                  {view.podProblem.message}
-                </p>
-              ) : rows.length ? (
-                <ResourceTable
-                  rows={rows}
-                  selected={tab.selected}
-                  onSelect={(uid) => controller.commit({ type: "select", key: tabId, uid })}
-                />
-              ) : (
+            <div className="pane-heading">
+              <h2>{kind}s</h2>
+              <span className="muted">{rows.length} shown</span>
+              <button disabled={!tab.view?.ref || i.loading} onClick={c.refresh}>
+                ↻ Refresh
+              </button>
+            </div>
+            <div className="filter-bar">
+              <input
+                aria-label="Filter this page"
+                placeholder="Filter this page…"
+                value={i.filter}
+                onChange={(e) => c.patch({ filter: e.target.value })}
+              />
+              <button onClick={() => c.patch({ sort: i.sort === "asc" ? "desc" : "asc" })}>Name {i.sort === "asc" ? "↑" : "↓"}</button>
+            </div>
+            <div className="filter-bar">
+              <button disabled={i.history.length === 1 || i.loading} onClick={c.previous}>
+                Previous
+              </button>
+              <span>Page {i.history.length}</span>
+              <button disabled={!i.page?.page.nextCursor || i.history.length >= 20 || i.loading} onClick={c.next}>
+                Next
+              </button>
+              <label>
+                <input type="checkbox" checked={i.auto} onChange={(e) => c.patch({ auto: e.target.checked })} /> Auto-refresh
+              </label>
+            </div>
+            {i.history.length >= 20 && <p className="warning">History limit reached. Refresh to restart pagination.</p>}
+            {i.auto && i.history.length > 1 && <p className="muted">Auto-refresh paused after page one.</p>}
+            {stale && i.page && <p className="warning table-hint">Retained data — connection evidence is not current.</p>}
+            <p className="table-hint">↑ ↓ Select · Filter and sort apply to this page. {i.page && `Captured ${i.page.page.fetchedAt}`}</p>
+            {i.loading && <p>Loading {kind}s…</p>}
+            {i.error && <p role="alert">{i.error}</p>}
+            {rows.length ? (
+              <ResourceTable rows={rows} kind={kind} selected={c.selection?.resource.uid ?? null} onSelect={c.selectResource} />
+            ) : (
+              !i.loading && (
                 <p className="state-message">
-                  {view?.state === "connected"
-                    ? tab.filter
-                      ? "No matching Pods."
-                      : "No Pods in this namespace."
-                    : "Connect or Retry to read Pods."}
+                  {i.filter
+                    ? "No matches on this page."
+                    : i.page
+                      ? "No resources returned on this page."
+                      : "Connect or Retry to read workloads."}
                 </p>
-              )}
-            </section>
-            <section className="detail-pane">
-              {selected ? (
-                <ResourceDetail pod={selected} context={tab.entry.context} source={tab.entry.sourceDisplay} stale={stale} />
-              ) : (
-                <div className="state-message">
-                  <h2>Select a Pod</h2>
-                  <p>Inspect basic fields from this context and namespace.</p>
-                </div>
-              )}
-            </section>
-          </ResourceSplit>
-        )}
+              )
+            )}
+          </section>
+          <section className="detail-pane">
+            {c.selection ? (
+              <ResourceDetail controller={c} context={tab.entry.context} source={tab.entry.sourceDisplay} stale={stale} logs={logs} />
+            ) : (
+              <div className="state-message">
+                <h2>Select a {kind}</h2>
+                <p>Inspect actual workload evidence.</p>
+              </div>
+            )}
+          </section>
+        </ResourceSplit>
       </div>
-      <details className="empty-sessions">
-        <summary>Sessions · 0</summary>
-        <p>No active sessions. Product log, terminal and forwarding sessions are not available yet.</p>
-      </details>
     </div>
   );
 }
