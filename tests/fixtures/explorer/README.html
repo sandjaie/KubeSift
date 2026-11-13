@@ -20,4 +20,9 @@
     The pod-reader ServiceAccount can only get/list Pods in this namespace. Short-lived token kubeconfigs belong in ignored .local storage,
     never here.
   </p>
+  <p>
+    Phase 1C.3b uses the existing web Ingress, web and stateful Services, generated EndpointSlices and allow-fixture-network policy on both
+    clusters. The Ingress has no controller. These fixtures exercise configuration and reference identity; they supply no traffic or
+    enforcement evidence. The restricted pod-reader identity is reused without expanding its permissions.
+  </p>
 </html>
