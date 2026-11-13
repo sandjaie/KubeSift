@@ -5,7 +5,7 @@ Updated 2026-11-14. Current integration branch is `develop`.
 ## Phase 1C.3c · Namespace policy and configuration
 
 - Implemented Namespaces, ResourceQuotas, LimitRanges, ConfigMaps, strict metadata-only Secrets and explicit Pod configuration references. [Spec](../../docs/superpowers/specs/2026-11-14-phase-1c3c-configuration-design.md), [plan](../../docs/superpowers/plans/2026-11-14-phase-1c3c-configuration.md), and [validation report](../../docs/superpowers/validation/phase-1c3c.html).
-- Configuration, networking and workload integration passed on both approved kind contexts. The packaged app verified namespace routes, Pod configuration references and Back. See the report for open coverage and publication status.
+- Configuration, networking and workload integration passed on both approved kind contexts. The packaged app verified namespace routes, Pod configuration references and Back. [PR #10](https://github.com/sandjaie/KubeSift/pull/10) was squash-merged into develop as `98801df` on 2026-11-14. See the report for remaining coverage limits.
 
 ## Phase 1C.3b · Read-only networking
 
