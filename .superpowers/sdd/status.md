@@ -17,3 +17,5 @@ Updated 2026-11-13. Active branch: `feature/phase-1c2-workload-investigation`. W
 - Live-log UAT refinement on the new Mac: one visible live view, abort on departure, fresh return, full retained-text scrolling, search and window expansion. Product Sessions dock removed. See the updated technical report and UAT checklist. User acceptance remains pending; PR #7 requires explicit merge approval.
 
 - High-volume native test of 3d5cce2 failed at approximately 1,000 lines/s (283 KB/s). WebKit saturated one CPU core and native interaction timed out. Temporary test Pod removed; app relaunched successfully. Root cause and under-load interaction/cleanup remain unresolved. See technical validation.
+
+- High-volume rendering fix verified at the same 1,000 lines/s, 283 KB/s source. Visible-row rendering and 100 ms notifications passed native search, expansion, scrolling and repeated leave/return; 23 frontend tests and full checks passed. The prior same-load failure is resolved. Paused reading uses one extra bounded snapshot. Longer soak and full accessibility UAT remain pending.

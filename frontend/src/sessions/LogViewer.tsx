@@ -4,21 +4,36 @@ Used by: The visible Pod Logs tab.
 Responsibilities: Scroll all retained text, find matches and pause scrolling while reading history.
 Important: The store bounds text at 1 MiB; this view never opens a native reader.
 */
-import { useEffect, useRef, useState } from "react";
-import { findLogMatch, scrollLogViewport, type LogSession } from "./logStore";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { findLogMatch, type LogSession } from "./logStore";
+import { logRows } from "./logRows";
 export function LogViewer({ session: s }: { session: LogSession }) {
-  const [following, setFollowing] = useState(true);
+  const [paused, setPaused] = useState<LogSession | null>(null);
+  const following = paused === null;
+  const shown = paused ?? s;
+  const rows = useMemo(() => logRows(shown.text), [shown.text]);
+  const [top, setTop] = useState(0);
+  const [height, setHeight] = useState(280);
   const [expanded, setExpanded] = useState(false);
   const [query, setQuery] = useState("");
   const [match, setMatch] = useState(-1);
   const [notice, setNotice] = useState("");
-  const viewport = useRef<HTMLPreElement>(null);
-  const selected = useRef<HTMLElement>(null);
+  const viewport = useRef<HTMLDivElement>(null);
   const expandButton = useRef<HTMLButtonElement>(null);
-  useEffect(() => scrollLogViewport(viewport.current, following), [s.text, following, expanded]);
+  useLayoutEffect(() => {
+    const node = viewport.current;
+    if (node && following) {
+      node.scrollTop = node.scrollHeight;
+      setTop(node.scrollTop);
+    }
+  }, [shown.text, following, expanded, height]);
   useEffect(() => {
-    if (match >= 0) selected.current?.scrollIntoView({ block: "center" });
-  }, [match, query]);
+    const node = viewport.current;
+    if (!node) return;
+    const observer = new ResizeObserver(() => setHeight(node.clientHeight));
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
   useEffect(() => {
     if (!expanded) return;
     expandButton.current?.focus();
@@ -31,18 +46,20 @@ export function LogViewer({ session: s }: { session: LogSession }) {
     window.addEventListener("keydown", escape);
     return () => window.removeEventListener("keydown", escape);
   }, [expanded]);
-  // Retention eviction changes offsets, so an old search selection must be discarded.
-  useEffect(() => {
-    setMatch(-1);
-  }, [s.dropped]);
   function find(backwards: boolean) {
     if (!query) return;
-    const next = findLogMatch(s.text, query, match, backwards);
-    setFollowing(false);
+    const next = findLogMatch(shown.text, query, match, backwards);
+    setPaused(shown);
     setMatch(next);
     setNotice(next < 0 ? "No match in retained logs" : "Match in retained logs");
-    if (next === match) selected.current?.scrollIntoView({ block: "center" });
+    if (next >= 0 && viewport.current) {
+      const row = rows.findIndex((row) => next >= row.start && next < row.start + row.text.length);
+      viewport.current.scrollTop = Math.max(0, row * 20 - height / 2);
+      setTop(viewport.current.scrollTop);
+    }
   }
+  const first = Math.max(0, Math.floor(top / 20) - 5);
+  const visible = rows.slice(first, first + Math.ceil(height / 20) + 10);
   return (
     <section
       className={`log-viewer${expanded ? " log-expanded" : ""}`}
@@ -77,7 +94,7 @@ export function LogViewer({ session: s }: { session: LogSession }) {
           <button
             onClick={() => {
               setMatch(-1);
-              setFollowing(true);
+              setPaused(null);
             }}
           >
             Jump to latest
@@ -110,6 +127,7 @@ export function LogViewer({ session: s }: { session: LogSession }) {
           Next match
         </button>
       </div>
+      {!following && <p className="muted">Reading retained history · Live collection continues. Jump to latest to update.</p>}
       {notice && <p role="status">{notice}</p>}
       {s.dropped > 0 && (
         <p className="warning" role="status">
@@ -121,26 +139,40 @@ export function LogViewer({ session: s }: { session: LogSession }) {
           {s.error || s.loss}
         </p>
       )}
-      <pre
+      <div
         ref={viewport}
         className="log-text"
         tabIndex={0}
         aria-label="Log output"
         onScroll={(e) => {
           const node = e.currentTarget;
-          setFollowing(node.scrollHeight - node.scrollTop - node.clientHeight < 8);
+          setTop(node.scrollTop);
+          if (node.scrollHeight - node.scrollTop - node.clientHeight >= 8 && following) setPaused(s);
         }}
       >
-        {match >= 0 ? (
-          <>
-            {s.text.slice(0, match)}
-            <mark ref={selected}>{s.text.slice(match, match + query.length)}</mark>
-            {s.text.slice(match + query.length)}
-          </>
-        ) : (
-          s.text || (s.active ? "Waiting for logs…" : "No log output.")
-        )}
-      </pre>
+        <div style={{ height: rows.length * 20, position: "relative", minWidth: "100%", width: "max-content" }}>
+          <div style={{ paddingTop: first * 20 }}>
+            {visible.map((row) => {
+              const highlightStart = Math.max(0, match - row.start);
+              const highlightEnd = Math.min(row.text.length, match + query.length - row.start);
+              return (
+                <div className="log-row" key={row.start}>
+                  {match >= 0 && highlightEnd > highlightStart ? (
+                    <>
+                      {row.text.slice(0, highlightStart)}
+                      <mark>{row.text.slice(highlightStart, highlightEnd)}</mark>
+                      {row.text.slice(highlightEnd)}
+                    </>
+                  ) : (
+                    row.text || " "
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        {!shown.text && (s.active ? "Waiting for logs…" : "No log output.")}
+      </div>
       <p className="muted">
         Initial request: last {s.request.tailLines} lines · Up to 1 MiB retained. Older rotated logs may be unavailable.
       </p>

@@ -4,7 +4,7 @@ Used by: Vitest.
 Responsibilities: Cover split UTF-8, stale segments, clear/loss and stop/close capacity.
 Important: The fake bridge exercises the real store without a native window.
 */
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import { findLogMatch, createLogStore, type LogBridge } from "./logStore";
 import type { SessionEvent } from "../bridge";
 import type { LogRequest } from "../workloads/model";
@@ -272,4 +272,51 @@ test("failed cleanup of a cancelled late reader remains available for retry", as
   await store.close(retained.id);
   expect(store.snapshot()).toHaveLength(0);
   expect(attempts).toEqual([ref.id, ref.id]);
+});
+
+test("display notifications batch while acknowledgements and close remain immediate", async () => {
+  vi.useFakeTimers();
+  try {
+    let receive: (event: SessionEvent) => void = () => {};
+    let acknowledgements = 0,
+      notifications = 0;
+    const store = createLogStore({
+      subscribe: (fn) => {
+        receive = fn;
+        return () => {};
+      },
+      open: async () => ({ id: "batched", connection: req.resource.connection }),
+      activate: async () => {},
+      ack: async () => {
+        acknowledgements++;
+      },
+      stop: async () => {},
+      close: async () => {},
+    });
+    store.attach();
+    const id = await store.open(req, "A", "local-a");
+    const ref = store.snapshot()[0].ref!;
+    store.subscribe(() => {
+      notifications++;
+    });
+    const send = (sequence: number) => receive({ session: ref, sequence, kind: "data", data: btoa("line\n") });
+    send(1);
+    send(2);
+    expect(acknowledgements).toBe(2);
+    expect(store.snapshot()[0].text).toBe("line\nline\n");
+    expect(notifications).toBe(0);
+    vi.advanceTimersByTime(99);
+    expect(notifications).toBe(0);
+    vi.advanceTimersByTime(1);
+    expect(notifications).toBe(1);
+    send(3);
+    await store.close(id);
+    expect(store.snapshot()).toHaveLength(0);
+    const afterClose = notifications;
+    vi.advanceTimersByTime(100);
+    expect(notifications).toBe(afterClose);
+    await store.dispose();
+  } finally {
+    vi.useRealTimers();
+  }
 });

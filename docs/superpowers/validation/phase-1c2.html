@@ -265,6 +265,27 @@
         interaction stalled. High-volume readiness is failed, and this supersedes the earlier pending stress-test status. User acceptance
         remains pending.
       </p>
+      <h2>High-volume rendering correction and retest · 2026-11-13</h2>
+      <p>
+        The full retained-text rendering path was replaced with visible fixed-height rows and overscan. Data notifications are batched at
+        100 ms; native acknowledgements and lifecycle changes remain immediate. Wide lines scroll horizontally, and pathological long lines
+        split into bounded display rows. Reading history freezes one additional bounded snapshot of up to 1 MiB; Jump to latest releases it.
+        Search covers that stable snapshot using original text offsets.
+      </p>
+      <p>
+        The identical resource-limited synthetic Pod in kind-dev-local-a / kubesift-explorer again produced 10,000 timestamped lines and
+        2,830,000 bytes in a ten-second sample. Native live output, visible retention warnings, expand/restore, previous/next search,
+        scrolling upward and downward, Jump to latest, and three Overview/Logs cycles passed on the final build without interaction
+        timeouts. Each return showed one fresh live view. Earlier tests on the optimized build also passed three navigation cycles. The
+        final 30-second process sample ended at 8.1% renderer CPU and approximately 200 MiB RSS, compared with 98.6–100% CPU and increasing
+        RSS in the failed test. These are sampled observations, not a maximum-load guarantee.
+      </p>
+      <p>
+        All 23 frontend tests, repository checks and macOS packaging passed. Regressions cover batching with immediate acknowledgements and
+        cleanup, long-line indexing and original offsets; existing cancellation and Unicode search tests remain passing. Independent review
+        corrected long-line rescanning and cross-row highlighting. The temporary load Pod was removed. This retest resolves the prior
+        same-load responsiveness failure. Longer soak testing and full screen-reader verification remain unrun; user UAT remains pending.
+      </p>
     </main>
   </body>
 </html>

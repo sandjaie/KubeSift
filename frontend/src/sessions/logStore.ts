@@ -63,10 +63,17 @@ export function createLogStore(bridge: LogBridge) {
   const operations = new Map<string, symbol>();
   const abortListeners = new Map<string, () => void>();
   let off: (() => void) | null = null;
-  const notify = () => listeners.forEach((fn) => fn());
-  const update = (id: string, patch: Partial<LogSession>) => {
+  let pendingNotification: ReturnType<typeof setTimeout> | undefined;
+  const notify = () => {
+    clearTimeout(pendingNotification);
+    pendingNotification = undefined;
+    listeners.forEach((fn) => fn());
+  };
+  const update = (id: string, patch: Partial<LogSession>, batch = false) => {
     sessions = sessions.map((s) => (s.id === id ? { ...s, ...patch } : s));
-    notify();
+    if (batch) {
+      pendingNotification ??= setTimeout(notify, 100);
+    } else notify();
   };
   const find = (id: string) => sessions.find((s) => s.id === id);
   const message = (e: unknown) => (e instanceof Error ? e.message : "Log request failed");
@@ -88,7 +95,7 @@ export function createLogStore(bridge: LogBridge) {
     if (event.kind === "data") {
       const decoder = decoders.get(s.id)!;
       const retained = boundedText(s.text + decoder.decode(bytes, { stream: true }), 1048576);
-      update(s.id, { text: retained.text, dropped: s.dropped + retained.dropped });
+      update(s.id, { text: retained.text, dropped: s.dropped + retained.dropped }, true);
       void bridge.ack(event.session, event.sequence).catch(() => {});
     } else {
       const value = new TextDecoder().decode(bytes);

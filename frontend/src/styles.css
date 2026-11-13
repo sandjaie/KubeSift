@@ -1424,12 +1424,14 @@ textarea::placeholder {
 .log-text {
   min-height: 220px;
   margin: 10px 0 0;
-  padding: 12px;
+  padding: 0;
   border: 1px solid var(--line);
   border-radius: 6px;
   background: var(--bg);
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-anchor: none;
+  height: 280px;
   max-height: 280px;
   overflow: auto;
   font-family: monospace;
@@ -1524,4 +1526,15 @@ textarea::placeholder {
 .log-text mark {
   background: var(--accent);
   color: var(--bg);
+}
+
+/* Only visible log rows enter layout and the accessibility tree. */
+.log-row {
+  height: 20px;
+  line-height: 20px;
+  white-space: pre;
+  padding: 0 12px;
+}
+.log-expanded .log-text {
+  height: auto;
 }
