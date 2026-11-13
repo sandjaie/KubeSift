@@ -26,3 +26,4 @@
 
 ## Git and publication
 - Follow docs/engineering/gitworkflow.md.
+- Complete authorized implementation through the workflow's documentation, ready PR and merge steps into develop once applicable checks and independent review pass. Do not stop at a draft PR or request another instruction to merge; report genuine blockers instead. Releases and merges into main remain separately authorized.
