@@ -14,7 +14,7 @@ export function age(value: string | null) {
   const minutes = Math.max(0, Math.floor((Date.now() - Date.parse(value)) / 60000));
   return minutes < 60 ? `${minutes}m` : minutes < 1440 ? `${Math.floor(minutes / 60)}h` : `${Math.floor(minutes / 1440)}d`;
 }
-type Column = { label: string; value: (row: WorkloadRow) => ReactNode };
+type Column<T = WorkloadRow> = { label: string; value: (row: T) => ReactNode };
 const ready: Column = { label: "Ready / desired", value: (row) => `${row.ready ?? "?"} / ${row.desired ?? "?"}` };
 const updated: Column = { label: "Updated", value: (row) => row.updated };
 const available: Column = { label: "Available", value: (row) => row.available };
@@ -74,11 +74,30 @@ export function ResourceTable({
   selected: string | null;
   onSelect: (row: WorkloadRow) => void;
 }) {
-  const columns = workloadColumns[kind];
+  return (
+    <InventoryTable rows={rows} kind={kind} label={`${kind}s`} selected={selected} onSelect={onSelect} columns={workloadColumns[kind]} />
+  );
+}
+
+export function InventoryTable<T extends Pick<WorkloadRow, "resource" | "createdAt">>({
+  rows,
+  kind,
+  label,
+  selected,
+  onSelect,
+  columns,
+}: {
+  rows: T[];
+  kind: string;
+  label: string;
+  selected: string | null;
+  onSelect: (row: T) => void;
+  columns: Column<T>[];
+}) {
   const selectedVisible = rows.some((row) => row.resource.uid === selected);
   return (
     <div className="resource-list">
-      <table aria-label={`${kind}s`}>
+      <table aria-label={label}>
         <thead>
           <tr>
             <th>Name</th>
