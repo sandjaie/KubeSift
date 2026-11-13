@@ -42,21 +42,10 @@
         Superpowers plans.
       </p>
       <section id="status">
-        <h2>Where we are · 12 November 2026</h2>
+        <h2>Phase sequence and dependencies</h2>
         <p>
-          <strong>Phase 1C.1 merged into develop through PR #3 as 395ef7a after maintainer authorization.</strong>
-          See the <a href="../superpowers/validation/phase-1c1.html">technical report</a> and
-          <a href="../superpowers/validation/phase-1c1-ui-uat.html">UAT checklist</a>. Agent UAT passed 12 core/UI cases; 3 optional cases
-          remain blocked, with their limits retained. Prior <a href="../superpowers/validation/phase-1a.html">architecture</a> and
-          <a href="../superpowers/validation/phase-1b.html">UI foundation</a> qualifications remain.
-        </p>
-        <p>
-          Workspace refinement PR #4 and the 0.3.0 release merge are now in repository history. The
-          <a href="../superpowers/specs/2026-11-12-phase-1c2-workload-investigation-design.md">Phase 1C.2 specification</a> was approved on
-          2026-11-12, preserving those UI improvements. Its
-          <a href="../superpowers/plans/2026-11-12-phase-1c2-workload-investigation.md">seven-task implementation plan</a>
-          includes minimal verification and a separate post-implementation UI UAT checklist. Implementation belongs in a separate session;
-          no implementation or new release occurred in this planning update.
+          This page records scope, order, dependencies and exit criteria, not implementation progress. See
+          <a href="../status.md">status and evidence</a> for the current checkpoint, task completion and verification results.
         </p>
         <div class="table-scroll">
           <table>
@@ -151,8 +140,8 @@
           </li>
           <li>
             Finish with a durable phase validation report: what works, actual checks, unrun environments, limitations and next-phase
-            prerequisites. Update the capability inventory and this status summary. Do not mark a phase complete merely because code or a
-            plan exists.
+            prerequisites. Update the capability inventory and the <a href="../../.superpowers/sdd/status.md">progress checkpoint</a>. Do
+            not mark a phase complete merely because code or a plan exists.
           </li>
         </ol>
       </section>
@@ -307,26 +296,26 @@
       <section id="resource-coverage">
         <h2>Phase 1C.3b · Networking</h2>
         <p>
-          Services, EndpointSlices, Ingresses, IngressClasses and NetworkPolicies extend the merged 1C.3a baseline. The
+          Services, EndpointSlices, Ingresses, IngressClasses and NetworkPolicies follow the 1C.3a workload scope. The
           <a href="../superpowers/specs/2026-11-13-phase-1c3b-networking-design.md">networking specification</a> and
           <a href="../superpowers/plans/2026-11-13-phase-1c3b-networking.md">implementation plan</a> cover read-only views and references,
           not connectivity or enforcement proof. Legacy Endpoints, dedicated Gateway API views, Routes and networking writes remain outside
           this increment. The <a href="../superpowers/validation/phase-1c3b.html">validation report</a> records branch evidence and
           remaining checks.
         </p>
-        <h2 id="phase-1c3-sequence">Remaining Phase 1C.3 sequence</h2>
+        <h2 id="phase-1c3-sequence">Phase 1C.3c–g sequence</h2>
         <p>
-          Planning order set on 14 November 2026 after networking merged. Follow this sequence unless the maintainer changes priority; do
-          not ask which area comes next at every handoff. Only 1C.3c has a detailed planning package here; later increments still need their
-          own specifications and explicit implementation requests.
+          Follow this sequence unless the maintainer changes priority. Consult the progress checkpoint to identify the first unfinished
+          increment; do not ask which area comes next at every handoff. Each increment requires its own specification and explicit
+          implementation request.
         </p>
         <ol>
           <li>
-            <strong>1C.3c — Namespace policy and configuration (next; planned).</strong> Namespaces, ResourceQuotas, LimitRanges, ConfigMaps
-            and metadata-only Secrets, plus explicit Pod configuration references. Read the
+            <strong>1C.3c — Namespace policy and configuration.</strong> Namespaces, ResourceQuotas, LimitRanges, ConfigMaps and
+            metadata-only Secrets, plus explicit Pod configuration references. Read the
             <a href="../superpowers/specs/2026-11-14-phase-1c3c-configuration-design.md">specification</a> and
             <a href="../superpowers/plans/2026-11-14-phase-1c3c-configuration.md">five-task plan</a>. Secret value reveal and Secret YAML
-            are deferred; this planning package is not implemented coverage.
+            require a separate specification.
           </li>
           <li>
             <strong>1C.3d — Storage.</strong> PVCs, PVs, StorageClasses, VolumeAttachments, CSIDrivers and CSINodes; Pod → claim → volume →
@@ -354,24 +343,17 @@
         </p>
         <h2>Resource coverage to carry into future specifications</h2>
         <p>
-          <strong>Phase 1C.3a remaining workloads passed maintainer acceptance.</strong>
-          StatefulSets, DaemonSets, Jobs and CronJobs extend the existing read-only explorer. The
+          Phase 1C.3a covers StatefulSets, DaemonSets, Jobs and CronJobs. Its
           <a href="../superpowers/specs/2026-11-13-phase-1c3a-remaining-workloads-design.md">specification</a> and
-          <a href="../superpowers/plans/2026-11-13-phase-1c3a-remaining-workloads.md">implementation plan</a>
-          define its bounded scope and acceptance. See the
-          <a href="../superpowers/validation/phase-1c3a.html">technical results</a> and
-          <a href="../superpowers/validation/phase-1c3a-ui-uat.html">packaged-app UAT findings</a>. HPA, PDB, ReplicationController,
-          ControllerRevision browsing and other resource groups remain later work.
+          <a href="../superpowers/plans/2026-11-13-phase-1c3a-remaining-workloads.md">implementation plan</a> define bounded scope and
+          acceptance. Phase 1C.2 covers Pod, Deployment and ReplicaSet investigation. Delivery results belong in the
+          <a href="../status.md">status and evidence documents</a>.
         </p>
         <p>
-          Phase 1C.2 is merged; see the
-          <a href="../superpowers/validation/phase-1c2.html">technical report</a> and
-          <a href="../superpowers/validation/phase-1c2-ui-uat.html">historical optional UAT checklist</a>. Its coverage includes Pods,
-          Deployments and ReplicaSets. The following inventory remains the coverage obligation across 1C.3 and later increments, not a claim
-          of implemented parity. Deliver it in independently useful increments under the
-          <a href="../engineering/engineering.html#agent-verification">agent verification policy</a>. Each kind needs an explicit coverage
-          row for discovery, list/detail, YAML, relationships, events where available, RBAC/error states, applicable operations and UAT
-          evidence.
+          The following inventory defines coverage obligations across 1C.3 and later increments. Deliver independently useful increments
+          under the <a href="../engineering/engineering.html#agent-verification">agent verification policy</a>. Each kind needs an explicit
+          coverage row for discovery, list/detail, YAML, relationships, events where available, RBAC/error states, applicable operations and
+          verification evidence.
         </p>
         <div class="table-scroll">
           <table>
@@ -424,10 +406,8 @@
                 <td>Remaining workloads and availability</td>
                 <td>
                   StatefulSets, DaemonSets, Jobs, CronJobs, HorizontalPodAutoscalers, PodDisruptionBudgets and ReplicationControllers when
-                  served. Follow controller ownership, scheduled Job history, scale targets and disruption allowance. The
-                  <a href="../superpowers/validation/workload-explorer-refinement.html">workload explorer refinement</a>
-                  brought read-only ReplicaSets into develop with Phase 1C.2. VerticalPodAutoscalers and other extensions use discovery when
-                  installed.
+                  served. Follow controller ownership, scheduled Job history, scale targets and disruption allowance. Read-only ReplicaSet
+                  investigation belongs to Phase 1C.2. VerticalPodAutoscalers and other extensions use discovery when installed.
                 </td>
                 <td>1C.3 dedicated reads; scale/restart/rollback in 1D; metrics interpretation in 1E.</td>
               </tr>
