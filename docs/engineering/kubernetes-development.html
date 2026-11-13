@@ -216,6 +216,26 @@
           >: configured limits and reported accounting are not measured CPU/memory consumption.
         </li>
       </ul>
+      <h2 id="storage">Storage evidence and references</h2>
+      <ul>
+        <li>
+          <a href="https://kubernetes.io/docs/concepts/storage/persistent-volumes/">Persistent volumes and binding</a> and
+          <a href="https://kubernetes.io/docs/concepts/storage/storage-classes/">StorageClasses</a>: class selection, claim/volume
+          references, binding policy and reclaim configuration.
+        </li>
+        <li>
+          <a href="https://kubernetes.io/docs/reference/kubernetes-api/storage/volume-attachment-v1/">VolumeAttachment</a>,
+          <a href="https://kubernetes.io/docs/reference/kubernetes-api/storage/csi-driver-v1/">CSIDriver</a> and
+          <a href="https://kubernetes.io/docs/reference/kubernetes-api/storage/csi-node-v1/">CSINode</a>: attachment, registration and
+          published limits are distinct from mount/I/O health.
+        </li>
+        <li>
+          <a href="https://kubernetes.io/docs/concepts/storage/ephemeral-volumes/">Ephemeral volumes</a>: inline and generic ephemeral
+          configuration must not be mistaken for a captured persistent claim identity. The
+          <a href="../superpowers/specs/2026-11-14-phase-1c3d-storage-design.md">storage specification</a> owns supported navigation and
+          exact bounds.
+        </li>
+      </ul>
       <h2 id="testing">Testing and evidence</h2>
       <ul>
         <li>

@@ -2,7 +2,13 @@
 
 Acceptance follows [agent verification](../../engineering/engineering.html#agent-verification): plans require automated and agent-run desktop checks in one validation report, not a duplicate manual user UAT checklist. This supersedes older user-checklist requirements below without altering historical results. Ask the user only for subjective decisions or a specific check the agent cannot complete.
 
-## Phase 1C.3c · Namespace policy and configuration (next; planned)
+## Phase 1C.3d · Read-only storage
+
+- [Specification](../specs/2026-11-14-phase-1c3d-storage-design.md): six storage kinds, explicit scopes, observed binding/attachment evidence and validated reference navigation.
+- [Five-task plan](2026-11-14-phase-1c3d-storage.md): bounded readers, reference resolver, structured views, state/navigation integration and full verification/review/delivery.
+- Separate implementation session, existing checkout, no worktree. Use the [checkpoint](../../../.superpowers/sdd/status.md) for current progress. Preserve one whole-PR review, agent desktop verification and ready-PR merge; no duplicate user UAT or installed storage infrastructure.
+
+## Phase 1C.3c · Namespace policy and configuration
 
 - [Specification](../specs/2026-11-14-phase-1c3c-configuration-design.md): five core kinds, strict metadata-only Secrets, namespace policy evidence and explicit Pod configuration links.
 - [Five-task plan](2026-11-14-phase-1c3c-configuration.md): bounded readers, reference validation, views, shared state/navigation and complete verification/delivery.

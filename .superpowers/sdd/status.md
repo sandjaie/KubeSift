@@ -2,6 +2,13 @@
 
 Updated 2026-11-14. Current integration branch is `develop`.
 
+## Next: Phase 1C.3d · Read-only storage
+
+- Planning package only; implementation belongs in a separate session. [Specification](../../docs/superpowers/specs/2026-11-14-phase-1c3d-storage-design.md) and [five-task plan](../../docs/superpowers/plans/2026-11-14-phase-1c3d-storage.md).
+- Scope: PVCs, PVs, StorageClasses, VolumeAttachments, CSIDrivers, CSINodes and explicit Pod/claim/volume/class/CSI links. No mounts, CSI installation, snapshots, product writes or inferred storage health. Existing checkout; no worktree.
+- Baseline checked at develop `ebed580`, including merged configuration `98801df`. Carry forward unrun 1C.3c native rare-status/failure-injection and earlier compatibility gaps; test overlapping navigation/state behavior in 1C.3d without duplicating manual UAT.
+- Separate implementation must complete automated and packaged desktop verification, update plan/report/checkpoint, obtain one independent whole-PR review with targeted fix rechecks, then ready PR and merge under the existing workflow. Next sequence after storage is 1C.3e access control; no later work authorized here.
+
 ## Phase 1C.3c · Namespace policy and configuration
 
 - Implemented Namespaces, ResourceQuotas, LimitRanges, ConfigMaps, strict metadata-only Secrets and explicit Pod configuration references. [Spec](../../docs/superpowers/specs/2026-11-14-phase-1c3c-configuration-design.md), [plan](../../docs/superpowers/plans/2026-11-14-phase-1c3c-configuration.md), and [validation report](../../docs/superpowers/validation/phase-1c3c.html).
