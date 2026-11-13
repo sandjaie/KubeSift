@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Use superpowers:subagent-driven-development only if the user chooses delegated execution. Steps use checkbox syntax for tracking.
 
-**Status:** Implemented and independently reviewed on the feature branch. [Technical evidence](../validation/phase-1c3a.html) and [optional historical user checklist](../validation/phase-1c3a-ui-uat.html) preserve recorded outcomes. Remaining agent verification belongs in the technical report under the [acceptance policy](../../engineering/engineering.html#agent-verification).
+**Status:** Implemented, independently reviewed and accepted by the maintainer for PR #8. [Technical evidence](../validation/phase-1c3a.html) and [packaged-app UAT findings](../validation/phase-1c3a-ui-uat.html) preserve recorded outcomes. Remaining agent verification belongs in the technical report under the [acceptance policy](../../engineering/engineering.html#agent-verification).
 
 **Goal:** Add useful read-only StatefulSet, DaemonSet, Job and CronJob investigation to the existing explorer.
 

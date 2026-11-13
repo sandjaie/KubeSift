@@ -14,10 +14,9 @@
     </header>
     <main id="content">
       <p class="callout">
-        Optional historical user checklist. Under the
-        <a href="../../engineering/engineering.html#agent-verification">agent verification policy</a>, the user does not need to repeat
-        agent-verified workflows. These recorded results are unchanged and are not a mandatory user acceptance gate. Remaining
-        technical/native gaps belong in the validation report and remain open until addressed.
+        This checklist records the packaged-app retest under the
+        <a href="../../engineering/engineering.html#agent-verification">agent verification policy</a>. The maintainer confirmed UAT is
+        complete.
       </p>
       <p>
         Delegated UAT on 13 November 2026 used the packaged macOS app and synthetic fixtures in the kubesift-explorer namespace on
@@ -96,8 +95,9 @@
               <td>
                 <strong>Finding.</strong> In local A, opening the stale phase1c3a-retained-job row returned Resource not found and kept the
                 CronJob selected. Refresh section removed the expired row and displayed No retained owned Jobs found, but left the prior
-                error above the refreshed section. Switching to default cleared the old details. Restricted/API-unavailable reads,
-                intermediate pages and replaced UIDs were not exercised natively.
+                error above the refreshed section. In the rebuilt package, repeating this sequence on local A verified that refresh cleared
+                both the expired row and its error while preserving the CronJob selection. Switching to default cleared the old details.
+                Restricted/API-unavailable reads, intermediate pages and replaced UIDs were not exercised natively.
               </td>
             </tr>
             <tr>

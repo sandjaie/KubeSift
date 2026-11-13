@@ -14,16 +14,18 @@
     </header>
     <main id="content">
       <p class="callout">
-        This is the primary acceptance evidence under the
-        <a href="../../engineering/engineering.html#agent-verification">agent verification policy</a>. No duplicate manual user UAT is
-        required. The unverified clipboard, simultaneous-tab, theme, narrow-split, zoom, keyboard and large-text checks recorded below
-        remain open for agent verification; this policy change does not mark them passed.
+        The 13 November packaged-app retest recorded results for A01–A10 in the <a href="phase-1c3a-ui-uat.html">existing UAT checklist</a>.
+        The retest confirmed the full ownership journey and isolation across simultaneous cluster tabs. Refreshing CronJob history after
+        opening an expired Job initially left its resource-not-found banner visible. The rebuilt app passed a targeted retest on
+        kind-dev-local-a: refreshing removed the expired row and the banner, preserving the CronJob selection. Independent review and
+        repository checks passed for the fix. The maintainer confirmed UAT is complete. Clipboard equality, exact 200% zoom, full keyboard
+        traversal, large text and the native edge cases listed in the checklist remain open.
       </p>
       <p>
         Automated and agent-native evidence from the implementation checkout based on develop at 4ad1108, 13 November 2026. Native
         observations used the arm64 macOS 27.0.1 package built before the final collision-count-only adjustment. See the
         <a href="../specs/2026-11-13-phase-1c3a-remaining-workloads-design.md">design acceptance criteria</a> and
-        <a href="phase-1c3a-ui-uat.html">optional historical user checklist</a>.
+        <a href="phase-1c3a-ui-uat.html">packaged-app UAT findings</a>.
       </p>
       <ul>
         <li>Repository checks passed, including Go tests and vet, 31 frontend tests, lint and TypeScript checks.</li>

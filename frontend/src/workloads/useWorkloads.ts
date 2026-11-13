@@ -172,7 +172,11 @@ export function useWorkloads(tabID: string, connection: ConnectionRef | null, na
       commit({ type: "section", tab: tabID, section, epoch: ++serial.current });
     },
     refresh: () => patch({ history: [""], refresh: inventory.refresh + 1 }),
-    refreshSection: () => patch({ sectionCursor: "", sectionRefresh: inventory.sectionRefresh + 1 }),
+    refreshSection: () => {
+      cancelNavigation();
+      setNavigationError("");
+      patch({ sectionCursor: "", sectionRefresh: inventory.sectionRefresh + 1 });
+    },
     next: () => commit({ type: "next", tab: tabID, cursor: inventory.page?.page.nextCursor ?? "" }),
     previous: () => patch({ history: inventory.history.length > 1 ? inventory.history.slice(0, -1) : inventory.history }),
     nextSection: (cursor: string) => patch({ sectionCursor: cursor }),

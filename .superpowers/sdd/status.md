@@ -4,11 +4,11 @@ Updated 2026-11-13. Current integration branch is `develop`.
 
 ## Phase 1C.3a · Remaining workloads
 
-- Implemented on `feature/phase-1c3a-remaining-workloads`, based on develop at `4ad1108`. [Specification](../../docs/superpowers/specs/2026-11-13-phase-1c3a-remaining-workloads-design.md) and [plan](../../docs/superpowers/plans/2026-11-13-phase-1c3a-remaining-workloads.md).
+- Implemented from the `develop` baseline at `4ad1108`. [Specification](../../docs/superpowers/specs/2026-11-13-phase-1c3a-remaining-workloads-design.md) and [plan](../../docs/superpowers/plans/2026-11-13-phase-1c3a-remaining-workloads.md).
 - Four read-only workload kinds are available with Overview, YAML and Events. StatefulSets, DaemonSets and Jobs expose owned Pods. CronJobs expose retained owned Jobs and bounded Back navigation.
 - Independent review corrections and local checks are recorded in the [technical report](../../docs/superpowers/validation/phase-1c3a.html). Both explicit kind contexts passed integration. Native observations and remaining native checks are listed separately.
-- [Draft PR #8](https://github.com/sandjaie/KubeSift/pull/8) targets `develop`.
-- [Agent verification policy](../../docs/engineering/engineering.html#agent-verification) replaces the duplicate user UAT gate. The [old checklist](../../docs/superpowers/validation/phase-1c3a-ui-uat.html) remains an optional historical record; unrun native checks in the technical report remain agent-owned and open. Local evidence and progress live under ignored `.superpowers/sdd/2026-11-13-phase-1c3a/`.
+- The maintainer confirmed UAT is complete and approved [PR #8](https://github.com/sandjaie/KubeSift/pull/8) for squash merge into `develop`.
+- [Packaged-app UAT](../../docs/superpowers/validation/phase-1c3a-ui-uat.html) records results for A01–A10. The packaged retest confirmed Refresh section clears the expired CronJob Job and its stale error. Remaining native edge cases are recorded in the technical report.
 
 ## Phase 1C.2 delivery history
 
