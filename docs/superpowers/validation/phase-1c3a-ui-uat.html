@@ -13,9 +13,20 @@
       <h1>Phase 1C.3a user UAT</h1>
     </header>
     <main id="content">
+      <p class="callout">
+        Optional historical user checklist. Under the
+        <a href="../../engineering/engineering.html#agent-verification">agent verification policy</a>, the user does not need to repeat
+        agent-verified workflows. These recorded results are unchanged and are not a mandatory user acceptance gate. Remaining
+        technical/native gaps belong in the validation report and remain open until addressed.
+      </p>
       <p>
-        Use the packaged app and synthetic fixtures on kind-dev-local-a and kind-dev-local-b. Record each result after trying the journey,
-        including the fixture and evidence for any problem. See the <a href="phase-1c3a.html">agent technical results</a>.
+        Delegated UAT on 13 November 2026 used the packaged macOS app and synthetic fixtures in the kubesift-explorer namespace on
+        kind-dev-local-a and kind-dev-local-b. The overall result remains open. The findings below include native observations and
+        supporting automated coverage. See the <a href="phase-1c3a.html">agent technical results</a>.
+      </p>
+      <p>
+        The two-context TestWorkloadInvestigation run passed, as did the kube and desktop Go suites and all 31 frontend tests. The temporary
+        phase1c3a-uat-job and its Pod were removed from each cluster, and cleanup was verified.
       </p>
       <div class="table-scroll">
         <table>
@@ -23,59 +34,98 @@
             <tr>
               <th scope="col">Check</th>
               <th scope="col">Journey</th>
-              <th scope="col">User result</th>
+              <th scope="col">UAT result</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <th scope="row">A01</th>
               <td>All four scoped inventories, Overview, YAML and Events</td>
-              <td>Not tested</td>
+              <td>
+                <strong>Pass.</strong> Opened all four inventories and their Overview, YAML and Events sections in local A. The two-context
+                integration run passed for the scoped reads.
+              </td>
             </tr>
             <tr>
               <th scope="row">A02</th>
               <td>StatefulSet totals, revisions, zero and generation lag</td>
-              <td>Not tested</td>
+              <td>
+                <strong>Partial.</strong> Local B stateful showed 1 total Pod, 1 current-revision Pod, matching current and update
+                revisions, and generation 1 observed as 1. Zero replicas, partition/OnDelete and lagging generation were not exercised
+                natively.
+              </td>
             </tr>
             <tr>
               <th scope="row">A03</th>
               <td>DaemonSet eligible, updated, ready and misscheduled node counts</td>
-              <td>Not tested</td>
+              <td>
+                <strong>Partial.</strong> Local A node-sample showed 1 desired, scheduled, updated, ready and available node, with 0
+                unavailable and 0 misscheduled. Zero eligible and nonzero misscheduled cases were not exercised natively.
+              </td>
             </tr>
             <tr>
               <th scope="row">A04</th>
               <td>Job retries, terminal conditions, suspension and indexed progress</td>
-              <td>Not tested</td>
+              <td>
+                <strong>Partial.</strong> Local A completed-job showed Complete and 1/1. Failed-job showed Failed, 0/1, one failed attempt
+                and BackoffLimitExceeded. Active retries, suspension, indexed progress and intermediate/conflicting conditions were not
+                exercised natively.
+              </td>
             </tr>
             <tr>
               <th scope="row">A05</th>
               <td>CronJob timezone, suspension, active references and retained history</td>
-              <td>Not tested</td>
+              <td>
+                <strong>Partial.</strong> Local A scheduled-job showed the unknown controller-default timezone, suspension, zero active
+                references and an unknown last schedule. Its Jobs section showed the retained fixture and the TTL/history caveat. Explicit
+                timezone and suspension with active references were not exercised natively.
+              </td>
             </tr>
             <tr>
               <th scope="row">A06</th>
               <td>Direct ownership and CronJob → Job → Pod → Back → Back</td>
-              <td>Not tested</td>
+              <td>
+                <strong>Pass.</strong> Local A scheduled-job opened phase1c3a-uat-job and its succeeded Pod. Back restored the Job Pods
+                section and then the CronJob Jobs section. StatefulSet stateful and DaemonSet node-sample showed their direct Pods. The kube
+                suite passed direct-owner filtering tests.
+              </td>
             </tr>
             <tr>
               <th scope="row">A07</th>
               <td>Denied or unavailable evidence, bounded pages, stale scope and replaced UIDs</td>
-              <td>Not tested</td>
+              <td>
+                <strong>Finding.</strong> In local A, opening the stale phase1c3a-retained-job row returned Resource not found and kept the
+                CronJob selected. Refresh section removed the expired row and displayed No retained owned Jobs found, but left the prior
+                error above the refreshed section. Switching to default cleared the old details. Restricted/API-unavailable reads,
+                intermediate pages and replaced UIDs were not exercised natively.
+              </td>
             </tr>
             <tr>
               <th scope="row">A08</th>
               <td>Namespace kind retention and two isolated cluster tabs</td>
-              <td>Not tested</td>
+              <td>
+                <strong>Pass.</strong> Switching local A from kubesift-explorer to default preserved CronJobs and cleared the selected
+                resource. Switching back from local B restored A’s independent scope. Both tabs showed the same-named stateful resource with
+                the correct local-a or local-b marker in YAML.
+              </td>
             </tr>
             <tr>
               <th scope="row">A09</th>
               <td>YAML search and copy, scoped Events and Pod Logs lifecycle</td>
-              <td>Not tested</td>
+              <td>
+                <strong>Partial.</strong> Searching local B StatefulSet YAML for local-b returned two matches. Copy was invoked, but
+                clipboard bytes were not compared. Local A opened scoped Events and reopened the completed Job Pod’s Logs after visiting
+                Overview. Native live-follow teardown was not measured in this run.
+              </td>
             </tr>
             <tr>
               <th scope="row">A10</th>
               <td>Light/dark, narrow split, 200% zoom, keyboard and large text</td>
-              <td>Not tested</td>
+              <td>
+                <strong>Partial.</strong> Light and dark both preserved the StatefulSet YAML view. Native Zoom In and Actual Size left the
+                YAML controls available. Keyboard arrows reduced the DaemonSet detail split from 50 to 22 with its tabs and related Pod
+                still exposed, then restored it. Exact 200% zoom, a full keyboard-only journey and large or hostile text remain open.
+              </td>
             </tr>
           </tbody>
         </table>

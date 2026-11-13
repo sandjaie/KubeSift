@@ -10,7 +10,7 @@ Approaches considered: extend typed readers and existing tables (selected; kind-
 
 ### Included and excluded
 
-Included: four namespace-scoped inventories, Overview/YAML/Events, directly owned Pods for StatefulSet/DaemonSet/Job, CronJob-owned Jobs, owner/back navigation, partial-permission states, bounded reads and separate user UAT.
+Included: four namespace-scoped inventories, Overview/YAML/Events, directly owned Pods for StatefulSet/DaemonSet/Job, CronJob-owned Jobs, owner/back navigation, partial-permission states, bounded reads and agent-run desktop verification.
 
 Excluded: mutations (run now, suspend/resume, scale, restart, delete, edit, rollback), controller-level log aggregation, all-namespace mode, watches, networking/storage explorers, ControllerRevision history, HPA/PDB/ReplicationController views, generic discovery, metrics and extra clusters. Show configured service/PVC references without fetching those resources or implying their existence. Preserve existing Pod Logs and Secret-reference boundaries.
 
@@ -99,7 +99,7 @@ Shared YAML/search/copy and UID-scoped Events work for every new kind. Events re
 
 Use existing synthetic fixtures first, only documented kind-dev-local-a/b with explicit contexts. Inspect fixture ownership before additions; no extra clusters, storage controllers or monitoring infrastructure. Use fake/unit fixtures for statuses impractical to induce safely; label that evidence separately from native integration. Keep CronJobs suspended except a deliberately authorized bounded local test with cleanup; prefer owned static fixture objects for retained-Job navigation. App runtime makes no writes.
 
-Deliver a technical validation report and separate user UAT checklist, with user results initially Not tested. Prior Phase 1C.2 UAT/soak/accessibility gaps remain tracked separately. No implementation, merge or release is authorized by this planning document.
+Deliver one validation report covering automated checks and agent-run desktop verification under the [acceptance policy](../../engineering/engineering.html#agent-verification). Do not require duplicate manual user UAT. Preserve prior results and track remaining soak/accessibility or native verification gaps explicitly; ask the user only for subjective decisions or checks the agent cannot complete. No implementation, merge or release is authorized by this planning document.
 
 ## Verified documentation and handoff
 

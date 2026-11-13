@@ -27,6 +27,8 @@ This planning exception does not authorize application code changes, merges to `
 
 ## Pull requests
 
+- Acceptance evidence follows [agent verification](engineering.html#agent-verification). Agent-run desktop checks satisfy the normal UI verification requirement; a duplicate manual user UAT checklist is not a merge gate. Unresolved failures, material verification gaps and explicit authorization requirements still apply.
+
 - Pull requests on [sandjaie/KubeSift](https://github.com/sandjaie/KubeSift) carry a summary and a test plan. Fill the template.
 - At the end of every completed phase, after its acceptance evidence and independent review are complete, create a pull request from the phase feature branch targeting `develop`. Include the actual checks, review resolutions and remaining limitations.
 - GitHub CI runs only for release-producing PRs targeting `main` from `release/*` or `hotfix/*`. Feature PRs targeting `develop` and push events do not trigger CI. Applicable local validation and independent review remain required for feature work.

@@ -8,9 +8,11 @@ Updated 2026-11-13. Current integration branch is `develop`.
 - Four read-only workload kinds are available with Overview, YAML and Events. StatefulSets, DaemonSets and Jobs expose owned Pods. CronJobs expose retained owned Jobs and bounded Back navigation.
 - Independent review corrections and local checks are recorded in the [technical report](../../docs/superpowers/validation/phase-1c3a.html). Both explicit kind contexts passed integration. Native observations and remaining native checks are listed separately.
 - [Draft PR #8](https://github.com/sandjaie/KubeSift/pull/8) targets `develop`.
-- [User UAT](../../docs/superpowers/validation/phase-1c3a-ui-uat.html) remains Not tested. Local evidence and progress live under ignored `.superpowers/sdd/2026-11-13-phase-1c3a/`.
+- [Agent verification policy](../../docs/engineering/engineering.html#agent-verification) replaces the duplicate user UAT gate. The [old checklist](../../docs/superpowers/validation/phase-1c3a-ui-uat.html) remains an optional historical record; unrun native checks in the technical report remain agent-owned and open. Local evidence and progress live under ignored `.superpowers/sdd/2026-11-13-phase-1c3a/`.
 
 ## Phase 1C.2 delivery history
+
+Historical references to pending user acceptance below no longer impose a repeat-test gate. Actual results and unresolved technical gaps remain unchanged under the current agent verification policy.
 
 - Implemented Phase 1C.2 tasks 1–6 on baseline `b19bff7`, with reviewed implementation at `823a17e`; task 7 validation and handoff have the explicit remaining checks in the [plan](../../docs/superpowers/plans/2026-11-12-phase-1c2-workload-investigation.md).
 - [Technical validation](../../docs/superpowers/validation/phase-1c2.html): full Go tests/vet, targeted race tests, 16 frontend tests, lint/typecheck, bindings/build/package and opt-in integration on explicit kind-dev-local-a/b passed after review corrections.
