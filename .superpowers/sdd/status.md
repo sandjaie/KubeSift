@@ -2,11 +2,12 @@
 
 Updated 2026-11-13. Current integration branch is `develop`.
 
-## Next planning package · Phase 1C.3a
+## Phase 1C.3a · Remaining workloads
 
-- Scope accepted: read-only StatefulSets, DaemonSets, Jobs and CronJobs. [Specification](../../docs/superpowers/specs/2026-11-13-phase-1c3a-remaining-workloads-design.md) and [implementation plan](../../docs/superpowers/plans/2026-11-13-phase-1c3a-remaining-workloads.md) prepared for review and separate-session implementation.
-- Baseline inspected: develop at dcfea2c. This planning work changes no application code, fixtures or runtime behavior. No implementation, merge, release or later increment is authorized.
-- Use the existing checkout; do not create a worktree. Prior Phase 1C.2 validation and pending user acceptance remain below. Detailed planning review output stays in ignored `.superpowers/sdd/2026-11-13-phase-1c3a/`.
+- Implemented on `feature/phase-1c3a-remaining-workloads`, based on develop at `4ad1108`. [Specification](../../docs/superpowers/specs/2026-11-13-phase-1c3a-remaining-workloads-design.md) and [plan](../../docs/superpowers/plans/2026-11-13-phase-1c3a-remaining-workloads.md).
+- Four read-only workload kinds are available with Overview, YAML and Events. StatefulSets, DaemonSets and Jobs expose owned Pods. CronJobs expose retained owned Jobs and bounded Back navigation.
+- Independent review corrections and local checks are recorded in the [technical report](../../docs/superpowers/validation/phase-1c3a.html). Both explicit kind contexts passed integration. Native observations and remaining native checks are listed separately.
+- [User UAT](../../docs/superpowers/validation/phase-1c3a-ui-uat.html) remains Not tested. Local evidence and progress live under ignored `.superpowers/sdd/2026-11-13-phase-1c3a/`.
 
 ## Phase 1C.2 delivery history
 

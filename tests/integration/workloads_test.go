@@ -41,6 +41,7 @@ func TestWorkloadInvestigation(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 	uids := []string{}
+	controllerUIDs := map[string]string{}
 	for _, suffix := range []string{"a", "b"} {
 		snapshot, err := config.Load([]string{filepath.Join(dir, suffix+".kubeconfig")})
 		if err != nil {
@@ -62,6 +63,65 @@ func TestWorkloadInvestigation(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+		for _, fixture := range []struct{ kind, name string }{{"StatefulSet", "stateful"}, {"DaemonSet", "node-sample"}, {"Job", "completed-job"}, {"CronJob", "scheduled-job"}} {
+			inventory, err := reader.ReadWorkloads(ctx, kube.PageRequest{Connection: ref, Kind: fixture.kind, Namespace: "kubesift-explorer"})
+			if err != nil {
+				t.Fatal(fixture.kind, err)
+			}
+			var target kube.ResourceRef
+			for _, row := range inventory.Items {
+				if row.Resource.Name == fixture.name {
+					target = row.Resource
+					break
+				}
+			}
+			if target.UID == "" {
+				t.Fatalf("%s fixture missing in %s", fixture.kind, suffix)
+			}
+			if controllerUIDs[fixture.kind] == target.UID {
+				t.Fatalf("%s fixture reused a UID across clusters", fixture.kind)
+			}
+			controllerUIDs[fixture.kind] = target.UID
+			detail, err := reader.ReadResource(ctx, kube.DetailRequest{Resource: target})
+			if err != nil || detail.Resource != target {
+				t.Fatalf("%s detail: %v", fixture.kind, err)
+			}
+			doc, err := reader.ReadResourceYAML(ctx, kube.DetailRequest{Resource: target})
+			if err != nil || !strings.Contains(doc.WithoutManagedFields, "kind: "+fixture.kind) {
+				t.Fatalf("%s YAML: %v", fixture.kind, err)
+			}
+			if _, err := reader.ReadResourceEvents(ctx, kube.EventRequest{Resource: target}); err != nil {
+				t.Fatal(fixture.kind, err)
+			}
+			if fixture.kind == "CronJob" {
+				jobs, err := reader.ReadRelatedJobs(ctx, kube.RelatedRequest{Resource: target})
+				if err != nil || jobs.Problem != nil || !jobs.Complete || len(jobs.Items) == 0 {
+					t.Fatalf("CronJob Jobs: %+v %v", jobs, err)
+				}
+				for _, job := range jobs.Items {
+					pods, err := reader.ReadRelatedPods(ctx, kube.RelatedRequest{Resource: job.Resource})
+					if err != nil || pods.Problem != nil || len(pods.Items) == 0 {
+						t.Fatalf("CronJob Job Pods: %+v %v", pods, err)
+					}
+					for _, pod := range pods.Items {
+						if pod.Controller != job.Resource {
+							t.Fatal("incorrect CronJob-owned Job identity")
+						}
+					}
+				}
+			} else {
+				pods, err := reader.ReadRelatedPods(ctx, kube.RelatedRequest{Resource: target})
+				if err != nil || pods.Problem != nil || len(pods.Items) == 0 {
+					t.Fatalf("%s Pods: %+v %v", fixture.kind, pods, err)
+				}
+				for _, pod := range pods.Items {
+					if pod.Controller != target {
+						t.Fatal("incorrect controller identity")
+					}
+				}
+			}
+		}
+
 		page, err := reader.ReadWorkloads(ctx, kube.PageRequest{Connection: ref, Kind: "Pod", Namespace: "kubesift-explorer"})
 		if err != nil {
 			t.Fatal(err)
