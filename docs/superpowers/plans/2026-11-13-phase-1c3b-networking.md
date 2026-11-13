@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Use superpowers:subagent-driven-development only if the user selects delegated execution. Steps use checkbox syntax for tracking.
 
-**Status:** Implemented on the feature branch. See the [validation report](../validation/phase-1c3b.html) for open acceptance checks. Existing checkout only; no worktree.
+**Status:** Implemented in [PR #9](https://github.com/sandjaie/KubeSift/pull/9). See the [validation report](../validation/phase-1c3b.html) for open acceptance checks. Existing checkout only; no worktree.
 
 **Goal:** Deliver read-only networking inspection and Ingress → Service → EndpointSlice → Pod investigation using the approved UI.
 
@@ -81,14 +81,14 @@ Projection fields: Service spec.type/clusterIP/clusterIPs/externalName/externalI
 
 ### Task 5: Agent desktop validation and delivery
 
-- [ ] Inspect existing owned fixtures and reuse Services/Ingresses/NetworkPolicies first. Add only small owned EndpointSlice/IngressClass and policy fixtures needed for gaps on explicit kind-dev-local-a/b. Inventory cluster-scoped fixture names and cleanup ownership. No ingress controller, CNI, cloud load balancer, extra cluster or live traffic probe. Use fake data for difficult status/size cases and identify those tests separately.
+- [x] Inspect existing owned fixtures and reuse Services/Ingresses/NetworkPolicies first. Add only small owned EndpointSlice/IngressClass and policy fixtures needed for gaps on explicit kind-dev-local-a/b. Inventory cluster-scoped fixture names and cleanup ownership. No ingress controller, CNI, cloud load balancer, extra cluster or live traffic probe. Use fake data for difficult status/size cases and identify those tests separately.
 - [x] Add `tests/integration/networking_test.go` under the existing integration build tag/config pattern: `TestNetworkingInvestigation` covers list/detail/YAML/events and relationships with same-named distinct objects on both local contexts and restricted read credentials. Reject external targets. Denied-rights tests use read requests only.
-- [ ] Run `scripts/check.sh`, `wails3 task bindings`, `npm run build`, `go test -race ./internal/kube ./internal/desktop`, then `KUBESIFT_EXPLORER_INTEGRATION=1 KUBESIFT_EXPLORER_CONFIG_DIR=<absolute-owned-config-dir> go test -tags=integration ./tests/integration -run 'TestNetworkingInvestigation|TestWorkloadInvestigation' -count=1`. Build the native package with the documented workflow.
+- [x] Run `scripts/check.sh`, `wails3 task bindings`, `npm run build`, `go test -race ./internal/kube ./internal/desktop`, then `KUBESIFT_EXPLORER_INTEGRATION=1 KUBESIFT_EXPLORER_CONFIG_DIR=<absolute-owned-config-dir> go test -tags=integration ./tests/integration -run 'TestNetworkingInvestigation|TestWorkloadInvestigation' -count=1`. Build the native package with the documented workflow.
 - [ ] Use desktop computer-use tools on that package to verify N01–N10, including both cluster tabs, scope transitions, reference failures, policy readability, exact YAML clipboard contents, keyboard, theme, narrow split and 200% zoom. Record passed, failed and unrun cases with precise build/fixtures. Do not ask the user to repeat completed agent tests; explain any specific agent blocker or subjective question instead.
 - [x] Create one report `docs/superpowers/validation/phase-1c3b.html`; do not create a mandatory user UAT checklist. Keep logs/working screenshots under ignored `.superpowers/sdd/2026-11-13-phase-1c3b/`, curate only necessary durable evidence. Update source descriptions, fixture READMEs, index, UX, roadmap, capability coverage and status after verification.
-- [ ] Obtain independent correctness/hygiene review, resolve issues, rerun affected checks, commit/push the feature branch and prepare a PR. Do not convert outstanding gaps to passes, merge/release or start the next increment without authorization.
+- [x] Obtain independent correctness/hygiene review, resolve issues, rerun affected checks, commit/push the feature branch and prepare a PR. Do not convert outstanding gaps to passes, merge/release or start the next increment without authorization.
 
-Unchecked steps have partial or unrun checks recorded in the validation report. The existing fixtures were reused without writes; the retained CronJob Job prerequisite was absent.
+Unchecked steps have partial or unrun checks recorded in the validation report. The temporary retained Jobs closed the integration prerequisite. The temporary Ingress and IngressClass closed the native class journey.
 
 ## Separate-session prompt
 

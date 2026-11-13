@@ -42,8 +42,8 @@
           restricted identity. The IngressClass list was empty on both clusters.
         </li>
         <li>
-          <strong>Failed:</strong> Combined integration exited nonzero at the existing workload test's retained CronJob Job assertion. The
-          suspended fixture had no retained Job. The test requires a temporary Job documented in the
+          <strong>Initial failure, resolved:</strong> Combined integration exited nonzero at the existing workload test's retained CronJob
+          Job assertion. The suspended fixture had no retained Job. The test requires a temporary Job documented in the
           <a href="../../../tests/integration/README.html">integration setup</a>; it was not created under the read-only constraint. The
           remainder of that test did not run.
         </li>
@@ -54,6 +54,13 @@
         no Job owned by the suspended CronJob on either context and no IngressClass on either context. The workload test stopped at the same
         retained Job assertion. In the reviewed package, keyboard resizing from 52% to 32% preserved the selected EndpointSlices section and
         its owner UID evidence. The split was restored to 52%.
+      </p>
+      <p>
+        With maintainer authorization, both <code>TestNetworkingInvestigation</code> and <code>TestWorkloadInvestigation</code> passed on
+        head <code>5822659</code> using one temporary CronJob-owned Job per context. The packaged app followed the temporary Ingress on A to
+        its explicitly named IngressClass. The class displayed its controller, name resolution, Overview and YAML. Events were absent, the
+        namespace chooser was disabled, and Back restored the original Ingress Overview and <code>kubesift-explorer</code>
+        namespace. Cleanup verified that the labeled Jobs and their Pods, the Ingress and the IngressClass were absent.
       </p>
       <h2>Acceptance coverage</h2>
       <div class="table-scroll">
@@ -72,7 +79,7 @@
                 Five typed lists and scope tests. Native networking navigation, empty cluster-scoped list, disabled chooser, namespaced
                 YAML/Events. Restricted class and Service lists denied without denying allowed Pods.
               </td>
-              <td>Native nonempty class detail and denied class alongside a permitted Ingress.</td>
+              <td>Denied class alongside a permitted Ingress.</td>
             </tr>
             <tr>
               <td>N02</td>
@@ -101,7 +108,7 @@
                 Native Ingress route, absence of class and name-resolved Service. Synthetic class and default backend resolution, wildcard,
                 named port, inert resource and TLS evidence.
               </td>
-              <td>Native IngressClass reference and Back; live legacy class and TLS edge cases.</td>
+              <td>Live legacy class and TLS edge cases.</td>
             </tr>
             <tr>
               <td>N06</td>
@@ -130,10 +137,10 @@
             <tr>
               <td>N09</td>
               <td>
-                Full unit suites; native Pod Logs from the investigation and return through Back. Workload integration reached the CronJob
-                check.
+                Full unit suites; native Pod Logs from the investigation and return through Back. Workload integration passed with the
+                temporary retained Jobs.
               </td>
-              <td>Remaining workload integration and full native workload inventory regression matrix.</td>
+              <td>Full native workload inventory regression matrix.</td>
             </tr>
             <tr>
               <td>N10</td>

@@ -5,8 +5,8 @@ Updated 2026-11-14. Current integration branch is `develop`.
 ## Phase 1C.3b · Read-only networking
 
 - Implemented on `feature/phase-1c3b-networking` from clean develop `816e372`, in the existing checkout. [Specification](../../docs/superpowers/specs/2026-11-13-phase-1c3b-networking-design.md), [plan](../../docs/superpowers/plans/2026-11-13-phase-1c3b-networking.md) and [validation report](../../docs/superpowers/validation/phase-1c3b.html).
-- Repository checks, race tests, networking kind integration with restricted reads and native investigation/Back passed. The existing workload integration stopped at its missing retained CronJob Job fixture; native edge cases remain open in the report. No cluster writes or duplicate manual UAT.
-- Independent review findings on association revalidation, late replies and same-resource reselection were addressed. [PR #9](https://github.com/sandjaie/KubeSift/pull/9) is draft. The 2026-11-14 merge check passed the repository suite and networking integration again, plus the native narrow detail split. Workload integration still requires the retained Job fixture, and native IngressClass navigation remains open. Merge authorization is conditional on verification.
+- Repository checks, targeted race tests, and both networking and workload integration passed on the approved kind contexts. The packaged app passed the Ingress → IngressClass → Back retest. Temporary Jobs, Ingress and IngressClass were removed after validation.
+- Independent review findings were addressed and rechecked. [PR #9](https://github.com/sandjaie/KubeSift/pull/9) carries the implementation and verification record into `develop`. Remaining edge cases are recorded in the validation report.
 
 ## Phase 1C.3a · Remaining workloads
 
