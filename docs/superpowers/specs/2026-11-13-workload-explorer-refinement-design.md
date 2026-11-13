@@ -1,6 +1,6 @@
 # Workload explorer refinement design
 
-**Date:** 2026-11-13. **Status:** Implementation authorized and delivered for validation on the existing Phase 1C.2 feature branch. User acceptance remains pending.
+**Date:** 2026-11-13. **Status:** Merged into develop through PR #7 as `c74940a`. User acceptance remains pending.
 
 ## Intent and decisions
 

@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Use superpowers:subagent-driven-development instead only if the user chooses delegated execution. Steps use checkbox syntax for tracking.
 
-**Status:** Implemented on the existing Phase 1C.2 feature branch. See [technical results and outstanding checks](../validation/workload-explorer-refinement.html). User acceptance is pending.
+**Status:** Merged into develop through PR #7 as `c74940a`. See [technical results and outstanding checks](../validation/workload-explorer-refinement.html). User acceptance is pending.
 
 **Goal:** Implement the accepted detail layouts, preserve workload kind across namespace changes and suppress unwanted linguistic suggestions in technical inputs.
 

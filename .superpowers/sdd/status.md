@@ -1,25 +1,25 @@
 # KubeSift resumable status
 
-Updated 2026-11-13. Active branch: `feature/phase-1c2-workload-investigation`. Work in place; preserve unrelated work.
+Updated 2026-11-13. Current integration branch is `develop`.
 
 - Implemented Phase 1C.2 tasks 1–6 on baseline `b19bff7`, with reviewed implementation at `823a17e`; task 7 validation and handoff have the explicit remaining checks in the [plan](../../docs/superpowers/plans/2026-11-12-phase-1c2-workload-investigation.md).
 - [Technical validation](../../docs/superpowers/validation/phase-1c2.html): full Go tests/vet, targeted race tests, 16 frontend tests, lint/typecheck, bindings/build/package and opt-in integration on explicit kind-dev-local-a/b passed after review corrections.
 - Five independent correctness findings fixed with regression evidence; source-map hygiene finding fixed. Optional export-modifier cleanup deferred.
 - [User UI UAT checklist](../../docs/superpowers/validation/phase-1c2-ui-uat.html): all 15 results Not tested. Delegated native observations, including the passing confirmation retest, and remaining gaps are recorded in the technical report and local ledger. Do not treat agent checks as user acceptance.
 - Preserve approved post-1C.1 UI refinements. No 1C.3, release, provider expansion or lossless-log claim. Version remains 0.3.0.
-- [PR #7](https://github.com/sandjaie/KubeSift/pull/7) is open to develop and unmerged. Leave unmerged pending user UI UAT unless explicitly authorized otherwise.
+- [PR #7](https://github.com/sandjaie/KubeSift/pull/7) merged into `develop` as `c74940a` on 2026-11-13. User UI acceptance results remain pending.
 - Operational logs, review rulings and detailed progress stay archived under ignored `.superpowers/sdd/2026-11-12-phase-1c2-workload-investigation/`.
 
 - Delegated native UI walkthrough recorded in the technical report and local delegated-ui-uat.md. Rebuilt confirmation and relaunch cleanup verified. Remaining fixture and layout coverage is listed in the local ledger.
 
-- UAT refinements verified: first-show work-area sizing, automatic bounded Deployment Pod traversal, removal of Identity & source, and simplified Logs controls without UUID/generation/repeated paths. Native local checks and applicable automated checks passed; see the technical report. PR #7 remains unmerged.
+- UAT refinements verified: first-show work-area sizing, automatic bounded Deployment Pod traversal, removal of Identity & source, and simplified Logs controls without UUID/generation/repeated paths. Native local checks and applicable automated checks passed; see the technical report.
 
-- Live-log UAT refinement on the new Mac: one visible live view, abort on departure, fresh return, full retained-text scrolling, search and window expansion. Product Sessions dock removed. See the updated technical report and UAT checklist. User acceptance remains pending; PR #7 requires explicit merge approval.
+- Live-log UAT refinement on the new Mac: one visible live view, abort on departure, fresh return, full retained-text scrolling, search and window expansion. Product Sessions dock removed. See the updated technical report and UAT checklist. User acceptance remains pending.
 
-- High-volume native test of 3d5cce2 failed at approximately 1,000 lines/s (283 KB/s). WebKit saturated one CPU core and native interaction timed out. Temporary test Pod removed; app relaunched successfully. Root cause and under-load interaction/cleanup remain unresolved. See technical validation.
+- High-volume native test of 3d5cce2 failed at approximately 1,000 lines/s (283 KB/s). WebKit saturated one CPU core and native interaction timed out. Temporary test Pod removed; app relaunched successfully. The fix and same-load retest are recorded below.
 
 - High-volume rendering fix verified at the same 1,000 lines/s, 283 KB/s source. Visible-row rendering and 100 ms notifications passed native search, expansion, scrolling and repeated leave/return; 23 frontend tests and full checks passed. The prior same-load failure is resolved. Paused reading uses one extra bounded snapshot. Longer soak and full accessibility UAT remain pending.
 
 - Workload explorer refinement authorized on the existing Phase 1C.2 feature branch. Approved planning package from develop at 910864d integrated with the reviewed workload and Logs baseline.
 
-- Workload UI refinement and read-only ReplicaSets shipped to the existing Phase 1C.2 feature branch in plan order. [Technical results](../../docs/superpowers/validation/workload-explorer-refinement.html) record automated, two-cluster and packaged native evidence. [User acceptance](../../docs/superpowers/validation/workload-explorer-refinement-ui-uat.html) remains pending. PR #7 stays open to develop.
+- Workload UI refinement and read-only ReplicaSets shipped to the existing Phase 1C.2 feature branch in plan order. [Technical results](../../docs/superpowers/validation/workload-explorer-refinement.html) record automated, two-cluster and packaged native evidence. [User acceptance](../../docs/superpowers/validation/workload-explorer-refinement-ui-uat.html) remains pending.
