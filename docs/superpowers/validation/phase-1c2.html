@@ -247,6 +247,24 @@
         native stress, screen-reader coverage and user UI acceptance remain pending. Earlier validation above describes the prior controls.
         Use the updated <a href="phase-1c2-ui-uat.html">UAT checklist</a> for this build.
       </p>
+      <h2>High-volume native test failed · 2026-11-13</h2>
+      <p>
+        Tested build 3d5cce2 on this Mac using temporary Pod log-volume-uat in kind-dev-local-a / kubesift-explorer. The bounded synthetic
+        source emitted 1,000 lines per second, including UTF-8 text and searchable markers. A ten-second source sample contained 10,000
+        lines and 2,830,000 timestamped bytes.
+      </p>
+      <p>
+        The viewer initially showed Live. The subsequent expand/search interaction exceeded the 30-second native automation timeout. WebKit
+        CPU samples reached 98.6–100% of one core and RSS rose from approximately 196 MiB to 379 MiB. Native accessibility inspection still
+        timed out after the source Pod was removed. These observations establish a responsiveness failure in this test; the precise
+        rendering, accessibility or delivery bottleneck remains unisolated.
+      </p>
+      <p>
+        The temporary Pod was deleted and absence verified. KubeSift was terminated and relaunched; its workspace was accessible again.
+        Search, scrolling, retention-warning visibility and normal tab-leave cleanup under this load remain unverified because the
+        interaction stalled. High-volume readiness is failed, and this supersedes the earlier pending stress-test status. User acceptance
+        remains pending.
+      </p>
     </main>
   </body>
 </html>
