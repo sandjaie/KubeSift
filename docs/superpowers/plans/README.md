@@ -1,5 +1,11 @@
 # Superpowers plans
 
+## Phase 1C.3a · Remaining workloads
+
+- [Specification](../specs/2026-11-13-phase-1c3a-remaining-workloads-design.md): StatefulSets, DaemonSets, Jobs and CronJobs with direct Pod ownership and CronJob → Jobs navigation. Scope accepted; written package for review.
+- [Five-task implementation plan](2026-11-13-phase-1c3a-remaining-workloads.md): typed readers, bounded relationships, existing UI extension, navigation and explicit validation/user UAT.
+- Implementation belongs in a separate authorized session. Use the existing checkout; no worktree. The merged Phase 1C.2 baseline is required; prior user UAT gaps remain separate.
+
 ## Workload refinement · 2026-11-13
 
 The user accepted the visual direction and full ReplicaSets scope and requested a planning-only handoff. The written package awaits review; implementation requires a separate explicit request.

@@ -2,6 +2,14 @@
 
 Updated 2026-11-13. Current integration branch is `develop`.
 
+## Next planning package · Phase 1C.3a
+
+- Scope accepted: read-only StatefulSets, DaemonSets, Jobs and CronJobs. [Specification](../../docs/superpowers/specs/2026-11-13-phase-1c3a-remaining-workloads-design.md) and [implementation plan](../../docs/superpowers/plans/2026-11-13-phase-1c3a-remaining-workloads.md) prepared for review and separate-session implementation.
+- Baseline inspected: develop at dcfea2c. This planning work changes no application code, fixtures or runtime behavior. No implementation, merge, release or later increment is authorized.
+- Use the existing checkout; do not create a worktree. Prior Phase 1C.2 validation and pending user acceptance remain below. Detailed planning review output stays in ignored `.superpowers/sdd/2026-11-13-phase-1c3a/`.
+
+## Phase 1C.2 delivery history
+
 - Implemented Phase 1C.2 tasks 1–6 on baseline `b19bff7`, with reviewed implementation at `823a17e`; task 7 validation and handoff have the explicit remaining checks in the [plan](../../docs/superpowers/plans/2026-11-12-phase-1c2-workload-investigation.md).
 - [Technical validation](../../docs/superpowers/validation/phase-1c2.html): full Go tests/vet, targeted race tests, 16 frontend tests, lint/typecheck, bindings/build/package and opt-in integration on explicit kind-dev-local-a/b passed after review corrections.
 - Five independent correctness findings fixed with regression evidence; source-map hygiene finding fixed. Optional export-modifier cleanup deferred.

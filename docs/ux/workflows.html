@@ -135,6 +135,14 @@
         automatically unhealthy; unavailable/stale health data must be identified. Alerts require evidence, not a decorative badge. Text and
         icons supplement color.
       </p>
+      <h2 id="remaining-workloads">Planned Phase 1C.3a workload views</h2>
+      <p>
+        StatefulSets, DaemonSets and Jobs reuse Overview, YAML, Events and related Pods; CronJobs use Overview, YAML, Events and Jobs. The
+        <a href="../superpowers/specs/2026-11-13-phase-1c3a-remaining-workloads-design.md">1C.3a specification</a> defines exact inventory
+        columns, controller-specific status semantics and CronJob → Job → Pod navigation. Preserve the approved compact resource layout,
+        literal inputs and bounded Back behavior. No controller Logs tab or write actions are introduced. These extensions are planned, not
+        yet implemented.
+      </p>
       <h2 id="workload-refinement">Workload investigation refinement</h2>
       <p>
         Pod and Deployment detail use compact evidence tables, structured Overview facts and a larger read-only YAML surface. Workloads
