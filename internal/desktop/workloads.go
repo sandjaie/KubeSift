@@ -118,3 +118,12 @@ func (s *ExplorerService) OpenPodLogs(req kube.LogRequest) (model.SessionRef, er
 func (s *ExplorerService) ClosePodLogs(ref model.SessionRef) error {
 	return s.core.kube.ClosePodLogs(ref)
 }
+
+func (s *ExplorerService) ReadNetworking(id string, req kube.PageRequest) (kube.NetworkPage, error) {
+	ctx, done, err := s.beginWorkloadRead(id)
+	if err != nil {
+		return kube.NetworkPage{}, err
+	}
+	defer done()
+	return s.core.kube.ReadNetworking(ctx, req)
+}

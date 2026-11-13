@@ -67,6 +67,10 @@ export function OpenPodLogs(req: kube$0.LogRequest): $CancellablePromise<model$0
   return $Call.ByID(1020417316, req);
 }
 
+export function ReadNetworking(id: string, req: kube$0.PageRequest): $CancellablePromise<kube$0.NetworkPage> {
+  return $Call.ByID(2674488666, id, req);
+}
+
 export function ReadPods(ref: model$0.ConnectionRef, $namespace: string): $CancellablePromise<explorer$0.ConnectionView> {
   return $Call.ByID(4095964600, ref, $namespace);
 }

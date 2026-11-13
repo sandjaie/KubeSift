@@ -15,6 +15,8 @@ export type {
   ForwardResult,
   JobSummary,
   LogRequest,
+  NetworkPage,
+  NetworkRow,
   PageInfo,
   PageRequest,
   PodSummary,

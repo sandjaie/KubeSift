@@ -54,6 +54,17 @@ export interface LogRequest {
   tailLines: number;
 }
 
+export interface NetworkPage {
+  items: NetworkRow[] | null;
+  page: PageInfo;
+}
+
+export interface NetworkRow {
+  resource: ResourceRef;
+  createdAt: string | null;
+  objectJSON: string;
+}
+
 export interface PageInfo {
   nextCursor: string;
   resourceVersion: string;

@@ -14,6 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/yaml"
 	"time"
@@ -38,11 +39,21 @@ func workloadVersion(kind string) string {
 }
 
 func validResource(ref ResourceRef) error {
-	if err := target(model.Target{Namespace: ref.Namespace, Name: ref.Name}, false); err != nil {
+	if ref.UID == "" {
+		return model.Fail("invalid", "Explicit resource UID required")
+	}
+	return validResourceAddress(ref)
+}
+func validResourceAddress(ref ResourceRef) error {
+	if err := resourceScope(ref.Kind, ref.Namespace); err != nil {
 		return err
 	}
-	if ref.UID == "" || len(ref.UID) > 128 || workloadVersion(ref.Kind) == "" || ref.APIVersion != workloadVersion(ref.Kind) {
-		return model.Fail("invalid", "Explicit workload identity required")
+	version := workloadVersion(ref.Kind)
+	if version == "" {
+		version = networkVersion(ref.Kind)
+	}
+	if len(validation.IsDNS1123Subdomain(ref.Name)) != 0 || len(ref.UID) > 128 || version == "" || version != ref.APIVersion {
+		return model.Fail("invalid", "Explicit resource identity required")
 	}
 	return nil
 }
@@ -50,6 +61,10 @@ func checkedObject(ctx context.Context, client kubernetes.Interface, ref Resourc
 	if err := validResource(ref); err != nil {
 		return nil, err
 	}
+	return getResource(ctx, client, ref)
+}
+func getResource(ctx context.Context, client kubernetes.Interface, ref ResourceRef) (workloadObject, error) {
+
 	var object workloadObject
 	var err error
 	switch ref.Kind {
@@ -67,12 +82,25 @@ func checkedObject(ctx context.Context, client kubernetes.Interface, ref Resourc
 		object, err = client.BatchV1().Jobs(ref.Namespace).Get(ctx, ref.Name, metav1.GetOptions{})
 	case "CronJob":
 		object, err = client.BatchV1().CronJobs(ref.Namespace).Get(ctx, ref.Name, metav1.GetOptions{})
+	case "NetworkPolicy":
+		object, err = client.NetworkingV1().NetworkPolicies(ref.Namespace).Get(ctx, ref.Name, metav1.GetOptions{})
+	case "IngressClass":
+		object, err = client.NetworkingV1().IngressClasses().Get(ctx, ref.Name, metav1.GetOptions{})
+	case "Ingress":
+		object, err = client.NetworkingV1().Ingresses(ref.Namespace).Get(ctx, ref.Name, metav1.GetOptions{})
+	case "EndpointSlice":
+		object, err = client.DiscoveryV1().EndpointSlices(ref.Namespace).Get(ctx, ref.Name, metav1.GetOptions{})
+	case "Service":
+		object, err = client.CoreV1().Services(ref.Namespace).Get(ctx, ref.Name, metav1.GetOptions{})
 	}
 
 	if err != nil {
 		return nil, readError(ctx, err)
 	}
-	if string(object.GetUID()) != ref.UID {
+	if networkVersion(ref.Kind) != "" && (object.GetName() != ref.Name || object.GetNamespace() != ref.Namespace || object.GetUID() == "") {
+		return nil, model.Fail("invalid", "Server did not return the requested resource identity")
+	}
+	if ref.UID != "" && string(object.GetUID()) != ref.UID {
 		return nil, model.Fail("resource_replaced", "Resource replaced; select again")
 	}
 	object.GetObjectKind().SetGroupVersionKind(schema.FromAPIVersionAndKind(ref.APIVersion, ref.Kind))
@@ -81,15 +109,18 @@ func checkedObject(ctx context.Context, client kubernetes.Interface, ref Resourc
 func checkPayload(value any) error {
 	raw, err := json.Marshal(value)
 	if err != nil {
-		return model.Fail("failed", "Cannot encode workload evidence")
+		return model.Fail("failed", "Cannot encode resource evidence")
 	}
 	if len(raw) > detailLimit {
-		return model.Fail("capacity", "Workload evidence exceeds the 2 MiB size limit")
+		return model.Fail("capacity", "Resource evidence exceeds the 2 MiB size limit")
 	}
 	return nil
 }
 func (s *Service) ReadResource(ctx context.Context, req DetailRequest) (ResourceDetail, error) {
 	result := ResourceDetail{}
+	if err := validResource(req.Resource); err != nil {
+		return result, err
+	}
 	client, err := s.boundedReadClient(ctx, req.Resource.Connection)
 	if err != nil {
 		return result, err
@@ -103,7 +134,7 @@ func (s *Service) ReadResource(ctx context.Context, req DetailRequest) (Resource
 	}
 	raw, err := json.Marshal(object)
 	if err != nil {
-		return result, model.Fail("failed", "Cannot encode workload")
+		return result, model.Fail("failed", "Cannot encode resource")
 	}
 	result = ResourceDetail{Resource: req.Resource, ResourceVersion: object.GetResourceVersion(), FetchedAt: time.Now().UTC(), ObjectJSON: string(raw)}
 	if job, ok := object.(*batch.Job); ok {
@@ -116,6 +147,9 @@ func (s *Service) ReadResource(ctx context.Context, req DetailRequest) (Resource
 }
 func (s *Service) ReadResourceYAML(ctx context.Context, req DetailRequest) (YAMLDocument, error) {
 	result := YAMLDocument{}
+	if err := validResource(req.Resource); err != nil {
+		return result, err
+	}
 	client, err := s.boundedReadClient(ctx, req.Resource.Connection)
 	if err != nil {
 		return result, err
@@ -129,21 +163,21 @@ func (s *Service) ReadResourceYAML(ctx context.Context, req DetailRequest) (YAML
 	}
 	raw, err := json.Marshal(object)
 	if err != nil {
-		return result, model.Fail("failed", "Cannot encode workload")
+		return result, model.Fail("failed", "Cannot encode resource")
 	}
 	with, err := yaml.JSONToYAML(raw)
 	if err != nil {
-		return result, model.Fail("failed", "Cannot serialize workload YAML")
+		return result, model.Fail("failed", "Cannot serialize resource YAML")
 	}
 	copy := object.DeepCopyObject().(workloadObject)
 	copy.SetManagedFields(nil)
 	raw, err = json.Marshal(copy)
 	if err != nil {
-		return result, model.Fail("failed", "Cannot encode workload")
+		return result, model.Fail("failed", "Cannot encode resource")
 	}
 	without, err := yaml.JSONToYAML(raw)
 	if err != nil {
-		return result, model.Fail("failed", "Cannot serialize workload YAML")
+		return result, model.Fail("failed", "Cannot serialize resource YAML")
 	}
 	result = YAMLDocument{Resource: req.Resource, ResourceVersion: object.GetResourceVersion(), FetchedAt: time.Now().UTC(), WithoutManagedFields: string(without), WithManagedFields: string(with)}
 	if err = checkPayload(result); err != nil {
