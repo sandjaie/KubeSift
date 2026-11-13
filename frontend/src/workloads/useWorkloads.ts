@@ -9,10 +9,17 @@ import type { ConnectionRef } from "../bridge";
 import { message } from "../connections/api";
 import { readRequest, workloadAPI as api } from "./api";
 import { canAutoRefresh, emptyKind, initialWorkloads, reduceWorkloads, kindScope, relatedHistory, type Action } from "./state";
-import { inventoryNamespace, isWorkloadKind, isResourceKind } from "./model";
+import { inventoryNamespace, isWorkloadKind, isResourceKind, isClusterScoped, resourceSections } from "./model";
+import { isConfigurationKind, type ConfigurationPage, type NamespaceDestination } from "../configuration/model";
 import type { NetworkPage } from "../networking/model";
 import type { Evidence, ResourceKind, KindState, Section, WorkloadPage, NavigationEntry, ResourceRef, ResourceDetail } from "./model";
-export function useWorkloads(tabID: string, connection: ConnectionRef | null, namespace: string, visible: boolean) {
+export function useWorkloads(
+  tabID: string,
+  connection: ConnectionRef | null,
+  namespace: string,
+  visible: boolean,
+  onNamespace: (tab: string, namespace: string) => void,
+) {
   const [state, setState] = useState(initialWorkloads);
   const current = useRef(state);
   const serial = useRef(0);
@@ -30,7 +37,7 @@ export function useWorkloads(tabID: string, connection: ConnectionRef | null, na
   const clusterScope = connection ? JSON.stringify([connection.id, connection.generation]) : "";
   const kind = state[tabID]?.kind ?? "Pod";
   const targetNamespace = inventoryNamespace(kind, namespace);
-  const scope = kind === "IngressClass" ? clusterScope : namespaceScope;
+  const scope = isClusterScoped(kind) ? clusterScope : namespaceScope;
   const tab = state[tabID];
   const t = tab && kindScope(tab, kind) === scope ? tab : null;
   const inventory = t?.kinds[kind] ?? emptyKind();
@@ -42,6 +49,20 @@ export function useWorkloads(tabID: string, connection: ConnectionRef | null, na
     setNavigationError("");
     return cancelNavigation;
   }, [tabID, namespaceScope, visible]);
+  useLayoutEffect(() => {
+    if (!visible || !tabID) return;
+    return () => {
+      const currentTab = current.current[tabID];
+      if (currentTab)
+        commit({
+          type: "patch",
+          tab: tabID,
+          scope: kindScope(currentTab, "ConfigMap"),
+          kind: "ConfigMap",
+          patch: { sections: { ...currentTab.kinds.ConfigMap.sections, Data: undefined }, sectionEpoch: ++serial.current },
+        });
+    };
+  }, [tabID, visible, commit]);
   useEffect(() => {
     if (tabID) commit({ type: "scope", tab: tabID, scope: namespaceScope, clusterScope });
   }, [tabID, namespaceScope, clusterScope, commit]);
@@ -49,9 +70,10 @@ export function useWorkloads(tabID: string, connection: ConnectionRef | null, na
     if (!visible || !connection || !t) return;
     const epoch = ++serial.current;
     commit({ type: "patch", tab: tabID, scope, kind, patch: { epoch, loading: true, error: "" } });
-    const request = readRequest<WorkloadPage | NetworkPage>((id) => {
+    const request = readRequest<WorkloadPage | NetworkPage | ConfigurationPage>((id) => {
       const req = { connection, namespace: targetNamespace, kind, cursor };
-      return isWorkloadKind(kind) ? api.ReadWorkloads(id, req) : api.ReadNetworking(id, req);
+      if (isWorkloadKind(kind)) return api.ReadWorkloads(id, req);
+      return isConfigurationKind(kind) ? api.ReadConfiguration(id, req) : api.ReadNetworking(id, req);
     });
     let active = true;
     void request.promise
@@ -86,7 +108,7 @@ export function useWorkloads(tabID: string, connection: ConnectionRef | null, na
     // Scope is the stable immutable connection/namespace identity.
   }, [tabID, scope, kind, cursor, inventory.refresh, visible, !!t, commit]);
   useEffect(() => {
-    if (!visible || !selected || section === "Logs") return;
+    if (!visible || !selected || section === "Logs" || !resourceSections(kind).includes(section)) return;
     const epoch = ++serial.current;
     const existing = current.current[tabID]?.kinds[kind].sections ?? {};
     commit({
@@ -96,7 +118,10 @@ export function useWorkloads(tabID: string, connection: ConnectionRef | null, na
       kind,
       patch: {
         sectionEpoch: epoch,
-        sections: { ...existing, [section]: { loading: true, error: "", data: existing[section]?.data ?? null } },
+        sections: {
+          ...existing,
+          [section]: { loading: true, error: "", data: section === "Data" ? null : (existing[section]?.data ?? null) },
+        },
       },
     });
     const resource = selected.resource;
@@ -107,7 +132,7 @@ export function useWorkloads(tabID: string, connection: ConnectionRef | null, na
       if (section === "ReplicaSets") return api.ReadRelatedReplicaSets(id, { resource, cursor: inventory.sectionCursor });
       if (section === "Jobs") return api.ReadRelatedJobs(id, { resource, cursor: inventory.sectionCursor });
       if (section === "Pods") return api.ReadRelatedPods(id, { resource, cursor: inventory.sectionCursor });
-      return api.ReadResource(id, { resource });
+      return api.ReadResource(id, { resource, includeConfigMapData: section === "Data" });
     });
     let active = true;
     const finish = (data: Evidence | null, error: string) => {
@@ -123,7 +148,9 @@ export function useWorkloads(tabID: string, connection: ConnectionRef | null, na
         patch: { sections: { ...sections, [section]: { data, error, loading: false } } },
       });
     };
-    void request.promise.then((data) => finish(data, "")).catch((e) => finish(existing[section]?.data ?? null, message(e)));
+    void request.promise
+      .then((data) => finish(data, ""))
+      .catch((e) => finish(section === "Data" ? null : (existing[section]?.data ?? null), message(e)));
     return () => {
       active = false;
       request.cancel();
@@ -211,25 +238,43 @@ export function useWorkloads(tabID: string, connection: ConnectionRef | null, na
     activeSection: section,
     sections: inventory.sections,
     back: t?.navigation[t.navigation.length - 1],
-    clusterScoped: kind === "IngressClass",
+    clusterScoped: isClusterScoped(kind),
     navigationError,
     patch,
     selectResource,
     selectKind: (kind: ResourceKind) => {
       cancelNavigation();
       setNavigationError("");
-      commit({ type: "kind", tab: tabID, kind });
+      commit({ type: "kind", tab: tabID, kind, epoch: ++serial.current });
     },
     selectSection: (section: Section) => {
       cancelNavigation();
       setNavigationError("");
       commit({ type: "section", tab: tabID, section, epoch: ++serial.current });
     },
-    refresh: () => patch({ history: [""], refresh: inventory.refresh + 1 }),
+    refresh: () => {
+      cancelNavigation();
+      setNavigationError("");
+      patch({
+        history: [""],
+        refresh: inventory.refresh + 1,
+        ...(section === "Data"
+          ? {
+              sections: { ...inventory.sections, Data: undefined },
+              sectionEpoch: ++serial.current,
+              sectionRefresh: inventory.sectionRefresh + 1,
+            }
+          : {}),
+      });
+    },
     refreshSection: () => {
       cancelNavigation();
       setNavigationError("");
-      patch({ sectionCursor: "", sectionRefresh: inventory.sectionRefresh + 1 });
+      patch({
+        sectionCursor: "",
+        sectionRefresh: inventory.sectionRefresh + 1,
+        ...(section === "Data" ? { sections: { ...inventory.sections, Data: undefined }, sectionEpoch: ++serial.current } : {}),
+      });
     },
     next: () => commit({ type: "next", tab: tabID, cursor: inventory.page?.page.nextCursor ?? "" }),
     previous: () => patch({ history: inventory.history.length > 1 ? inventory.history.slice(0, -1) : inventory.history }),
@@ -250,6 +295,40 @@ export function useWorkloads(tabID: string, connection: ConnectionRef | null, na
             result.identityEvidence === "uid-verified" ? "Referenced UID verified" : "Resolved by name at open time",
             true,
           ),
+      );
+    },
+    openConfigurationReference: (source: ResourceDetail, target: ResourceRef) => {
+      if (
+        !selected ||
+        section !== "Overview" ||
+        selected.resource.uid !== source.resource.uid ||
+        source.resource.kind !== "Pod" ||
+        !canOpen(target)
+      )
+        return;
+      navigationRequest(
+        (id) => api.ResolveConfigurationReference(id, { source: source.resource, sourceVersion: source.resourceVersion, target }),
+        (result) => openFromSelection(result.resource, "Resolved by name at open time", true),
+      );
+    },
+    browseNamespace: (source: ResourceDetail, destination: NamespaceDestination) => {
+      if (
+        !selected ||
+        section !== "Overview" ||
+        source.resource.kind !== "Namespace" ||
+        selected.resource.uid !== source.resource.uid ||
+        !canOpen(source.resource)
+      )
+        return;
+      navigationRequest(
+        (id) => api.ReadResource(id, { resource: source.resource }),
+        () => {
+          const nextNamespace = source.resource.name;
+          const nextScope = JSON.stringify([source.resource.connection.id, source.resource.connection.generation, nextNamespace]);
+          commit({ type: "scope", tab: tabID, scope: nextScope, clusterScope });
+          commit({ type: "kind", tab: tabID, kind: destination });
+          onNamespace(tabID, nextNamespace);
+        },
       );
     },
     openServiceSlice: (sourceVersion: string, target: ResourceRef) => {

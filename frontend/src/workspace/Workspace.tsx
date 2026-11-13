@@ -12,6 +12,8 @@ import type { ConnectionTab } from "../connections/model";
 import { visibleState } from "../connections/state";
 import { ResourceNavigation } from "./ResourceNavigation";
 import { isNetworkKind, networkLabels, type NetworkRow } from "../networking/model";
+import { ConfigurationTable } from "../configuration/ConfigurationTable";
+import { configurationLabels, isConfigurationKind, type ConfigurationRow } from "../configuration/model";
 import { NetworkTable } from "../networking/NetworkTable";
 import type { WorkloadRow } from "../workloads/model";
 import { ResourceTable } from "./ResourceTable";
@@ -42,7 +44,7 @@ export function Workspace({
 }) {
   const i = c.inventory,
     kind = c.kind;
-  const label = isNetworkKind(kind) ? networkLabels[kind] : `${kind}s`;
+  const label = isNetworkKind(kind) ? networkLabels[kind] : isConfigurationKind(kind) ? configurationLabels[kind] : `${kind}s`;
   const stale = tab.pollFailed || visibleState(tab.view) !== "connected";
   const rows = [...(i.page?.items ?? [])]
     .filter((row) => row.resource.name.toLowerCase().includes(i.filter.toLowerCase()))
@@ -86,6 +88,7 @@ export function Workspace({
             <div className="pane-heading">
               <h2>{label}</h2>
               {c.clusterScoped && <span className="muted">Cluster-scoped</span>}
+              {kind === "Secret" && <span className="muted">Metadata only</span>}
               <span className="muted">{rows.length} shown</span>
               <button disabled={!tab.view?.ref || i.loading} onClick={c.refresh}>
                 ↻ Refresh
@@ -128,6 +131,13 @@ export function Workspace({
               isNetworkKind(kind) ? (
                 <NetworkTable
                   rows={rows as NetworkRow[]}
+                  kind={kind}
+                  selected={c.selection?.resource.uid ?? null}
+                  onSelect={c.selectResource}
+                />
+              ) : isConfigurationKind(kind) ? (
+                <ConfigurationTable
+                  rows={rows as ConfigurationRow[]}
                   kind={kind}
                   selected={c.selection?.resource.uid ?? null}
                   onSelect={c.selectResource}

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Phase 1C.3c validation · KubeSift</title>
+    <link rel="stylesheet" href="../../assets/planning.css" />
+    <script src="../../assets/theme.js"></script>
+  </head>
+  <body>
+    <header>
+      <a href="../../index.html">KubeSift / Planning</a>
+      <h1>Phase 1C.3c validation</h1>
+      <p>Namespace policy and configuration</p>
+    </header>
+    <main id="content">
+      <p>
+        Baseline <code>11dbae3</code>. See the <a href="../specs/2026-11-14-phase-1c3c-configuration-design.md">specification</a> and
+        <a href="../plans/2026-11-14-phase-1c3c-configuration.md">implementation plan</a>. Native verification used the arm64 KubeSift 0.3.0
+        app on macOS 27.0.1. Initial package SHA-256 <code>64e6074ea9c3370f9248d7d259a33a34a219699d8e5cb28112fcc11517597351</code>.
+      </p>
+      <h2>Verification</h2>
+      <ul>
+        <li>
+          Passed configuration, networking and workload integration on explicit <code>kind-dev-local-a</code> and
+          <code>kind-dev-local-b</code>. The synthetic restricted identity could list ConfigMaps while Namespace and Secret lists were
+          denied.
+        </li>
+        <li>
+          Passed native Namespace → ConfigMaps, ResourceQuotas and LimitRanges. The chooser was disabled in Namespace inventory and the
+          selected namespace was applied by explicit browse.
+        </li>
+        <li>
+          Passed native Pod → ConfigMap Data → Back and Pod → Secret Overview → Back. The Secret pane exposed only identity and Overview.
+          Pod Logs reopened after Back.
+        </li>
+        <li>
+          Native text and base64 copy showed success, and the view displayed Unicode, hostile markup literally, and an empty value.
+          Switching Settings and cluster tabs cleared the selected value. A keyboard-narrowed 32% detail split retained the key table.
+        </li>
+        <li>Repository checks, 45 frontend tests, Go race tests, bindings and production package passed.</li>
+        <li>
+          The native clipboard matched the exact synthetic multiline string including the final newline, and canonical base64. The Data tab
+          and Copy control remained accessible after twenty native five-percentage-point Zoom In commands from Actual Size. Actual Size was
+          restored afterward.
+        </li>
+        <li>
+          The final package, SHA-256 <code>e63b70ce1bf81dce0d318805a572ea74921e2146f2d8e10a0c1a5d19216737ed</code>, passed the live Secret
+          inventory and metadata Overview retest, and ConfigMap Data refresh cleared the selected value before Back restored the Pod.
+        </li>
+      </ul>
+      <h2>Coverage limits</h2>
+      <p>
+        Synthetic tests cover representation rejection, body caps, cancellation, scope, stale and forged references, and missing versus
+        zero. Native rare status, quota/limit edge cases and failure injection are outside the exercised desktop journeys. Older networking
+        compatibility gaps remain in the
+        <a href="phase-1c3b.html">Phase 1C.3b validation report</a>.
+      </p>
+      <h2>Independent review</h2>
+      <p>
+        Reviewer <code>configuration_pr_review</code> reviewed the full feature delta at <code>6937b5a</code> against develop
+        <code>11dbae3</code>, excluding concurrent planning-site work. On phase-only head <code>c52ba4b</code>, the reviewer confirmed
+        KSF-001 was fixed. Back, kind changes and refresh now invalidate the outgoing ConfigMap Data and reject late results. On
+        <code>afbfd63</code>, the reviewer confirmed the production fix for KSF-002. The strict Secret metadata envelope now rejects
+        mislabeled full-shaped bodies while discarding arbitrary nested metadata. KSF-003 identified a test import typo, corrected before
+        the final suite and targeted recheck.
+      </p>
+    </main>
+  </body>
+</html>

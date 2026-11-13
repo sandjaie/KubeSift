@@ -25,4 +25,9 @@
     clusters. The Ingress has no controller. These fixtures exercise configuration and reference identity; they supply no traffic or
     enforcement evidence. The restricted pod-reader identity is reused without expanding its permissions.
   </p>
+  <p>
+    Phase 1C.3c uses phase-1c3c.yaml in the separate kubesift-config-check namespace on approved kind contexts. It owns synthetic policy,
+    configuration, Pod references and a ConfigMap-only reader. The Secret contains synthetic sentinels. Remove the owned namespace after
+    verification and leave the existing explorer namespaces in place.
+  </p>
 </html>

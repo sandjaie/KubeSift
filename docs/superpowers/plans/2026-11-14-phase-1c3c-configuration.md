@@ -35,9 +35,9 @@
 **Interfaces:** `ConfigurationRow { Resource ResourceRef; CreatedAt *time.Time; ObjectJSON string }`, `ConfigurationPage { Items []ConfigurationRow; Page PageInfo }`. `ReadConfiguration(ctx context.Context, req PageRequest) (ConfigurationPage, error)` and desktop `ReadConfiguration(id string, req kube.PageRequest) (kube.ConfigurationPage, error)`. ObjectJSON is an explicit inventory projection: namespace phase; quota resource count/scope summary; limit item types; ConfigMap key counts/immutable; empty object for Secret. Reuse ResourceDetail for detail projections, adding a Secret-specific dispatch before any typed read. Private `readSecretMetadata(ctx context.Context, ref ResourceRef) (ResourceDetail, error)` and `listSecretMetadata(ctx context.Context, req PageRequest) (ConfigurationPage, error)` must enforce the spec's strict transport contract and bounds.
 
 - [ ] Add failing tests for all five kinds and scopes; wrong API/kind, empty namespace, invalid UID, denied get/list, replaced object, expired/mixed cursor and empty page with continuation. Tests assert inventory projection excludes ConfigMap data/binaryData and arbitrary Secret metadata.
-- [ ] Add HTTP fixture tests asserting partial-only Accept negotiation for list/get, expected response kind/group, cancellation/body cap and safe errors. Assert 406 and full Secret responses cause an error and no second request; annotations with synthetic content never enter DTOs. Assert direct Secret YAML and Events calls reject without I/O, and unsupported Namespace Events do not enumerate all namespaces.
-- [ ] Run `go test ./internal/kube ./internal/desktop` and confirm new tests fail on missing contracts/behavior; implement bounded configuration reads, strict Secret metadata transport and explicit kind/scope dispatch. Keep Secret value-bearing types out of the new reader. Reuse authenticated configuration and bounded transport without changing stream behavior.
-- [ ] Extend Overview/YAML for Namespace, quota, limit and ConfigMap; Events only for the three permitted namespaced kinds. Capture UID/version/time; verify response identity and cap every bridge response. Preserve raw quantity strings and absent fields.
+- [x] Add HTTP fixture tests asserting partial-only Accept negotiation for list/get, expected response kind/group, cancellation/body cap and safe errors. Assert 406 and full Secret responses cause an error and no second request; annotations with synthetic content never enter DTOs. Assert direct Secret YAML and Events calls reject without I/O, and unsupported Namespace Events do not enumerate all namespaces.
+- [x] Run `go test ./internal/kube ./internal/desktop` and confirm new tests fail on missing contracts/behavior; implement bounded configuration reads, strict Secret metadata transport and explicit kind/scope dispatch. Keep Secret value-bearing types out of the new reader. Reuse authenticated configuration and bounded transport without changing stream behavior.
+- [x] Extend Overview/YAML for Namespace, quota, limit and ConfigMap; Events only for the three permitted namespaced kinds. Capture UID/version/time; verify response identity and cap every bridge response. Preserve raw quantity strings and absent fields.
 - [ ] Run Go tests and `go vet ./...`; regenerate `wails3 task bindings` and run `npm run typecheck`. Inspect generated changes and commit this deliverable. Do not launch a per-task review.
 
 ## Task 2 — Pod references and scope routing (C02, C07)
@@ -47,10 +47,10 @@
 
 **Interfaces:** `ConfigurationReferenceRequest { Source ResourceRef; SourceVersion string; Target ResourceRef }`; `ResolvedConfigurationReference { Resource ResourceRef; IdentityEvidence string }`; `ResolveConfigurationReference(ctx context.Context, req ConfigurationReferenceRequest) (ResolvedConfigurationReference, error)` plus desktop `(id string, req ...)`. Source is Pod only. Return identity evidence `name-resolved`; optional supplied target UID is checked. Namespace browse uses an explicit fresh `ReadResource(DetailRequest)` UID check before routing; it is not this Pod resolver.
 
-- [ ] Test every allowed env/envFrom/volume/projected/imagePullSecrets reference across regular/init/ephemeral containers, duplicate targets and optional/key references. Assert no GET for disallowed plugin/CSI references, wrong connection/namespace/API, removed reference, stale source UID/version or forged target.
-- [ ] Test missing/forbidden target, supplied target UID mismatch and Secret target metadata-only transport; capture current UID for name-only references. Do not test key presence by fetching Secret data.
-- [ ] Run tests to demonstrate failures, then implement source revalidation and field allowlist before target resolution. Share existing identity conventions without widening the networking resolver.
-- [ ] Regenerate bindings, add frontend API wrapper and cancellation; run `go test ./internal/kube ./internal/desktop`, targeted race tests and typecheck. Commit reference contracts.
+- [x] Test every allowed env/envFrom/volume/projected/imagePullSecrets reference across regular/init/ephemeral containers, duplicate targets and optional/key references. Assert no GET for disallowed plugin/CSI references, wrong connection/namespace/API, removed reference, stale source UID/version or forged target.
+- [x] Test missing/forbidden target, supplied target UID mismatch and Secret target metadata-only transport; capture current UID for name-only references. Do not test key presence by fetching Secret data.
+- [x] Run tests to demonstrate failures, then implement source revalidation and field allowlist before target resolution. Share existing identity conventions without widening the networking resolver.
+- [x] Regenerate bindings, add frontend API wrapper and cancellation; run `go test ./internal/kube ./internal/desktop`, targeted race tests and typecheck. Commit reference contracts.
 
 ## Task 3 — Configuration and namespace views (C02–C06)
 
@@ -59,10 +59,10 @@
 
 **Interfaces:** `ConfigurationTable({ rows: ConfigurationRow[], kind, selected, onSelect })` follows NetworkTable's selection contract. `ConfigurationOverview({ data: ResourceDetail, onBrowseNamespace: (kind: "ConfigMap" | "ResourceQuota" | "LimitRange") => void })`. `ConfigMapData({ data: ResourceDetail })` owns only local key selection/filter/page/wrap/copy state and resets when resource UID/version changes. Secret kind renders solely its allowlisted metadata, never generic metadata grids.
 
-- [ ] Write rendering/projection tests for the spec tables: quota union of spec/status keys and missing/zero distinction; limit item boundaries; Namespace conditions/finalizers; metadata-only Secret with no hidden reveal/YAML affordance.
+- [x] Write rendering/projection tests for the spec tables: quota union of spec/status keys and missing/zero distinction; limit item boundaries; Namespace conditions/finalizers; metadata-only Secret with no hidden reveal/YAML affordance.
 - [ ] Test ConfigMap text/binary/empty data, Unicode byte length, multiline exact copy, literal hostile strings, >100 keys, filtered-page reset and state clear on changed UID/version. Do not introduce snapshot tests that merely duplicate markup.
-- [ ] Run `npm test` to confirm meaningful failures, implement the tables and structured views using existing tokens/components. Values remain inert and selectable; binary is base64 only. No inventory value prefetch or persistent cache.
-- [ ] Run frontend tests, lint, typecheck and build; update the source description and commit the views.
+- [x] Run `npm test` to confirm meaningful failures, implement the tables and structured views using existing tokens/components. Values remain inert and selectable; binary is base64 only. No inventory value prefetch or persistent cache.
+- [x] Run frontend tests, lint, typecheck and build; update the source description and commit the views.
 
 ## Task 4 — Explorer integration and retained state (C01, C02, C07–C09)
 
@@ -71,21 +71,23 @@
 **Interfaces:** extend ResourceKind with the five new kinds and Section with `Data`. Inventory page union adds ConfigurationPage. `Data` consumes a captured ResourceDetail for ConfigMap only. Existing Reference/Back navigation remains authoritative; the configuration resolver supplies the same captured ResourceRef shape. Namespace browse callbacks validate source UID, then route selected namespace/kind while preserving independent cluster/tab state.
 
 - [ ] Add reducer tests for every new kind/section, namespace changes retaining kind, cluster Namespace independence, related target absent from inventory page, stale success/error and source-version invalidation. Cover cancellation on namespace/tab/selection/refresh, ConfigMap Data clearing and Back to original Pod section/position.
-- [ ] Add Pod reference projection tests from captured ObjectJSON: correct location/key/optional fields, no unsupported references and no background API calls. Duplicate reference locations stay visible without duplicate speculative reads.
-- [ ] Wire registry, inventory dispatch, conditional tabs and components. Add compact Pod references with on-click resolver and local error behavior. Secret direct section attempts remain blocked by both UI and backend.
-- [ ] Run `npm test`, lint, typecheck/build and Go tests for bridge contracts; verify existing workloads/networking/Logs state tests still pass. Update touched source maps and commit integration.
+- [x] Add Pod reference projection tests from captured ObjectJSON: correct location/key/optional fields, no unsupported references and no background API calls. Duplicate reference locations stay visible without duplicate speculative reads.
+- [x] Wire registry, inventory dispatch, conditional tabs and components. Add compact Pod references with on-click resolver and local error behavior. Secret direct section attempts remain blocked by both UI and backend.
+- [x] Run `npm test`, lint, typecheck/build and Go tests for bridge contracts; verify existing workloads/networking/Logs state tests still pass. Update touched source maps and commit integration.
 
 ## Task 5 — Full verification, one PR review and delivery (C01–C10)
 
 **Create:** `tests/integration/configuration_test.go`, owned configuration fixtures under `tests/fixtures/explorer/`, `docs/superpowers/validation/phase-1c3c.html`.
 **Modify:** fixture/integration READMEs, owning capability/UX docs, permanent plan checkboxes and `.superpowers/sdd/status.md` after actual results.
 
-- [ ] Add opt-in `TestConfigurationInvestigation` following networking_test.go's isolated config and loopback/context validation. Use only explicit kind-dev-local-a/b. Create owned isolated namespace quota/limit fixtures, synthetic ConfigMap/Secret/Pod references and restricted credentials using existing local setup. Do not install infrastructure or disturb existing workloads.
-- [ ] Exercise real metadata negotiation, inventory/detail/UID checks, forbidden reads independent of other resources, scope routing and Pod references on both clusters. Keep mock-only full-response/406/status/cap cases identified separately. Cleanup only owned objects after capturing synthetic evidence.
+- [x] Add opt-in `TestConfigurationInvestigation` following networking_test.go's isolated config and loopback/context validation. Use only explicit kind-dev-local-a/b. Create owned isolated namespace quota/limit fixtures, synthetic ConfigMap/Secret/Pod references and restricted credentials using existing local setup. Do not install infrastructure or disturb existing workloads.
+- [x] Exercise real metadata negotiation, inventory/detail/UID checks, forbidden reads independent of other resources, scope routing and Pod references on both clusters. Keep mock-only full-response/406/status/cap cases identified separately. Cleanup only owned objects after capturing synthetic evidence.
 - [ ] Run `scripts/check.sh`, `go test -race ./internal/kube ./internal/desktop`, `wails3 task bindings`, `npm run build`, and the existing opt-in integration command with the isolated configuration directory and new `TestConfigurationInvestigation` selector. Run workload/networking integration regressions too. Consult tests/integration/README.html for exact opt-in variables; do not substitute current kubeconfig context.
-- [ ] Package with `wails3 task package`; use desktop computer use to verify C10 on that exact app, including Secret absent actions, explicit namespace routes, exact text/base64 copy, 200% zoom and rapid tab/scope changes. Record passed/failed/unrun checks honestly in one report; do not generate a duplicate mandatory user UAT checklist. Existing unrelated unrun checks remain named gaps.
+- [x] Package with `wails3 task package`; use desktop computer use to verify C10 on that exact app, including Secret absent actions, explicit namespace routes, exact text/base64 copy, 200% zoom and rapid tab/scope changes. Record passed/failed/unrun checks honestly in one report; do not generate a duplicate mandatory user UAT checklist. Existing unrelated unrun checks remain named gaps.
 - [ ] Update owning documents with implemented coverage and limits, preserving “planned” for deferred kinds. Record progress in `.superpowers/sdd/status.md`, task completion here and verification in the validation report. Change the roadmap only if scope, sequence, dependencies or exit criteria change; do not add delivery status there. Commit candidate; dispatch one fresh reviewer with the full candidate commit range, this spec/plan and actual evidence using `kubesift-code-review`. Fix confirmed findings, rerun affected checks and obtain targeted rechecks of the new head. Record reviewer identity, reviewed SHAs and dispositions; no review after each earlier task.
 - [ ] Push the feature branch, create/mark ready the PR into develop with the completed template, satisfy actual required checks/approvals and squash-merge under standing authorization. Verify merge before marking integrated; clean up source branch only if it has no ongoing work. Report PR, merge, evidence and limitations. Do not release or start 1C.3d.
+
+Unchecked steps have pending or partial evidence in the [validation report](../validation/phase-1c3c.html).
 
 ## Separate-session prompt
 

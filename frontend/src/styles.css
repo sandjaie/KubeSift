@@ -1619,3 +1619,10 @@ textarea::placeholder {
   min-width: 7ch;
   max-width: 28ch;
 }
+
+.configuration-value {
+  max-height: 24rem;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  user-select: text;
+}

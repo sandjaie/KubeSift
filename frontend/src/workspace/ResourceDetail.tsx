@@ -13,8 +13,12 @@ import type {
   RelatedPage,
   RelatedReplicaSetPage,
   RelatedJobPage,
-  Section,
 } from "../workloads/model";
+import { isClusterScoped, resourceSections } from "../workloads/model";
+import { isConfigurationKind } from "../configuration/model";
+import { ConfigurationOverview } from "../configuration/ConfigurationOverview";
+import { ConfigMapData } from "../configuration/ConfigMapData";
+import { PodConfiguration } from "../configuration/PodConfiguration";
 import { isNetworkKind, type ServiceSlicePage } from "../networking/model";
 import { NetworkOverview } from "../networking/NetworkOverview";
 import { ServiceEndpointSlices } from "../networking/ServiceEndpointSlices";
@@ -41,14 +45,7 @@ export function ResourceDetail({
     state = c.sections[section],
     data = state?.data;
   const kind = row.resource.kind;
-  const tabs: Section[] = ["Overview", "YAML"];
-  if (kind !== "IngressClass") tabs.push("Events");
-  if (kind === "Pod") tabs.push("Logs");
-  else if (kind === "Service") tabs.push("EndpointSlices");
-  else if (!isNetworkKind(kind)) {
-    tabs.push(kind === "CronJob" ? "Jobs" : "Pods");
-    if (kind === "Deployment") tabs.push("ReplicaSets");
-  }
+  const tabs = resourceSections(kind);
   return (
     <div className={section === "YAML" ? "compact-pod-detail yaml-detail" : "compact-pod-detail"}>
       {c.back && (
@@ -66,7 +63,7 @@ export function ResourceDetail({
         )}
       </div>
       <p className="detail-identity">
-        {context} / {kind === "IngressClass" ? "Cluster-scoped" : row.resource.namespace} / {row.resource.kind}
+        {context} / {isClusterScoped(kind) ? "Cluster-scoped" : row.resource.namespace} / {row.resource.kind}
       </p>
       {c.inventory.identity && <p className="muted">{c.inventory.identity}</p>}
       {stale && <p className="warning">Retained evidence — connection status is stale.</p>}
@@ -87,9 +84,22 @@ export function ResourceDetail({
         data &&
         (isNetworkKind(kind) ? (
           <NetworkOverview data={data as Detail} onOpenReference={(target) => c.openReference(data as Detail, target)} />
+        ) : isConfigurationKind(kind) ? (
+          <ConfigurationOverview
+            data={data as Detail}
+            onBrowseNamespace={(destination) => c.browseNamespace(data as Detail, destination)}
+          />
         ) : (
-          <ResourceOverview data={data as Detail} onOpenOwner={c.openRelated} />
+          <>
+            <ResourceOverview data={data as Detail} onOpenOwner={c.openRelated} />
+            {kind === "Pod" && (
+              <PodConfiguration data={data as Detail} onOpen={(target) => c.openConfigurationReference(data as Detail, target)} />
+            )}
+          </>
         ))}
+      {section === "Data" && kind === "ConfigMap" && data && (
+        <ConfigMapData key={JSON.stringify([row.resource.uid, (data as Detail).resourceVersion])} data={data as Detail} />
+      )}
       {section === "EndpointSlices" && data && (
         <ServiceEndpointSlices
           data={data as ServiceSlicePage}

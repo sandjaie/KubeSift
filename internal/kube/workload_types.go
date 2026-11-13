@@ -67,7 +67,8 @@ type WorkloadPage struct {
 }
 
 type DetailRequest struct {
-	Resource ResourceRef `json:"resource"`
+	IncludeConfigMapData bool        `json:"includeConfigMapData,omitempty"`
+	Resource             ResourceRef `json:"resource"`
 }
 type ResourceDetail struct {
 	Job             *JobSummary `json:"job"`
