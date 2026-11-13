@@ -1,6 +1,6 @@
 # KubeSift resumable status
 
-Updated 2026-11-12. Active branch: `feature/phase-1c2-workload-investigation`. Work in place; preserve unrelated work.
+Updated 2026-11-13. Active branch: `feature/phase-1c2-workload-investigation`. Work in place; preserve unrelated work.
 
 - Implemented Phase 1C.2 tasks 1–6 on baseline `b19bff7`, with reviewed implementation at `823a17e`; task 7 validation and handoff have the explicit remaining checks in the [plan](../../docs/superpowers/plans/2026-11-12-phase-1c2-workload-investigation.md).
 - [Technical validation](../../docs/superpowers/validation/phase-1c2.html): full Go tests/vet, targeted race tests, 16 frontend tests, lint/typecheck, bindings/build/package and opt-in integration on explicit kind-dev-local-a/b passed after review corrections.
@@ -11,3 +11,5 @@ Updated 2026-11-12. Active branch: `feature/phase-1c2-workload-investigation`. W
 - Operational logs, review rulings and detailed progress stay archived under ignored `.superpowers/sdd/2026-11-12-phase-1c2-workload-investigation/`.
 
 - Delegated native UI walkthrough recorded in the technical report and local delegated-ui-uat.md. Rebuilt confirmation and relaunch cleanup verified. Remaining fixture and layout coverage is listed in the local ledger.
+
+- UAT refinements verified: first-show work-area sizing, automatic bounded Deployment Pod traversal, removal of Identity & source, and simplified Logs controls without UUID/generation/repeated paths. Native local checks and applicable automated checks passed; see the technical report. PR #7 remains unmerged.

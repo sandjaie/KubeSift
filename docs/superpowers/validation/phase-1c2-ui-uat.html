@@ -187,7 +187,10 @@ kubectl --context kind-dev-local-b -n kubesift-explorer get pods,deployments</pr
       </article>
       <article>
         <h2>6. Owned Pods and Back</h2>
-        <p><strong>Steps:</strong> Deployments → web → Pods → Load next relationship page → actual web Pod → Back to Deployment.</p>
+        <p>
+          <strong>Steps:</strong> Deployments → web → Pods → actual web Pod → Back to Deployment. Pods should appear without an intermediate
+          loading click; use Load more Pods only if additional results exist.
+        </p>
         <p>
           <strong>Expected:</strong> Partial coverage is explicit. web-lookalike is excluded. Back returns to the captured Deployment,
           revalidating its UID.
@@ -252,8 +255,8 @@ kubectl --context kind-dev-local-b -n kubesift-explorer get pods,deployments</pr
         <h2>9. Current container snapshot</h2>
         <p><strong>Steps:</strong> Select web Pod → Logs. Keep Current and Follow off; choose app and Open logs.</p>
         <p>
-          <strong>Expected:</strong> Timestamped bounded tail completes; target cluster/namespace/Pod UID/container remain visible. No
-          automatic new session on section changes.
+          <strong>Expected:</strong> Timestamped bounded tail completes; cluster/namespace/Pod remain identified by the surrounding view and
+          container/mode by the session; UUID/generation are not displayed. No automatic new session on section changes.
         </p>
         <label
           >Result
@@ -295,8 +298,8 @@ kubectl --context kind-dev-local-b -n kubesift-explorer get pods,deployments</pr
         <h2>11. Follow, Stop, Clear and scroll</h2>
         <p><strong>Steps:</strong> Follow the web Pod logs. Pause Auto-scroll, Clear view, enable Auto-scroll, then Stop.</p>
         <p>
-          <strong>Expected:</strong> Clear retains target/loss counters and does not stop transport. Auto-scroll follows newest output;
-          paused scroll remains still. Stop retains evidence; Resume warns of overlap/gaps.
+          <strong>Expected:</strong> Clear retains target and any loss warnings and does not stop transport. Auto-scroll follows newest
+          output; paused scroll remains still. Stop retains evidence; Resume warns of overlap/gaps.
         </p>
         <label
           >Result
@@ -337,8 +340,8 @@ kubectl --context kind-dev-local-b -n kubesift-explorer get pods,deployments</pr
       <article>
         <h2>13. Bounds, loss and capacity</h2>
         <p>
-          <strong>Steps:</strong> Open up to eight short snapshots. Attempt a ninth; close one and retry. Use retained-text
-          search/Earlier/Later if enough synthetic text exists.
+          <strong>Steps:</strong> Open up to eight short snapshots. Attempt a ninth; close one and retry. Expand Search logs; use
+          Earlier/Later when enough synthetic text exists.
         </p>
         <p>
           <strong>Expected:</strong> Ninth session asks to close one; no silent eviction. Text is ≤1 MiB/session and display ≤64 KiB.

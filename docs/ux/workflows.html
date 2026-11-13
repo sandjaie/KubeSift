@@ -70,7 +70,8 @@
         Refresh belongs beside the Pods heading, without a separate toolbar. Column headings stay visible within the scrolling table.
         Single-namespace rows omit repeated namespace subtitles. Phase dots supplement labels: Running blue, Succeeded green, Pending amber,
         Failed red and unknown grey. Keep readiness separate. Selected details use compact label/value rows with context and namespace
-        visible; Identity &amp; source expands selectable UID and full source text.
+        visible. The separate Identity &amp; source disclosure is removed following Phase 1C.2 UAT; object UID and metadata remain available
+        in YAML.
       </p>
       <h3 id="namespace-selector">Searchable namespace selector</h3>
       <p>
@@ -177,10 +178,20 @@
         <a href="../security/security-model.html">security model</a>. Describe actual filtering without promising that all sensitive data
         can be detected.
       </p>
+      <h3>Log viewer</h3>
+      <p>
+        Prioritize log output beneath compact container, instance, line-count and Follow controls. A session shows its container/mode,
+        status and applicable Stop or Resume, Clear view, Close and Auto-scroll actions. Search logs expands on demand; Earlier/Later
+        appears only when retained text exceeds the display chunk. Do not show UUIDs, connection generations, repeated resource paths or
+        routine byte/segment statistics. The Sessions dock retains a concise cluster, namespace and Pod label because it spans targets. Keep
+        errors, omitted-text and gap warnings visible; identity checks and buffering bounds remain internal safeguards.
+      </p>
       <h2>Themes and window sizes</h2>
       <p>
         UAT refinement approved 12 November 2026: launch maximized in the selected display’s available desktop work area, without entering
-        macOS full-screen mode. Restore saved display placement before maximizing; keep ordinary resizing and saved pane proportions.
+        macOS full-screen mode. Use the entire selected display work-area rectangle on the first native window show; keep ordinary resizing
+        and saved pane proportions. Opening a Deployment’s Pods tab automatically advances up to eight empty ownership pages to find Pods;
+        keep bounded Load more Pods only when continuation remains. Do not show internal traversal timestamps or completion labels.
         Inventory pagination places Previous, the page number and Next in one vertically centered group, with Auto-refresh aligned beside it
         and wrapping as a whole on narrow panes. Separate these controls from the filter row. Do not display the inventory capture timestamp
         in the table hint; retain stale-data warnings and detail evidence timestamps.

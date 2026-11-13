@@ -130,7 +130,7 @@ export function Workspace({
           </section>
           <section className="detail-pane">
             {c.selection ? (
-              <ResourceDetail controller={c} context={tab.entry.context} source={tab.entry.sourceDisplay} stale={stale} logs={logs} />
+              <ResourceDetail controller={c} context={tab.entry.context} stale={stale} logs={logs} />
             ) : (
               <div className="state-message">
                 <h2>Select a {kind}</h2>

@@ -168,10 +168,6 @@ func TestWorkloadDetails(t *testing.T) {
 		})
 		resource := ResourceRef{Connection: ref, APIVersion: "apps/v1", Kind: "Deployment", Namespace: "default", Name: "sample", UID: "deploy"}
 		page, err := s.ReadRelatedPods(context.Background(), RelatedRequest{Resource: resource})
-		if err != nil || page.Complete || page.Page.NextCursor == "" {
-			t.Fatal(page, err)
-		}
-		page, err = s.ReadRelatedPods(context.Background(), RelatedRequest{Resource: resource, Cursor: page.Page.NextCursor})
 		if err != nil || !page.Complete || len(page.Items) != 1 || page.Items[0].Pod.Resource.Name != "owned" {
 			t.Fatal(page, err)
 		}
@@ -218,5 +214,25 @@ func TestWorkloadEvents(t *testing.T) {
 				t.Fatal(page, err)
 			}
 		})
+	}
+}
+
+func TestRelatedPodsBoundsEmptyTraversal(t *testing.T) {
+	pages := 0
+	s, ref := workloadServer(t, func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if strings.HasSuffix(r.URL.Path, "deployments/sample") {
+			fmt.Fprint(w, `{"apiVersion":"apps/v1","kind":"Deployment","metadata":{"name":"sample","namespace":"default","uid":"deploy"}}`)
+			return
+		}
+		if !strings.HasSuffix(r.URL.Path, "replicasets") {
+			t.Error("unexpected read", r.URL.Path)
+		}
+		pages++
+		fmt.Fprintf(w, `{"apiVersion":"apps/v1","kind":"ReplicaSetList","metadata":{"continue":"page%d"},"items":[]}`, pages)
+	})
+	page, err := s.ReadRelatedPods(context.Background(), RelatedRequest{Resource: ResourceRef{Connection: ref, APIVersion: "apps/v1", Kind: "Deployment", Namespace: "default", Name: "sample", UID: "deploy"}})
+	if err != nil || pages != 8 || page.Complete || page.Page.NextCursor == "" {
+		t.Fatalf("unbounded or misleading traversal: pages=%d complete=%v cursor=%t err=%v", pages, page.Complete, page.Page.NextCursor != "", err)
 	}
 }

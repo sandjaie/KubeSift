@@ -1,7 +1,7 @@
 /*
 Purpose: Traverse Deployment controller ownership in bounded pages.
 Used by: Deployment Pods investigation.
-Responsibilities: Advance one ReplicaSet or Pod list page and disclose partial permission coverage.
+Responsibilities: Skip bounded intermediate owner pages and disclose partial permission coverage.
 Important: Labels narrow requests; controller UIDs alone prove ownership.
 */
 package kube
@@ -30,6 +30,18 @@ func ownedBy(refs []metav1.OwnerReference, uid string) bool {
 	return false
 }
 func (s *Service) ReadRelatedPods(ctx context.Context, req RelatedRequest) (RelatedPage, error) {
+	// Owner discovery is not a user-facing Pod page. Skip empty intermediate
+	// pages, but cap work per request even in namespaces with many ReplicaSets.
+	for step := 0; ; step++ {
+		page, err := s.readRelatedPodPage(ctx, req)
+		if err != nil || page.Problem != nil || len(page.Items) > 0 || page.Complete || page.Page.NextCursor == "" || step == 7 {
+			return page, err
+		}
+		req.Cursor = page.Page.NextCursor
+	}
+}
+
+func (s *Service) readRelatedPodPage(ctx context.Context, req RelatedRequest) (RelatedPage, error) {
 	result := RelatedPage{Items: []RelatedPod{}, Page: PageInfo{FetchedAt: time.Now().UTC()}}
 	if req.Resource.Kind != "Deployment" {
 		return result, model.Fail("invalid", "Deployment identity required")

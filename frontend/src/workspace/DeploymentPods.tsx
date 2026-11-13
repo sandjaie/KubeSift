@@ -17,12 +17,9 @@ export function DeploymentPods({
 }) {
   return (
     <div className="evidence-section">
-      <p>
-        Captured {data.page.fetchedAt} · {data.complete ? "Traversal complete" : "Partial relationship coverage"}
-      </p>
       {data.problem && <p role="alert">{data.problem.message}</p>}
-      {!data.items?.length && (
-        <p>{data.complete ? "No owned Pods on this page." : "No owned Pods on this page; more evidence may remain."}</p>
+      {!data.problem && !data.items?.length && (
+        <p>{data.complete ? "No owned Pods found." : "No Pods found in this batch. More results may be available."}</p>
       )}
       {data.items?.map((row) => (
         <p key={row.pod.resource.uid}>
@@ -30,7 +27,7 @@ export function DeploymentPods({
           <PodPhase phase={row.pod.phase} /> · {row.pod.ready ?? "?"}/{row.pod.desired ?? "?"}
         </p>
       ))}
-      {data.page.nextCursor && <button onClick={() => onNext(data.page.nextCursor)}>Load next relationship page</button>}
+      {data.page.nextCursor && <button onClick={() => onNext(data.page.nextCursor)}>Load more Pods</button>}
     </div>
   );
 }

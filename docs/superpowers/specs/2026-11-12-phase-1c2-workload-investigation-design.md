@@ -54,7 +54,7 @@ Auto-refresh is off by default. When enabled for the visible inventory, refresh 
 
 ## 2. Pod details
 
-Replace the “More resource details are not available yet” placeholder with Overview, YAML, Events and Logs tabs. Fetch only the active section; a forbidden section does not erase permitted sections. Keep context/namespace/resource name visible and retain Identity & source with UID, resourceVersion and timestamps where applicable.
+Replace the “More resource details are not available yet” placeholder with Overview, YAML, Events and Logs tabs. Fetch only the active section; a forbidden section does not erase permitted sections. Keep context/namespace/resource name visible and keep object UID and metadata available in YAML; omit the separate Identity & source disclosure per UAT feedback.
 
 Overview contains:
 
@@ -73,7 +73,7 @@ Overview shows desired/updated/ready/available/unavailable counts, observed vers
 
 Resolve relationships through controller ownerReferences: Deployment UID → ReplicaSet controller owner UID → Pod controller owner UID. Label matches may narrow candidates but must not prove ownership. Reuse typed ReplicaSet reads only for this relationship, not a new standalone ReplicaSet explorer commitment. Filter out lookalikes owned by another Deployment, including equal labels or reused names.
 
-Bound related-object pages and show partial coverage/load-next rather than silently scanning an entire namespace. A Pods row identifies its ReplicaSet and phase/readiness. If ReplicaSet/Pod access is forbidden, keep the Deployment overview and show that relationship evidence is unavailable. Empty partial results are not “Deployment has no Pods.” Open a related Pod in the same cluster tab with an explicit Back to Deployment breadcrumb; preserve its original namespace/UID, and return to the Deployment only if that captured identity remains valid.
+Bound related-object pages. Automatically advance through up to eight empty ownership pages per request so opening Pods reaches actual Pod rows without a discovery-only click. Stop at a nonempty Pod page, completion, error or that bound; offer Load more Pods only when continuation remains, without silently scanning an entire namespace. A Pods row identifies its ReplicaSet and phase/readiness. If ReplicaSet/Pod access is forbidden, keep the Deployment overview and show that relationship evidence is unavailable. Empty partial results are not “Deployment has no Pods.” Open a related Pod in the same cluster tab with an explicit Back to Deployment breadcrumb; preserve its original namespace/UID, and return to the Deployment only if that captured identity remains valid.
 
 ## 4. Read-only YAML
 
@@ -163,3 +163,7 @@ The user approved this specification on 2026-11-12. The [implementation plan](..
 ## UAT refinement · 12 November 2026
 
 User requested desktop-work-area maximization at launch (not macOS full screen), aligned inventory pagination/Auto-refresh and removal of the inventory capture timestamp. Follow the [owning UX behavior](../../ux/workflows.html#detail-divider) and its Themes and window sizes section. Saved display placement and pane proportions remain; detail evidence timestamps and stale-data warnings remain. These are Phase 1C.2 UAT fixes, not Phase 1C.3 scope.
+
+Follow-up UAT: use explicit work-area dimensions on first native show instead of native zoom; remove the separate Identity & source disclosure and internal relationship timestamp/completion copy. Ownership/UID validation remains native and unchanged.
+
+Logs UAT refinement: prioritize output with compact controls, conditional Stop/Resume, expandable Search logs and conditional Earlier/Later. Remove visible UUID/generation, repeated detail resource path and routine buffer statistics. Keep concise target labels in the cross-target Sessions dock and retain actual errors, omitted-text and gap warnings. Internal immutable targets and bounds are unchanged.

@@ -1375,20 +1375,6 @@ textarea::placeholder {
 .pod-facts dt {
   margin: 0;
 }
-.pod-identity-disclosure {
-  margin: 12px 16px;
-  border-bottom: 1px solid var(--line);
-  padding-bottom: 12px;
-}
-.pod-identity-disclosure summary {
-  cursor: pointer;
-}
-.pod-identity-disclosure dl {
-  padding: 0;
-  font-family: var(--mono);
-  user-select: text;
-}
-
 /* Workload evidence extends the existing compact panes and theme tokens. */
 .detail-tabs {
   display: flex;
@@ -1436,6 +1422,12 @@ textarea::placeholder {
   overflow: auto;
 }
 .log-text {
+  min-height: 220px;
+  margin: 10px 0 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   max-height: 280px;
@@ -1443,9 +1435,73 @@ textarea::placeholder {
   font-family: monospace;
 }
 .log-viewer {
-  padding: 8px 12px;
+  padding: 12px 0;
   min-width: 0;
 }
-.log-viewer .filter-bar {
+.log-open-controls,
+.log-toolbar {
+  display: flex;
   flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.log-open-controls {
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.log-open-controls select:first-child {
+  flex: 1 1 180px;
+  min-width: 0;
+  max-width: 280px;
+}
+.log-checkbox,
+.log-tail {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.log-checkbox input {
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  margin: 0;
+  accent-color: var(--accent);
+}
+.log-tail input {
+  width: 76px;
+}
+.log-toolbar button {
+  padding: 5px 8px;
+  font-size: 12px;
+}
+.log-session-name {
+  font-size: 12px;
+}
+.log-status {
+  color: var(--muted);
+  font-size: 11px;
+  margin-right: auto;
+  text-transform: capitalize;
+}
+.log-target {
+  color: var(--muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  margin: 0 0 8px;
+}
+.log-search {
+  margin-top: 10px;
+}
+.log-search summary {
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 12px;
+}
+.log-search .log-toolbar {
+  margin-top: 8px;
+}
+.log-search input {
+  flex: 1;
+  min-width: 120px;
 }

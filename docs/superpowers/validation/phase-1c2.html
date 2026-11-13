@@ -206,6 +206,30 @@
         scroll positioning, full multi-container log selection, external-monitor layout and split persistence, and the optional
         replacement/reconnect race. This records delegated observations. Maintainer sign-off remains pending.
       </p>
+      <h2>UAT refinements verified · 2026-11-13</h2>
+      <p>
+        Launch now applies the selected display’s complete work area on the first native window show, rather than relying on macOS zoom.
+        Size is set before top-left position. Native relaunch filled the laptop work area without macOS full-screen mode; synthetic geometry
+        cases cover saved secondary-display placement and fallback after display removal.
+      </p>
+      <p>
+        Deployment Pods automatically skips up to eight empty ownership pages per request. The native web Deployment showed its owned Pod
+        immediately on opening Pods; no discovery-only click was needed. Tests cover owned/lookalike filtering, forbidden evidence and
+        bounded empty traversal. The separate Identity &amp; source disclosure and internal relationship timestamp/completion labels were
+        removed.
+      </p>
+      <p>
+        Logs now prioritizes output with compact controls, conditional Stop/Resume, expandable Search logs and conditional Earlier/Later.
+        UUIDs, generations, repeated detail target paths and routine byte/segment statistics are hidden. Actual omission, gap and error
+        warnings remain visible; cross-target Sessions retain concise cluster/namespace/Pod labels. Native current logs from the local web
+        Pod rendered in the simplified viewer. The user-authorized restart cleared prior sessions; the app was left open on this log view.
+      </p>
+      <p>
+        Validation: kube/desktop/preferences suites, both-context opt-in workload integration, all 16 frontend tests, lint/typecheck, source
+        descriptions, documentation links and local macOS packaging passed. Native checks used kind-dev-local-a in kubesift-explorer;
+        integration explicitly used kind-dev-local-a/b. No release, merge or Phase 1C.3 work. User checklist outcomes remain Not tested
+        pending maintainer sign-off. These focused checks do not expand the earlier platform or high-volume guarantees.
+      </p>
     </main>
   </body>
 </html>

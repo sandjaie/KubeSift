@@ -140,8 +140,9 @@ func Save(path string, p Preferences) error {
 	return os.Rename(name, path)
 }
 
-// Work areas are primary-first. Prefer the greatest overlap, then center on primary.
-func ClampWindow(saved Rect, areas []Rect) Rect {
+// WindowWorkArea chooses the saved display by overlap, falling back to primary.
+// Returning the complete work area keeps launch independent of the saved window size.
+func WindowWorkArea(saved Rect, areas []Rect) Rect {
 	valid := make([]Rect, 0, len(areas))
 	for _, a := range areas {
 		if a.Width > 0 && a.Height > 0 {
@@ -160,6 +161,13 @@ func ClampWindow(saved Rect, areas []Rect) Rect {
 			overlap = n
 		}
 	}
+	return best
+}
+
+// ClampWindow keeps normal window bounds inside the selected display.
+func ClampWindow(saved Rect, areas []Rect) Rect {
+	best := WindowWorkArea(saved, areas)
+	overlap := max(0, min(saved.X+saved.Width, best.X+best.Width)-max(saved.X, best.X)) * max(0, min(saved.Y+saved.Height, best.Y+best.Height)-max(saved.Y, best.Y))
 	saved.Width = min(max(saved.Width, 1100), best.Width)
 	saved.Height = min(max(saved.Height, 700), best.Height)
 	if overlap == 0 {

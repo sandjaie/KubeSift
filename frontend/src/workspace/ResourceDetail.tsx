@@ -138,13 +138,11 @@ function Overview({ data }: { data: Detail }) {
 export function ResourceDetail({
   controller: c,
   context,
-  source,
   stale,
   logs,
 }: {
   controller: WorkloadController;
   context: string;
-  source: string;
   stale: boolean;
   logs?: ReactNode;
 }) {
@@ -187,10 +185,6 @@ export function ResourceDetail({
       {section === "Events" && data && <ResourceEvents data={data as EventPage} onNext={c.nextSection} />}
       {section === "Pods" && data && <DeploymentPods data={data as RelatedPage} onNext={c.nextSection} onSelect={c.openPod} />}
       {section === "Logs" && logs}
-      <details className="pod-identity-disclosure">
-        <summary>Identity &amp; source</summary>
-        <Facts values={{ UID: row.resource.uid, Source: source, "Connection generation": row.resource.connection.generation }} />
-      </details>
     </div>
   );
 }

@@ -57,8 +57,8 @@ export function PodLogs({
   }, [resource.connection.id, resource.connection.generation, resource.namespace, resource.uid, resource.name]);
   const sessions = controller.sessions.filter((s) => s.tab === tab && s.request.resource.uid === resource.uid);
   return (
-    <div className="evidence-section">
-      <div className="filter-bar">
+    <div className="evidence-section pod-logs">
+      <div className="log-open-controls">
         <select aria-label="Log container" value={container} onChange={(e) => setContainer(e.target.value)}>
           <option value="">Choose container</option>
           {containers.map((c) => (
@@ -78,10 +78,10 @@ export function PodLogs({
           <option value="current">Current</option>
           <option value="previous">Previous</option>
         </select>
-        <label>
-          Tail <input type="number" min={1} max={1000} value={tail} onChange={(e) => setTail(Number(e.target.value))} />
+        <label className="log-tail">
+          Lines <input type="number" min={1} max={1000} value={tail} onChange={(e) => setTail(Number(e.target.value))} />
         </label>
-        <label>
+        <label className="log-checkbox">
           <input type="checkbox" checked={follow} disabled={previous} onChange={(e) => setFollow(e.target.checked)} /> Follow
         </label>
         <button
@@ -96,10 +96,10 @@ export function PodLogs({
           Open logs
         </button>
       </div>
-      {previous && <p>Previous never follows. Kubernetes may have no previous instance available.</p>}
+      {previous && <p>Previous instance logs may be unavailable.</p>}
       {error && <p role="alert">{error}</p>}
       {sessions.map((s) => (
-        <LogViewer key={s.id} session={s} store={controller.store} connection={resource.connection} />
+        <LogViewer embedded key={s.id} session={s} store={controller.store} connection={resource.connection} />
       ))}
     </div>
   );
