@@ -25,6 +25,10 @@
     credentials must have the fixture pod-reader rights only; requests check reads, with no fixture writes.
   </p>
   <p>
+    TestConfigurationInvestigation uses the same explicit A/B kubeconfigs plus configuration-restricted.kubeconfig for the ConfigMap-only
+    identity in the isolated Phase 1C.3c namespace. Use the fixture manifest in the explorer fixture directory.
+  </p>
+  <p>
     Keep the synthetic scheduled-job CronJob suspended. Before workload validation, create one temporary Job and let it create a Pod in each
     context using the commands below. The generated Job carries the actual CronJob controller UID. Remove the exact fixture after
     verification and leave the other fixtures in place.

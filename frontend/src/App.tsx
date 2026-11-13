@@ -98,7 +98,13 @@ export default function App() {
     return () => window.removeEventListener("keydown", listener);
   }, []);
   const active = state.active ? state.tabs[state.active] : null;
-  const workloads = useWorkloads(state.active ?? "", active?.view?.ref ?? null, active?.namespace ?? "default", page === "workspace");
+  const workloads = useWorkloads(
+    state.active ?? "",
+    active?.view?.ref ?? null,
+    active?.namespace ?? "default",
+    page === "workspace",
+    (tab, namespace) => void controller.selectNamespace(tab, namespace),
+  );
   function choose(entry: CatalogEntry) {
     setPage("workspace");
     void controller.connect(entry);

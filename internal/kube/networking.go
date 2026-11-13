@@ -33,9 +33,9 @@ func networkVersion(kind string) string {
 }
 
 func resourceScope(kind, ns string) error {
-	if kind == "IngressClass" {
+	if kind == "IngressClass" || kind == "Namespace" {
 		if ns != "" {
-			return model.Fail("invalid", "IngressClass requires cluster scope")
+			return model.Fail("invalid", "Selected kind requires cluster scope")
 		}
 		return nil
 	}

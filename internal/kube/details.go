@@ -1,8 +1,8 @@
 /*
-Purpose: Capture UID-checked workload overview and read-only YAML.
+Purpose: Capture UID-checked resource overview and read-only YAML.
 Used by: Investigation sections and other resource-scoped readers.
 Responsibilities: Validate kind and identity, cap bridge payloads and serialize one captured version.
-Important: Workload values stay local; referenced Secrets and ConfigMaps are never fetched.
+Important: Secret identity uses a separate partial metadata reader; generic reads never fetch a full Secret.
 */
 package kube
 
@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"github.com/sandjaie/KubeSift/internal/model"
 	batch "k8s.io/api/batch/v1"
+	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -52,6 +53,9 @@ func validResourceAddress(ref ResourceRef) error {
 	if version == "" {
 		version = networkVersion(ref.Kind)
 	}
+	if version == "" && configurationKind(ref.Kind) {
+		version = "v1"
+	}
 	if len(validation.IsDNS1123Subdomain(ref.Name)) != 0 || len(ref.UID) > 128 || version == "" || version != ref.APIVersion {
 		return model.Fail("invalid", "Explicit resource identity required")
 	}
@@ -90,14 +94,24 @@ func getResource(ctx context.Context, client kubernetes.Interface, ref ResourceR
 		object, err = client.NetworkingV1().Ingresses(ref.Namespace).Get(ctx, ref.Name, metav1.GetOptions{})
 	case "EndpointSlice":
 		object, err = client.DiscoveryV1().EndpointSlices(ref.Namespace).Get(ctx, ref.Name, metav1.GetOptions{})
+	case "Namespace":
+		object, err = client.CoreV1().Namespaces().Get(ctx, ref.Name, metav1.GetOptions{})
+	case "ResourceQuota":
+		object, err = client.CoreV1().ResourceQuotas(ref.Namespace).Get(ctx, ref.Name, metav1.GetOptions{})
+	case "LimitRange":
+		object, err = client.CoreV1().LimitRanges(ref.Namespace).Get(ctx, ref.Name, metav1.GetOptions{})
+	case "ConfigMap":
+		object, err = client.CoreV1().ConfigMaps(ref.Namespace).Get(ctx, ref.Name, metav1.GetOptions{})
 	case "Service":
 		object, err = client.CoreV1().Services(ref.Namespace).Get(ctx, ref.Name, metav1.GetOptions{})
+	default:
+		return nil, model.Fail("invalid", "Generic detail is unavailable for this kind")
 	}
 
 	if err != nil {
 		return nil, readError(ctx, err)
 	}
-	if networkVersion(ref.Kind) != "" && (object.GetName() != ref.Name || object.GetNamespace() != ref.Namespace || object.GetUID() == "") {
+	if (networkVersion(ref.Kind) != "" || configurationKind(ref.Kind)) && (object.GetName() != ref.Name || object.GetNamespace() != ref.Namespace || object.GetUID() == "") {
 		return nil, model.Fail("invalid", "Server did not return the requested resource identity")
 	}
 	if ref.UID != "" && string(object.GetUID()) != ref.UID {
@@ -118,6 +132,12 @@ func checkPayload(value any) error {
 }
 func (s *Service) ReadResource(ctx context.Context, req DetailRequest) (ResourceDetail, error) {
 	result := ResourceDetail{}
+	if req.Resource.Kind == "Secret" {
+		if err := validResource(req.Resource); err != nil {
+			return result, err
+		}
+		return s.readSecretMetadata(ctx, req.Resource)
+	}
 	if err := validResource(req.Resource); err != nil {
 		return result, err
 	}
@@ -125,12 +145,29 @@ func (s *Service) ReadResource(ctx context.Context, req DetailRequest) (Resource
 	if err != nil {
 		return result, err
 	}
+	if req.Resource.Kind == "ResourceQuota" || req.Resource.Kind == "LimitRange" {
+		return s.readPolicyOverview(ctx, client, req.Resource)
+	}
 	object, err := checkedObject(ctx, client, req.Resource)
 	if err != nil {
 		return result, err
 	}
 	if err = checkPayload(object); err != nil {
 		return result, err
+	}
+	if configMap, ok := object.(*core.ConfigMap); ok && !req.IncludeConfigMapData {
+		raw, e := json.Marshal(map[string]any{
+			"metadata": configMap.ObjectMeta, "immutable": configMap.Immutable,
+			"textKeys": len(configMap.Data), "binaryKeys": len(configMap.BinaryData),
+		})
+		if e != nil {
+			return result, model.Fail("failed", "Cannot encode ConfigMap overview")
+		}
+		result = ResourceDetail{Resource: req.Resource, ResourceVersion: object.GetResourceVersion(), FetchedAt: time.Now().UTC(), ObjectJSON: string(raw)}
+		if e = checkPayload(result); e != nil {
+			return ResourceDetail{}, e
+		}
+		return result, s.connections.Validate(req.Resource.Connection)
 	}
 	raw, err := json.Marshal(object)
 	if err != nil {
@@ -147,6 +184,9 @@ func (s *Service) ReadResource(ctx context.Context, req DetailRequest) (Resource
 }
 func (s *Service) ReadResourceYAML(ctx context.Context, req DetailRequest) (YAMLDocument, error) {
 	result := YAMLDocument{}
+	if req.Resource.Kind == "Secret" {
+		return result, model.Fail("invalid", "Secret YAML is unavailable")
+	}
 	if err := validResource(req.Resource); err != nil {
 		return result, err
 	}
