@@ -6,7 +6,7 @@ Updated 2026-11-14. Current integration branch is `develop`.
 
 - Implemented in the existing checkout on `feature/phase-1c3d-storage` from `1d955d7`. [Specification](../../docs/superpowers/specs/2026-11-14-phase-1c3d-storage-design.md), [plan](../../docs/superpowers/plans/2026-11-14-phase-1c3d-storage.md), and [validation report](../../docs/superpowers/validation/phase-1c3d.html).
 - Storage, configuration, networking and workload integration passed on both approved kind contexts. Packaged verification covered the forward and Back journeys, namespace retention, keyboard, narrow split, both appearances, native zoom and YAML copy.
-- Whole-PR review and delivery remain pending.
+- The independent whole-PR review and targeted fix recheck passed. Ready PR and merge verification are next.
 
 ## Phase 1C.3c · Namespace policy and configuration
 
