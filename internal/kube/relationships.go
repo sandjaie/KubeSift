@@ -1,6 +1,6 @@
 /*
-Purpose: Traverse Deployment controller ownership in bounded pages.
-Used by: Deployment Pods investigation.
+Purpose: Traverse workload controller ownership in bounded pages.
+Used by: Workload Pods, ReplicaSets and Jobs investigation.
 Responsibilities: Skip bounded intermediate owner pages and disclose partial permission coverage.
 Important: Labels narrow requests; controller UIDs alone prove ownership.
 */

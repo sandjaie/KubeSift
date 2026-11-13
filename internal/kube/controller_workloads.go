@@ -16,7 +16,7 @@ import (
 func statefulSetRow(c model.ConnectionRef, set apps.StatefulSet) WorkloadRow {
 	status := set.Status
 	row := WorkloadRow{Resource: resourceRef(c, "StatefulSet", "apps/v1", set.ObjectMeta), Desired: set.Spec.Replicas, CreatedAt: created(set.ObjectMeta)}
-	if status.ObservedGeneration != 0 || len(status.Conditions) != 0 || status.Replicas != 0 || status.CurrentReplicas != 0 || status.ReadyReplicas != 0 || status.UpdatedReplicas != 0 || status.AvailableReplicas != 0 {
+	if status.ObservedGeneration != 0 || len(status.Conditions) != 0 || status.Replicas != 0 || status.CurrentReplicas != 0 || status.ReadyReplicas != 0 || status.UpdatedReplicas != 0 || status.AvailableReplicas != 0 || (status.CollisionCount != nil && *status.CollisionCount != 0) {
 		row.Total, row.Ready, row.Updated, row.Available = &status.Replicas, &status.ReadyReplicas, &status.UpdatedReplicas, &status.AvailableReplicas
 	}
 	return row
@@ -25,7 +25,7 @@ func statefulSetRow(c model.ConnectionRef, set apps.StatefulSet) WorkloadRow {
 func daemonSetRow(c model.ConnectionRef, set apps.DaemonSet) WorkloadRow {
 	status := set.Status
 	row := WorkloadRow{Resource: resourceRef(c, "DaemonSet", "apps/v1", set.ObjectMeta), CreatedAt: created(set.ObjectMeta)}
-	if status.ObservedGeneration != 0 || len(status.Conditions) != 0 || status.DesiredNumberScheduled != 0 || status.CurrentNumberScheduled != 0 || status.UpdatedNumberScheduled != 0 || status.NumberReady != 0 || status.NumberAvailable != 0 || status.NumberUnavailable != 0 || status.NumberMisscheduled != 0 {
+	if status.ObservedGeneration != 0 || len(status.Conditions) != 0 || status.DesiredNumberScheduled != 0 || status.CurrentNumberScheduled != 0 || status.UpdatedNumberScheduled != 0 || status.NumberReady != 0 || status.NumberAvailable != 0 || status.NumberUnavailable != 0 || status.NumberMisscheduled != 0 || (status.CollisionCount != nil && *status.CollisionCount != 0) {
 		row.Desired, row.Current, row.Ready, row.Updated, row.Available = &status.DesiredNumberScheduled, &status.CurrentNumberScheduled, &status.NumberReady, &status.UpdatedNumberScheduled, &status.NumberAvailable
 	}
 	return row

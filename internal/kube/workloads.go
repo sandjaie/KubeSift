@@ -1,5 +1,5 @@
 /*
-Purpose: Read one namespace-scoped page of Pods or Deployments.
+Purpose: Read one namespace-scoped page of typed workloads.
 Used by: The workload bridge and related-Pod projection.
 Responsibilities: Bind bounded cursors to query scope and preserve optional status evidence.
 Important: Continuation is not authorization; every call validates its connection generation.

@@ -16,7 +16,14 @@ export function controllerOverview(data: ResourceDetail, spec: Fields, status: F
   const kind = data.resource.kind;
   const configured = (value: unknown) => value ?? "Not configured";
   if (kind === "StatefulSet") {
-    const observed = observation(status, ["replicas", "currentReplicas", "readyReplicas", "updatedReplicas", "availableReplicas"]);
+    const observed = observation(status, [
+      "replicas",
+      "currentReplicas",
+      "readyReplicas",
+      "updatedReplicas",
+      "availableReplicas",
+      "collisionCount",
+    ]);
     const count = (key: string) => (observed ? (status[key] ?? 0) : undefined);
     return {
       summary: {
@@ -51,6 +58,7 @@ export function controllerOverview(data: ResourceDetail, spec: Fields, status: F
       "numberAvailable",
       "numberUnavailable",
       "numberMisscheduled",
+      "collisionCount",
     ]);
     const count = (key: string) => (observed ? (status[key] ?? 0) : undefined);
     return {

@@ -90,3 +90,41 @@ func TestRemainingWorkloadDirectPods(t *testing.T) {
 		})
 	}
 }
+
+func TestRemainingWorkloadCronJobPages(t *testing.T) {
+	pages := 0
+	service, connection := workloadServer(t, func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/apis/batch/v1/namespaces/test/cronjobs/hourly":
+			fmt.Fprint(w, `{"apiVersion":"batch/v1","kind":"CronJob","metadata":{"name":"hourly","namespace":"test","uid":"cron"},"spec":{"suspend":true}}`)
+		case "/apis/batch/v1/namespaces/test/jobs":
+			pages++
+			if r.URL.Query().Get("limit") != "100" {
+				t.Error("unbounded Job request")
+			}
+			if pages <= 8 {
+				fmt.Fprintf(w, `{"apiVersion":"batch/v1","kind":"JobList","metadata":{"continue":"%d"},"items":[{"metadata":{"name":"foreign","uid":"foreign","ownerReferences":[{"controller":true,"uid":"other"}]}}]}`, pages)
+				return
+			}
+			fmt.Fprint(w, `{"apiVersion":"batch/v1","kind":"JobList","items":[{"metadata":{"name":"retained","namespace":"test","uid":"job","ownerReferences":[{"controller":true,"uid":"cron"}]},"status":{"conditions":[{"type":"Complete","status":"True"}]}}]}`)
+		default:
+			t.Errorf("unexpected path %s", r.URL.Path)
+			w.WriteHeader(http.StatusNotFound)
+		}
+	})
+	ctx := context.Background()
+	parent := ResourceRef{Kind: "CronJob", APIVersion: "batch/v1", Namespace: "test", Name: "hourly", UID: "cron", Connection: connection}
+	first, err := service.ReadRelatedJobs(ctx, RelatedRequest{Resource: parent})
+	if err != nil || pages != 8 || first.Complete || first.Page.NextCursor == "" || len(first.Items) != 0 {
+		t.Fatalf("incorrect bounded empty page: %+v %v", first, err)
+	}
+	second, err := service.ReadRelatedJobs(ctx, RelatedRequest{Resource: parent, Cursor: first.Page.NextCursor})
+	if err != nil || !second.Complete || len(second.Items) != 1 || second.Items[0].Job.Status != "Complete" {
+		t.Fatalf("incorrect retained jobs: %+v %v", second, err)
+	}
+	parent.UID = "replacement"
+	if _, err := service.ReadRelatedJobs(ctx, RelatedRequest{Resource: parent, Cursor: first.Page.NextCursor}); err == nil {
+		t.Fatal("reused parent name accepted")
+	}
+}

@@ -113,3 +113,28 @@ test("remaining workload tables label Pod, node and schedule counts correctly", 
     if (kind === "CronJob") expect(html).toContain("Existing Jobs can continue");
   }
 });
+
+test("only controller owner references become navigation buttons", () => {
+  const html = renderToStaticMarkup(
+    <ResourceOverview
+      data={{
+        resource: { connection: { id: "c", generation: 1 }, kind: "Pod", apiVersion: "v1", namespace: "ns", name: "pod", uid: "p" },
+        job: null,
+        resourceVersion: "",
+        fetchedAt: "",
+        objectJSON: JSON.stringify({
+          metadata: {
+            ownerReferences: [
+              { apiVersion: "batch/v1", kind: "Job", name: "ordinary", uid: "other", controller: false },
+              { apiVersion: "batch/v1", kind: "Job", name: "controller", uid: "owner", controller: true },
+            ],
+          },
+        }),
+      }}
+      onOpenOwner={() => {}}
+    />,
+  );
+  expect(html).toContain(">Job ordinary<");
+  expect(html).not.toContain("<button>Job ordinary");
+  expect(html).toContain("<button>Job controller</button>");
+});

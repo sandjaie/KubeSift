@@ -104,3 +104,23 @@ test("relationship return restores the originating section and rejects a stale s
     next,
   );
 });
+
+test("CronJob to Job to Pod restores the originating sections and clears old scope", () => {
+  let state = reduceWorkloads(initialWorkloads(), { type: "scope", tab: "A", scope: "a" });
+  const resource = { connection: { id: "a", generation: 1 }, apiVersion: "batch/v1", namespace: "test", name: "sample" };
+  const cron = { resource: { ...resource, kind: "CronJob", uid: "cron" }, section: "Jobs", cursor: "jobs-page" } as const;
+  const job = { resource: { ...resource, kind: "Job", uid: "job" }, section: "Pods", cursor: "pods-page" } as const;
+  const pod = { resource: { ...resource, apiVersion: "v1", kind: "Pod", uid: "pod" }, section: "Overview", cursor: "" } as const;
+  state = reduceWorkloads(state, { type: "navigate", tab: "A", scope: "a", kind: "Pod", entry: pod, history: [cron, job], epoch: 1 });
+  state = reduceWorkloads(state, { type: "navigate", tab: "A", scope: "a", kind: "Job", entry: job, history: [cron], epoch: 2 });
+  expect(state.A.kinds.Job).toMatchObject({ section: "Pods", sectionCursor: "pods-page" });
+  state = reduceWorkloads(state, { type: "navigate", tab: "A", scope: "a", kind: "CronJob", entry: cron, history: [], epoch: 3 });
+  expect(state.A.kinds.CronJob).toMatchObject({ section: "Jobs", sectionCursor: "jobs-page" });
+  state = reduceWorkloads(state, { type: "scope", tab: "A", scope: "b" });
+  expect(state.A.kind).toBe("CronJob");
+  expect(state.A.kinds.CronJob.selected).toBeNull();
+  expect(state.A.navigation).toEqual([]);
+  expect(reduceWorkloads(state, { type: "navigate", tab: "A", scope: "a", kind: "Job", entry: job, history: [cron], epoch: 4 })).toBe(
+    state,
+  );
+});

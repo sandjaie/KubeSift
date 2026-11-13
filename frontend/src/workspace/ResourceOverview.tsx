@@ -268,6 +268,7 @@ export function ResourceOverview({ data, onOpenOwner }: { data: Detail; onOpenOw
             {owners.map((owner, i) => {
               const { kind, name, uid, apiVersion } = owner;
               const supported =
+                owner.controller === true &&
                 (((kind === "ReplicaSet" || kind === "Deployment" || kind === "StatefulSet" || kind === "DaemonSet") &&
                   apiVersion === "apps/v1") ||
                   ((kind === "Job" || kind === "CronJob") && apiVersion === "batch/v1")) &&
