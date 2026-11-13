@@ -107,6 +107,10 @@ export function ReadServiceEndpointSlices(id: string, req: kube$0.RelatedRequest
   return $Call.ByID(414000693, id, req);
 }
 
+export function ReadStorage(id: string, req: kube$0.PageRequest): $CancellablePromise<kube$0.StoragePage> {
+  return $Call.ByID(3352270225, id, req);
+}
+
 export function ReadWorkloads(id: string, req: kube$0.PageRequest): $CancellablePromise<kube$0.WorkloadPage> {
   return $Call.ByID(415147446, id, req);
 }
@@ -138,6 +142,13 @@ export function ResolveNetworkReference(
   req: kube$0.NetworkReferenceRequest,
 ): $CancellablePromise<kube$0.ResolvedNetworkReference> {
   return $Call.ByID(3658289995, id, req);
+}
+
+export function ResolveStorageReference(
+  id: string,
+  req: kube$0.StorageReferenceRequest,
+): $CancellablePromise<kube$0.ResolvedStorageReference> {
+  return $Call.ByID(2174736150, id, req);
 }
 
 export function ReviewHelper(source: string, snapshot: string, name: string): $CancellablePromise<trust$0.PreviewRecord> {

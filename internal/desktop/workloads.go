@@ -163,3 +163,21 @@ func (s *ExplorerService) ResolveConfigurationReference(id string, req kube.Conf
 	defer done()
 	return s.core.kube.ResolveConfigurationReference(ctx, req)
 }
+
+func (s *ExplorerService) ReadStorage(id string, req kube.PageRequest) (kube.StoragePage, error) {
+	ctx, done, err := s.beginWorkloadRead(id)
+	if err != nil {
+		return kube.StoragePage{}, err
+	}
+	defer done()
+	return s.core.kube.ReadStorage(ctx, req)
+}
+
+func (s *ExplorerService) ResolveStorageReference(id string, req kube.StorageReferenceRequest) (kube.ResolvedStorageReference, error) {
+	ctx, done, err := s.beginWorkloadRead(id)
+	if err != nil {
+		return kube.ResolvedStorageReference{}, err
+	}
+	defer done()
+	return s.core.kube.ResolveStorageReference(ctx, req)
+}

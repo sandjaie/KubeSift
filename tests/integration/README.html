@@ -48,4 +48,9 @@ for context in kind-dev-local-a kind-dev-local-b; do
     -l 'kubesift.dev/fixture=phase1c3a-validation' \
     --field-selector metadata.name=phase1c3a-retained-job || exit 1
 done</code></pre>
+  <p>
+    TestStorageInvestigation uses the same explicit A/B files plus storage-restricted.kubeconfig, using the kubesift-phase1c3d-reader
+    identity on A. Create the collision-checked phase-1c3d.yaml fixtures in both contexts before running; the test itself only reads. No CSI
+    resources are required.
+  </p>
 </html>

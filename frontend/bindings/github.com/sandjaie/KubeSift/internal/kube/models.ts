@@ -155,6 +155,14 @@ export interface ResolvedNetworkReference {
   identityEvidence: string;
 }
 
+export interface ResolvedStorageReference {
+  resource: ResourceRef;
+  sourceVersion: string;
+  targetVersion: string;
+  identityEvidence: string;
+  bindingEvidence: string;
+}
+
 export interface ResourceDetail {
   job: JobSummary | null;
   resource: ResourceRef;
@@ -194,6 +202,23 @@ export interface ServiceSlicePage {
 export interface ServiceSliceRow {
   slice: NetworkRow;
   association: string;
+}
+
+export interface StoragePage {
+  items: StorageRow[] | null;
+  page: PageInfo;
+}
+
+export interface StorageReferenceRequest {
+  source: ResourceRef;
+  sourceVersion: string;
+  target: ResourceRef;
+}
+
+export interface StorageRow {
+  resource: ResourceRef;
+  createdAt: string | null;
+  objectJSON: string;
 }
 
 export interface WorkloadPage {

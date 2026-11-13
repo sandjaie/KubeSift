@@ -5,6 +5,7 @@ Responsibilities: Group resource destinations and identify implemented live dest
 Important: Unimplemented kinds never display invented live data.
 */
 import { ResourceIcon } from "../ui/ResourceIcon";
+import { storageKinds, storageLabels } from "../storage/model";
 export const destinations = [
   {
     group: "Workloads",
@@ -37,7 +38,7 @@ export const destinations = [
       ["Secret", "Secrets", true],
     ],
   },
-  { group: "Storage", items: [["PersistentVolumeClaim", "Volume claims", false]] },
+  { group: "Storage", items: storageKinds.map((kind) => [kind, storageLabels[kind], true] as const) },
   {
     group: "Cluster & access",
     items: [

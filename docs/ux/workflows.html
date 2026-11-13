@@ -135,13 +135,14 @@
         automatically unhealthy; unavailable/stale health data must be identified. Alerts require evidence, not a decorative badge. Text and
         icons supplement color.
       </p>
-      <h2 id="storage-investigation">Phase 1C.3d storage investigation design</h2>
+      <h2 id="storage-investigation">Phase 1C.3d storage investigation</h2>
       <p>
         The <a href="../superpowers/specs/2026-11-14-phase-1c3d-storage-design.md">storage specification</a> extends the existing compact
         inventory and Overview/YAML patterns to six storage kinds, with PVC-only Events. Explicit Pod → claim → volume → class links retain
         bounded Back and scope restoration. Distinguish name resolution, UID evidence and agreeing binding references; attachment or binding
         does not establish usable storage. Cluster-scoped lists retain the saved namespace. No mount, provisioner installation, Secret
-        fetching or storage actions are part of this design. Delivery evidence belongs in the status checkpoint and phase report.
+        fetching or storage actions are available. See the
+        <a href="../superpowers/validation/phase-1c3d.html">storage validation report</a>.
       </p>
       <h2 id="configuration-investigation">Phase 1C.3c namespace policy and configuration</h2>
       <p>

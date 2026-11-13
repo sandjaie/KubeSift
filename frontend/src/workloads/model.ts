@@ -28,16 +28,18 @@ import type {
 } from "../../bindings/github.com/sandjaie/KubeSift/internal/kube/models";
 import { isNetworkKind, networkKinds, type NetworkKind, type NetworkPage, type ServiceSlicePage } from "../networking/model";
 import { configurationKinds, isConfigurationKind, type ConfigurationKind, type ConfigurationPage } from "../configuration/model";
+import { isStorageKind, storageKinds, type StorageKind, type StoragePage, type ResolvedStorageReference } from "../storage/model";
 export const workloadKinds = ["Pod", "Deployment", "ReplicaSet", "StatefulSet", "DaemonSet", "Job", "CronJob"] as const;
 export type Kind = (typeof workloadKinds)[number];
 export function isWorkloadKind(kind: string): kind is Kind {
   return workloadKinds.some((item) => item === kind);
 }
-export type ResourceKind = Kind | NetworkKind | ConfigurationKind;
-export const resourceKinds = [...workloadKinds, ...networkKinds, ...configurationKinds];
+export type ResourceKind = Kind | NetworkKind | ConfigurationKind | StorageKind;
+export const resourceKinds = [...workloadKinds, ...networkKinds, ...configurationKinds, ...storageKinds];
 export const isResourceKind = (kind: string): kind is ResourceKind =>
-  isWorkloadKind(kind) || isNetworkKind(kind) || isConfigurationKind(kind);
-export const isClusterScoped = (kind: string) => kind === "IngressClass" || kind === "Namespace";
+  isWorkloadKind(kind) || isNetworkKind(kind) || isConfigurationKind(kind) || isStorageKind(kind);
+export const isClusterScoped = (kind: string) =>
+  kind === "IngressClass" || kind === "Namespace" || (isStorageKind(kind) && kind !== "PersistentVolumeClaim");
 export const inventoryNamespace = (kind: ResourceKind, namespace: string) => (isClusterScoped(kind) ? "" : namespace);
 export type Section = "Overview" | "YAML" | "Events" | "Pods" | "Logs" | "ReplicaSets" | "Jobs" | "EndpointSlices" | "Data";
 export function resourceSections(kind: string): Section[] {
@@ -60,15 +62,20 @@ export interface SectionState {
   error: string;
   data: Evidence | null;
 }
+export type StorageLinkEvidence = Pick<
+  ResolvedStorageReference,
+  "bindingEvidence" | "sourceVersion" | "targetVersion" | "identityEvidence"
+>;
 export interface KindState {
   filter: string;
   sort: "asc" | "desc";
   scroll: number;
   history: string[];
-  page: WorkloadPage | NetworkPage | ConfigurationPage | null;
+  page: WorkloadPage | NetworkPage | ConfigurationPage | StoragePage | null;
   selected: { resource: ResourceRef } | null;
   related: boolean;
   identity: string;
+  storageLink?: StorageLinkEvidence;
   section: Section;
   sections: Partial<Record<Section, SectionState>>;
   loading: boolean;
@@ -85,6 +92,8 @@ export interface NavigationEntry {
   section: Section;
   cursor: string;
   identity?: string;
+  namespace?: string;
+  storageLink?: StorageLinkEvidence;
   position?: Pick<KindState, "filter" | "sort" | "scroll" | "history">;
 }
 export interface TabState {

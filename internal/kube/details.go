@@ -53,6 +53,9 @@ func validResourceAddress(ref ResourceRef) error {
 	if version == "" {
 		version = networkVersion(ref.Kind)
 	}
+	if version == "" {
+		version = storageVersion(ref.Kind)
+	}
 	if version == "" && configurationKind(ref.Kind) {
 		version = "v1"
 	}
@@ -68,6 +71,10 @@ func checkedObject(ctx context.Context, client kubernetes.Interface, ref Resourc
 	return getResource(ctx, client, ref)
 }
 func getResource(ctx context.Context, client kubernetes.Interface, ref ResourceRef) (workloadObject, error) {
+	if storageVersion(ref.Kind) != "" {
+		object, _, err := getStorage(ctx, client, ref)
+		return object, err
+	}
 
 	var object workloadObject
 	var err error
@@ -148,7 +155,7 @@ func (s *Service) ReadResource(ctx context.Context, req DetailRequest) (Resource
 	if req.Resource.Kind == "ResourceQuota" || req.Resource.Kind == "LimitRange" {
 		return s.readPolicyOverview(ctx, client, req.Resource)
 	}
-	object, err := checkedObject(ctx, client, req.Resource)
+	object, captured, err := detailObject(ctx, client, req.Resource)
 	if err != nil {
 		return result, err
 	}
@@ -169,9 +176,12 @@ func (s *Service) ReadResource(ctx context.Context, req DetailRequest) (Resource
 		}
 		return result, s.connections.Validate(req.Resource.Connection)
 	}
-	raw, err := json.Marshal(object)
-	if err != nil {
-		return result, model.Fail("failed", "Cannot encode resource")
+	raw := captured
+	if raw == nil {
+		raw, err = json.Marshal(object)
+		if err != nil {
+			return result, model.Fail("failed", "Cannot encode resource")
+		}
 	}
 	result = ResourceDetail{Resource: req.Resource, ResourceVersion: object.GetResourceVersion(), FetchedAt: time.Now().UTC(), ObjectJSON: string(raw)}
 	if job, ok := object.(*batch.Job); ok {
@@ -194,14 +204,14 @@ func (s *Service) ReadResourceYAML(ctx context.Context, req DetailRequest) (YAML
 	if err != nil {
 		return result, err
 	}
-	object, err := checkedObject(ctx, client, req.Resource)
+	object, captured, err := detailObject(ctx, client, req.Resource)
 	if err != nil {
 		return result, err
 	}
 	if err = checkPayload(object); err != nil {
 		return result, err
 	}
-	raw, err := json.Marshal(object)
+	raw, err := storageYAMLJSON(object, captured)
 	if err != nil {
 		return result, model.Fail("failed", "Cannot encode resource")
 	}
@@ -211,7 +221,7 @@ func (s *Service) ReadResourceYAML(ctx context.Context, req DetailRequest) (YAML
 	}
 	copy := object.DeepCopyObject().(workloadObject)
 	copy.SetManagedFields(nil)
-	raw, err = json.Marshal(copy)
+	raw, err = storageYAMLJSON(copy, captured)
 	if err != nil {
 		return result, model.Fail("failed", "Cannot encode resource")
 	}
@@ -224,4 +234,12 @@ func (s *Service) ReadResourceYAML(ctx context.Context, req DetailRequest) (YAML
 		return YAMLDocument{}, err
 	}
 	return result, s.connections.Validate(req.Resource.Connection)
+}
+
+func detailObject(ctx context.Context, client kubernetes.Interface, ref ResourceRef) (workloadObject, []byte, error) {
+	if storageVersion(ref.Kind) != "" {
+		return getStorage(ctx, client, ref)
+	}
+	object, err := checkedObject(ctx, client, ref)
+	return object, nil, err
 }

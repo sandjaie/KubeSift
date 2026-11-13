@@ -282,3 +282,78 @@ test("Back discards the outgoing ConfigMap capture and rejects late Data", () =>
     reduceWorkloads(state, { type: "response", tab: "A", scope: "a", kind: "ConfigMap", epoch: 1, section: true, patch: { sections } }),
   ).toBe(state);
 });
+
+test("storage navigation keeps a claim outside the page and restores the saved namespace on Back", async () => {
+  const { resourceSections, isClusterScoped } = await import("./model");
+  const { storageKinds } = await import("../storage/model");
+  for (const kind of storageKinds) {
+    expect(isClusterScoped(kind)).toBe(kind !== "PersistentVolumeClaim");
+    expect(resourceSections(kind)).toEqual(kind === "PersistentVolumeClaim" ? ["Overview", "YAML", "Events"] : ["Overview", "YAML"]);
+  }
+  const connection = { id: "a", generation: 1 };
+  const volume = { connection, kind: "PersistentVolume", apiVersion: "v1", name: "disk", uid: "pv", namespace: "" };
+  const claim = { ...volume, kind: "PersistentVolumeClaim", name: "claim", uid: "pvc", namespace: "other" };
+  const original = {
+    resource: volume,
+    section: "Overview" as const,
+    cursor: "",
+    namespace: "saved",
+    position: {
+      filter: "disk",
+      sort: "asc" as const,
+      scroll: 44,
+      history: ["", "next"],
+    },
+  };
+  let s = reduceWorkloads(initialWorkloads(), { type: "scope", tab: "A", scope: "saved-scope", clusterScope: "cluster" });
+  s = reduceWorkloads(s, { type: "kind", tab: "A", kind: "PersistentVolume" });
+  s = reduceWorkloads(s, {
+    type: "navigate",
+    tab: "A",
+    scope: "cluster",
+    nextScope: "other-scope",
+    kind: "PersistentVolumeClaim",
+    entry: { resource: claim, section: "Overview", cursor: "", namespace: "other" },
+    history: [original],
+    epoch: 4,
+  });
+  expect(s.A.scope).toBe("other-scope");
+  expect(s.A.kind).toBe("PersistentVolumeClaim");
+  expect(s.A.kinds.PersistentVolumeClaim.selected?.resource).toEqual(claim);
+  expect(s.A.kinds.PersistentVolumeClaim.related).toBe(true);
+  expect(
+    reduceWorkloads(s, {
+      type: "response",
+      tab: "A",
+      scope: "saved-scope",
+      kind: "PersistentVolumeClaim",
+      epoch: 0,
+      patch: { selected: null },
+    }),
+  ).toBe(s);
+  s = reduceWorkloads(s, {
+    type: "navigate",
+    tab: "A",
+    scope: "other-scope",
+    nextScope: "saved-scope",
+    kind: "PersistentVolume",
+    entry: original,
+    history: [],
+    epoch: 5,
+  });
+  expect(s.A.scope).toBe("saved-scope");
+  expect(s.A.kinds.PersistentVolume.selected?.resource).toEqual(volume);
+  expect(s.A.kinds.PersistentVolume.scroll).toBe(44);
+  expect(s.A.kinds.PersistentVolume.history).toEqual(["", "next"]);
+  expect(
+    reduceWorkloads(s, {
+      type: "response",
+      tab: "A",
+      scope: "other-scope",
+      kind: "PersistentVolumeClaim",
+      section: true,
+      epoch: 4,
+      patch: { error: "late" },
+    }),
+  ).toBe(s);
+});
