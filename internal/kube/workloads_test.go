@@ -52,7 +52,7 @@ func workloadServer(t *testing.T, handler http.HandlerFunc) (*Service, model.Con
 }
 
 func TestWorkloadReads(t *testing.T) {
-	for _, kind := range []string{"Pod", "Deployment", "ReplicaSet"} {
+	for _, kind := range []string{"Pod", "Deployment", "ReplicaSet", "StatefulSet", "DaemonSet", "Job", "CronJob"} {
 		t.Run(kind+" pagination and scope", func(t *testing.T) {
 			s, ref := workloadServer(t, func(w http.ResponseWriter, r *http.Request) {
 				if r.Method != "GET" || r.URL.Query().Get("limit") != "100" {
@@ -67,6 +67,9 @@ func TestWorkloadReads(t *testing.T) {
 				version := "v1"
 				if kind != "Pod" {
 					version = "apps/v1"
+				}
+				if kind == "Job" || kind == "CronJob" {
+					version = "batch/v1"
 				}
 				fmt.Fprintf(w, `{"kind":%q,"apiVersion":%q,"metadata":{"continue":"next","resourceVersion":"7"},"items":[{"metadata":{"name":"sample","namespace":"default","uid":"uid-1"}}]}`, kind+"List", version)
 			})
