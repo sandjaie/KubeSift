@@ -21,12 +21,42 @@ export function DeploymentPods({
       {!data.problem && !data.items?.length && (
         <p>{data.complete ? "No owned Pods found." : "No Pods found in this batch. More results may be available."}</p>
       )}
-      {data.items?.map((row) => (
-        <p key={row.pod.resource.uid}>
-          <button onClick={() => onSelect(row.pod)}>{row.pod.resource.name}</button> · ReplicaSet {row.replicaSet.name} ·{" "}
-          <PodPhase phase={row.pod.phase} /> · {row.pod.ready ?? "?"}/{row.pod.desired ?? "?"}
-        </p>
-      ))}
+      {!!data.items?.length && (
+        <>
+          <p className="muted">{data.items.length} shown</p>
+          <div className="evidence-table-wrap">
+            <table className="evidence-table">
+              <thead>
+                <tr>
+                  <th>Pod</th>
+                  <th>Phase</th>
+                  <th>Ready</th>
+                  <th>Restarts</th>
+                  <th>ReplicaSet</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.items.map(({ pod, replicaSet }) => (
+                  <tr key={pod.resource.uid}>
+                    <td>
+                      <button onClick={() => onSelect(pod)}>{pod.resource.name}</button>
+                    </td>
+                    <td>
+                      <PodPhase phase={pod.phase} />
+                      {pod.reason && <div>{pod.reason}</div>}
+                    </td>
+                    <td>
+                      {pod.ready ?? "?"}/{pod.desired ?? "?"}
+                    </td>
+                    <td>{pod.restarts ?? "Unknown"}</td>
+                    <td>{replicaSet.name}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
       {data.page.nextCursor && <button onClick={() => onNext(data.page.nextCursor)}>Load more Pods</button>}
     </div>
   );

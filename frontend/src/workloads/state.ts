@@ -47,7 +47,18 @@ export function reduceWorkloads(state: WorkloadsState, a: Action): WorkloadsStat
   if (a.type === "scope")
     return t?.scope === a.scope
       ? state
-      : { ...state, [a.tab]: { scope: a.scope, kind: "Pod", kinds: { Pod: emptyKind(), Deployment: emptyKind() }, back: null } };
+      : {
+          ...state,
+          [a.tab]: {
+            scope: a.scope,
+            kind: t?.kind ?? "Pod",
+            kinds: {
+              Pod: { ...emptyKind(), auto: t?.kinds.Pod.auto ?? false },
+              Deployment: { ...emptyKind(), auto: t?.kinds.Deployment.auto ?? false },
+            },
+            back: null,
+          },
+        };
   if (!t) return state;
   if (a.type === "kind") return { ...state, [a.tab]: { ...t, kind: a.kind } };
   if (a.type === "back") return { ...state, [a.tab]: { ...t, back: a.row } };

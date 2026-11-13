@@ -87,6 +87,10 @@ export function Workspace({
             </div>
             <div className="filter-bar">
               <input
+                spellCheck={false}
+                autoCorrect="off"
+                autoCapitalize="none"
+                autoComplete="off"
                 aria-label="Filter this page"
                 placeholder="Filter this page…"
                 value={i.filter}

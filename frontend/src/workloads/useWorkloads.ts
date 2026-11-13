@@ -20,7 +20,7 @@ export function useWorkloads(tabID: string, connection: ConnectionRef | null, na
   }, []);
   const scope = connection ? JSON.stringify([connection.id, connection.generation, namespace]) : "";
   const t = state[tabID]?.scope === scope ? state[tabID] : null;
-  const kind = t?.kind ?? "Pod";
+  const kind = state[tabID]?.kind ?? "Pod";
   const inventory = t?.kinds[kind] ?? emptyKind();
   const cursor = inventory.history[inventory.history.length - 1] ?? "";
   const selected = inventory.selected;

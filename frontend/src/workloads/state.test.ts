@@ -60,3 +60,22 @@ test("observed Deployment zero counts remain zero while sparse status stays unkn
   expect(deploymentCounts({ observedGeneration: 1 })).toEqual({ updated: 0, ready: 0, available: 0, unavailable: 0 });
   expect(deploymentCounts({})).toEqual({ updated: undefined, ready: undefined, available: undefined, unavailable: undefined });
 });
+
+test("namespace reconciliation retains workload kind and auto-refresh but invalidates evidence", () => {
+  let state = reduceWorkloads(initialWorkloads(), { type: "scope", tab: "A", scope: "old" });
+  state = reduceWorkloads(state, { type: "kind", tab: "A", kind: "Deployment" });
+  state = reduceWorkloads(state, {
+    type: "patch",
+    tab: "A",
+    scope: "old",
+    kind: "Deployment",
+    patch: { auto: true, filter: "old", epoch: 3, scroll: 50, history: ["", "next"] },
+  });
+  const next = reduceWorkloads(state, { type: "scope", tab: "A", scope: "new" });
+  expect(next.A.kind).toBe("Deployment");
+  expect(next.A.kinds.Deployment).toEqual({ ...emptyKind(), auto: true });
+  expect(
+    reduceWorkloads(next, { type: "response", tab: "A", scope: "old", kind: "Deployment", epoch: 3, patch: { error: "forbidden" } }),
+  ).toBe(next);
+  expect(reduceWorkloads(next, { type: "scope", tab: "A", scope: "new" })).toBe(next);
+});

@@ -108,6 +108,10 @@ export function LogViewer({ session: s }: { session: LogSession }) {
       )}
       <div className="log-toolbar">
         <input
+          spellCheck={false}
+          autoCorrect="off"
+          autoCapitalize="none"
+          autoComplete="off"
           aria-label="Search logs"
           placeholder="Search logs…"
           value={query}
