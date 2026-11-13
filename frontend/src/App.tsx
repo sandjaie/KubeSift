@@ -184,12 +184,14 @@ export default function App() {
               ☰
             </button>
             <strong title={active.entry.sourceDisplay}>{active.entry.context}</strong>
+            {workloads.clusterScoped && <span className="muted">Cluster-scoped</span>}
             <NamespaceControl
               key={state.active}
               namespace={active.namespace}
               names={active.view?.namespaces ?? []}
               complete={active.view?.namespacesComplete ?? false}
               disabled={
+                workloads.clusterScoped ||
                 !active.view?.ref ||
                 active.view.state === "connecting" ||
                 (!!active.view.problem && active.view.problem.code !== "forbidden")

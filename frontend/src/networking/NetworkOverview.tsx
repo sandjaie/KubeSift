@@ -123,7 +123,10 @@ function Endpoints({ endpoints, open, resource }: { endpoints: Endpoint[]; open:
           rows={rows.map((e) => {
             const ref = e.targetRef;
             const pod =
-              ref?.kind === "Pod" && ref.apiVersion === "v1" && ref.name && (!ref.namespace || ref.namespace === resource.namespace);
+              ref?.kind === "Pod" &&
+              (!ref.apiVersion || ref.apiVersion === "v1") &&
+              ref.name &&
+              (!ref.namespace || ref.namespace === resource.namespace);
             return [
               e.addresses?.join(", "),
               e.hostname,

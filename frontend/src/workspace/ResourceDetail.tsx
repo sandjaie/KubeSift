@@ -15,6 +15,9 @@ import type {
   RelatedJobPage,
   Section,
 } from "../workloads/model";
+import { isNetworkKind, type ServiceSlicePage } from "../networking/model";
+import { NetworkOverview } from "../networking/NetworkOverview";
+import { ServiceEndpointSlices } from "../networking/ServiceEndpointSlices";
 import { ResourceYaml } from "./ResourceYaml";
 import { ResourceEvents } from "./ResourceEvents";
 import { DeploymentPods } from "./DeploymentPods";
@@ -37,16 +40,15 @@ export function ResourceDetail({
   const section = c.activeSection,
     state = c.sections[section],
     data = state?.data;
-  const tabs: Section[] =
-    row.resource.kind === "Pod"
-      ? ["Overview", "YAML", "Events", "Logs"]
-      : [
-          "Overview",
-          "YAML",
-          "Events",
-          row.resource.kind === "CronJob" ? "Jobs" : "Pods",
-          ...(row.resource.kind === "Deployment" ? ["ReplicaSets" as const] : []),
-        ];
+  const kind = row.resource.kind;
+  const tabs: Section[] = ["Overview", "YAML"];
+  if (kind !== "IngressClass") tabs.push("Events");
+  if (kind === "Pod") tabs.push("Logs");
+  else if (kind === "Service") tabs.push("EndpointSlices");
+  else if (!isNetworkKind(kind)) {
+    tabs.push(kind === "CronJob" ? "Jobs" : "Pods");
+    if (kind === "Deployment") tabs.push("ReplicaSets");
+  }
   return (
     <div className={section === "YAML" ? "compact-pod-detail yaml-detail" : "compact-pod-detail"}>
       {c.back && (
@@ -64,8 +66,9 @@ export function ResourceDetail({
         )}
       </div>
       <p className="detail-identity">
-        {context} / {row.resource.namespace} / {row.resource.kind}
+        {context} / {kind === "IngressClass" ? "Cluster-scoped" : row.resource.namespace} / {row.resource.kind}
       </p>
+      {c.inventory.identity && <p className="muted">{c.inventory.identity}</p>}
       {stale && <p className="warning">Retained evidence — connection status is stale.</p>}
       <div className="detail-tabs" role="tablist">
         {tabs.map((tab) => (
@@ -80,7 +83,20 @@ export function ResourceDetail({
           {state.error} {data ? "Retained section evidence may be stale." : ""}
         </p>
       )}
-      {section === "Overview" && data && <ResourceOverview data={data as Detail} onOpenOwner={c.openRelated} />}
+      {section === "Overview" &&
+        data &&
+        (isNetworkKind(kind) ? (
+          <NetworkOverview data={data as Detail} onOpenReference={(target) => c.openReference(data as Detail, target)} />
+        ) : (
+          <ResourceOverview data={data as Detail} onOpenOwner={c.openRelated} />
+        ))}
+      {section === "EndpointSlices" && data && (
+        <ServiceEndpointSlices
+          data={data as ServiceSlicePage}
+          onNext={c.nextSection}
+          onSelect={(target) => c.openServiceSlice((data as ServiceSlicePage).sourceVersion, target)}
+        />
+      )}
       {section === "YAML" && data && (
         <ResourceYaml key={JSON.stringify([row.resource.uid, (data as YAMLDocument).fetchedAt])} data={data as YAMLDocument} />
       )}

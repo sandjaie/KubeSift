@@ -170,3 +170,91 @@ func TestServiceSliceAssociation(t *testing.T) {
 		t.Fatal("replaced Service accepted")
 	}
 }
+
+func TestEndpointSlicePodReferenceIdentity(t *testing.T) {
+	var calls atomic.Int32
+	s, c := workloadServer(t, func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/apis/discovery.k8s.io/v1/namespaces/test/endpointslices/slice":
+			fmt.Fprint(w, `{"apiVersion":"discovery.k8s.io/v1","kind":"EndpointSlice","metadata":{"name":"slice","namespace":"test","uid":"slice","resourceVersion":"2"},"addressType":"IPv4","endpoints":[{"addresses":["192.0.2.1"],"targetRef":{"kind":"Pod","name":"live","uid":"live"}},{"addresses":["192.0.2.2"],"targetRef":{"apiVersion":"v1","kind":"Pod","name":"reused","uid":"old"}},{"addresses":["192.0.2.3"],"targetRef":{"kind":"Pod","name":"external","namespace":"other"}},{"addresses":["192.0.2.4"],"targetRef":{"kind":"Pod","name":"name-only"}}]}`)
+		case "/api/v1/namespaces/test/pods/live", "/api/v1/namespaces/test/pods/reused", "/api/v1/namespaces/test/pods/name-only":
+			calls.Add(1)
+			name := r.URL.Path[strings.LastIndexByte(r.URL.Path, '/')+1:]
+			fmt.Fprintf(w, `{"apiVersion":"v1","kind":"Pod","metadata":{"name":%q,"namespace":"test","uid":"live"}}`, name)
+		default:
+			t.Errorf("unexpected target read: %s", r.URL.Path)
+			http.NotFound(w, r)
+		}
+	})
+	source := ResourceRef{Connection: c, APIVersion: "discovery.k8s.io/v1", Kind: "EndpointSlice", Namespace: "test", Name: "slice", UID: "slice"}
+	for _, tc := range []struct {
+		name, uid, ns, evidence string
+		calls                   int32
+	}{
+		{"external", "", "test", "", 0}, {"external", "", "other", "", 0}, {"live", "", "test", "", 0},
+		{"live", "live", "test", "uid-verified", 1}, {"reused", "old", "test", "", 2}, {"name-only", "", "test", "name-resolved", 3},
+	} {
+		target := ResourceRef{Connection: c, APIVersion: "v1", Kind: "Pod", Namespace: tc.ns, Name: tc.name, UID: tc.uid}
+		result, err := s.ResolveNetworkReference(context.Background(), NetworkReferenceRequest{Source: source, SourceVersion: "2", Target: target})
+		if (err == nil) != (tc.evidence != "") || result.IdentityEvidence != tc.evidence || calls.Load() != tc.calls {
+			t.Fatalf("%s: %+v %v, %d calls", tc.name, result, err, calls.Load())
+		}
+	}
+}
+
+func TestServiceSliceOpenRechecksAssociation(t *testing.T) {
+	for _, tc := range []struct{ label, owner, want string }{
+		{"web", "current", "owner-confirmed"}, {"web", "", "label-only"}, {"web", "old", ""}, {"changed", "current", ""},
+	} {
+		t.Run(tc.label+"/"+tc.owner, func(t *testing.T) {
+			s, c := workloadServer(t, func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				switch r.URL.Path {
+				case "/api/v1/namespaces/test/services/web":
+					fmt.Fprint(w, `{"apiVersion":"v1","kind":"Service","metadata":{"name":"web","namespace":"test","uid":"current","resourceVersion":"1"}}`)
+				case "/apis/discovery.k8s.io/v1/namespaces/test/endpointslices/slice":
+					fmt.Fprintf(w, `{"apiVersion":"discovery.k8s.io/v1","kind":"EndpointSlice","metadata":{"name":"slice","namespace":"test","uid":"slice","resourceVersion":"2","labels":{"kubernetes.io/service-name":%q},"ownerReferences":[{"apiVersion":"v1","kind":"Service","name":"web","uid":%q}]},"addressType":"IPv4","endpoints":[]}`, tc.label, tc.owner)
+				default:
+					t.Errorf("unexpected API call %s", r.URL.Path)
+					http.NotFound(w, r)
+				}
+			})
+			source := ResourceRef{Connection: c, APIVersion: "v1", Kind: "Service", Namespace: "test", Name: "web", UID: "current"}
+			target := ResourceRef{Connection: c, APIVersion: "discovery.k8s.io/v1", Kind: "EndpointSlice", Namespace: "test", Name: "slice", UID: "slice"}
+			result, err := s.ResolveNetworkReference(context.Background(), NetworkReferenceRequest{Source: source, SourceVersion: "1", Target: target})
+			if (err == nil) != (tc.want != "") || result.Association != tc.want {
+				t.Fatal(result, err)
+			}
+		})
+	}
+}
+
+func TestNetworkingInventoryFailures(t *testing.T) {
+	for _, tc := range []struct {
+		code         int
+		reason, want string
+	}{
+		{403, "Forbidden", "forbidden"}, {404, "NotFound", "api_unavailable"}, {410, "Expired", "list_changed"}, {200, "", "capacity"},
+	} {
+		t.Run(tc.want, func(t *testing.T) {
+			s, c := workloadServer(t, func(w http.ResponseWriter, r *http.Request) {
+				if r.URL.Path != "/apis/discovery.k8s.io/v1/namespaces/test/endpointslices" {
+					t.Errorf("unexpected fallback %s", r.URL.Path)
+				}
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(tc.code)
+				if tc.code != 200 {
+					fmt.Fprintf(w, `{"apiVersion":"v1","kind":"Status","status":"Failure","reason":%q,"code":%d}`, tc.reason, tc.code)
+					return
+				}
+				fmt.Fprintf(w, `{"apiVersion":"discovery.k8s.io/v1","kind":"EndpointSliceList","items":[{"metadata":{"namespace":"test","name":"slice","uid":"slice","labels":{"large":%q}},"addressType":"IPv4","endpoints":[]}]}`, strings.Repeat("a", detailLimit))
+			})
+			req := PageRequest{Connection: c, Kind: "EndpointSlice", Namespace: "test"}
+			page, err := s.ReadNetworking(context.Background(), req)
+			if err == nil || !strings.HasPrefix(err.Error(), tc.want+":") || len(page.Items) != 0 {
+				t.Fatal(err)
+			}
+		})
+	}
+}

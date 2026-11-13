@@ -15,7 +15,7 @@ export function ServiceEndpointSlices({
 }: {
   data: ServiceSlicePage;
   onNext: (cursor: string) => void;
-  onSelect: (resource: ResourceRef, evidence?: string) => void;
+  onSelect: (resource: ResourceRef) => void;
 }) {
   const rows = data.items ?? [];
   return (
@@ -57,7 +57,7 @@ export function ServiceEndpointSlices({
                       {association === "owner-conflict" ? (
                         slice.resource.name
                       ) : (
-                        <button onClick={() => onSelect(slice.resource, evidence)}>{slice.resource.name}</button>
+                        <button onClick={() => onSelect(slice.resource)}>{slice.resource.name}</button>
                       )}
                     </td>
                     <td>{o.addressType ?? "Unknown"}</td>

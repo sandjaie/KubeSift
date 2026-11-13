@@ -127,6 +127,7 @@ export interface RelatedRequest {
 }
 
 export interface ResolvedNetworkReference {
+  association: string;
   resource: ResourceRef;
   identityEvidence: string;
 }
@@ -160,6 +161,7 @@ export interface ResourceRef {
 }
 
 export interface ServiceSlicePage {
+  sourceVersion: string;
   items: ServiceSliceRow[] | null;
   page: PageInfo;
   complete: boolean;

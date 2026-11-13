@@ -21,8 +21,11 @@ export const destinations = [
   {
     group: "Networking",
     items: [
-      ["Service", "Services", false],
-      ["Ingress", "Ingresses", false],
+      ["Service", "Services", true],
+      ["EndpointSlice", "EndpointSlices", true],
+      ["Ingress", "Ingresses", true],
+      ["IngressClass", "IngressClasses", true],
+      ["NetworkPolicy", "NetworkPolicies", true],
     ],
   },
   {

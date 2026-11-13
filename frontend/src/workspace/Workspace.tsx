@@ -5,12 +5,15 @@ Responsibilities: Render bounded page controls and preserve tab-owned navigation
 Important: No synthetic fallback or write action is exposed.
 */
 import { ResourceSplit } from "./ResourceSplit";
-import { isWorkloadKind } from "../workloads/model";
+import { isResourceKind } from "../workloads/model";
 import type { ReactNode } from "react";
 import type { WorkloadController } from "../workloads/useWorkloads";
 import type { ConnectionTab } from "../connections/model";
 import { visibleState } from "../connections/state";
 import { ResourceNavigation } from "./ResourceNavigation";
+import { isNetworkKind, networkLabels, type NetworkRow } from "../networking/model";
+import { NetworkTable } from "../networking/NetworkTable";
+import type { WorkloadRow } from "../workloads/model";
 import { ResourceTable } from "./ResourceTable";
 import { ResourceDetail } from "./ResourceDetail";
 import { ResizeHandle } from "../ui/ResizeHandle";
@@ -39,6 +42,7 @@ export function Workspace({
 }) {
   const i = c.inventory,
     kind = c.kind;
+  const label = isNetworkKind(kind) ? networkLabels[kind] : `${kind}s`;
   const stale = tab.pollFailed || visibleState(tab.view) !== "connected";
   const rows = [...(i.page?.items ?? [])]
     .filter((row) => row.resource.name.toLowerCase().includes(i.filter.toLowerCase()))
@@ -52,7 +56,7 @@ export function Workspace({
               <ResourceNavigation
                 kind={kind}
                 onSelect={(k) => {
-                  if (isWorkloadKind(k)) c.selectKind(k);
+                  if (isResourceKind(k)) c.selectKind(k);
                 }}
               />
             </div>
@@ -80,7 +84,8 @@ export function Workspace({
             }}
           >
             <div className="pane-heading">
-              <h2>{kind}s</h2>
+              <h2>{label}</h2>
+              {c.clusterScoped && <span className="muted">Cluster-scoped</span>}
               <span className="muted">{rows.length} shown</span>
               <button disabled={!tab.view?.ref || i.loading} onClick={c.refresh}>
                 ↻ Refresh
@@ -100,7 +105,7 @@ export function Workspace({
               <button onClick={() => c.patch({ sort: i.sort === "asc" ? "desc" : "asc" })}>Name {i.sort === "asc" ? "↑" : "↓"}</button>
             </div>
             <div className="inventory-controls">
-              <nav className="inventory-pagination" aria-label="Workload pages">
+              <nav className="inventory-pagination" aria-label="Resource pages">
                 <button disabled={i.history.length === 1 || i.loading} onClick={c.previous}>
                   Previous
                 </button>
@@ -117,10 +122,24 @@ export function Workspace({
             {i.auto && i.history.length > 1 && <p className="muted">Auto-refresh paused after page one.</p>}
             {stale && i.page && <p className="warning table-hint">Retained data — connection evidence is not current.</p>}
             <p className="table-hint">↑ ↓ Select · Filter and sort apply to this page.</p>
-            {i.loading && <p>Loading {kind}s…</p>}
+            {i.loading && <p>Loading {label}…</p>}
             {i.error && <p role="alert">{i.error}</p>}
             {rows.length ? (
-              <ResourceTable rows={rows} kind={kind} selected={c.selection?.resource.uid ?? null} onSelect={c.selectResource} />
+              isNetworkKind(kind) ? (
+                <NetworkTable
+                  rows={rows as NetworkRow[]}
+                  kind={kind}
+                  selected={c.selection?.resource.uid ?? null}
+                  onSelect={c.selectResource}
+                />
+              ) : (
+                <ResourceTable
+                  rows={rows as WorkloadRow[]}
+                  kind={kind}
+                  selected={c.selection?.resource.uid ?? null}
+                  onSelect={c.selectResource}
+                />
+              )
             ) : (
               !i.loading && (
                 <p className="state-message">
@@ -128,7 +147,7 @@ export function Workspace({
                     ? "No matches on this page."
                     : i.page
                       ? "No resources returned on this page."
-                      : "Connect or Retry to read workloads."}
+                      : "Connect or Retry to read resources."}
                 </p>
               )
             )}
@@ -139,7 +158,7 @@ export function Workspace({
             ) : (
               <div className="state-message">
                 <h2>Select a {kind}</h2>
-                <p>Inspect actual workload evidence.</p>
+                <p>Inspect captured resource evidence.</p>
               </div>
             )}
           </section>

@@ -51,9 +51,11 @@ func (s *Service) ReadServiceEndpointSlices(ctx context.Context, req RelatedRequ
 	if err != nil {
 		return result, err
 	}
-	if _, err = checkedObject(ctx, client, parent); err != nil {
+	service, err := checkedObject(ctx, client, parent)
+	if err != nil {
 		return result, err
 	}
+	result.SourceVersion = service.GetResourceVersion()
 	selector := labels.Set{serviceNameLabel: parent.Name}.AsSelector().String()
 	for range 8 {
 		list, e := client.DiscoveryV1().EndpointSlices(parent.Namespace).List(ctx, metav1.ListOptions{Limit: 100, Continue: token, LabelSelector: selector})
@@ -141,7 +143,7 @@ func referencePresent(source workloadObject, target ResourceRef) bool {
 		}
 		for _, endpoint := range o.Endpoints {
 			ref := endpoint.TargetRef
-			if ref == nil || ref.Kind != "Pod" || ref.APIVersion != "v1" || ref.Name != target.Name || string(ref.UID) != target.UID {
+			if ref == nil || ref.Kind != "Pod" || (ref.APIVersion != "" && ref.APIVersion != "v1") || ref.Name != target.Name || string(ref.UID) != target.UID {
 				continue
 			}
 			if ref.Namespace == "" || ref.Namespace == o.Namespace {
@@ -155,7 +157,7 @@ func referencePresent(source workloadObject, target ResourceRef) bool {
 func (s *Service) ResolveNetworkReference(ctx context.Context, req NetworkReferenceRequest) (ResolvedNetworkReference, error) {
 	result := ResolvedNetworkReference{}
 	source, target := req.Source, req.Target
-	if (source.Kind != "Ingress" && source.Kind != "EndpointSlice") || source.Connection != target.Connection || req.SourceVersion == "" || len(req.SourceVersion) > 256 {
+	if (source.Kind != "Ingress" && source.Kind != "EndpointSlice" && source.Kind != "Service") || source.Connection != target.Connection || req.SourceVersion == "" || len(req.SourceVersion) > 256 {
 		return result, model.Fail("invalid", "Captured networking reference required")
 	}
 	if err := validResource(source); err != nil {
@@ -178,7 +180,11 @@ func (s *Service) ResolveNetworkReference(ctx context.Context, req NetworkRefere
 	if err = checkPayload(object); err != nil {
 		return result, err
 	}
-	if !referencePresent(object, target) {
+	if source.Kind == "Service" {
+		if target.Kind != "EndpointSlice" || target.Namespace != source.Namespace || target.UID == "" {
+			return result, model.Fail("invalid", "Captured EndpointSlice identity required")
+		}
+	} else if !referencePresent(object, target) {
 		return result, model.Fail("invalid", "Reference is unavailable or conflicts with captured evidence")
 	}
 	resolved, err := getResource(ctx, client, target)
@@ -191,6 +197,13 @@ func (s *Service) ResolveNetworkReference(ctx context.Context, req NetworkRefere
 	if err = ctx.Err(); err != nil {
 		return result, safeError(ctx, err)
 	}
+	if source.Kind == "Service" {
+		slice := resolved.(*discovery.EndpointSlice)
+		result.Association = sliceAssociation(slice, source)
+		if slice.Labels[serviceNameLabel] != source.Name || result.Association == "owner-conflict" {
+			return ResolvedNetworkReference{}, model.Fail("stale_target", "EndpointSlice association changed; refresh the section")
+		}
+	}
 	evidence := "uid-verified"
 	if target.UID == "" {
 		evidence = "name-resolved"
@@ -199,5 +212,6 @@ func (s *Service) ResolveNetworkReference(ctx context.Context, req NetworkRefere
 	if err = validResource(target); err != nil {
 		return result, err
 	}
-	return ResolvedNetworkReference{Resource: target, IdentityEvidence: evidence}, s.connections.Validate(source.Connection)
+	result.Resource, result.IdentityEvidence = target, evidence
+	return result, s.connections.Validate(source.Connection)
 }

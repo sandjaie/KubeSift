@@ -26,10 +26,11 @@ type ServiceSliceRow struct {
 	Association string     `json:"association"`
 }
 type ServiceSlicePage struct {
-	Items    []ServiceSliceRow `json:"items"`
-	Page     PageInfo          `json:"page"`
-	Complete bool              `json:"complete"`
-	Problem  *model.Problem    `json:"problem"`
+	SourceVersion string            `json:"sourceVersion"`
+	Items         []ServiceSliceRow `json:"items"`
+	Page          PageInfo          `json:"page"`
+	Complete      bool              `json:"complete"`
+	Problem       *model.Problem    `json:"problem"`
 }
 
 type NetworkReferenceRequest struct {
@@ -38,6 +39,7 @@ type NetworkReferenceRequest struct {
 	Target        ResourceRef `json:"target"`
 }
 type ResolvedNetworkReference struct {
+	Association      string      `json:"association"`
 	Resource         ResourceRef `json:"resource"`
 	IdentityEvidence string      `json:"identityEvidence"`
 }
