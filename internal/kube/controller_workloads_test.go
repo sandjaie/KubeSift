@@ -7,10 +7,14 @@ Important: Synthetic status only.
 package kube
 
 import (
+	"context"
+	"fmt"
 	"github.com/sandjaie/KubeSift/internal/model"
 	apps "k8s.io/api/apps/v1"
 	batch "k8s.io/api/batch/v1"
 	core "k8s.io/api/core/v1"
+	"net/http"
+	"strings"
 	"testing"
 )
 
@@ -60,5 +64,29 @@ func TestRemainingWorkloadCounters(t *testing.T) {
 	}
 	if row := daemonSetRow(model.ConnectionRef{}, apps.DaemonSet{Status: apps.DaemonSetStatus{ObservedGeneration: 1}}); row.Desired == nil || *row.Desired != 0 {
 		t.Fatal("observed zero nodes lost")
+	}
+}
+
+func TestRemainingWorkloadDirectPods(t *testing.T) {
+	for _, kind := range []string{"StatefulSet", "DaemonSet", "Job"} {
+		t.Run(kind, func(t *testing.T) {
+			version := workloadVersion(kind)
+			service, connection := workloadServer(t, func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				if strings.HasSuffix(r.URL.Path, "/sample") {
+					fmt.Fprintf(w, `{"apiVersion":%q,"kind":%q,"metadata":{"name":"sample","namespace":"test","uid":"parent"},"spec":{"selector":{"matchLabels":{"app":"sample"}}}}`, version, kind)
+					return
+				}
+				if r.URL.Path != "/api/v1/namespaces/test/pods" || r.URL.Query().Get("limit") != "100" || r.URL.Query().Get("labelSelector") != "app=sample" {
+					t.Errorf("unexpected Pod query %v", r.URL)
+				}
+				fmt.Fprint(w, `{"apiVersion":"v1","kind":"PodList","items":[{"metadata":{"name":"owned","namespace":"test","uid":"owned","ownerReferences":[{"controller":true,"uid":"parent"}]}},{"metadata":{"name":"not-owned","namespace":"test","uid":"other","ownerReferences":[{"controller":false,"uid":"parent"}]}}]}`)
+			})
+			parent := ResourceRef{Connection: connection, Kind: kind, APIVersion: version, Name: "sample", Namespace: "test", UID: "parent"}
+			page, err := service.ReadRelatedPods(context.Background(), RelatedRequest{Resource: parent})
+			if err != nil || len(page.Items) != 1 || page.Items[0].Pod.Resource.Name != "owned" || !page.Complete {
+				t.Fatalf("owning controller page: %+v %v", page, err)
+			}
+		})
 	}
 }

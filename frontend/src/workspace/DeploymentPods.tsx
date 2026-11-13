@@ -38,7 +38,7 @@ export function DeploymentPods({
                 </tr>
               </thead>
               <tbody>
-                {data.items.map(({ pod, replicaSet }) => (
+                {data.items.map(({ pod, controller }) => (
                   <tr key={pod.resource.uid}>
                     <td>
                       <button onClick={() => onSelect(pod.resource)}>{pod.resource.name}</button>
@@ -53,7 +53,7 @@ export function DeploymentPods({
                     <td>{pod.restarts ?? "Unknown"}</td>
                     {showOwner && (
                       <td>
-                        <button onClick={() => onSelect(replicaSet)}>{replicaSet.name}</button>
+                        <button onClick={() => onSelect(controller)}>{controller.name}</button>
                       </td>
                     )}
                   </tr>

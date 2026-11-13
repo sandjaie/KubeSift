@@ -14,6 +14,7 @@ test("partially observed regular containers do not imply complete readiness or r
     <ResourceOverview
       data={{
         resource: { connection: { id: "c", generation: 1 }, kind: "Pod", apiVersion: "v1", namespace: "ns", name: "pod", uid: "p" },
+        job: null,
         resourceVersion: "1",
         fetchedAt: "2026-11-13T00:00:00Z",
         objectJSON: JSON.stringify({

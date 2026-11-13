@@ -39,6 +39,9 @@ test("reselecting the same resource or section preserves pending evidence", () =
     available: null,
     updated: null,
     current: null,
+    total: null,
+    job: null,
+    cronJob: null,
     createdAt: null,
   };
   s = reduceWorkloads(s, { type: "select", tab: "A", row, epoch: 1 });

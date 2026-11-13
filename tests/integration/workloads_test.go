@@ -128,7 +128,7 @@ func TestWorkloadInvestigation(t *testing.T) {
 			t.Fatalf("ReplicaSet Pods: %+v %v", pods, err)
 		}
 		for _, row := range pods.Items {
-			if row.ReplicaSet != replicaSet || row.Pod.Resource.Name == "web-lookalike" {
+			if row.Controller != replicaSet || row.Pod.Resource.Name == "web-lookalike" {
 				t.Fatal("incorrect ReplicaSet Pod identity")
 			}
 		}

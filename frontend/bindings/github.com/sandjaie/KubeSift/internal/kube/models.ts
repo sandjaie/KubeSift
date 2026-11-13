@@ -11,6 +11,14 @@ Important: Wails generates this glue; change Go contracts and regenerate rather 
 // @ts-ignore: Unused imports
 import * as model$0 from "../model/models.js";
 
+export interface CronJobSummary {
+  schedule: string;
+  timeZone: string | null;
+  suspended: boolean | null;
+  active: number;
+  lastScheduled: string | null;
+}
+
 export interface DetailRequest {
   resource: ResourceRef;
 }
@@ -28,6 +36,14 @@ export interface EventRequest {
 export interface ForwardResult {
   session: model$0.SessionRef;
   localPort: number;
+}
+
+export interface JobSummary {
+  status: string;
+  active: number | null;
+  succeeded: number | null;
+  failed: number | null;
+  completions: number | null;
 }
 
 export interface LogRequest {
@@ -62,6 +78,13 @@ export interface PodSummary {
   annotation: string;
 }
 
+export interface RelatedJobPage {
+  items: WorkloadRow[] | null;
+  page: PageInfo;
+  complete: boolean;
+  problem: model$0.Problem | null;
+}
+
 export interface RelatedPage {
   items: RelatedPod[] | null;
   page: PageInfo;
@@ -71,7 +94,7 @@ export interface RelatedPage {
 
 export interface RelatedPod {
   pod: WorkloadRow;
-  replicaSet: ResourceRef;
+  controller: ResourceRef;
 }
 
 export interface RelatedReplicaSetPage {
@@ -87,6 +110,7 @@ export interface RelatedRequest {
 }
 
 export interface ResourceDetail {
+  job: JobSummary | null;
   resource: ResourceRef;
   resourceVersion: string;
   fetchedAt: string;
@@ -119,6 +143,9 @@ export interface WorkloadPage {
 }
 
 export interface WorkloadRow {
+  total: number | null;
+  job: JobSummary | null;
+  cronJob: CronJobSummary | null;
   resource: ResourceRef;
   phase: string;
   reason: string;

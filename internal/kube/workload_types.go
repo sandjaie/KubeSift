@@ -89,7 +89,7 @@ type RelatedRequest struct {
 }
 type RelatedPod struct {
 	Pod        WorkloadRow `json:"pod"`
-	ReplicaSet ResourceRef `json:"replicaSet"`
+	Controller ResourceRef `json:"controller"`
 }
 type RelatedPage struct {
 	Items    []RelatedPod   `json:"items"`
@@ -99,6 +99,13 @@ type RelatedPage struct {
 }
 
 type RelatedReplicaSetPage struct {
+	Items    []WorkloadRow  `json:"items"`
+	Page     PageInfo       `json:"page"`
+	Complete bool           `json:"complete"`
+	Problem  *model.Problem `json:"problem"`
+}
+
+type RelatedJobPage struct {
 	Items    []WorkloadRow  `json:"items"`
 	Page     PageInfo       `json:"page"`
 	Complete bool           `json:"complete"`

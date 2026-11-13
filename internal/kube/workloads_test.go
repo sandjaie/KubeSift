@@ -281,7 +281,7 @@ func TestReplicaSetRelationships(t *testing.T) {
 		t.Fatalf("zero/current semantics: %+v", row)
 	}
 	pods, err := s.ReadRelatedPods(ctx, RelatedRequest{Resource: row.Resource})
-	if err != nil || !pods.Complete || len(pods.Items) != 1 || pods.Items[0].ReplicaSet != row.Resource {
+	if err != nil || !pods.Complete || len(pods.Items) != 1 || pods.Items[0].Controller != row.Resource {
 		t.Fatalf("pods: %+v %v", pods, err)
 	}
 	forbidden.Store(true)
