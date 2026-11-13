@@ -14,6 +14,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/sandjaie/KubeSift/internal/config"
@@ -51,7 +52,7 @@ func workloadServer(t *testing.T, handler http.HandlerFunc) (*Service, model.Con
 }
 
 func TestWorkloadReads(t *testing.T) {
-	for _, kind := range []string{"Pod", "Deployment"} {
+	for _, kind := range []string{"Pod", "Deployment", "ReplicaSet"} {
 		t.Run(kind+" pagination and scope", func(t *testing.T) {
 			s, ref := workloadServer(t, func(w http.ResponseWriter, r *http.Request) {
 				if r.Method != "GET" || r.URL.Query().Get("limit") != "100" {
@@ -64,7 +65,7 @@ func TestWorkloadReads(t *testing.T) {
 					return
 				}
 				version := "v1"
-				if kind == "Deployment" {
+				if kind != "Pod" {
 					version = "apps/v1"
 				}
 				fmt.Fprintf(w, `{"kind":%q,"apiVersion":%q,"metadata":{"continue":"next","resourceVersion":"7"},"items":[{"metadata":{"name":"sample","namespace":"default","uid":"uid-1"}}]}`, kind+"List", version)
@@ -234,5 +235,62 @@ func TestRelatedPodsBoundsEmptyTraversal(t *testing.T) {
 	page, err := s.ReadRelatedPods(context.Background(), RelatedRequest{Resource: ResourceRef{Connection: ref, APIVersion: "apps/v1", Kind: "Deployment", Namespace: "default", Name: "sample", UID: "deploy"}})
 	if err != nil || pages != 8 || page.Complete || page.Page.NextCursor == "" {
 		t.Fatalf("unbounded or misleading traversal: pages=%d complete=%v cursor=%t err=%v", pages, page.Complete, page.Page.NextCursor != "", err)
+	}
+}
+
+func TestReplicaSetRelationships(t *testing.T) {
+	var forbidden atomic.Bool
+	s, connection := workloadServer(t, func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/apis/apps/v1/namespaces/default/deployments/web":
+			fmt.Fprint(w, `{"apiVersion":"apps/v1","kind":"Deployment","metadata":{"name":"web","namespace":"default","uid":"deploy"}}`)
+		case "/apis/apps/v1/namespaces/default/replicasets":
+			if r.URL.Query().Get("limit") != "100" {
+				t.Error("expected bounded ReplicaSet page")
+			}
+			fmt.Fprint(w, `{"apiVersion":"apps/v1","kind":"ReplicaSetList","metadata":{"continue":"sets-next"},"items":[{"metadata":{"name":"owned","namespace":"default","uid":"rs","ownerReferences":[{"uid":"deploy","controller":true}]},"spec":{"replicas":0},"status":{"observedGeneration":1,"replicas":0}},{"metadata":{"name":"foreign","uid":"other","ownerReferences":[{"uid":"deploy","controller":false}]}}]}`)
+		case "/apis/apps/v1/namespaces/default/replicasets/owned":
+			fmt.Fprint(w, `{"apiVersion":"apps/v1","kind":"ReplicaSet","metadata":{"name":"owned","namespace":"default","uid":"rs"},"spec":{"selector":{"matchLabels":{"app":"web"}}}}`)
+		case "/api/v1/namespaces/default/pods":
+			if forbidden.Load() {
+				w.WriteHeader(403)
+				fmt.Fprint(w, `{"apiVersion":"v1","kind":"Status","reason":"Forbidden","code":403}`)
+				return
+			}
+			if r.URL.Query().Get("limit") != "100" || r.URL.Query().Get("labelSelector") != "app=web" {
+				t.Error("expected bounded and narrowed Pod page")
+			}
+			fmt.Fprint(w, `{"apiVersion":"v1","kind":"PodList","items":[{"metadata":{"name":"owned-pod","namespace":"default","uid":"pod","ownerReferences":[{"uid":"rs","controller":true}]}},{"metadata":{"name":"lookalike","namespace":"default","uid":"lookalike","ownerReferences":[{"uid":"another","controller":true}]}}]}`)
+		default:
+			t.Errorf("unexpected route %s", r.URL.Path)
+			w.WriteHeader(404)
+		}
+	})
+	ctx := context.Background()
+	deploy := ResourceRef{Connection: connection, APIVersion: "apps/v1", Kind: "Deployment", Namespace: "default", Name: "web", UID: "deploy"}
+	sets, err := s.ReadRelatedReplicaSets(ctx, RelatedRequest{Resource: deploy})
+	if err != nil || len(sets.Items) != 1 || sets.Complete || sets.Page.NextCursor == "" {
+		t.Fatalf("sets: %+v %v", sets, err)
+	}
+	row := sets.Items[0]
+	if row.Desired == nil || *row.Desired != 0 || row.Current == nil || *row.Current != 0 || row.Updated != nil {
+		t.Fatalf("zero/current semantics: %+v", row)
+	}
+	pods, err := s.ReadRelatedPods(ctx, RelatedRequest{Resource: row.Resource})
+	if err != nil || !pods.Complete || len(pods.Items) != 1 || pods.Items[0].ReplicaSet != row.Resource {
+		t.Fatalf("pods: %+v %v", pods, err)
+	}
+	forbidden.Store(true)
+	pods, err = s.ReadRelatedPods(ctx, RelatedRequest{Resource: row.Resource})
+	if err != nil || pods.Problem == nil || pods.Problem.Code != "forbidden" || pods.Complete {
+		t.Fatalf("forbidden: %+v %v", pods, err)
+	}
+	if _, err := s.ReadRelatedPods(ctx, RelatedRequest{Resource: row.Resource, Cursor: sets.Page.NextCursor}); err == nil {
+		t.Fatal("cursor crossed relation endpoints")
+	}
+	row.Resource.UID = "stale"
+	if _, err := s.ReadResource(ctx, DetailRequest{Resource: row.Resource}); err == nil {
+		t.Fatal("reused name accepted")
 	}
 }

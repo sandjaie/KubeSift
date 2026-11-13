@@ -5,6 +5,7 @@ Responsibilities: Render bounded page controls and preserve tab-owned navigation
 Important: No synthetic fallback or write action is exposed.
 */
 import { ResourceSplit } from "./ResourceSplit";
+import { isWorkloadKind } from "../workloads/model";
 import type { ReactNode } from "react";
 import type { WorkloadController } from "../workloads/useWorkloads";
 import type { ConnectionTab } from "../connections/model";
@@ -51,7 +52,7 @@ export function Workspace({
               <ResourceNavigation
                 kind={kind}
                 onSelect={(k) => {
-                  if (k === "Pod" || k === "Deployment") c.selectKind(k);
+                  if (isWorkloadKind(k)) c.selectKind(k);
                 }}
               />
             </div>

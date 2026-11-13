@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Workload explorer refinement user UAT · KubeSift</title>
+    <link rel="stylesheet" href="../../assets/planning.css" />
+    <script src="../../assets/theme.js"></script>
+  </head>
+  <body>
+    <header>
+      <a href="../../index.html">KubeSift / Planning</a>
+      <h1>Workload explorer refinement user UAT</h1>
+    </header>
+    <main id="content">
+      <p>
+        User results are pending. Use the packaged app and synthetic fixtures on kind-dev-local-a and kind-dev-local-b.
+        <a href="workload-explorer-refinement.html">Separate agent verification</a>.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Journey</th>
+            <th scope="col">Expected result</th>
+            <th scope="col">User result</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Switch namespaces with each workload kind selected.</td>
+            <td>The selected kind stays active. Old evidence clears and inventory starts at page one.</td>
+            <td>Pending</td>
+          </tr>
+          <tr>
+            <td>Inspect healthy and failing Pod and Deployment Overview.</td>
+            <td>Facts, conditions and containers are readable. Unknown counts and zero replicas stay distinct.</td>
+            <td>Pending</td>
+          </tr>
+          <tr>
+            <td>Filter Events and expand a warning.</td>
+            <td>Page-local counts and full message metadata remain clear.</td>
+            <td>Pending</td>
+          </tr>
+          <tr>
+            <td>Find next and previous YAML matches, toggle managed fields and copy.</td>
+            <td>Search wraps and uses the active capture. Copy equals the selected representation.</td>
+            <td>Pending</td>
+          </tr>
+          <tr>
+            <td>Open Deployment → ReplicaSets → ReplicaSet → Pods → Pod. Go Back twice, then open a Pod owner.</td>
+            <td>
+              Links resolve the captured identities, and Back restores sections and preserves inventory state. Stale identities produce an
+              error.
+            </td>
+            <td>Pending</td>
+          </tr>
+          <tr>
+            <td>Browse ReplicaSets directly and inspect a zero count or an unavailable related read.</td>
+            <td>Each permitted tab remains usable and unavailable reads are distinct from empty results.</td>
+            <td>Pending</td>
+          </tr>
+          <tr>
+            <td>Type and paste mixed-case identifiers with correction enabled. Try IME and the namespace selector.</td>
+            <td>Technical inputs stay literal and the namespace results remain available.</td>
+            <td>Pending</td>
+          </tr>
+          <tr>
+            <td>Use keyboard navigation in both themes at 200% zoom and a narrow split. Open and leave Logs.</td>
+            <td>Controls remain reachable, tables scroll locally, and Logs starts and leaves normally.</td>
+            <td>Pending</td>
+          </tr>
+        </tbody>
+      </table>
+    </main>
+  </body>
+</html>

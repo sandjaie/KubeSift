@@ -4,7 +4,7 @@ Used by: The workload controller and focused reducer tests.
 Responsibilities: Reject stale responses and cap page history without a growing payload cache.
 Important: Connection health snapshots never enter this reducer.
 */
-import type { Kind, KindState, WorkloadsState, WorkloadRow, Section } from "./model";
+import type { Kind, KindState, WorkloadsState, WorkloadRow, Section, NavigationEntry } from "./model";
 export const initialWorkloads = (): WorkloadsState => ({});
 export const emptyKind = (): KindState => ({
   filter: "",
@@ -13,6 +13,7 @@ export const emptyKind = (): KindState => ({
   history: [""],
   page: null,
   selected: null,
+  related: false,
   section: "Overview",
   sections: {},
   loading: false,
@@ -33,7 +34,7 @@ export type Action =
   | { type: "scope"; tab: string; scope: string }
   | { type: "close"; tab: string }
   | { type: "kind"; tab: string; kind: Kind }
-  | { type: "back"; tab: string; row: WorkloadRow | null }
+  | { type: "navigate"; tab: string; scope: string; kind: Kind; entry: NavigationEntry; history: NavigationEntry[]; epoch: number }
   | { type: "next"; tab: string; cursor: string }
   | { type: "patch"; tab: string; scope: string; kind: Kind; patch: Partial<KindState> }
   | { type: "response"; tab: string; scope: string; kind: Kind; epoch: number; section?: boolean; patch: Partial<KindState> };
@@ -55,19 +56,53 @@ export function reduceWorkloads(state: WorkloadsState, a: Action): WorkloadsStat
             kinds: {
               Pod: { ...emptyKind(), auto: t?.kinds.Pod.auto ?? false },
               Deployment: { ...emptyKind(), auto: t?.kinds.Deployment.auto ?? false },
+              ReplicaSet: { ...emptyKind(), auto: t?.kinds.ReplicaSet.auto ?? false },
             },
-            back: null,
+            navigation: [],
           },
         };
   if (!t) return state;
-  if (a.type === "kind") return { ...state, [a.tab]: { ...t, kind: a.kind } };
-  if (a.type === "back") return { ...state, [a.tab]: { ...t, back: a.row } };
+  if (a.type === "kind") {
+    const target = t.kinds[a.kind];
+    return {
+      ...state,
+      [a.tab]: {
+        ...t,
+        kind: a.kind,
+        navigation: [],
+        kinds: { ...t.kinds, [a.kind]: target.related ? { ...target, selected: null, related: false, sections: {} } : target },
+      },
+    };
+  }
+  if (a.type === "navigate") {
+    if (t.scope !== a.scope) return state;
+    return {
+      ...state,
+      [a.tab]: {
+        ...t,
+        kind: a.kind,
+        navigation: a.history,
+        kinds: {
+          ...t.kinds,
+          [a.kind]: {
+            ...t.kinds[a.kind],
+            selected: { resource: a.entry.resource },
+            related: true,
+            section: a.entry.section,
+            sectionCursor: a.entry.cursor,
+            sectionEpoch: a.epoch,
+            sections: {},
+          },
+        },
+      },
+    };
+  }
   const kind = a.type === "next" || a.type === "select" || a.type === "section" ? t.kind : a.kind;
   const k = t.kinds[kind];
   let patch: Partial<KindState>;
   if (a.type === "select") {
-    if (k.selected?.resource.uid === a.row.resource.uid) return state;
-    patch = { selected: a.row, section: "Overview", sections: {}, sectionCursor: "", sectionEpoch: a.epoch };
+    if (k.selected?.resource.uid === a.row.resource.uid && !k.related && !t.navigation.length) return state;
+    patch = { related: false, selected: a.row, section: "Overview", sections: {}, sectionCursor: "", sectionEpoch: a.epoch };
   } else if (a.type === "section") {
     if (k.section === a.section) return state;
     patch = { section: a.section, sectionCursor: "", sectionEpoch: a.epoch };
@@ -78,5 +113,8 @@ export function reduceWorkloads(state: WorkloadsState, a: Action): WorkloadsStat
     if (a.scope !== t.scope || (a.type === "response" && a.epoch !== (a.section ? k.sectionEpoch : k.epoch))) return state;
     patch = a.patch;
   }
-  return { ...state, [a.tab]: { ...t, kinds: { ...t.kinds, [kind]: { ...k, ...patch } } } };
+  return {
+    ...state,
+    [a.tab]: { ...t, ...(a.type === "select" ? { navigation: [] } : {}), kinds: { ...t.kinds, [kind]: { ...k, ...patch } } },
+  };
 }

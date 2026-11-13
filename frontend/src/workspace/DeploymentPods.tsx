@@ -4,16 +4,18 @@ Used by: The Deployment Pods section.
 Responsibilities: Disclose partial coverage and open actual Pod identities.
 Important: Empty intermediate pages do not imply the Deployment has no Pods.
 */
-import type { RelatedPage, WorkloadRow } from "../workloads/model";
+import type { RelatedPage, ResourceRef } from "../workloads/model";
 import { PodPhase } from "./PodPhase";
 export function DeploymentPods({
   data,
   onNext,
   onSelect,
+  showOwner = true,
 }: {
   data: RelatedPage;
+  showOwner?: boolean;
   onNext: (cursor: string) => void;
-  onSelect: (row: WorkloadRow) => void;
+  onSelect: (row: ResourceRef) => void;
 }) {
   return (
     <div className="evidence-section">
@@ -32,14 +34,14 @@ export function DeploymentPods({
                   <th>Phase</th>
                   <th>Ready</th>
                   <th>Restarts</th>
-                  <th>ReplicaSet</th>
+                  {showOwner && <th>ReplicaSet</th>}
                 </tr>
               </thead>
               <tbody>
                 {data.items.map(({ pod, replicaSet }) => (
                   <tr key={pod.resource.uid}>
                     <td>
-                      <button onClick={() => onSelect(pod)}>{pod.resource.name}</button>
+                      <button onClick={() => onSelect(pod.resource)}>{pod.resource.name}</button>
                     </td>
                     <td>
                       <PodPhase phase={pod.phase} />
@@ -49,7 +51,11 @@ export function DeploymentPods({
                       {pod.ready ?? "?"}/{pod.desired ?? "?"}
                     </td>
                     <td>{pod.restarts ?? "Unknown"}</td>
-                    <td>{replicaSet.name}</td>
+                    {showOwner && (
+                      <td>
+                        <button onClick={() => onSelect(replicaSet)}>{replicaSet.name}</button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

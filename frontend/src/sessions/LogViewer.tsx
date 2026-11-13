@@ -121,7 +121,7 @@ export function LogViewer({ session: s }: { session: LogSession }) {
             setNotice("");
           }}
           onKeyDown={(e) => {
-            if (e.key === "Enter") find(e.shiftKey);
+            if (e.key === "Enter" && !e.nativeEvent.isComposing) find(e.shiftKey);
           }}
         />
         <button disabled={!query} onClick={() => find(true)}>

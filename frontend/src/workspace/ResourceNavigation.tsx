@@ -11,6 +11,7 @@ export const destinations = [
     items: [
       ["Pod", "Pods", true],
       ["Deployment", "Deployments", true],
+      ["ReplicaSet", "ReplicaSets", true],
       ["StatefulSet", "StatefulSets", false],
       ["Job", "Jobs", false],
     ],

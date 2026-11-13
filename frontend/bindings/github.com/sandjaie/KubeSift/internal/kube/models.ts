@@ -74,6 +74,13 @@ export interface RelatedPod {
   replicaSet: ResourceRef;
 }
 
+export interface RelatedReplicaSetPage {
+  items: WorkloadRow[] | null;
+  page: PageInfo;
+  complete: boolean;
+  problem: model$0.Problem | null;
+}
+
 export interface RelatedRequest {
   resource: ResourceRef;
   cursor: string;
@@ -118,6 +125,7 @@ export interface WorkloadRow {
   node: string;
   ready: number | null;
   desired: number | null;
+  current: number | null;
   updated: number | null;
   available: number | null;
   restarts: number | null;

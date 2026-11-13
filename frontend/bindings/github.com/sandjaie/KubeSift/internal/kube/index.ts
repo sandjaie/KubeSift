@@ -18,6 +18,7 @@ export type {
   PodSummary,
   RelatedPage,
   RelatedPod,
+  RelatedReplicaSetPage,
   RelatedRequest,
   ResourceDetail,
   ResourceEvent,

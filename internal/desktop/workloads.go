@@ -85,6 +85,15 @@ func (s *ExplorerService) ReadRelatedPods(id string, req kube.RelatedRequest) (k
 	return s.core.kube.ReadRelatedPods(ctx, req)
 }
 
+func (s *ExplorerService) ReadRelatedReplicaSets(id string, req kube.RelatedRequest) (kube.RelatedReplicaSetPage, error) {
+	ctx, done, err := s.beginWorkloadRead(id)
+	if err != nil {
+		return kube.RelatedReplicaSetPage{}, err
+	}
+	defer done()
+	return s.core.kube.ReadRelatedReplicaSets(ctx, req)
+}
+
 func (s *ExplorerService) ReadResourceEvents(id string, req kube.EventRequest) (kube.EventPage, error) {
 	ctx, done, err := s.beginWorkloadRead(id)
 	if err != nil {

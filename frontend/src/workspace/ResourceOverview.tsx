@@ -4,7 +4,7 @@ Used by: Workload investigation details.
 Responsibilities: Show observed facts and expandable configuration.
 Important: Cluster strings are inert and configuration does not measure usage.
 */
-import type { ResourceDetail as Detail } from "../workloads/model";
+import type { ResourceDetail as Detail, ResourceRef } from "../workloads/model";
 import { deploymentCounts } from "../workloads/model";
 import { PodPhase } from "./PodPhase";
 const object = (v: unknown): Record<string, unknown> =>
@@ -37,15 +37,26 @@ export function evidenceTime(value: unknown) {
   return Number.isNaN(date.getTime()) ? "Unknown" : date.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "long" });
 }
 
-export function ResourceOverview({ data }: { data: Detail }) {
+export function ResourceOverview({ data, onOpenOwner }: { data: Detail; onOpenOwner: (target: ResourceRef) => void }) {
   const root = overviewObject(data),
     meta = object(root.metadata),
     spec = object(root.spec),
     status = object(root.status);
   const pod = data.resource.kind === "Pod";
   const template = object(object(spec.template).spec);
-  const regular = list(status.containerStatuses).map(object);
+  const regular = list(spec.containers).map((container) =>
+    object(list(status.containerStatuses).find((item) => object(item).name === object(container).name)),
+  );
+  const readinessKnown = regular.length > 0 && regular.every((item) => typeof item.ready === "boolean");
+  const restartsKnown = regular.length > 0 && regular.every((item) => typeof item.restartCount === "number");
   const counts = deploymentCounts(status);
+  const replicaSet = data.resource.kind === "ReplicaSet";
+  const observed =
+    Number(status.observedGeneration) > 0 ||
+    list(status.conditions).length > 0 ||
+    ["replicas", "readyReplicas", "availableReplicas", "fullyLabeledReplicas"].some((key) => Number(status[key]) > 0);
+  const replicaCount = (key: string) => (observed ? (status[key] ?? 0) : undefined);
+  const owners = list(meta.ownerReferences).map(object);
   const conditions = list(status.conditions).map(object);
   const facts = pod
     ? {
@@ -72,19 +83,27 @@ export function ResourceOverview({ data }: { data: Detail }) {
           values={
             pod
               ? {
-                  "Ready containers": regular.length
+                  "Ready containers": readinessKnown
                     ? `${regular.filter((c) => c.ready === true).length} / ${list(spec.containers).length}`
                     : undefined,
-                  Restarts: regular.length ? regular.reduce((total, c) => total + Number(c.restartCount ?? 0), 0) : undefined,
+                  Restarts: restartsKnown ? regular.reduce((total, c) => total + Number(c.restartCount), 0) : undefined,
                   QoS: status.qosClass,
                 }
-              : {
-                  Desired: spec.replicas,
-                  Updated: counts.updated,
-                  Ready: counts.ready,
-                  Available: counts.available,
-                  Unavailable: counts.unavailable,
-                }
+              : replicaSet
+                ? {
+                    Desired: spec.replicas,
+                    Current: replicaCount("replicas"),
+                    Ready: replicaCount("readyReplicas"),
+                    Available: replicaCount("availableReplicas"),
+                    ...(status.fullyLabeledReplicas !== undefined ? { "Fully labeled": status.fullyLabeledReplicas } : {}),
+                  }
+                : {
+                    Desired: spec.replicas,
+                    Updated: counts.updated,
+                    Ready: counts.ready,
+                    Available: counts.available,
+                    Unavailable: counts.unavailable,
+                  }
           }
         />
       </div>
@@ -203,13 +222,43 @@ export function ResourceOverview({ data }: { data: Detail }) {
       })}
       {!pod && (
         <details>
-          <summary>Selector and strategy</summary>
-          <Facts values={{ Selector: spec.selector, Strategy: spec.strategy }} />
+          <summary>{replicaSet ? "Selector" : "Selector and strategy"}</summary>
+          <Facts values={{ Selector: spec.selector, ...(!replicaSet ? { Strategy: spec.strategy } : {}) }} />
         </details>
       )}
       <details>
         <summary>Volumes and owners</summary>
-        <Facts values={{ Volumes: (pod ? spec : template).volumes, Owners: meta.ownerReferences }} />
+        <Facts values={{ Volumes: (pod ? spec : template).volumes }} />
+        {owners.length ? (
+          <ul>
+            {owners.map((owner, i) => {
+              const { kind, name, uid, apiVersion } = owner;
+              const supported =
+                (kind === "ReplicaSet" || kind === "Deployment") &&
+                apiVersion === "apps/v1" &&
+                typeof name === "string" &&
+                typeof uid === "string" &&
+                !!uid;
+              return (
+                <li key={i}>
+                  {supported ? (
+                    <button onClick={() => onOpenOwner({ ...data.resource, kind, name, uid, apiVersion })}>
+                      {kind} {name}
+                    </button>
+                  ) : (
+                    `${text(kind)} ${text(name)}`
+                  )}
+                  <details>
+                    <summary>Reference</summary>
+                    <Facts values={owner} />
+                  </details>
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <p>No owner references.</p>
+        )}
       </details>
       <details>
         <summary>Labels</summary>

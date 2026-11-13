@@ -11,20 +11,26 @@ export type {
   ResourceDetail,
   YAMLDocument,
   RelatedPage,
+  RelatedReplicaSetPage,
   EventPage,
   LogRequest,
 } from "../../bindings/github.com/sandjaie/KubeSift/internal/kube/models";
 import type {
-  WorkloadRow,
+  ResourceRef,
   WorkloadPage,
   ResourceDetail,
   YAMLDocument,
   RelatedPage,
+  RelatedReplicaSetPage,
   EventPage,
 } from "../../bindings/github.com/sandjaie/KubeSift/internal/kube/models";
-export type Kind = "Pod" | "Deployment";
-export type Section = "Overview" | "YAML" | "Events" | "Pods" | "Logs";
-export type Evidence = ResourceDetail | YAMLDocument | RelatedPage | EventPage;
+export const workloadKinds = ["Pod", "Deployment", "ReplicaSet"] as const;
+export type Kind = (typeof workloadKinds)[number];
+export function isWorkloadKind(kind: string): kind is Kind {
+  return workloadKinds.some((item) => item === kind);
+}
+export type Section = "Overview" | "YAML" | "Events" | "Pods" | "Logs" | "ReplicaSets";
+export type Evidence = ResourceDetail | YAMLDocument | RelatedPage | RelatedReplicaSetPage | EventPage;
 export interface SectionState {
   loading: boolean;
   error: string;
@@ -36,7 +42,8 @@ export interface KindState {
   scroll: number;
   history: string[];
   page: WorkloadPage | null;
-  selected: WorkloadRow | null;
+  selected: { resource: ResourceRef } | null;
+  related: boolean;
   section: Section;
   sections: Partial<Record<Section, SectionState>>;
   loading: boolean;
@@ -48,11 +55,16 @@ export interface KindState {
   sectionCursor: string;
   auto: boolean;
 }
+export interface NavigationEntry {
+  resource: ResourceRef;
+  section: Section;
+  cursor: string;
+}
 export interface TabState {
   scope: string;
   kind: Kind;
   kinds: Record<Kind, KindState>;
-  back: WorkloadRow | null;
+  navigation: NavigationEntry[];
 }
 export type WorkloadsState = Record<string, TabState>;
 

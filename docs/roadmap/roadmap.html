@@ -365,12 +365,11 @@
               <tr>
                 <td>Remaining workloads and availability</td>
                 <td>
-                  StatefulSets, DaemonSets, ReplicaSets, Jobs, CronJobs, HorizontalPodAutoscalers, PodDisruptionBudgets and
-                  ReplicationControllers when served. Follow controller ownership, scheduled Job history, scale targets and disruption
-                  allowance. ReplicaSets used internally in 1C.2 do not count as a standalone explorer. The separately requested
-                  <a href="../superpowers/specs/2026-11-13-workload-explorer-refinement-design.md">13 November refinement</a>
-                  brings full read-only ReplicaSets into a focused post-1C.2 follow-up plan; it is not yet implemented and does not
-                  authorize the rest of 1C.3. VerticalPodAutoscalers and other extensions use discovery when installed.
+                  StatefulSets, DaemonSets, Jobs, CronJobs, HorizontalPodAutoscalers, PodDisruptionBudgets and ReplicationControllers when
+                  served. Follow controller ownership, scheduled Job history, scale targets and disruption allowance. The
+                  <a href="../superpowers/validation/workload-explorer-refinement.html">workload explorer refinement</a>
+                  implements read-only ReplicaSets on the Phase 1C.2 feature branch. VerticalPodAutoscalers and other extensions use
+                  discovery when installed.
                 </td>
                 <td>1C.3 dedicated reads; scale/restart/rollback in 1D; metrics interpretation in 1E.</td>
               </tr>

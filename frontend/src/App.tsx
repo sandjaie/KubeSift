@@ -194,7 +194,7 @@ export default function App() {
                 active.view.state === "connecting" ||
                 (!!active.view.problem && active.view.problem.code !== "forbidden")
               }
-              onSelect={(namespace) => void controller.readPods(state.active!, namespace)}
+              onSelect={(namespace) => void controller.selectNamespace(state.active!, namespace)}
             />
             <span className="spacer" />
             <ConnectionControls

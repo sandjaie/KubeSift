@@ -27,8 +27,8 @@ func validResource(ref ResourceRef) error {
 	if err := target(model.Target{Namespace: ref.Namespace, Name: ref.Name}, false); err != nil {
 		return err
 	}
-	if ref.UID == "" || len(ref.UID) > 128 || !(ref.Kind == "Pod" && ref.APIVersion == "v1" || ref.Kind == "Deployment" && ref.APIVersion == "apps/v1") {
-		return model.Fail("invalid", "Explicit Pod or Deployment identity required")
+	if ref.UID == "" || len(ref.UID) > 128 || !(ref.Kind == "Pod" && ref.APIVersion == "v1" || (ref.Kind == "Deployment" || ref.Kind == "ReplicaSet") && ref.APIVersion == "apps/v1") {
+		return model.Fail("invalid", "Explicit workload identity required")
 	}
 	return nil
 }
@@ -40,6 +40,8 @@ func checkedObject(ctx context.Context, client kubernetes.Interface, ref Resourc
 	var err error
 	if ref.Kind == "Pod" {
 		object, err = client.CoreV1().Pods(ref.Namespace).Get(ctx, ref.Name, metav1.GetOptions{})
+	} else if ref.Kind == "ReplicaSet" {
+		object, err = client.AppsV1().ReplicaSets(ref.Namespace).Get(ctx, ref.Name, metav1.GetOptions{})
 	} else {
 		object, err = client.AppsV1().Deployments(ref.Namespace).Get(ctx, ref.Name, metav1.GetOptions{})
 	}

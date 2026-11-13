@@ -38,6 +38,7 @@ test("reselecting the same resource or section preserves pending evidence", () =
     restarts: 0,
     available: null,
     updated: null,
+    current: null,
     createdAt: null,
   };
   s = reduceWorkloads(s, { type: "select", tab: "A", row, epoch: 1 });
@@ -78,4 +79,25 @@ test("namespace reconciliation retains workload kind and auto-refresh but invali
     reduceWorkloads(next, { type: "response", tab: "A", scope: "old", kind: "Deployment", epoch: 3, patch: { error: "forbidden" } }),
   ).toBe(next);
   expect(reduceWorkloads(next, { type: "scope", tab: "A", scope: "new" })).toBe(next);
+});
+
+test("relationship return restores the originating section and rejects a stale scope", () => {
+  let state = reduceWorkloads(initialWorkloads(), { type: "scope", tab: "A", scope: "scope" });
+  const resource = {
+    connection: { id: "a", generation: 1 },
+    apiVersion: "apps/v1",
+    kind: "ReplicaSet",
+    namespace: "ns",
+    name: "web",
+    uid: "set",
+  };
+  const entry = { resource, section: "Pods" as const, cursor: "related-page" };
+  state = reduceWorkloads(state, { type: "navigate", tab: "A", scope: "scope", kind: "ReplicaSet", entry, history: [], epoch: 4 });
+  expect(state.A.kind).toBe("ReplicaSet");
+  expect(state.A.kinds.ReplicaSet).toMatchObject({ selected: { resource }, section: "Pods", sectionCursor: "related-page", related: true });
+  const next = reduceWorkloads(state, { type: "scope", tab: "A", scope: "other" });
+  expect(next.A).toMatchObject({ kind: "ReplicaSet", navigation: [], kinds: { ReplicaSet: { selected: null, sections: {} } } });
+  expect(reduceWorkloads(next, { type: "navigate", tab: "A", scope: "scope", kind: "ReplicaSet", entry, history: [], epoch: 4 })).toBe(
+    next,
+  );
 });

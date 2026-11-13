@@ -37,6 +37,7 @@ type WorkloadRow struct {
 	Node      string      `json:"node"`
 	Ready     *int32      `json:"ready"`
 	Desired   *int32      `json:"desired"`
+	Current   *int32      `json:"current"`
 	Updated   *int32      `json:"updated"`
 	Available *int32      `json:"available"`
 	Restarts  *int32      `json:"restarts"`
@@ -73,6 +74,13 @@ type RelatedPod struct {
 }
 type RelatedPage struct {
 	Items    []RelatedPod   `json:"items"`
+	Page     PageInfo       `json:"page"`
+	Complete bool           `json:"complete"`
+	Problem  *model.Problem `json:"problem"`
+}
+
+type RelatedReplicaSetPage struct {
+	Items    []WorkloadRow  `json:"items"`
 	Page     PageInfo       `json:"page"`
 	Complete bool           `json:"complete"`
 	Problem  *model.Problem `json:"problem"`

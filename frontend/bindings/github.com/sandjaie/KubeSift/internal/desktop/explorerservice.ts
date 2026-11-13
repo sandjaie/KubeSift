@@ -75,6 +75,10 @@ export function ReadRelatedPods(id: string, req: kube$0.RelatedRequest): $Cancel
   return $Call.ByID(429677435, id, req);
 }
 
+export function ReadRelatedReplicaSets(id: string, req: kube$0.RelatedRequest): $CancellablePromise<kube$0.RelatedReplicaSetPage> {
+  return $Call.ByID(3764401356, id, req);
+}
+
 export function ReadResource(id: string, req: kube$0.DetailRequest): $CancellablePromise<kube$0.ResourceDetail> {
   return $Call.ByID(1281873028, id, req);
 }
@@ -120,6 +124,10 @@ export function SetLabel(source: string, name: string, label: string): $Cancella
 
 export function SetSourceEnabled(id: string, enabled: boolean, confirmed: boolean): $CancellablePromise<void> {
   return $Call.ByID(1343252026, id, enabled, confirmed);
+}
+
+export function SetWorkloadNamespace(ref: model$0.ConnectionRef, $namespace: string): $CancellablePromise<explorer$0.ConnectionView> {
+  return $Call.ByID(1110415912, ref, $namespace);
 }
 
 export function StartConnection(req: explorer$0.ConnectRequest): $CancellablePromise<explorer$0.Attempt> {

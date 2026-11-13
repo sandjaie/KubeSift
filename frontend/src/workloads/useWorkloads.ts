@@ -4,16 +4,23 @@ Used by: App, with its controller shared by the active workspace.
 Responsibilities: Cancel hidden reads, isolate epochs and fetch only the visible investigation section.
 Important: Payloads remain bounded, in memory, and independent of connection-health polling.
 */
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { ConnectionRef } from "../bridge";
 import { message } from "../connections/api";
 import { readRequest, workloadAPI as api } from "./api";
 import { canAutoRefresh, emptyKind, initialWorkloads, reduceWorkloads, type Action } from "./state";
-import type { Evidence, Kind, KindState, Section, WorkloadRow } from "./model";
+import { isWorkloadKind } from "./model";
+import type { Evidence, Kind, KindState, Section, WorkloadRow, NavigationEntry, ResourceRef } from "./model";
 export function useWorkloads(tabID: string, connection: ConnectionRef | null, namespace: string, visible: boolean) {
   const [state, setState] = useState(initialWorkloads);
   const current = useRef(state);
   const serial = useRef(0);
+  const pendingNavigation = useRef<(() => void) | null>(null);
+  const [navigationError, setNavigationError] = useState("");
+  const cancelNavigation = () => {
+    pendingNavigation.current?.();
+    pendingNavigation.current = null;
+  };
   const commit = useCallback((a: Action) => {
     current.current = reduceWorkloads(current.current, a);
     setState(current.current);
@@ -26,6 +33,10 @@ export function useWorkloads(tabID: string, connection: ConnectionRef | null, na
   const selected = inventory.selected;
   const section = inventory.section;
   const patch = (value: Partial<KindState>) => commit({ type: "patch", tab: tabID, scope, kind, patch: value });
+  useLayoutEffect(() => {
+    setNavigationError("");
+    return cancelNavigation;
+  }, [tabID, scope, visible]);
   useEffect(() => {
     if (tabID) commit({ type: "scope", tab: tabID, scope });
   }, [tabID, scope, commit]);
@@ -39,10 +50,9 @@ export function useWorkloads(tabID: string, connection: ConnectionRef | null, na
       .then((page) => {
         if (!active) return;
         const old = current.current[tabID]?.kinds[kind].selected;
-        const selected =
-          current.current[tabID]?.back && kind === "Pod"
-            ? (old ?? null)
-            : (page.items?.find((row) => row.resource.uid === old?.resource.uid) ?? null);
+        const selected = current.current[tabID]?.kinds[kind].related
+          ? (old ?? null)
+          : (page.items?.find((row) => row.resource.uid === old?.resource.uid) ?? null);
         commit({
           type: "response",
           tab: tabID,
@@ -79,6 +89,7 @@ export function useWorkloads(tabID: string, connection: ConnectionRef | null, na
     const request = readRequest<Evidence>((id) => {
       if (section === "YAML") return api.ReadResourceYAML(id, { resource });
       if (section === "Events") return api.ReadResourceEvents(id, { resource, cursor: inventory.sectionCursor });
+      if (section === "ReplicaSets") return api.ReadRelatedReplicaSets(id, { resource, cursor: inventory.sectionCursor });
       if (section === "Pods") return api.ReadRelatedPods(id, { resource, cursor: inventory.sectionCursor });
       return api.ReadResource(id, { resource });
     });
@@ -107,45 +118,72 @@ export function useWorkloads(tabID: string, connection: ConnectionRef | null, na
     const timer = setTimeout(() => patch({ refresh: inventory.refresh + 1 }), 15000);
     return () => clearTimeout(timer);
   }, [tabID, scope, kind, inventory.auto, inventory.loading, inventory.history.length, inventory.refresh, visible]);
-  const selectResource = (row: WorkloadRow) => commit({ type: "select", tab: tabID, row, epoch: ++serial.current });
+  const selectResource = (row: WorkloadRow) => {
+    cancelNavigation();
+    setNavigationError("");
+    commit({ type: "select", tab: tabID, row, epoch: ++serial.current });
+  };
+  function navigate(entry: NavigationEntry, history: NavigationEntry[]) {
+    const targetKind = entry.resource.kind;
+    if (
+      !visible ||
+      !connection ||
+      !isWorkloadKind(targetKind) ||
+      entry.resource.namespace !== namespace ||
+      entry.resource.connection.id !== connection.id ||
+      entry.resource.connection.generation !== connection.generation
+    )
+      return;
+    cancelNavigation();
+    setNavigationError("");
+    const request = readRequest((id) => api.ReadResource(id, { resource: entry.resource }));
+    pendingNavigation.current = request.cancel;
+    void request.promise
+      .then(() => {
+        if (pendingNavigation.current !== request.cancel || current.current[tabID]?.scope !== scope) return;
+        pendingNavigation.current = null;
+        commit({ type: "navigate", tab: tabID, scope, kind: targetKind, entry, history, epoch: ++serial.current });
+      })
+      .catch((error) => {
+        if (pendingNavigation.current !== request.cancel) return;
+        pendingNavigation.current = null;
+        setNavigationError(`${message(error)}. Select the resource again from its inventory.`);
+      });
+  }
   return {
     kind,
     inventory,
     selection: selected,
     activeSection: section,
     sections: inventory.sections,
-    back: t?.back,
+    back: t?.navigation[t.navigation.length - 1],
+    navigationError,
     patch,
     selectResource,
-    selectKind: (kind: Kind) => commit({ type: "kind", tab: tabID, kind }),
-    selectSection: (section: Section) => commit({ type: "section", tab: tabID, section, epoch: ++serial.current }),
+    selectKind: (kind: Kind) => {
+      cancelNavigation();
+      setNavigationError("");
+      commit({ type: "kind", tab: tabID, kind });
+    },
+    selectSection: (section: Section) => {
+      cancelNavigation();
+      setNavigationError("");
+      commit({ type: "section", tab: tabID, section, epoch: ++serial.current });
+    },
     refresh: () => patch({ history: [""], refresh: inventory.refresh + 1 }),
     refreshSection: () => patch({ sectionCursor: "", sectionRefresh: inventory.sectionRefresh + 1 }),
     next: () => commit({ type: "next", tab: tabID, cursor: inventory.page?.page.nextCursor ?? "" }),
     previous: () => patch({ history: inventory.history.length > 1 ? inventory.history.slice(0, -1) : inventory.history }),
     nextSection: (cursor: string) => patch({ sectionCursor: cursor }),
-    openPod: (row: WorkloadRow) => {
-      commit({ type: "back", tab: tabID, row: selected });
-      commit({
-        type: "patch",
-        tab: tabID,
-        scope,
-        kind: "Pod",
-        patch: { selected: row, section: "Overview", sections: {}, sectionCursor: "" },
-      });
-      commit({ type: "kind", tab: tabID, kind: "Pod" });
+    openRelated: (resource: ResourceRef) => {
+      if (!t || !selected || resource.uid === selected.resource.uid) return;
+      const history = t.navigation.filter(({ resource: prior }) => prior.uid !== resource.uid && prior.uid !== selected.resource.uid);
+      history.push({ resource: selected.resource, section, cursor: inventory.sectionCursor });
+      navigate({ resource, section: "Overview", cursor: "" }, history.slice(-8));
     },
-    backToDeployment: () => {
-      if (!t?.back) return;
-      commit({ type: "kind", tab: tabID, kind: "Deployment" });
-      commit({
-        type: "patch",
-        tab: tabID,
-        scope,
-        kind: "Deployment",
-        patch: { selected: t.back, section: "Overview", sections: {}, sectionRefresh: t.kinds.Deployment.sectionRefresh + 1 },
-      });
-      commit({ type: "back", tab: tabID, row: null });
+    backToResource: () => {
+      const entry = t?.navigation[t.navigation.length - 1];
+      if (entry && t) navigate(entry, t.navigation.slice(0, -1));
     },
     close: (tab: string) => commit({ type: "close", tab }),
   };

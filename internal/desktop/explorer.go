@@ -133,6 +133,13 @@ func (s *ExplorerService) ReadPods(ref model.ConnectionRef, namespace string) (e
 	}
 	return c.ReadPods(ref, namespace)
 }
+func (s *ExplorerService) SetWorkloadNamespace(ref model.ConnectionRef, namespace string) (explorer.ConnectionView, error) {
+	c, err := s.get()
+	if err != nil {
+		return explorer.ConnectionView{}, err
+	}
+	return c.SetWorkloadNamespace(ref, namespace)
+}
 func (s *ExplorerService) ReviewHelper(source, snapshot, name string) (trust.PreviewRecord, error) {
 	c, e := s.get()
 	if e != nil {

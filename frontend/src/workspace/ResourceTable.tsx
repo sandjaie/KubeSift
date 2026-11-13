@@ -8,7 +8,7 @@ import type { WorkloadRow, Kind } from "../workloads/model";
 import { PodPhase } from "./PodPhase";
 import { ResourceIcon } from "../ui/ResourceIcon";
 export function age(value: string | null) {
-  if (!value) return "Unknown";
+  if (!value || !Number.isFinite(Date.parse(value))) return "Unknown";
   const minutes = Math.max(0, Math.floor((Date.now() - Date.parse(value)) / 60000));
   return minutes < 60 ? `${minutes}m` : minutes < 1440 ? `${Math.floor(minutes / 60)}h` : `${Math.floor(minutes / 1440)}d`;
 }
@@ -23,6 +23,7 @@ export function ResourceTable({
   selected: string | null;
   onSelect: (row: WorkloadRow) => void;
 }) {
+  const selectedVisible = rows.some((row) => row.resource.uid === selected);
   return (
     <div className="resource-list">
       <table aria-label={`${kind}s`}>
@@ -30,7 +31,15 @@ export function ResourceTable({
           <tr>
             <th>Name</th>
             {kind === "Pod" ? <th>Phase / reason</th> : null}
-            <th>Ready / desired</th>
+            {kind === "ReplicaSet" ? (
+              <>
+                <th>Desired</th>
+                <th>Current</th>
+                <th>Ready</th>
+              </>
+            ) : (
+              <th>Ready / desired</th>
+            )}
             {kind === "Pod" ? (
               <>
                 <th>Restarts</th>
@@ -38,7 +47,7 @@ export function ResourceTable({
               </>
             ) : (
               <>
-                <th>Updated</th>
+                {kind === "Deployment" && <th>Updated</th>}
                 <th>Available</th>
               </>
             )}
@@ -50,7 +59,7 @@ export function ResourceTable({
             <tr
               key={row.resource.uid}
               aria-selected={selected === row.resource.uid}
-              tabIndex={selected === row.resource.uid || (!selected && index === 0) ? 0 : -1}
+              tabIndex={selected === row.resource.uid || (!selectedVisible && index === 0) ? 0 : -1}
               onClick={() => onSelect(row)}
               onKeyDown={(e) => {
                 if (e.key === "ArrowDown" || e.key === "ArrowUp") {
@@ -76,9 +85,17 @@ export function ResourceTable({
                   {row.reason && <span className="warning"> · {row.reason}</span>}
                 </td>
               ) : null}
-              <td>
-                {row.ready ?? "?"} / {row.desired ?? "?"}
-              </td>
+              {kind === "ReplicaSet" ? (
+                <>
+                  <td>{row.desired ?? "Unknown"}</td>
+                  <td>{row.current ?? "Unknown"}</td>
+                  <td>{row.ready ?? "Unknown"}</td>
+                </>
+              ) : (
+                <td>
+                  {row.ready ?? "?"} / {row.desired ?? "?"}
+                </td>
+              )}
               {kind === "Pod" ? (
                 <>
                   <td>{row.restarts ?? "Unknown"}</td>
@@ -86,7 +103,7 @@ export function ResourceTable({
                 </>
               ) : (
                 <>
-                  <td>{row.updated ?? "Unknown"}</td>
+                  {kind === "Deployment" && <td>{row.updated ?? "Unknown"}</td>}
                   <td>{row.available ?? "Unknown"}</td>
                 </>
               )}

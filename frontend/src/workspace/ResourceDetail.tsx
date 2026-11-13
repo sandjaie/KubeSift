@@ -6,10 +6,11 @@ Important: Overview configuration is not measured usage and references never fet
 */
 import type { ReactNode } from "react";
 import type { WorkloadController } from "../workloads/useWorkloads";
-import type { ResourceDetail as Detail, YAMLDocument, EventPage, RelatedPage, Section } from "../workloads/model";
+import type { ResourceDetail as Detail, YAMLDocument, EventPage, RelatedPage, RelatedReplicaSetPage, Section } from "../workloads/model";
 import { ResourceYaml } from "./ResourceYaml";
 import { ResourceEvents } from "./ResourceEvents";
 import { DeploymentPods } from "./DeploymentPods";
+import { ReplicaSetList } from "./ReplicaSetList";
 import { ResourceOverview } from "./ResourceOverview";
 export function ResourceDetail({
   controller: c,
@@ -27,10 +28,18 @@ export function ResourceDetail({
   const section = c.activeSection,
     state = c.sections[section],
     data = state?.data;
-  const tabs: Section[] = row.resource.kind === "Pod" ? ["Overview", "YAML", "Events", "Logs"] : ["Overview", "YAML", "Events", "Pods"];
+  const tabs: Section[] =
+    row.resource.kind === "Pod"
+      ? ["Overview", "YAML", "Events", "Logs"]
+      : ["Overview", "YAML", "Events", "Pods", ...(row.resource.kind === "Deployment" ? ["ReplicaSets" as const] : [])];
   return (
-    <div className="compact-pod-detail">
-      {c.back && row.resource.kind === "Pod" && <button onClick={c.backToDeployment}>← Back to Deployment {c.back.resource.name}</button>}
+    <div className={section === "YAML" ? "compact-pod-detail yaml-detail" : "compact-pod-detail"}>
+      {c.back && (
+        <button onClick={c.backToResource}>
+          ← Back to {c.back.resource.kind} {c.back.resource.name}
+        </button>
+      )}
+      {c.navigationError && <p role="alert">{c.navigationError}</p>}
       <div className="pane-heading">
         <h2>{row.resource.name}</h2>
         {section !== "Logs" && (
@@ -56,12 +65,22 @@ export function ResourceDetail({
           {state.error} {data ? "Retained section evidence may be stale." : ""}
         </p>
       )}
-      {section === "Overview" && data && <ResourceOverview data={data as Detail} />}
+      {section === "Overview" && data && <ResourceOverview data={data as Detail} onOpenOwner={c.openRelated} />}
       {section === "YAML" && data && (
         <ResourceYaml key={JSON.stringify([row.resource.uid, (data as YAMLDocument).fetchedAt])} data={data as YAMLDocument} />
       )}
       {section === "Events" && data && <ResourceEvents key={row.resource.uid} data={data as EventPage} onNext={c.nextSection} />}
-      {section === "Pods" && data && <DeploymentPods data={data as RelatedPage} onNext={c.nextSection} onSelect={c.openPod} />}
+      {section === "Pods" && data && (
+        <DeploymentPods
+          showOwner={row.resource.kind !== "ReplicaSet"}
+          data={data as RelatedPage}
+          onNext={c.nextSection}
+          onSelect={c.openRelated}
+        />
+      )}
+      {section === "ReplicaSets" && data && (
+        <ReplicaSetList data={data as RelatedReplicaSetPage} onNext={c.nextSection} onSelect={c.openRelated} />
+      )}
       {section === "Logs" && logs}
     </div>
   );

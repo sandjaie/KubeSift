@@ -121,13 +121,23 @@ func deploymentRow(c model.ConnectionRef, d appsv1.Deployment) WorkloadRow {
 	}
 	return row
 }
+func replicaSetRow(c model.ConnectionRef, rs appsv1.ReplicaSet) WorkloadRow {
+	row := WorkloadRow{Resource: resourceRef(c, "ReplicaSet", "apps/v1", rs.ObjectMeta), Desired: rs.Spec.Replicas, CreatedAt: created(rs.ObjectMeta)}
+	// Typed decoding loses field presence. Require observation evidence before inferring omitted zero counters.
+	if rs.Status.ObservedGeneration != 0 || len(rs.Status.Conditions) != 0 || rs.Status.Replicas != 0 || rs.Status.ReadyReplicas != 0 || rs.Status.AvailableReplicas != 0 || rs.Status.FullyLabeledReplicas != 0 {
+		row.Current = &rs.Status.Replicas
+		row.Ready = &rs.Status.ReadyReplicas
+		row.Available = &rs.Status.AvailableReplicas
+	}
+	return row
+}
 func (s *Service) ReadWorkloads(ctx context.Context, req PageRequest) (WorkloadPage, error) {
 	result := WorkloadPage{Items: []WorkloadRow{}}
 	if err := namespace(req.Namespace); err != nil {
 		return result, err
 	}
-	if req.Kind != "Pod" && req.Kind != "Deployment" {
-		return result, model.Fail("invalid", "Choose Pods or Deployments")
+	if req.Kind != "Pod" && req.Kind != "Deployment" && req.Kind != "ReplicaSet" {
+		return result, model.Fail("invalid", "Choose Pods, Deployments or ReplicaSets")
 	}
 	scope := pageCursor{Connection: req.Connection, Kind: req.Kind, Namespace: req.Namespace}
 	token, err := decodeCursor(req.Cursor, scope)
@@ -151,6 +161,18 @@ func (s *Service) ReadWorkloads(ctx context.Context, req PageRequest) (WorkloadP
 		meta = list.ListMeta
 		for _, p := range list.Items {
 			result.Items = append(result.Items, podRow(req.Connection, p))
+		}
+	} else if req.Kind == "ReplicaSet" {
+		list, e := client.AppsV1().ReplicaSets(req.Namespace).List(ctx, opts)
+		if e != nil {
+			return result, readError(ctx, e)
+		}
+		if len(list.Items) > 100 {
+			return result, model.Fail("capacity", "Server exceeded page size")
+		}
+		meta = list.ListMeta
+		for _, rs := range list.Items {
+			result.Items = append(result.Items, replicaSetRow(req.Connection, rs))
 		}
 	} else {
 		list, e := client.AppsV1().Deployments(req.Namespace).List(ctx, opts)

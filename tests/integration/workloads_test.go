@@ -105,6 +105,33 @@ func TestWorkloadInvestigation(t *testing.T) {
 		if deployment.UID == "" {
 			t.Fatal("Deployment absent")
 		}
+		sets, err := reader.ReadRelatedReplicaSets(ctx, kube.RelatedRequest{Resource: deployment})
+		if err != nil || sets.Problem != nil || len(sets.Items) == 0 {
+			t.Fatalf("related ReplicaSets: %+v %v", sets, err)
+		}
+		inventory, err := reader.ReadWorkloads(ctx, kube.PageRequest{Connection: ref, Kind: "ReplicaSet", Namespace: "kubesift-explorer"})
+		if err != nil || len(inventory.Items) == 0 {
+			t.Fatalf("ReplicaSet inventory: %v", err)
+		}
+		replicaSet := sets.Items[0].Resource
+		if _, err := reader.ReadResource(ctx, kube.DetailRequest{Resource: replicaSet}); err != nil {
+			t.Fatal("ReplicaSet detail", err)
+		}
+		if _, err := reader.ReadResourceYAML(ctx, kube.DetailRequest{Resource: replicaSet}); err != nil {
+			t.Fatal("ReplicaSet YAML", err)
+		}
+		if _, err := reader.ReadResourceEvents(ctx, kube.EventRequest{Resource: replicaSet}); err != nil {
+			t.Fatal("ReplicaSet events", err)
+		}
+		pods, err := reader.ReadRelatedPods(ctx, kube.RelatedRequest{Resource: replicaSet})
+		if err != nil || pods.Problem != nil {
+			t.Fatalf("ReplicaSet Pods: %+v %v", pods, err)
+		}
+		for _, row := range pods.Items {
+			if row.ReplicaSet != replicaSet || row.Pod.Resource.Name == "web-lookalike" {
+				t.Fatal("incorrect ReplicaSet Pod identity")
+			}
+		}
 		cursor := ""
 		owned := 0
 		var ownedPod kube.ResourceRef

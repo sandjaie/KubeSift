@@ -21,3 +21,5 @@ Updated 2026-11-13. Active branch: `feature/phase-1c2-workload-investigation`. W
 - High-volume rendering fix verified at the same 1,000 lines/s, 283 KB/s source. Visible-row rendering and 100 ms notifications passed native search, expansion, scrolling and repeated leave/return; 23 frontend tests and full checks passed. The prior same-load failure is resolved. Paused reading uses one extra bounded snapshot. Longer soak and full accessibility UAT remain pending.
 
 - Workload explorer refinement authorized on the existing Phase 1C.2 feature branch. Approved planning package from develop at 910864d integrated with the reviewed workload and Logs baseline.
+
+- Workload UI refinement and read-only ReplicaSets shipped to the existing Phase 1C.2 feature branch in plan order. [Technical results](../../docs/superpowers/validation/workload-explorer-refinement.html) record automated, two-cluster and packaged native evidence. [User acceptance](../../docs/superpowers/validation/workload-explorer-refinement-ui-uat.html) remains pending. PR #7 stays open to develop.
