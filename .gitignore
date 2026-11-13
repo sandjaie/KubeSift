@@ -9,3 +9,4 @@ internal/desktop/assets/dist/
 !.superpowers/sdd/
 .superpowers/sdd/*
 !.superpowers/sdd/status.md
+.playwright-mcp/*
