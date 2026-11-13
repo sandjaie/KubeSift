@@ -12,8 +12,10 @@ export const destinations = [
       ["Pod", "Pods", true],
       ["Deployment", "Deployments", true],
       ["ReplicaSet", "ReplicaSets", true],
-      ["StatefulSet", "StatefulSets", false],
-      ["Job", "Jobs", false],
+      ["StatefulSet", "StatefulSets", true],
+      ["DaemonSet", "DaemonSets", true],
+      ["Job", "Jobs", true],
+      ["CronJob", "CronJobs", true],
     ],
   },
   {

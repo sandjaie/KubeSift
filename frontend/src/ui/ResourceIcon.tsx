@@ -9,6 +9,8 @@ const paths: Record<string, string> = {
   Deployment: "M4 4h7v7H4z M13 13h7v7h-7z M15 4h5v5 M4 15v5h5",
   ReplicaSet: "M3 7h7v7H3z M14 7h7v7h-7z M8 17h8v4H8z",
   StatefulSet: "M4 4h16v5H4z M4 11h16v4H4z M4 17h16v4H4z",
+  DaemonSet: "M4 4h6v6H4z M14 4h6v6h-6z M4 14h6v6H4z M14 14h6v6h-6z",
+  CronJob: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z M12 7v5l3 2",
   Job: "M6 3h12v18H6z M9 11l2 2 4-5",
   Service: "M12 3v6 M4 18v-5h16v5 M12 13v5 M2 18h4v4H2z M10 18h4v4h-4z M18 18h4v4h-4z",
   Ingress: "M3 12h17 M14 5l7 7-7 7 M3 4v16",

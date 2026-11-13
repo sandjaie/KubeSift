@@ -10,6 +10,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/sandjaie/KubeSift/internal/model"
+	batch "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -23,11 +24,24 @@ type workloadObject interface {
 	runtime.Object
 }
 
+func workloadVersion(kind string) string {
+	switch kind {
+	case "Pod":
+		return "v1"
+	case "Deployment", "ReplicaSet", "StatefulSet", "DaemonSet":
+		return "apps/v1"
+	case "Job", "CronJob":
+		return "batch/v1"
+	default:
+		return ""
+	}
+}
+
 func validResource(ref ResourceRef) error {
 	if err := target(model.Target{Namespace: ref.Namespace, Name: ref.Name}, false); err != nil {
 		return err
 	}
-	if ref.UID == "" || len(ref.UID) > 128 || !(ref.Kind == "Pod" && ref.APIVersion == "v1" || (ref.Kind == "Deployment" || ref.Kind == "ReplicaSet") && ref.APIVersion == "apps/v1") {
+	if ref.UID == "" || len(ref.UID) > 128 || workloadVersion(ref.Kind) == "" || ref.APIVersion != workloadVersion(ref.Kind) {
 		return model.Fail("invalid", "Explicit workload identity required")
 	}
 	return nil
@@ -38,13 +52,23 @@ func checkedObject(ctx context.Context, client kubernetes.Interface, ref Resourc
 	}
 	var object workloadObject
 	var err error
-	if ref.Kind == "Pod" {
+	switch ref.Kind {
+	case "Pod":
 		object, err = client.CoreV1().Pods(ref.Namespace).Get(ctx, ref.Name, metav1.GetOptions{})
-	} else if ref.Kind == "ReplicaSet" {
-		object, err = client.AppsV1().ReplicaSets(ref.Namespace).Get(ctx, ref.Name, metav1.GetOptions{})
-	} else {
+	case "Deployment":
 		object, err = client.AppsV1().Deployments(ref.Namespace).Get(ctx, ref.Name, metav1.GetOptions{})
+	case "ReplicaSet":
+		object, err = client.AppsV1().ReplicaSets(ref.Namespace).Get(ctx, ref.Name, metav1.GetOptions{})
+	case "StatefulSet":
+		object, err = client.AppsV1().StatefulSets(ref.Namespace).Get(ctx, ref.Name, metav1.GetOptions{})
+	case "DaemonSet":
+		object, err = client.AppsV1().DaemonSets(ref.Namespace).Get(ctx, ref.Name, metav1.GetOptions{})
+	case "Job":
+		object, err = client.BatchV1().Jobs(ref.Namespace).Get(ctx, ref.Name, metav1.GetOptions{})
+	case "CronJob":
+		object, err = client.BatchV1().CronJobs(ref.Namespace).Get(ctx, ref.Name, metav1.GetOptions{})
 	}
+
 	if err != nil {
 		return nil, readError(ctx, err)
 	}
@@ -82,6 +106,9 @@ func (s *Service) ReadResource(ctx context.Context, req DetailRequest) (Resource
 		return result, model.Fail("failed", "Cannot encode workload")
 	}
 	result = ResourceDetail{Resource: req.Resource, ResourceVersion: object.GetResourceVersion(), FetchedAt: time.Now().UTC(), ObjectJSON: string(raw)}
+	if job, ok := object.(*batch.Job); ok {
+		result.Job = summarizeJob(job)
+	}
 	if err = checkPayload(result); err != nil {
 		return ResourceDetail{}, err
 	}

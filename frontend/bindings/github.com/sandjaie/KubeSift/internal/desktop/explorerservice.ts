@@ -71,6 +71,10 @@ export function ReadPods(ref: model$0.ConnectionRef, $namespace: string): $Cance
   return $Call.ByID(4095964600, ref, $namespace);
 }
 
+export function ReadRelatedJobs(id: string, req: kube$0.RelatedRequest): $CancellablePromise<kube$0.RelatedJobPage> {
+  return $Call.ByID(1836961027, id, req);
+}
+
 export function ReadRelatedPods(id: string, req: kube$0.RelatedRequest): $CancellablePromise<kube$0.RelatedPage> {
   return $Call.ByID(429677435, id, req);
 }

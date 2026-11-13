@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Phase 1C.3a technical validation · KubeSift</title>
+    <link rel="stylesheet" href="../../assets/planning.css" />
+    <script src="../../assets/theme.js"></script>
+  </head>
+  <body>
+    <header>
+      <a href="../../index.html">KubeSift / Planning</a>
+      <h1>Phase 1C.3a technical validation</h1>
+    </header>
+    <main id="content">
+      <p class="callout">
+        The 13 November packaged-app retest recorded results for A01–A10 in the <a href="phase-1c3a-ui-uat.html">existing UAT checklist</a>.
+        The retest confirmed the full ownership journey and isolation across simultaneous cluster tabs. Refreshing CronJob history after
+        opening an expired Job initially left its resource-not-found banner visible. The rebuilt app passed a targeted retest on
+        kind-dev-local-a: refreshing removed the expired row and the banner, preserving the CronJob selection. Independent review and
+        repository checks passed for the fix. The maintainer confirmed UAT is complete. Clipboard equality, exact 200% zoom, full keyboard
+        traversal, large text and the native edge cases listed in the checklist remain open.
+      </p>
+      <p>
+        Automated and agent-native evidence from the implementation checkout based on develop at 4ad1108, 13 November 2026. Native
+        observations used the arm64 macOS 27.0.1 package built before the final collision-count-only adjustment. See the
+        <a href="../specs/2026-11-13-phase-1c3a-remaining-workloads-design.md">design acceptance criteria</a> and
+        <a href="phase-1c3a-ui-uat.html">packaged-app UAT findings</a>.
+      </p>
+      <ul>
+        <li>Repository checks passed, including Go tests and vet, 31 frontend tests, lint and TypeScript checks.</li>
+        <li>
+          Go race suites passed for kube and desktop. Wails bindings, the frontend production build and the local macOS package passed.
+        </li>
+        <li>
+          TestWorkloadInvestigation passed on explicit kind-dev-local-a and kind-dev-local-b with isolated loopback kubeconfigs. Existing
+          fixtures were reused with one temporary bounded retained Job per cluster.
+        </li>
+        <li>
+          Independent review findings were resolved by requiring controller owner references for navigation, recognizing observed
+          collision-count-only status, and correcting source documentation. The Go linker emitted macOS deployment target warnings.
+        </li>
+      </ul>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Check</th>
+              <th scope="col">Journey</th>
+              <th scope="col">Observed evidence</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">A01</th>
+              <td>All four scoped inventories, Overview, YAML and Events</td>
+              <td>Typed-reader tests and both kind contexts. Native inventories and selected details on local A.</td>
+            </tr>
+            <tr>
+              <th scope="row">A02</th>
+              <td>StatefulSet totals, revisions, zero and generation lag</td>
+              <td>Go counter and frontend rendering tests. Native ready/desired and YAML on local A.</td>
+            </tr>
+            <tr>
+              <th scope="row">A03</th>
+              <td>DaemonSet eligible, updated, ready and misscheduled node counts</td>
+              <td>Go counter and frontend rendering tests. Native node counters and owned Pods on local A.</td>
+            </tr>
+            <tr>
+              <th scope="row">A04</th>
+              <td>Job retries, terminal conditions, suspension and indexed progress</td>
+              <td>Go status precedence and frontend rendering tests. Native Complete and Failed with BackoffLimitExceeded on local A.</td>
+            </tr>
+            <tr>
+              <th scope="row">A05</th>
+              <td>CronJob timezone, suspension, active references and retained history</td>
+              <td>
+                Projection tests cover absent timezone and active refs while suspended. Native default timezone, suspension and history
+                caveat on local A.
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">A06</th>
+              <td>Direct ownership and CronJob → Job → Pod → Back → Back</td>
+              <td>
+                Owner filtering, relation pagination and reducer tests. Both clusters returned retained Jobs and their Pods. Native CronJob
+                → Job → Pod and both Back actions restored the originating sections. A DaemonSet-owned Pod opened and returned to Pods.
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">A07</th>
+              <td>Denied or unavailable evidence, bounded pages, stale scope and replaced UIDs</td>
+              <td>
+                Reader and frontend regression suites exercise permission and stale-identity guards. New-kind restricted native reads and
+                expiry were not exercised.
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">A08</th>
+              <td>Namespace kind retention and two isolated cluster tabs</td>
+              <td>
+                Frontend state tests and explicit two-cluster integration. Native CronJobs retained its kind when switching namespaces on
+                local A. Two simultaneous native tabs were not exercised.
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">A09</th>
+              <td>YAML search and copy, scoped Events and Pod Logs lifecycle</td>
+              <td>
+                Frontend and real-cluster log regression checks. Native StatefulSet YAML search, Job Events and leaving and reopening live
+                Pod Logs were observed. Exact clipboard contents remain unverified.
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">A10</th>
+              <td>Light/dark, narrow split, 200% zoom, keyboard and large text</td>
+              <td>
+                Synthetic rendering and existing shared view regressions. Dedicated native theme, narrow split, 200% zoom, keyboard-only and
+                hostile/large-text passes remain open.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </body>
+</html>

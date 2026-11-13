@@ -1,5 +1,5 @@
 /*
-Purpose: Read one namespace-scoped page of Pods or Deployments.
+Purpose: Read one namespace-scoped page of typed workloads.
 Used by: The workload bridge and related-Pod projection.
 Responsibilities: Bind bounded cursors to query scope and preserve optional status evidence.
 Important: Continuation is not authorization; every call validates its connection generation.
@@ -136,8 +136,8 @@ func (s *Service) ReadWorkloads(ctx context.Context, req PageRequest) (WorkloadP
 	if err := namespace(req.Namespace); err != nil {
 		return result, err
 	}
-	if req.Kind != "Pod" && req.Kind != "Deployment" && req.Kind != "ReplicaSet" {
-		return result, model.Fail("invalid", "Choose Pods, Deployments or ReplicaSets")
+	if workloadVersion(req.Kind) == "" {
+		return result, model.Fail("invalid", "Unsupported workload kind")
 	}
 	scope := pageCursor{Connection: req.Connection, Kind: req.Kind, Namespace: req.Namespace}
 	token, err := decodeCursor(req.Cursor, scope)
@@ -150,7 +150,8 @@ func (s *Service) ReadWorkloads(ctx context.Context, req PageRequest) (WorkloadP
 	}
 	opts := metav1.ListOptions{Limit: 100, Continue: token}
 	var meta metav1.ListMeta
-	if req.Kind == "Pod" {
+	switch req.Kind {
+	case "Pod":
 		list, e := client.CoreV1().Pods(req.Namespace).List(ctx, opts)
 		if e != nil {
 			return result, readError(ctx, e)
@@ -162,7 +163,7 @@ func (s *Service) ReadWorkloads(ctx context.Context, req PageRequest) (WorkloadP
 		for _, p := range list.Items {
 			result.Items = append(result.Items, podRow(req.Connection, p))
 		}
-	} else if req.Kind == "ReplicaSet" {
+	case "ReplicaSet":
 		list, e := client.AppsV1().ReplicaSets(req.Namespace).List(ctx, opts)
 		if e != nil {
 			return result, readError(ctx, e)
@@ -174,7 +175,7 @@ func (s *Service) ReadWorkloads(ctx context.Context, req PageRequest) (WorkloadP
 		for _, rs := range list.Items {
 			result.Items = append(result.Items, replicaSetRow(req.Connection, rs))
 		}
-	} else {
+	case "Deployment":
 		list, e := client.AppsV1().Deployments(req.Namespace).List(ctx, opts)
 		if e != nil {
 			return result, readError(ctx, e)
@@ -186,6 +187,58 @@ func (s *Service) ReadWorkloads(ctx context.Context, req PageRequest) (WorkloadP
 		for _, d := range list.Items {
 			result.Items = append(result.Items, deploymentRow(req.Connection, d))
 		}
+	case "StatefulSet":
+		list, err := client.AppsV1().StatefulSets(req.Namespace).List(ctx, opts)
+		if err != nil {
+			return result, readError(ctx, err)
+		}
+		if len(list.Items) > 100 {
+			return result, model.Fail("capacity", "Server exceeded page size")
+		}
+		meta = list.ListMeta
+		for _, item := range list.Items {
+			result.Items = append(result.Items, statefulSetRow(req.Connection, item))
+		}
+
+	case "DaemonSet":
+		list, err := client.AppsV1().DaemonSets(req.Namespace).List(ctx, opts)
+		if err != nil {
+			return result, readError(ctx, err)
+		}
+		if len(list.Items) > 100 {
+			return result, model.Fail("capacity", "Server exceeded page size")
+		}
+		meta = list.ListMeta
+		for _, item := range list.Items {
+			result.Items = append(result.Items, daemonSetRow(req.Connection, item))
+		}
+
+	case "Job":
+		list, err := client.BatchV1().Jobs(req.Namespace).List(ctx, opts)
+		if err != nil {
+			return result, readError(ctx, err)
+		}
+		if len(list.Items) > 100 {
+			return result, model.Fail("capacity", "Server exceeded page size")
+		}
+		meta = list.ListMeta
+		for _, item := range list.Items {
+			result.Items = append(result.Items, jobRow(req.Connection, item))
+		}
+
+	case "CronJob":
+		list, err := client.BatchV1().CronJobs(req.Namespace).List(ctx, opts)
+		if err != nil {
+			return result, readError(ctx, err)
+		}
+		if len(list.Items) > 100 {
+			return result, model.Fail("capacity", "Server exceeded page size")
+		}
+		meta = list.ListMeta
+		for _, item := range list.Items {
+			result.Items = append(result.Items, cronJobRow(req.Connection, item))
+		}
+
 	}
 	next, err := encodeCursor(scope, meta.Continue)
 	if err != nil {

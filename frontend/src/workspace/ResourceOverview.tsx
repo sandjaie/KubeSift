@@ -6,6 +6,7 @@ Important: Cluster strings are inert and configuration does not measure usage.
 */
 import type { ResourceDetail as Detail, ResourceRef } from "../workloads/model";
 import { deploymentCounts } from "../workloads/model";
+import { controllerOverview } from "./controllerOverview";
 import { PodPhase } from "./PodPhase";
 const object = (v: unknown): Record<string, unknown> =>
   v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
@@ -43,7 +44,10 @@ export function ResourceOverview({ data, onOpenOwner }: { data: Detail; onOpenOw
     spec = object(root.spec),
     status = object(root.status);
   const pod = data.resource.kind === "Pod";
-  const template = object(object(spec.template).spec);
+  const jobTemplate = object(object(spec.jobTemplate).spec);
+  const templateObject = object(data.resource.kind === "CronJob" ? jobTemplate.template : spec.template);
+  const template = object(templateObject.spec);
+  const controller = controllerOverview(data, spec, status);
   const regular = list(spec.containers).map((container) =>
     object(list(status.containerStatuses).find((item) => object(item).name === object(container).name)),
   );
@@ -69,7 +73,13 @@ export function ResourceOverview({ data, onOpenOwner }: { data: Detail; onOpenOw
         Started: evidenceTime(status.startTime),
         ...(meta.deletionTimestamp ? { Deletion: evidenceTime(meta.deletionTimestamp) } : {}),
       }
-    : { "Desired generation": meta.generation, "Observed generation": status.observedGeneration };
+    : {
+        "Desired generation": meta.generation,
+        "Observed generation": status.observedGeneration,
+        Created: evidenceTime(meta.creationTimestamp),
+        ...(meta.deletionTimestamp ? { Deletion: evidenceTime(meta.deletionTimestamp) } : {}),
+        ...controller?.facts,
+      };
   return (
     <div className="evidence-section workload-overview">
       {pod && (
@@ -78,10 +88,12 @@ export function ResourceOverview({ data, onOpenOwner }: { data: Detail; onOpenOw
           {meta.deletionTimestamp ? " · Terminating" : ""}
         </p>
       )}
+      {!pod && meta.deletionTimestamp != null && <p>Terminating</p>}
       <div className="evidence-stats">
         <Facts
           values={
-            pod
+            controller?.summary ??
+            (pod
               ? {
                   "Ready containers": readinessKnown
                     ? `${regular.filter((c) => c.ready === true).length} / ${list(spec.containers).length}`
@@ -103,11 +115,33 @@ export function ResourceOverview({ data, onOpenOwner }: { data: Detail; onOpenOw
                     Ready: counts.ready,
                     Available: counts.available,
                     Unavailable: counts.unavailable,
-                  }
+                  })
           }
         />
       </div>
       <Facts values={facts} />
+      {data.resource.kind === "CronJob" && spec.suspend === true && (
+        <p>Suspension prevents future scheduling. Existing Jobs can continue.</p>
+      )}
+      {controller && (
+        <details>
+          <summary>Controller configuration</summary>
+          <Facts values={controller.configuration} />
+        </details>
+      )}
+      {!pod && (
+        <details>
+          <summary>Pod template configuration</summary>
+          <Facts
+            values={{
+              Metadata: templateObject.metadata,
+              "Node selector": template.nodeSelector,
+              Affinity: template.affinity,
+              Tolerations: template.tolerations,
+            }}
+          />
+        </details>
+      )}
       <h3>Conditions</h3>
       {conditions.length ? (
         <div className="evidence-table-wrap">
@@ -220,10 +254,10 @@ export function ResourceOverview({ data, onOpenOwner }: { data: Detail; onOpenOw
           </section>
         );
       })}
-      {!pod && (
+      {!pod && data.resource.kind !== "CronJob" && (
         <details>
-          <summary>{replicaSet ? "Selector" : "Selector and strategy"}</summary>
-          <Facts values={{ Selector: spec.selector, ...(!replicaSet ? { Strategy: spec.strategy } : {}) }} />
+          <summary>{data.resource.kind === "Deployment" ? "Selector and strategy" : "Selector"}</summary>
+          <Facts values={{ Selector: spec.selector, ...(data.resource.kind === "Deployment" ? { Strategy: spec.strategy } : {}) }} />
         </details>
       )}
       <details>
@@ -234,8 +268,10 @@ export function ResourceOverview({ data, onOpenOwner }: { data: Detail; onOpenOw
             {owners.map((owner, i) => {
               const { kind, name, uid, apiVersion } = owner;
               const supported =
-                (kind === "ReplicaSet" || kind === "Deployment") &&
-                apiVersion === "apps/v1" &&
+                owner.controller === true &&
+                (((kind === "ReplicaSet" || kind === "Deployment" || kind === "StatefulSet" || kind === "DaemonSet") &&
+                  apiVersion === "apps/v1") ||
+                  ((kind === "Job" || kind === "CronJob") && apiVersion === "batch/v1")) &&
                 typeof name === "string" &&
                 typeof uid === "string" &&
                 !!uid;

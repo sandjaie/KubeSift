@@ -157,7 +157,7 @@ npx tsc --noEmit</code></pre>
       <p>
         Keep tests minimal and behavior-focused: representative checks for trust boundaries, targeting, cancellation and data-loss risks.
         Avoid exhaustive UI suites, snapshots and tests that mirror implementation. Use one opt-in local integration scenario and a short
-        manual packaged-app checklist where appropriate. Add regression tests when a real defect justifies them.
+        agent-executed packaged-app verification where appropriate. Add regression tests when a real defect justifies them.
       </p>
       <ul>
         <li>
@@ -173,6 +173,25 @@ npx tsc --noEmit</code></pre>
         <li>A bug fix gets a regression test at the shared function, after every caller has been traced.</li>
       </ul>
 
+      <h3 id="agent-verification">Agent verification and acceptance</h3>
+      <p>
+        The implementing agent owns post-implementation verification: run meaningful automated checks and use desktop computer-use tools to
+        verify the affected workflows in the packaged application. Record one validation report with the tested build, environment, explicit
+        local contexts, evidence, and passed, failed or unrun checks. Label agent observations honestly; they do not mean the user
+        personally tested the application. Browser checks alone do not establish native desktop behavior.
+      </p>
+      <p>
+        Do not create or require a separate manual user UAT checklist by default, or ask the user to repeat workflows already verified by
+        the agent. Ask for user input only for subjective design decisions or specific checks the agent cannot complete; explain the
+        limitation and the precise input needed. Keep unrun or blocked checks visible and agent-owned where feasible. Failed checks and
+        material verification gaps remain unresolved until fixed, verified or explicitly accepted with their limitations.
+      </p>
+      <p>
+        This policy was requested on 13 November 2026 and supersedes duplicate manual-user-UAT requirements in earlier specs, plans, status
+        notes and checklists. Existing user checklists are optional historical records, not automatic acceptance or merge blockers. Preserve
+        their actual outcomes; never convert Not tested into Passed. Independent code review, required technical checks, release smoke tests
+        and explicit merge/release authorization rules remain in force.
+      </p>
       <h3 id="source-layout">Project layout and source descriptions</h3>
       <p>
         <code>cmd/kubesift</code> owns the executable entry point; <code>internal</code> owns Go services and the thin desktop adapter;

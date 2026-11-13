@@ -2,13 +2,17 @@
 
 Updated 2026-11-13. Current integration branch is `develop`.
 
-## Next planning package · Phase 1C.3a
+## Phase 1C.3a · Remaining workloads
 
-- Scope accepted: read-only StatefulSets, DaemonSets, Jobs and CronJobs. [Specification](../../docs/superpowers/specs/2026-11-13-phase-1c3a-remaining-workloads-design.md) and [implementation plan](../../docs/superpowers/plans/2026-11-13-phase-1c3a-remaining-workloads.md) prepared for review and separate-session implementation.
-- Baseline inspected: develop at dcfea2c. This planning work changes no application code, fixtures or runtime behavior. No implementation, merge, release or later increment is authorized.
-- Use the existing checkout; do not create a worktree. Prior Phase 1C.2 validation and pending user acceptance remain below. Detailed planning review output stays in ignored `.superpowers/sdd/2026-11-13-phase-1c3a/`.
+- Implemented from the `develop` baseline at `4ad1108`. [Specification](../../docs/superpowers/specs/2026-11-13-phase-1c3a-remaining-workloads-design.md) and [plan](../../docs/superpowers/plans/2026-11-13-phase-1c3a-remaining-workloads.md).
+- Four read-only workload kinds are available with Overview, YAML and Events. StatefulSets, DaemonSets and Jobs expose owned Pods. CronJobs expose retained owned Jobs and bounded Back navigation.
+- Independent review corrections and local checks are recorded in the [technical report](../../docs/superpowers/validation/phase-1c3a.html). Both explicit kind contexts passed integration. Native observations and remaining native checks are listed separately.
+- The maintainer confirmed UAT is complete and approved [PR #8](https://github.com/sandjaie/KubeSift/pull/8) for squash merge into `develop`.
+- [Packaged-app UAT](../../docs/superpowers/validation/phase-1c3a-ui-uat.html) records results for A01–A10. The packaged retest confirmed Refresh section clears the expired CronJob Job and its stale error. Remaining native edge cases are recorded in the technical report.
 
 ## Phase 1C.2 delivery history
+
+Historical references to pending user acceptance below no longer impose a repeat-test gate. Actual results and unresolved technical gaps remain unchanged under the current agent verification policy.
 
 - Implemented Phase 1C.2 tasks 1–6 on baseline `b19bff7`, with reviewed implementation at `823a17e`; task 7 validation and handoff have the explicit remaining checks in the [plan](../../docs/superpowers/plans/2026-11-12-phase-1c2-workload-investigation.md).
 - [Technical validation](../../docs/superpowers/validation/phase-1c2.html): full Go tests/vet, targeted race tests, 16 frontend tests, lint/typecheck, bindings/build/package and opt-in integration on explicit kind-dev-local-a/b passed after review corrections.

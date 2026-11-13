@@ -1,6 +1,6 @@
 /*
-Purpose: Traverse Deployment controller ownership in bounded pages.
-Used by: Deployment Pods investigation.
+Purpose: Traverse workload controller ownership in bounded pages.
+Used by: Workload Pods, ReplicaSets and Jobs investigation.
 Responsibilities: Skip bounded intermediate owner pages and disclose partial permission coverage.
 Important: Labels narrow requests; controller UIDs alone prove ownership.
 */
@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"github.com/sandjaie/KubeSift/internal/model"
 	appsv1 "k8s.io/api/apps/v1"
+	batch "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"time"
@@ -49,8 +50,10 @@ func (s *Service) ReadRelatedPods(ctx context.Context, req RelatedRequest) (Rela
 
 func (s *Service) readRelatedPodPage(ctx context.Context, req RelatedRequest) (RelatedPage, error) {
 	result := RelatedPage{Items: []RelatedPod{}, Page: PageInfo{FetchedAt: time.Now().UTC()}}
-	if req.Resource.Kind != "Deployment" && req.Resource.Kind != "ReplicaSet" {
-		return result, model.Fail("invalid", "Deployment or ReplicaSet identity required")
+	switch req.Resource.Kind {
+	case "Deployment", "ReplicaSet", "StatefulSet", "DaemonSet", "Job":
+	default:
+		return result, model.Fail("invalid", "Pod-owning controller identity required")
 	}
 	client, err := s.boundedReadClient(ctx, req.Resource.Connection)
 	if err != nil {
@@ -65,13 +68,24 @@ func (s *Service) readRelatedPodPage(ctx context.Context, req RelatedRequest) (R
 	if err != nil {
 		return result, err
 	}
-	if rs, ok := parent.(*appsv1.ReplicaSet); ok {
-		if rs.Spec.Selector == nil {
-			return result, model.Fail("invalid", "ReplicaSet selector unavailable")
+	if req.Resource.Kind != "Deployment" {
+		var configured *metav1.LabelSelector
+		switch controller := parent.(type) {
+		case *appsv1.ReplicaSet:
+			configured = controller.Spec.Selector
+		case *appsv1.StatefulSet:
+			configured = controller.Spec.Selector
+		case *appsv1.DaemonSet:
+			configured = controller.Spec.Selector
+		case *batch.Job:
+			configured = controller.Spec.Selector
 		}
-		selector, selectorErr := metav1.LabelSelectorAsSelector(rs.Spec.Selector)
-		if selectorErr != nil {
-			return result, model.Fail("invalid", "ReplicaSet selector unavailable")
+		if configured == nil {
+			return result, model.Fail("invalid", "Controller selector unavailable")
+		}
+		selector, selectorErr := metav1.LabelSelectorAsSelector(configured)
+		if selectorErr != nil || selector.Empty() {
+			return result, model.Fail("invalid", "Controller selector unavailable")
 		}
 		list, listErr := client.CoreV1().Pods(req.Resource.Namespace).List(ctx, metav1.ListOptions{Limit: 100, Continue: token, LabelSelector: selector.String()})
 		if listErr != nil {
@@ -86,7 +100,7 @@ func (s *Service) readRelatedPodPage(ctx context.Context, req RelatedRequest) (R
 		}
 		for _, pod := range list.Items {
 			if ownedBy(pod.OwnerReferences, req.Resource.UID) {
-				result.Items = append(result.Items, RelatedPod{Pod: podRow(req.Resource.Connection, pod), ReplicaSet: req.Resource})
+				result.Items = append(result.Items, RelatedPod{Pod: podRow(req.Resource.Connection, pod), Controller: req.Resource})
 			}
 		}
 		result.Page.ResourceVersion = list.ResourceVersion
@@ -158,7 +172,7 @@ func (s *Service) readRelatedPodPage(ctx context.Context, req RelatedRequest) (R
 		result.Page.ResourceVersion = list.ResourceVersion
 		for _, pod := range list.Items {
 			if ownedBy(pod.OwnerReferences, rsref.UID) {
-				result.Items = append(result.Items, RelatedPod{Pod: podRow(req.Resource.Connection, pod), ReplicaSet: rsref})
+				result.Items = append(result.Items, RelatedPod{Pod: podRow(req.Resource.Connection, pod), Controller: rsref})
 			}
 		}
 		cursor.Pods = list.Continue
@@ -210,6 +224,55 @@ func (s *Service) ReadRelatedReplicaSets(ctx context.Context, req RelatedRequest
 		for _, rs := range list.Items {
 			if ownedBy(rs.OwnerReferences, parent.UID) {
 				result.Items = append(result.Items, replicaSetRow(parent.Connection, rs))
+			}
+		}
+		token = list.Continue
+		result.Page.ResourceVersion = list.ResourceVersion
+		if len(result.Items) != 0 || token == "" {
+			break
+		}
+	}
+	result.Complete = token == ""
+	result.Page.NextCursor, err = encodeCursor(scope, token)
+	if err != nil {
+		return result, err
+	}
+	return result, s.connections.Validate(parent.Connection)
+}
+
+func (s *Service) ReadRelatedJobs(ctx context.Context, req RelatedRequest) (RelatedJobPage, error) {
+	result := RelatedJobPage{Items: []WorkloadRow{}, Page: PageInfo{FetchedAt: time.Now().UTC()}}
+	parent := req.Resource
+	if parent.Kind != "CronJob" {
+		return result, model.Fail("invalid", "CronJob identity required")
+	}
+	client, err := s.boundedReadClient(ctx, parent.Connection)
+	if err != nil {
+		return result, err
+	}
+	if _, err = checkedObject(ctx, client, parent); err != nil {
+		return result, err
+	}
+	scope := pageCursor{Connection: parent.Connection, Kind: "CronJob/Jobs", Namespace: parent.Namespace, Query: parent.Name + "/" + parent.UID}
+	token, err := decodeCursor(req.Cursor, scope)
+	if err != nil {
+		return result, err
+	}
+	for range 8 {
+		list, e := client.BatchV1().Jobs(parent.Namespace).List(ctx, metav1.ListOptions{Limit: 100, Continue: token})
+		if e != nil {
+			if problem := ClassifyError(ctx, e); problem.Code == "forbidden" {
+				result.Problem = problem
+				return result, s.connections.Validate(parent.Connection)
+			}
+			return result, readError(ctx, e)
+		}
+		if len(list.Items) > 100 {
+			return result, model.Fail("capacity", "Server exceeded page size")
+		}
+		for _, rs := range list.Items {
+			if ownedBy(rs.OwnerReferences, parent.UID) {
+				result.Items = append(result.Items, jobRow(parent.Connection, rs))
 			}
 		}
 		token = list.Continue

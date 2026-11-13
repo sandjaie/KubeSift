@@ -5,6 +5,8 @@ Responsibilities: Show truthful optional counts, phase and container failure rea
 Important: Sorting and filtering apply only to this page.
 */
 import type { WorkloadRow, Kind } from "../workloads/model";
+import type { ReactNode } from "react";
+import { evidenceTime } from "./ResourceOverview";
 import { PodPhase } from "./PodPhase";
 import { ResourceIcon } from "../ui/ResourceIcon";
 export function age(value: string | null) {
@@ -12,6 +14,55 @@ export function age(value: string | null) {
   const minutes = Math.max(0, Math.floor((Date.now() - Date.parse(value)) / 60000));
   return minutes < 60 ? `${minutes}m` : minutes < 1440 ? `${Math.floor(minutes / 60)}h` : `${Math.floor(minutes / 1440)}d`;
 }
+type Column = { label: string; value: (row: WorkloadRow) => ReactNode };
+const ready: Column = { label: "Ready / desired", value: (row) => `${row.ready ?? "?"} / ${row.desired ?? "?"}` };
+const updated: Column = { label: "Updated", value: (row) => row.updated };
+const available: Column = { label: "Available", value: (row) => row.available };
+
+export const jobColumns: Column[] = [
+  { label: "Status", value: (row) => row.job?.status },
+  { label: "Succeeded / completions", value: (row) => `${row.job?.succeeded ?? "Unknown"} / ${row.job?.completions ?? "Not specified"}` },
+  { label: "Active Pods", value: (row) => row.job?.active },
+  { label: "Failed attempts", value: (row) => row.job?.failed },
+];
+
+const workloadColumns: Record<Kind, Column[]> = {
+  Pod: [
+    {
+      label: "Phase / reason",
+      value: (row) => (
+        <>
+          <PodPhase phase={row.phase} />
+          {row.reason && <span className="warning"> · {row.reason}</span>}
+        </>
+      ),
+    },
+    ready,
+    { label: "Restarts", value: (row) => row.restarts },
+    { label: "Node", value: (row) => row.node || "Unknown" },
+  ],
+  Deployment: [ready, updated, available],
+  ReplicaSet: [
+    { label: "Desired", value: (row) => row.desired },
+    { label: "Current", value: (row) => row.current },
+    { label: "Ready", value: (row) => row.ready },
+    available,
+  ],
+  StatefulSet: [ready, { label: "Total Pods", value: (row) => row.total }, { ...updated, label: "Updated Pods" }],
+  DaemonSet: [
+    { ...ready, label: "Ready / desired nodes" },
+    { label: "Scheduled nodes", value: (row) => row.current },
+    { ...updated, label: "Updated nodes" },
+  ],
+  Job: jobColumns,
+  CronJob: [
+    { label: "Schedule", value: (row) => row.cronJob?.schedule },
+    { label: "Time zone", value: (row) => row.cronJob?.timeZone ?? "Controller default (unknown)" },
+    { label: "Suspended", value: (row) => (row.cronJob?.suspended == null ? "Unknown" : row.cronJob.suspended ? "Yes" : "No") },
+    { label: "Active Job references", value: (row) => row.cronJob?.active },
+    { label: "Last scheduled", value: (row) => evidenceTime(row.cronJob?.lastScheduled) },
+  ],
+};
 export function ResourceTable({
   rows,
   kind,
@@ -23,6 +74,7 @@ export function ResourceTable({
   selected: string | null;
   onSelect: (row: WorkloadRow) => void;
 }) {
+  const columns = workloadColumns[kind];
   const selectedVisible = rows.some((row) => row.resource.uid === selected);
   return (
     <div className="resource-list">
@@ -30,27 +82,9 @@ export function ResourceTable({
         <thead>
           <tr>
             <th>Name</th>
-            {kind === "Pod" ? <th>Phase / reason</th> : null}
-            {kind === "ReplicaSet" ? (
-              <>
-                <th>Desired</th>
-                <th>Current</th>
-                <th>Ready</th>
-              </>
-            ) : (
-              <th>Ready / desired</th>
-            )}
-            {kind === "Pod" ? (
-              <>
-                <th>Restarts</th>
-                <th>Node</th>
-              </>
-            ) : (
-              <>
-                {kind === "Deployment" && <th>Updated</th>}
-                <th>Available</th>
-              </>
-            )}
+            {columns.map(({ label }) => (
+              <th key={label}>{label}</th>
+            ))}
             <th>Age</th>
           </tr>
         </thead>
@@ -79,34 +113,9 @@ export function ResourceTable({
                   <ResourceIcon kind={kind} size={14} /> {row.resource.name}
                 </strong>
               </td>
-              {kind === "Pod" ? (
-                <td>
-                  <PodPhase phase={row.phase} />
-                  {row.reason && <span className="warning"> · {row.reason}</span>}
-                </td>
-              ) : null}
-              {kind === "ReplicaSet" ? (
-                <>
-                  <td>{row.desired ?? "Unknown"}</td>
-                  <td>{row.current ?? "Unknown"}</td>
-                  <td>{row.ready ?? "Unknown"}</td>
-                </>
-              ) : (
-                <td>
-                  {row.ready ?? "?"} / {row.desired ?? "?"}
-                </td>
-              )}
-              {kind === "Pod" ? (
-                <>
-                  <td>{row.restarts ?? "Unknown"}</td>
-                  <td>{row.node || "Unknown"}</td>
-                </>
-              ) : (
-                <>
-                  {kind === "Deployment" && <td>{row.updated ?? "Unknown"}</td>}
-                  <td>{row.available ?? "Unknown"}</td>
-                </>
-              )}
+              {columns.map(({ label, value }) => (
+                <td key={label}>{value(row) ?? "Unknown"}</td>
+              ))}
               <td>{age(row.createdAt)}</td>
             </tr>
           ))}

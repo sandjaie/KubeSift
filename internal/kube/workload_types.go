@@ -30,18 +30,36 @@ type PageInfo struct {
 	ResourceVersion string    `json:"resourceVersion"`
 	FetchedAt       time.Time `json:"fetchedAt"`
 }
+type JobSummary struct {
+	Status      string `json:"status"`
+	Active      *int32 `json:"active"`
+	Succeeded   *int32 `json:"succeeded"`
+	Failed      *int32 `json:"failed"`
+	Completions *int32 `json:"completions"`
+}
+type CronJobSummary struct {
+	Schedule      string     `json:"schedule"`
+	TimeZone      *string    `json:"timeZone"`
+	Suspended     *bool      `json:"suspended"`
+	Active        int        `json:"active"`
+	LastScheduled *time.Time `json:"lastScheduled"`
+}
+
 type WorkloadRow struct {
-	Resource  ResourceRef `json:"resource"`
-	Phase     string      `json:"phase"`
-	Reason    string      `json:"reason"`
-	Node      string      `json:"node"`
-	Ready     *int32      `json:"ready"`
-	Desired   *int32      `json:"desired"`
-	Current   *int32      `json:"current"`
-	Updated   *int32      `json:"updated"`
-	Available *int32      `json:"available"`
-	Restarts  *int32      `json:"restarts"`
-	CreatedAt *time.Time  `json:"createdAt"`
+	Total     *int32          `json:"total"`
+	Job       *JobSummary     `json:"job"`
+	CronJob   *CronJobSummary `json:"cronJob"`
+	Resource  ResourceRef     `json:"resource"`
+	Phase     string          `json:"phase"`
+	Reason    string          `json:"reason"`
+	Node      string          `json:"node"`
+	Ready     *int32          `json:"ready"`
+	Desired   *int32          `json:"desired"`
+	Current   *int32          `json:"current"`
+	Updated   *int32          `json:"updated"`
+	Available *int32          `json:"available"`
+	Restarts  *int32          `json:"restarts"`
+	CreatedAt *time.Time      `json:"createdAt"`
 }
 type WorkloadPage struct {
 	Items []WorkloadRow `json:"items"`
@@ -52,6 +70,7 @@ type DetailRequest struct {
 	Resource ResourceRef `json:"resource"`
 }
 type ResourceDetail struct {
+	Job             *JobSummary `json:"job"`
 	Resource        ResourceRef `json:"resource"`
 	ResourceVersion string      `json:"resourceVersion"`
 	FetchedAt       time.Time   `json:"fetchedAt"`
@@ -70,7 +89,7 @@ type RelatedRequest struct {
 }
 type RelatedPod struct {
 	Pod        WorkloadRow `json:"pod"`
-	ReplicaSet ResourceRef `json:"replicaSet"`
+	Controller ResourceRef `json:"controller"`
 }
 type RelatedPage struct {
 	Items    []RelatedPod   `json:"items"`
@@ -80,6 +99,13 @@ type RelatedPage struct {
 }
 
 type RelatedReplicaSetPage struct {
+	Items    []WorkloadRow  `json:"items"`
+	Page     PageInfo       `json:"page"`
+	Complete bool           `json:"complete"`
+	Problem  *model.Problem `json:"problem"`
+}
+
+type RelatedJobPage struct {
 	Items    []WorkloadRow  `json:"items"`
 	Page     PageInfo       `json:"page"`
 	Complete bool           `json:"complete"`

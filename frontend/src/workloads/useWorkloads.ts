@@ -90,6 +90,7 @@ export function useWorkloads(tabID: string, connection: ConnectionRef | null, na
       if (section === "YAML") return api.ReadResourceYAML(id, { resource });
       if (section === "Events") return api.ReadResourceEvents(id, { resource, cursor: inventory.sectionCursor });
       if (section === "ReplicaSets") return api.ReadRelatedReplicaSets(id, { resource, cursor: inventory.sectionCursor });
+      if (section === "Jobs") return api.ReadRelatedJobs(id, { resource, cursor: inventory.sectionCursor });
       if (section === "Pods") return api.ReadRelatedPods(id, { resource, cursor: inventory.sectionCursor });
       return api.ReadResource(id, { resource });
     });
@@ -171,7 +172,11 @@ export function useWorkloads(tabID: string, connection: ConnectionRef | null, na
       commit({ type: "section", tab: tabID, section, epoch: ++serial.current });
     },
     refresh: () => patch({ history: [""], refresh: inventory.refresh + 1 }),
-    refreshSection: () => patch({ sectionCursor: "", sectionRefresh: inventory.sectionRefresh + 1 }),
+    refreshSection: () => {
+      cancelNavigation();
+      setNavigationError("");
+      patch({ sectionCursor: "", sectionRefresh: inventory.sectionRefresh + 1 });
+    },
     next: () => commit({ type: "next", tab: tabID, cursor: inventory.page?.page.nextCursor ?? "" }),
     previous: () => patch({ history: inventory.history.length > 1 ? inventory.history.slice(0, -1) : inventory.history }),
     nextSection: (cursor: string) => patch({ sectionCursor: cursor }),

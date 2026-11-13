@@ -15,8 +15,28 @@
     ignored.
   </p>
   <p>
-    workloads_test.go exercises read-only Pod/Deployment investigation and log snapshot/follow cleanup. Use KUBESIFT_EXPLORER_INTEGRATION=1
+    workloads_test.go exercises read-only workload investigation and Pod log snapshot/follow cleanup. Use KUBESIFT_EXPLORER_INTEGRATION=1
     and absolute KUBESIFT_EXPLORER_CONFIG_DIR with a.kubeconfig and b.kubeconfig, then go test -tags=integration ./tests/integration -run
     TestWorkloadInvestigation -count=1. Only kind-dev-local-a/b loopback endpoints are accepted.
   </p>
+  <p>
+    Keep the synthetic scheduled-job CronJob suspended. Before workload validation, create one temporary Job and let it create a Pod in each
+    context using the commands below. The generated Job carries the actual CronJob controller UID. Remove the exact fixture after
+    verification and leave the other fixtures in place.
+  </p>
+  <pre><code>for context in kind-dev-local-a kind-dev-local-b; do
+  kubectl --context "$context" -n kubesift-explorer create job phase1c3a-retained-job \
+    --from=cronjob/scheduled-job --dry-run=client -o json |
+    python3 -c 'import json,sys; j=json.load(sys.stdin); j["metadata"].setdefault("labels", {})["kubesift.dev/fixture"]="phase1c3a-validation"; j["spec"]["activeDeadlineSeconds"]=90; print(json.dumps(j))' |
+    kubectl --context "$context" -n kubesift-explorer create -f - || exit 1
+  kubectl --context "$context" -n kubesift-explorer wait --for=condition=complete \
+    job/phase1c3a-retained-job --timeout=120s || exit 1
+done
+
+# After validation
+for context in kind-dev-local-a kind-dev-local-b; do
+  kubectl --context "$context" -n kubesift-explorer delete jobs \
+    -l 'kubesift.dev/fixture=phase1c3a-validation' \
+    --field-selector metadata.name=phase1c3a-retained-job || exit 1
+done</code></pre>
 </html>

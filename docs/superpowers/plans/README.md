@@ -1,5 +1,7 @@
 # Superpowers plans
 
+Acceptance follows [agent verification](../../engineering/engineering.html#agent-verification): plans require automated and agent-run desktop checks in one validation report, not a duplicate manual user UAT checklist. This supersedes older user-checklist requirements below without altering historical results. Ask the user only for subjective decisions or a specific check the agent cannot complete.
+
 ## Phase 1C.3a · Remaining workloads
 
 - [Specification](../specs/2026-11-13-phase-1c3a-remaining-workloads-design.md): StatefulSets, DaemonSets, Jobs and CronJobs with direct Pod ownership and CronJob → Jobs navigation. Scope accepted; written package for review.
