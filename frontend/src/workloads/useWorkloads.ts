@@ -35,6 +35,7 @@ export function useWorkloads(
   const current = useRef(state);
   const serial = useRef(0);
   const pendingNavigation = useRef<(() => void) | null>(null);
+  const seededOverview = useRef<ResourceDetail | undefined>(undefined);
   const [navigationError, setNavigationError] = useState("");
   const cancelNavigation = () => {
     pendingNavigation.current?.();
@@ -123,6 +124,10 @@ export function useWorkloads(
     if (!visible || !selected || section === "Logs" || !resourceSections(kind).includes(section)) return;
     const epoch = ++serial.current;
     const existing = current.current[tabID]?.kinds[kind].sections ?? {};
+    if (section === "Overview" && seededOverview.current && existing.Overview?.data === seededOverview.current) {
+      seededOverview.current = undefined;
+      return;
+    }
     commit({
       type: "patch",
       tab: tabID,
@@ -216,21 +221,28 @@ export function useWorkloads(
         if (stillCurrent()) setNavigationError(message(error));
       });
   }
-  function show(entry: NavigationEntry, history: NavigationEntry[]) {
+  function show(entry: NavigationEntry, history: NavigationEntry[], detail?: ResourceDetail) {
     const destinationNamespace = entry.namespace ?? namespace;
     if (!canOpen(entry.resource, destinationNamespace)) return;
     const nextScope = JSON.stringify([entry.resource.connection.id, entry.resource.connection.generation, destinationNamespace]);
-    commit({ type: "navigate", tab: tabID, scope, nextScope, kind: entry.resource.kind, entry, history, epoch: ++serial.current });
+    seededOverview.current = entry.section === "Overview" ? detail : undefined;
+    commit({ type: "navigate", tab: tabID, scope, nextScope, kind: entry.resource.kind, entry, detail, history, epoch: ++serial.current });
     if (destinationNamespace !== namespace) onNamespace(tabID, destinationNamespace);
   }
   function navigate(entry: NavigationEntry, history: NavigationEntry[]) {
     if (canOpen(entry.resource, entry.namespace))
       navigationRequest(
         (id) => api.ReadResource(id, { resource: entry.resource }),
-        () => show(entry, history),
+        (detail) => show(entry, history, entry.storageLink ? detail : undefined),
       );
   }
-  function openFromSelection(resource: ResourceRef, identity?: string, resolved = false, storageLink?: StorageLinkEvidence) {
+  function openFromSelection(
+    resource: ResourceRef,
+    identity?: string,
+    resolved = false,
+    storageLink?: StorageLinkEvidence,
+    detail?: ResourceDetail,
+  ) {
     const destinationNamespace = storageLink && resource.kind === "PersistentVolumeClaim" ? resource.namespace : namespace;
     if (!t || !selected || !canOpen(resource, destinationNamespace) || resource.uid === selected.resource.uid) return;
     const { filter, sort, scroll, history } = inventory;
@@ -248,7 +260,7 @@ export function useWorkloads(
       resource,
     );
     const entry: NavigationEntry = { resource, section: "Overview", cursor: "", identity, storageLink, namespace: destinationNamespace };
-    if (resolved) show(entry, entries);
+    if (resolved) show(entry, entries, detail);
     else navigate(entry, entries);
   }
   return {
@@ -333,7 +345,7 @@ export function useWorkloads(
         return;
       navigationRequest(
         (id) => api.ResolveStorageReference(id, { source: source.resource, sourceVersion: source.resourceVersion, target }),
-        (result) => openFromSelection(result.resource, undefined, true, result),
+        ({ resource, detail, ...link }) => openFromSelection(resource, undefined, true, link, detail),
       );
     },
     openConfigurationReference: (source: ResourceDetail, target: ResourceRef) => {

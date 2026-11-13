@@ -156,6 +156,7 @@ export interface ResolvedNetworkReference {
 }
 
 export interface ResolvedStorageReference {
+  detail: ResourceDetail;
   resource: ResourceRef;
   sourceVersion: string;
   targetVersion: string;

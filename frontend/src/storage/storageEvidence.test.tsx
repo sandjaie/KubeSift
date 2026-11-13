@@ -50,6 +50,22 @@ describe("storage evidence", () => {
     expect(overview("StorageClass", { provisioner: "driver", parameters: { endpoint: "https://example.test" } })).not.toContain("<a ");
   });
 
+  it("does not mount the descendants of collapsed storage disclosures", () => {
+    const topologies = Array.from({ length: 100 }, () => ({
+      matchLabelExpressions: Array.from({ length: 20 }, () => ({ key: "fixture", values: ["deep-sentinel"] })),
+    }));
+    const markup = overview("StorageClass", { allowedTopologies: topologies });
+    expect(markup).toContain("Show 100 entries");
+    expect(markup.includes("deep-sentinel")).toBe(false);
+    expect(markup.length).toBeLessThan(3000);
+  });
+
+  it("recognizes typed PV sources without assigning meaning to future spec fields", () => {
+    const markup = overview("PersistentVolume", { spec: { hostPath: { path: "/fixture" }, futureField: { value: "ignored" } } });
+    expect(markup).toContain("hostPath");
+    expect(markup).not.toContain("futureField");
+  });
+
   it("associates mounts and devices across container types without inferring ephemeral claims", () => {
     const rows = podVolumes(
       capture("Pod", {

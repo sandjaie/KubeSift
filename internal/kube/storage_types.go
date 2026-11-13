@@ -26,9 +26,10 @@ type StorageReferenceRequest struct {
 }
 
 type ResolvedStorageReference struct {
-	Resource         ResourceRef `json:"resource"`
-	SourceVersion    string      `json:"sourceVersion"`
-	TargetVersion    string      `json:"targetVersion"`
-	IdentityEvidence string      `json:"identityEvidence"`
-	BindingEvidence  string      `json:"bindingEvidence"`
+	Detail           ResourceDetail `json:"detail"`
+	Resource         ResourceRef    `json:"resource"`
+	SourceVersion    string         `json:"sourceVersion"`
+	TargetVersion    string         `json:"targetVersion"`
+	IdentityEvidence string         `json:"identityEvidence"`
+	BindingEvidence  string         `json:"bindingEvidence"`
 }

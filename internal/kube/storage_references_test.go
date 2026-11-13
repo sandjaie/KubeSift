@@ -93,6 +93,7 @@ func TestStorageReferenceRoutes(t *testing.T) {
 			}
 			if err != nil || targetCalls != 1 || result.Resource.UID != "target" ||
 				result.SourceVersion != "7" || result.TargetVersion != "8" ||
+				result.Detail.Resource != result.Resource || result.Detail.ResourceVersion != result.TargetVersion || result.Detail.ObjectJSON == "" ||
 				result.IdentityEvidence != tc.identity || result.BindingEvidence != tc.binding {
 				t.Fatal(result, err, targetCalls)
 			}

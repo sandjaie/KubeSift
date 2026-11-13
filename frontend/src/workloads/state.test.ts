@@ -305,6 +305,8 @@ test("storage navigation keeps a claim outside the page and restores the saved n
       history: ["", "next"],
     },
   };
+  const detail = { resource: claim, objectJSON: "{}", resourceVersion: "8", fetchedAt: "", job: null };
+  const storageLink = { sourceVersion: "7", targetVersion: "8", identityEvidence: "uid-verified", bindingEvidence: "references-agree" };
   let s = reduceWorkloads(initialWorkloads(), { type: "scope", tab: "A", scope: "saved-scope", clusterScope: "cluster" });
   s = reduceWorkloads(s, { type: "kind", tab: "A", kind: "PersistentVolume" });
   s = reduceWorkloads(s, {
@@ -313,7 +315,8 @@ test("storage navigation keeps a claim outside the page and restores the saved n
     scope: "cluster",
     nextScope: "other-scope",
     kind: "PersistentVolumeClaim",
-    entry: { resource: claim, section: "Overview", cursor: "", namespace: "other" },
+    entry: { resource: claim, section: "Overview", cursor: "", namespace: "other", storageLink },
+    detail,
     history: [original],
     epoch: 4,
   });
@@ -321,6 +324,8 @@ test("storage navigation keeps a claim outside the page and restores the saved n
   expect(s.A.kind).toBe("PersistentVolumeClaim");
   expect(s.A.kinds.PersistentVolumeClaim.selected?.resource).toEqual(claim);
   expect(s.A.kinds.PersistentVolumeClaim.related).toBe(true);
+  expect(s.A.kinds.PersistentVolumeClaim.sections.Overview?.data).toBe(detail);
+  expect(s.A.kinds.PersistentVolumeClaim.storageLink).toBe(storageLink);
   expect(
     reduceWorkloads(s, {
       type: "response",

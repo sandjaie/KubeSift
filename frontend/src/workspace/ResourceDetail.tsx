@@ -76,10 +76,10 @@ export function ResourceDetail({
         {context} / {isClusterScoped(kind) ? "Cluster-scoped" : row.resource.namespace} / {row.resource.kind}
       </p>
       {c.inventory.identity && <p className="muted">{c.inventory.identity}</p>}
-      {capturedLink && (
+      {link && (
         <div className="muted" title={`Source version ${link.sourceVersion}; target version ${link.targetVersion}`}>
           <p>{link.identityEvidence === "uid-verified" ? "Referenced UID verified" : "Resolved by name at open time"}</p>
-          {link.bindingEvidence !== "not-applicable" && (
+          {capturedLink && link.bindingEvidence !== "not-applicable" && (
             <p>
               {link.bindingEvidence === "references-agree" ? "Binding references agree" : "Reference only; binding unconfirmed"} · Observed
               in separate reads.

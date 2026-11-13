@@ -8,6 +8,7 @@ package kube
 
 import (
 	"context"
+	"time"
 
 	"github.com/sandjaie/KubeSift/internal/model"
 	core "k8s.io/api/core/v1"
@@ -140,7 +141,7 @@ func (s *Service) ResolveStorageReference(ctx context.Context, req StorageRefere
 	if err := s.connections.Validate(source.Connection); err != nil {
 		return result, err
 	}
-	resolved, _, err := getStorage(ctx, client, target)
+	resolved, raw, err := getStorage(ctx, client, target)
 	if err != nil {
 		return result, err
 	}
@@ -162,6 +163,7 @@ func (s *Service) ResolveStorageReference(ctx context.Context, req StorageRefere
 	result = ResolvedStorageReference{
 		Resource: target, SourceVersion: captured.GetResourceVersion(), TargetVersion: resolved.GetResourceVersion(),
 		IdentityEvidence: identity, BindingEvidence: binding,
+		Detail: ResourceDetail{Resource: target, ResourceVersion: resolved.GetResourceVersion(), FetchedAt: time.Now().UTC(), ObjectJSON: string(raw)},
 	}
 	if err := checkPayload(result); err != nil {
 		return ResolvedStorageReference{}, err

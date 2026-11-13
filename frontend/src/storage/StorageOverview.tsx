@@ -67,24 +67,31 @@ function Value({ value }: { value: unknown }) {
 }
 
 function Structured({ value }: { value: object }) {
+  const [open, setOpen] = useState(false);
   const entries = Object.entries(value);
   if (!entries.length) return "None reported";
   if (Array.isArray(value) && value.length <= 10 && value.every((item) => typeof item === "string")) return value.join(", ");
   return (
-    <details>
+    <details
+      onToggle={(event) => {
+        if (event.target === event.currentTarget) setOpen(event.currentTarget.open);
+      }}
+    >
       <summary>
         Show {entries.length} {entries.length === 1 ? "entry" : "entries"}
       </summary>
-      <dl className="pod-facts">
-        <EvidencePage
-          items={entries}
-          render={([key, field]) => (
-            <Fact key={key} label={key}>
-              <Value value={field} />
-            </Fact>
-          )}
-        />
-      </dl>
+      {open && (
+        <dl className="pod-facts">
+          <EvidencePage
+            items={entries}
+            render={([key, field]) => (
+              <Fact key={key} label={key}>
+                <Value value={field} />
+              </Fact>
+            )}
+          />
+        </dl>
+      )}
     </details>
   );
 }
@@ -92,17 +99,29 @@ function Structured({ value }: { value: object }) {
 const fields = (source: Properties, names: [string, string][]): [string, ReactNode][] =>
   names.map(([label, field]) => [label, <Value value={source[field]} />]);
 
-const pvFields = new Set([
-  "capacity",
-  "accessModes",
-  "claimRef",
-  "persistentVolumeReclaimPolicy",
-  "storageClassName",
-  "mountOptions",
-  "volumeMode",
-  "nodeAffinity",
-  "volumeAttributesClassName",
-]);
+const legacySources = [
+  "gcePersistentDisk",
+  "awsElasticBlockStore",
+  "hostPath",
+  "glusterfs",
+  "nfs",
+  "rbd",
+  "iscsi",
+  "cinder",
+  "cephfs",
+  "fc",
+  "flocker",
+  "flexVolume",
+  "azureFile",
+  "vsphereVolume",
+  "quobyte",
+  "azureDisk",
+  "photonPersistentDisk",
+  "portworxVolume",
+  "scaleIO",
+  "local",
+  "storageos",
+];
 
 export function StorageOverview({ data, onOpenReference }: { data: ResourceDetail; onOpenReference: (target: ResourceRef) => void }) {
   const { resource } = data;
@@ -149,7 +168,7 @@ export function StorageOverview({ data, onOpenReference }: { data: ResourceDetai
     case "PersistentVolume": {
       note = "Capacity is provisioned space. Access modes and binding do not prove access from a Pod.";
       const claim = spec.claimRef;
-      const sources = Object.fromEntries(Object.entries(spec).filter(([key]) => !pvFields.has(key) && key !== "csi"));
+      const sources = Object.fromEntries(legacySources.filter((key) => spec[key] != null).map((key) => [key, spec[key]]));
       items = [
         ["Class", classLink(spec.storageClassName ?? "")],
         [

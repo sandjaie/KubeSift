@@ -5,7 +5,7 @@ Responsibilities: Reject stale responses and cap page history without a growing 
 Important: Connection health snapshots never enter this reducer.
 */
 import { isClusterScoped, resourceKinds, resourceSections } from "./model";
-import type { ResourceKind, KindState, WorkloadsState, ResourceRef, Section, NavigationEntry, TabState } from "./model";
+import type { ResourceKind, KindState, WorkloadsState, ResourceRef, Section, NavigationEntry, TabState, ResourceDetail } from "./model";
 export const initialWorkloads = (): WorkloadsState => ({});
 export const emptyKind = (): KindState => ({
   filter: "",
@@ -43,6 +43,7 @@ export type Action =
       nextScope?: string;
       kind: ResourceKind;
       entry: NavigationEntry;
+      detail?: ResourceDetail;
       history: NavigationEntry[];
       epoch: number;
     }
@@ -139,7 +140,7 @@ export function reduceWorkloads(state: WorkloadsState, a: Action): WorkloadsStat
             section: a.entry.section,
             sectionCursor: a.entry.cursor,
             sectionEpoch: a.epoch,
-            sections: {},
+            sections: a.detail && a.entry.section === "Overview" ? { Overview: { data: a.detail, loading: false, error: "" } } : {},
           },
         },
       },
