@@ -7,6 +7,7 @@ Important: Requests never fall back to a full Secret representation.
 package kube
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -28,6 +29,12 @@ type secretIdentity struct {
 	UID             string     `json:"uid"`
 	ResourceVersion string     `json:"resourceVersion"`
 	CreatedAt       *time.Time `json:"creationTimestamp"`
+}
+
+// The envelope is strict, while arbitrary fields inside metadata are discarded.
+func (m *secretIdentity) UnmarshalJSON(raw []byte) error {
+	type identity secretIdentity
+	return json.Unmarshal(raw, (*identity)(m))
 }
 
 type secretMetadataObject struct {
@@ -112,7 +119,9 @@ func (s *Service) requestSecretMetadata(ctx context.Context, ref model.Connectio
 		return model.Fail("failed", "Cannot read Secret metadata")
 	}
 	var meta metav1.TypeMeta
-	if json.Unmarshal(raw, &meta) != nil || meta.APIVersion != "meta.k8s.io/v1" || meta.Kind != kind || json.Unmarshal(raw, out) != nil {
+	decoder := json.NewDecoder(bytes.NewReader(raw))
+	decoder.DisallowUnknownFields()
+	if json.Unmarshal(raw, &meta) != nil || meta.APIVersion != "meta.k8s.io/v1" || meta.Kind != kind || decoder.Decode(out) != nil {
 		return unsupportedSecretMetadata()
 	}
 	if err = ctx.Err(); err != nil {
