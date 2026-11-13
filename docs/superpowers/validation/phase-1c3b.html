@@ -48,6 +48,13 @@
           remainder of that test did not run.
         </li>
       </ul>
+      <h2>14 November merge check</h2>
+      <p>
+        On PR #9 head <code>f6ad885</code>, the repository suite and networking integration passed again. The read-only fixture check found
+        no Job owned by the suspended CronJob on either context and no IngressClass on either context. The workload test stopped at the same
+        retained Job assertion. In the reviewed package, keyboard resizing from 52% to 32% preserved the selected EndpointSlices section and
+        its owner UID evidence. The split was restored to 52%.
+      </p>
       <h2>Acceptance coverage</h2>
       <div class="table-scroll">
         <table>
@@ -134,7 +141,7 @@
                 Native keyboard link activation and investigation journey, dark view, light setting, YAML copy acknowledgement; hostile text
                 escaped in synthetic rendering.
               </td>
-              <td>Exact clipboard equality, measured 200% zoom, narrow split and full keyboard/assistive technology matrix.</td>
+              <td>Exact clipboard equality, measured 200% zoom and full keyboard/assistive technology matrix.</td>
             </tr>
           </tbody>
         </table>
