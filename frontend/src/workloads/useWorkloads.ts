@@ -11,8 +11,19 @@ import { readRequest, workloadAPI as api } from "./api";
 import { canAutoRefresh, emptyKind, initialWorkloads, reduceWorkloads, kindScope, relatedHistory, type Action } from "./state";
 import { inventoryNamespace, isWorkloadKind, isResourceKind, isClusterScoped, resourceSections } from "./model";
 import { isConfigurationKind, type ConfigurationPage, type NamespaceDestination } from "../configuration/model";
+import { isStorageKind, type StoragePage } from "../storage/model";
 import type { NetworkPage } from "../networking/model";
-import type { Evidence, ResourceKind, KindState, Section, WorkloadPage, NavigationEntry, ResourceRef, ResourceDetail } from "./model";
+import type {
+  Evidence,
+  ResourceKind,
+  KindState,
+  Section,
+  WorkloadPage,
+  NavigationEntry,
+  ResourceRef,
+  ResourceDetail,
+  StorageLinkEvidence,
+} from "./model";
 export function useWorkloads(
   tabID: string,
   connection: ConnectionRef | null,
@@ -24,6 +35,7 @@ export function useWorkloads(
   const current = useRef(state);
   const serial = useRef(0);
   const pendingNavigation = useRef<(() => void) | null>(null);
+  const seededOverview = useRef<ResourceDetail | undefined>(undefined);
   const [navigationError, setNavigationError] = useState("");
   const cancelNavigation = () => {
     pendingNavigation.current?.();
@@ -70,9 +82,10 @@ export function useWorkloads(
     if (!visible || !connection || !t) return;
     const epoch = ++serial.current;
     commit({ type: "patch", tab: tabID, scope, kind, patch: { epoch, loading: true, error: "" } });
-    const request = readRequest<WorkloadPage | NetworkPage | ConfigurationPage>((id) => {
+    const request = readRequest<WorkloadPage | NetworkPage | ConfigurationPage | StoragePage>((id) => {
       const req = { connection, namespace: targetNamespace, kind, cursor };
       if (isWorkloadKind(kind)) return api.ReadWorkloads(id, req);
+      if (isStorageKind(kind)) return api.ReadStorage(id, req);
       return isConfigurationKind(kind) ? api.ReadConfiguration(id, req) : api.ReadNetworking(id, req);
     });
     let active = true;
@@ -111,6 +124,10 @@ export function useWorkloads(
     if (!visible || !selected || section === "Logs" || !resourceSections(kind).includes(section)) return;
     const epoch = ++serial.current;
     const existing = current.current[tabID]?.kinds[kind].sections ?? {};
+    if (section === "Overview" && seededOverview.current && existing.Overview?.data === seededOverview.current) {
+      seededOverview.current = undefined;
+      return;
+    }
     commit({
       type: "patch",
       tab: tabID,
@@ -166,11 +183,11 @@ export function useWorkloads(
     setNavigationError("");
     commit({ type: "select", tab: tabID, row, epoch: ++serial.current });
   };
-  const canOpen = (resource: ResourceRef): resource is ResourceRef & { kind: ResourceKind } =>
+  const canOpen = (resource: ResourceRef, destinationNamespace = namespace): resource is ResourceRef & { kind: ResourceKind } =>
     !!visible &&
     !!connection &&
     isResourceKind(resource.kind) &&
-    resource.namespace === inventoryNamespace(resource.kind, namespace) &&
+    resource.namespace === inventoryNamespace(resource.kind, destinationNamespace) &&
     resource.connection.id === connection.id &&
     resource.connection.generation === connection.generation;
   function navigationRequest<T>(read: (id: string) => Promise<T>, open: (data: T) => void) {
@@ -187,7 +204,9 @@ export function useWorkloads(
         active.kind === kind &&
         source?.selected?.resource.uid === selected?.resource.uid &&
         source?.section === section &&
-        source?.sectionCursor === inventory.sectionCursor
+        source?.sectionCursor === inventory.sectionCursor &&
+        source?.sectionEpoch === inventory.sectionEpoch &&
+        source?.sectionRefresh === inventory.sectionRefresh
       );
     };
     void request.promise
@@ -202,19 +221,30 @@ export function useWorkloads(
         if (stillCurrent()) setNavigationError(message(error));
       });
   }
-  function show(entry: NavigationEntry, history: NavigationEntry[]) {
-    if (!canOpen(entry.resource)) return;
-    commit({ type: "navigate", tab: tabID, scope, kind: entry.resource.kind, entry, history, epoch: ++serial.current });
+  function show(entry: NavigationEntry, history: NavigationEntry[], detail?: ResourceDetail) {
+    const destinationNamespace = entry.namespace ?? namespace;
+    if (!canOpen(entry.resource, destinationNamespace)) return;
+    const nextScope = JSON.stringify([entry.resource.connection.id, entry.resource.connection.generation, destinationNamespace]);
+    seededOverview.current = entry.section === "Overview" ? detail : undefined;
+    commit({ type: "navigate", tab: tabID, scope, nextScope, kind: entry.resource.kind, entry, detail, history, epoch: ++serial.current });
+    if (destinationNamespace !== namespace) onNamespace(tabID, destinationNamespace);
   }
   function navigate(entry: NavigationEntry, history: NavigationEntry[]) {
-    if (canOpen(entry.resource))
+    if (canOpen(entry.resource, entry.namespace))
       navigationRequest(
         (id) => api.ReadResource(id, { resource: entry.resource }),
-        () => show(entry, history),
+        (detail) => show(entry, history, entry.storageLink ? detail : undefined),
       );
   }
-  function openFromSelection(resource: ResourceRef, identity?: string, resolved = false) {
-    if (!t || !selected || !canOpen(resource) || resource.uid === selected.resource.uid) return;
+  function openFromSelection(
+    resource: ResourceRef,
+    identity?: string,
+    resolved = false,
+    storageLink?: StorageLinkEvidence,
+    detail?: ResourceDetail,
+  ) {
+    const destinationNamespace = storageLink && resource.kind === "PersistentVolumeClaim" ? resource.namespace : namespace;
+    if (!t || !selected || !canOpen(resource, destinationNamespace) || resource.uid === selected.resource.uid) return;
     const { filter, sort, scroll, history } = inventory;
     const entries = relatedHistory(
       t.navigation,
@@ -223,12 +253,14 @@ export function useWorkloads(
         section,
         cursor: inventory.sectionCursor,
         identity: inventory.identity,
+        storageLink: inventory.storageLink,
+        namespace,
         position: { filter, sort, scroll, history },
       },
       resource,
     );
-    const entry: NavigationEntry = { resource, section: "Overview", cursor: "", identity };
-    if (resolved) show(entry, entries);
+    const entry: NavigationEntry = { resource, section: "Overview", cursor: "", identity, storageLink, namespace: destinationNamespace };
+    if (resolved) show(entry, entries, detail);
     else navigate(entry, entries);
   }
   return {
@@ -257,6 +289,7 @@ export function useWorkloads(
       setNavigationError("");
       patch({
         history: [""],
+        storageLink: undefined,
         refresh: inventory.refresh + 1,
         ...(section === "Data"
           ? {
@@ -272,6 +305,7 @@ export function useWorkloads(
       setNavigationError("");
       patch({
         sectionCursor: "",
+        storageLink: undefined,
         sectionRefresh: inventory.sectionRefresh + 1,
         ...(section === "Data" ? { sections: { ...inventory.sections, Data: undefined }, sectionEpoch: ++serial.current } : {}),
       });
@@ -295,6 +329,23 @@ export function useWorkloads(
             result.identityEvidence === "uid-verified" ? "Referenced UID verified" : "Resolved by name at open time",
             true,
           ),
+      );
+    },
+    openStorageReference: (source: ResourceDetail, target: ResourceRef) => {
+      const destinationNamespace =
+        source.resource.kind === "PersistentVolume" && target.kind === "PersistentVolumeClaim" ? target.namespace : namespace;
+      if (
+        !selected ||
+        section !== "Overview" ||
+        selected.resource.uid !== source.resource.uid ||
+        inventory.sections.Overview?.data !== source ||
+        inventory.sections.Overview?.loading ||
+        !canOpen(target, destinationNamespace)
+      )
+        return;
+      navigationRequest(
+        (id) => api.ResolveStorageReference(id, { source: source.resource, sourceVersion: source.resourceVersion, target }),
+        ({ resource, detail, ...link }) => openFromSelection(resource, undefined, true, link, detail),
       );
     },
     openConfigurationReference: (source: ResourceDetail, target: ResourceRef) => {

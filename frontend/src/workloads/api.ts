@@ -1,6 +1,6 @@
 /*
-Purpose: Adapt generated workload reads to independently cancellable invocations.
-Used by: The workload controller.
+Purpose: Adapt generated explorer reads to independently cancellable invocations.
+Used by: The explorer inventory and detail controller.
 Responsibilities: Issue unique request IDs and expose native cancellation.
 Important: Cancellation is paired with reducer epochs; it is not a guarantee against late replies.
 */

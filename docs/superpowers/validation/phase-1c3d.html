@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Phase 1C.3d validation · KubeSift</title>
+    <link rel="stylesheet" href="../../assets/planning.css" />
+    <script src="../../assets/theme.js"></script>
+  </head>
+  <body>
+    <header>
+      <a href="../../index.html">KubeSift / Planning</a>
+      <h1>Phase 1C.3d validation</h1>
+      <p>Read-only storage investigation</p>
+    </header>
+    <main id="content">
+      <p>
+        Baseline <code>1d955d7</code>. See the <a href="../specs/2026-11-14-phase-1c3d-storage-design.md">specification</a> and
+        <a href="../plans/2026-11-14-phase-1c3d-storage.md">implementation plan</a>.
+      </p>
+      <h2>API and native evidence</h2>
+      <p>Repository checks, 51 frontend tests, Go race checks, generated bindings and production build passed.</p>
+      <p>
+        Initial native walkthrough executable SHA-256: <code>c178de4749e349fd0f4497c233ac7d66dbfd26f4d86959091dfbb2c2d25c217e</code>. After
+        the attachment YAML presence correction, the packaged cross-scope route and Back passed again on executable
+        <code>8a466eab2219a80a71358ec6b5739181bcbea69ad40154e1e8a55114241cad8e</code>.
+      </p>
+      <ul>
+        <li>
+          Storage, configuration, networking and workload integration passed on explicit <code>kind-dev-local-a</code> and
+          <code>kind-dev-local-b</code>. Both returned Bound and Pending claims. A PVC-only identity read claims and was denied all five
+          cluster storage lists and a related PV GET. Both clusters returned one genuine CSINode, no CSIDrivers and no VolumeAttachments.
+        </li>
+        <li>
+          Packaged arm64 KubeSift 0.3.0 on macOS 27.0.1 passed Pod → claim → volume → class → Back to Pod, and cross-scope volume → claim →
+          Back to the original saved namespace. The cluster namespace chooser remained disabled, and changing namespace while viewing claims
+          retained the kind. Arrow Down selected the pending claim; the Pod retained its Logs tab.
+        </li>
+        <li>
+          Dark and Light appearance were exercised. The YAML controls remained accessible at 200% native zoom and at a keyboard-resized 32%
+          detail split. The copied StorageClass YAML matched all displayed lines and indentation, including the final newline. Empty
+          attachment and driver lists and a genuine CSINode with no registered drivers were verified.
+        </li>
+      </ul>
+      <h2>Coverage limits</h2>
+      <p>
+        Rare attachment and CSI field combinations use synthetic HTTP and rendering tests. No driver installation, scheduled storage
+        consumer, mounted volume or application I/O was required. Native denial was not injected; the restricted identity was verified by
+        integration. Earlier unrelated limits remain in the <a href="phase-1c3c.html">configuration report</a>.
+      </p>
+      <h2>Independent review</h2>
+      <p>
+        Reviewer <code>storage_pr_review</code> reviewed the complete candidate <code>e18a3b9</code> from merge base <code>1d955d7</code>.
+        The review found two blockers and one minor mismatch:
+      </p>
+      <ul>
+        <li>KSF-001 (P2): Collapsed nested evidence now mounts only when opened. A wide topology test covers initial render bounds.</li>
+        <li>
+          KSF-002 (P2): Link navigation uses the same capped target capture the resolver validated. Refresh and section reentry can still
+          read a new version.
+        </li>
+        <li>KSF-003 (P3): PV Overview recognizes the pinned typed source fields; unknown spec keys do not become source kinds.</li>
+      </ul>
+      <p>
+        The fixed package, executable SHA-256 <code>1292d7d1d9e95fd31d4e862eb1de4b782306d4d00f0880574a549c0c24c3b54a</code>, verified native
+        nested open and collapse, claim binding evidence, refresh clearing that evidence, and Back restoring the saved namespace.
+        Two-cluster storage integration and automated checks were rerun.
+      </p>
+      <p>
+        The same reviewer rechecked the delta through <code>3da5517</code> and confirmed all three fixes with no remaining blockers. The
+        storage and temporary regression fixtures were removed from both clusters using normal deletion.
+      </p>
+    </main>
+  </body>
+</html>

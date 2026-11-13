@@ -5,7 +5,7 @@ Responsibilities: Reject stale responses and cap page history without a growing 
 Important: Connection health snapshots never enter this reducer.
 */
 import { isClusterScoped, resourceKinds, resourceSections } from "./model";
-import type { ResourceKind, KindState, WorkloadsState, ResourceRef, Section, NavigationEntry, TabState } from "./model";
+import type { ResourceKind, KindState, WorkloadsState, ResourceRef, Section, NavigationEntry, TabState, ResourceDetail } from "./model";
 export const initialWorkloads = (): WorkloadsState => ({});
 export const emptyKind = (): KindState => ({
   filter: "",
@@ -36,7 +36,17 @@ export type Action =
   | { type: "scope"; tab: string; scope: string; clusterScope?: string }
   | { type: "close"; tab: string }
   | { type: "kind"; tab: string; kind: ResourceKind; epoch?: number }
-  | { type: "navigate"; tab: string; scope: string; kind: ResourceKind; entry: NavigationEntry; history: NavigationEntry[]; epoch: number }
+  | {
+      type: "navigate";
+      tab: string;
+      scope: string;
+      nextScope?: string;
+      kind: ResourceKind;
+      entry: NavigationEntry;
+      detail?: ResourceDetail;
+      history: NavigationEntry[];
+      epoch: number;
+    }
   | { type: "next"; tab: string; cursor: string }
   | { type: "patch"; tab: string; scope: string; kind: ResourceKind; patch: Partial<KindState> }
   | { type: "response"; tab: string; scope: string; kind: ResourceKind; epoch: number; section?: boolean; patch: Partial<KindState> };
@@ -92,32 +102,45 @@ export function reduceWorkloads(state: WorkloadsState, a: Action): WorkloadsStat
         kinds: {
           ...t.kinds,
           ...clearOutgoingData(t, a.kind, a.epoch),
-          [a.kind]: target.related ? { ...target, selected: null, related: false, identity: "", sections: {} } : target,
+          [a.kind]: target.related
+            ? { ...target, selected: null, related: false, identity: "", storageLink: undefined, sections: {} }
+            : target,
         },
       },
     };
   }
   if (a.type === "navigate") {
     if (kindScope(t, t.kind) !== a.scope) return state;
+    const nextScope = a.nextScope ?? t.scope;
+    const destination =
+      nextScope === t.scope
+        ? t
+        : reduceWorkloads(state, {
+            type: "scope",
+            tab: a.tab,
+            scope: nextScope,
+            clusterScope: t.clusterScope,
+          })[a.tab];
     return {
       ...state,
       [a.tab]: {
-        ...t,
+        ...destination,
         kind: a.kind,
         navigation: a.history,
         kinds: {
-          ...t.kinds,
-          ...clearOutgoingData(t, a.kind, a.epoch),
+          ...destination.kinds,
+          ...clearOutgoingData(destination, a.kind, a.epoch),
           [a.kind]: {
-            ...t.kinds[a.kind],
+            ...destination.kinds[a.kind],
             ...a.entry.position,
             identity: a.entry.identity ?? "",
+            storageLink: a.entry.storageLink,
             selected: { resource: a.entry.resource },
             related: true,
             section: a.entry.section,
             sectionCursor: a.entry.cursor,
             sectionEpoch: a.epoch,
-            sections: {},
+            sections: a.detail && a.entry.section === "Overview" ? { Overview: { data: a.detail, loading: false, error: "" } } : {},
           },
         },
       },
@@ -128,7 +151,7 @@ export function reduceWorkloads(state: WorkloadsState, a: Action): WorkloadsStat
   let patch: Partial<KindState>;
   if (a.type === "select") {
     if (k.selected?.resource.uid === a.row.resource.uid && !k.related && !t.navigation.length) return state;
-    patch = { related: false, identity: "", selected: a.row };
+    patch = { related: false, identity: "", storageLink: undefined, selected: a.row };
     if (k.selected?.resource.uid !== a.row.resource.uid || k.section !== "Overview") {
       Object.assign(patch, { section: "Overview", sections: {}, sectionCursor: "", sectionEpoch: a.epoch });
     }

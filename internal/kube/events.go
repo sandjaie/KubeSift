@@ -34,7 +34,7 @@ func eventTime(v *time.Time) time.Time {
 }
 func (s *Service) ReadResourceEvents(ctx context.Context, req EventRequest) (EventPage, error) {
 	result := EventPage{Items: []ResourceEvent{}}
-	if req.Resource.Kind == "IngressClass" || req.Resource.Kind == "Namespace" || req.Resource.Kind == "Secret" {
+	if isClusterScopedResource(req.Resource.Kind) || req.Resource.Kind == "Secret" {
 		return result, model.Fail("invalid", "Events are unavailable for this kind")
 	}
 	if err := validResource(req.Resource); err != nil {

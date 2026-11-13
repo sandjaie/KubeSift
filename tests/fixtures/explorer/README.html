@@ -30,4 +30,9 @@
     configuration, Pod references and a ConfigMap-only reader. The Secret contains synthetic sentinels. Remove the owned namespace after
     verification and leave the existing explorer namespaces in place.
   </p>
+  <p>
+    phase-1c3d.yaml creates the isolated kubesift-storage-check namespace, a nondefault StorageClass, one Retain PV, Bound and Pending
+    claims, a scheduling-gated Pod, and a PVC-only test identity. Check the namespace, class and volume names for collisions before
+    creation. Delete only these owned objects after verification; never force finalizers or create the host path.
+  </p>
 </html>

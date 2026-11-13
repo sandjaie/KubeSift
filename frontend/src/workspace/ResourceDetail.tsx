@@ -20,6 +20,9 @@ import { ConfigurationOverview } from "../configuration/ConfigurationOverview";
 import { ConfigMapData } from "../configuration/ConfigMapData";
 import { PodConfiguration } from "../configuration/PodConfiguration";
 import { isNetworkKind, type ServiceSlicePage } from "../networking/model";
+import { isStorageKind } from "../storage/model";
+import { StorageOverview } from "../storage/StorageOverview";
+import { PodStorage } from "../storage/PodStorage";
 import { NetworkOverview } from "../networking/NetworkOverview";
 import { ServiceEndpointSlices } from "../networking/ServiceEndpointSlices";
 import { ResourceYaml } from "./ResourceYaml";
@@ -46,6 +49,13 @@ export function ResourceDetail({
     data = state?.data;
   const kind = row.resource.kind;
   const tabs = resourceSections(kind);
+  const link = c.inventory.storageLink;
+  const capturedLink =
+    link &&
+    section === "Overview" &&
+    !state?.loading &&
+    !state?.error &&
+    (data as Detail | undefined)?.resourceVersion === link.targetVersion;
   return (
     <div className={section === "YAML" ? "compact-pod-detail yaml-detail" : "compact-pod-detail"}>
       {c.back && (
@@ -66,6 +76,17 @@ export function ResourceDetail({
         {context} / {isClusterScoped(kind) ? "Cluster-scoped" : row.resource.namespace} / {row.resource.kind}
       </p>
       {c.inventory.identity && <p className="muted">{c.inventory.identity}</p>}
+      {link && (
+        <div className="muted" title={`Source version ${link.sourceVersion}; target version ${link.targetVersion}`}>
+          <p>{link.identityEvidence === "uid-verified" ? "Referenced UID verified" : "Resolved by name at open time"}</p>
+          {capturedLink && link.bindingEvidence !== "not-applicable" && (
+            <p>
+              {link.bindingEvidence === "references-agree" ? "Binding references agree" : "Reference only; binding unconfirmed"} · Observed
+              in separate reads.
+            </p>
+          )}
+        </div>
+      )}
       {stale && <p className="warning">Retained evidence — connection status is stale.</p>}
       <div className="detail-tabs" role="tablist">
         {tabs.map((tab) => (
@@ -82,7 +103,9 @@ export function ResourceDetail({
       )}
       {section === "Overview" &&
         data &&
-        (isNetworkKind(kind) ? (
+        (isStorageKind(kind) ? (
+          <StorageOverview data={data as Detail} onOpenReference={(target) => c.openStorageReference(data as Detail, target)} />
+        ) : isNetworkKind(kind) ? (
           <NetworkOverview data={data as Detail} onOpenReference={(target) => c.openReference(data as Detail, target)} />
         ) : isConfigurationKind(kind) ? (
           <ConfigurationOverview
@@ -93,7 +116,10 @@ export function ResourceDetail({
           <>
             <ResourceOverview data={data as Detail} onOpenOwner={c.openRelated} />
             {kind === "Pod" && (
-              <PodConfiguration data={data as Detail} onOpen={(target) => c.openConfigurationReference(data as Detail, target)} />
+              <>
+                <PodStorage data={data as Detail} onOpenReference={(target) => c.openStorageReference(data as Detail, target)} />
+                <PodConfiguration data={data as Detail} onOpen={(target) => c.openConfigurationReference(data as Detail, target)} />
+              </>
             )}
           </>
         ))}

@@ -32,8 +32,13 @@ func networkVersion(kind string) string {
 	}
 }
 
+func isClusterScopedResource(kind string) bool {
+	return kind == "IngressClass" || kind == "Namespace" ||
+		(storageVersion(kind) != "" && kind != "PersistentVolumeClaim")
+}
+
 func resourceScope(kind, ns string) error {
-	if kind == "IngressClass" || kind == "Namespace" {
+	if isClusterScopedResource(kind) {
 		if ns != "" {
 			return model.Fail("invalid", "Selected kind requires cluster scope")
 		}

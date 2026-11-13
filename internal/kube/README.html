@@ -9,6 +9,8 @@
     controller-specific counts and Job status for inventory and detail. networking.go projects the five typed networking inventories;
     networking_relationships.go validates Service associations and explicit captured references before opening targets. configuration.go
     projects configuration inventories and captures policy quantities; secret_metadata.go negotiates only partial metadata and projects
-    Secret identity. configuration_references.go validates Pod fields before explicit reads.
+    Secret identity. configuration_references.go validates Pod fields before explicit reads. storage.go captures bounded typed storage reads
+    and preserves reported quantities and field presence. storage_references.go verifies explicit storage links and checks both sides of
+    binding references.
   </p>
 </html>
