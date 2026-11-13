@@ -90,6 +90,7 @@ export function useWorkloads(tabID: string, connection: ConnectionRef | null, na
       if (section === "YAML") return api.ReadResourceYAML(id, { resource });
       if (section === "Events") return api.ReadResourceEvents(id, { resource, cursor: inventory.sectionCursor });
       if (section === "ReplicaSets") return api.ReadRelatedReplicaSets(id, { resource, cursor: inventory.sectionCursor });
+      if (section === "Jobs") return api.ReadRelatedJobs(id, { resource, cursor: inventory.sectionCursor });
       if (section === "Pods") return api.ReadRelatedPods(id, { resource, cursor: inventory.sectionCursor });
       return api.ReadResource(id, { resource });
     });

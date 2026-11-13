@@ -6,10 +6,19 @@ Important: Overview configuration is not measured usage and references never fet
 */
 import type { ReactNode } from "react";
 import type { WorkloadController } from "../workloads/useWorkloads";
-import type { ResourceDetail as Detail, YAMLDocument, EventPage, RelatedPage, RelatedReplicaSetPage, Section } from "../workloads/model";
+import type {
+  ResourceDetail as Detail,
+  YAMLDocument,
+  EventPage,
+  RelatedPage,
+  RelatedReplicaSetPage,
+  RelatedJobPage,
+  Section,
+} from "../workloads/model";
 import { ResourceYaml } from "./ResourceYaml";
 import { ResourceEvents } from "./ResourceEvents";
 import { DeploymentPods } from "./DeploymentPods";
+import { RelatedJobs } from "./RelatedJobs";
 import { ReplicaSetList } from "./ReplicaSetList";
 import { ResourceOverview } from "./ResourceOverview";
 export function ResourceDetail({
@@ -31,7 +40,13 @@ export function ResourceDetail({
   const tabs: Section[] =
     row.resource.kind === "Pod"
       ? ["Overview", "YAML", "Events", "Logs"]
-      : ["Overview", "YAML", "Events", "Pods", ...(row.resource.kind === "Deployment" ? ["ReplicaSets" as const] : [])];
+      : [
+          "Overview",
+          "YAML",
+          "Events",
+          row.resource.kind === "CronJob" ? "Jobs" : "Pods",
+          ...(row.resource.kind === "Deployment" ? ["ReplicaSets" as const] : []),
+        ];
   return (
     <div className={section === "YAML" ? "compact-pod-detail yaml-detail" : "compact-pod-detail"}>
       {c.back && (
@@ -72,7 +87,7 @@ export function ResourceDetail({
       {section === "Events" && data && <ResourceEvents key={row.resource.uid} data={data as EventPage} onNext={c.nextSection} />}
       {section === "Pods" && data && (
         <DeploymentPods
-          showOwner={row.resource.kind !== "ReplicaSet"}
+          showOwner={row.resource.kind === "Deployment"}
           data={data as RelatedPage}
           onNext={c.nextSection}
           onSelect={c.openRelated}
@@ -81,6 +96,7 @@ export function ResourceDetail({
       {section === "ReplicaSets" && data && (
         <ReplicaSetList data={data as RelatedReplicaSetPage} onNext={c.nextSection} onSelect={c.openRelated} />
       )}
+      {section === "Jobs" && data && <RelatedJobs data={data as RelatedJobPage} onNext={c.nextSection} onSelect={c.openRelated} />}
       {section === "Logs" && logs}
     </div>
   );

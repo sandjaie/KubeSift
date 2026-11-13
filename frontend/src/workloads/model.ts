@@ -12,6 +12,7 @@ export type {
   YAMLDocument,
   RelatedPage,
   RelatedReplicaSetPage,
+  RelatedJobPage,
   EventPage,
   LogRequest,
 } from "../../bindings/github.com/sandjaie/KubeSift/internal/kube/models";
@@ -22,15 +23,16 @@ import type {
   YAMLDocument,
   RelatedPage,
   RelatedReplicaSetPage,
+  RelatedJobPage,
   EventPage,
 } from "../../bindings/github.com/sandjaie/KubeSift/internal/kube/models";
-export const workloadKinds = ["Pod", "Deployment", "ReplicaSet"] as const;
+export const workloadKinds = ["Pod", "Deployment", "ReplicaSet", "StatefulSet", "DaemonSet", "Job", "CronJob"] as const;
 export type Kind = (typeof workloadKinds)[number];
 export function isWorkloadKind(kind: string): kind is Kind {
   return workloadKinds.some((item) => item === kind);
 }
-export type Section = "Overview" | "YAML" | "Events" | "Pods" | "Logs" | "ReplicaSets";
-export type Evidence = ResourceDetail | YAMLDocument | RelatedPage | RelatedReplicaSetPage | EventPage;
+export type Section = "Overview" | "YAML" | "Events" | "Pods" | "Logs" | "ReplicaSets" | "Jobs";
+export type Evidence = ResourceDetail | YAMLDocument | RelatedPage | RelatedReplicaSetPage | RelatedJobPage | EventPage;
 export interface SectionState {
   loading: boolean;
   error: string;

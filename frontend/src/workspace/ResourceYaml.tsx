@@ -136,7 +136,7 @@ export function ResourceYaml({ data }: { data: YAMLDocument }) {
         </summary>
         <p>
           Exact capture {data.fetchedAt || "Unknown"}. Server representation with managed fields {managed ? "included" : "omitted"}.
-          Original comments and ordering may differ.
+          Original comments and ordering may differ. Fields unknown to this app’s Kubernetes types may be omitted.
         </p>
       </details>
     </div>

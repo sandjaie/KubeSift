@@ -34,6 +34,7 @@ export function DeploymentPods({
                   <th>Phase</th>
                   <th>Ready</th>
                   <th>Restarts</th>
+                  <th>Node</th>
                   {showOwner && <th>ReplicaSet</th>}
                 </tr>
               </thead>
@@ -51,6 +52,7 @@ export function DeploymentPods({
                       {pod.ready ?? "?"}/{pod.desired ?? "?"}
                     </td>
                     <td>{pod.restarts ?? "Unknown"}</td>
+                    <td>{pod.node || "Unknown"}</td>
                     {showOwner && (
                       <td>
                         <button onClick={() => onSelect(controller)}>{controller.name}</button>

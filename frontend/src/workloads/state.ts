@@ -4,6 +4,7 @@ Used by: The workload controller and focused reducer tests.
 Responsibilities: Reject stale responses and cap page history without a growing payload cache.
 Important: Connection health snapshots never enter this reducer.
 */
+import { workloadKinds } from "./model";
 import type { Kind, KindState, WorkloadsState, WorkloadRow, Section, NavigationEntry } from "./model";
 export const initialWorkloads = (): WorkloadsState => ({});
 export const emptyKind = (): KindState => ({
@@ -53,11 +54,9 @@ export function reduceWorkloads(state: WorkloadsState, a: Action): WorkloadsStat
           [a.tab]: {
             scope: a.scope,
             kind: t?.kind ?? "Pod",
-            kinds: {
-              Pod: { ...emptyKind(), auto: t?.kinds.Pod.auto ?? false },
-              Deployment: { ...emptyKind(), auto: t?.kinds.Deployment.auto ?? false },
-              ReplicaSet: { ...emptyKind(), auto: t?.kinds.ReplicaSet.auto ?? false },
-            },
+            kinds: Object.fromEntries(
+              workloadKinds.map((kind) => [kind, { ...emptyKind(), auto: t?.kinds[kind].auto ?? false }]),
+            ) as Record<Kind, KindState>,
             navigation: [],
           },
         };
