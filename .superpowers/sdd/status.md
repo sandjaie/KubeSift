@@ -1,6 +1,12 @@
 # KubeSift resumable status
 
-Updated 2026-11-12. Active branch: `develop`. Work in place; do not create a worktree.
+Updated 2026-11-13. Planning checkpoint on `develop`; implementation remains in its separate feature checkout. Preserve concurrent Logs work.
+
+- Requested [workload refinement design](../../docs/superpowers/specs/2026-11-13-workload-explorer-refinement-design.md) and two plans: [UI/navigation](../../docs/superpowers/plans/2026-11-13-workload-ui-refinement.md), then [ReplicaSets](../../docs/superpowers/plans/2026-11-13-replicasets-explorer.md). Accepted visual direction and scope are recorded; written package awaits review. No implementation authorization in this planning session.
+- [Durable mockups](../../docs/ux/mocks/index.html#workload-refinement) preserve the accepted Events and Pod/Deployment detail direction. Literal-search behavior is the only Logs integration requirement here.
+- Current develop is a planning baseline; the implementation reference inspected was feature/phase-1c2-workload-investigation at 963977f. The future session must reconcile the reviewed Phase 1C.2/Logs baseline before executing either plan. This planning update does not report its runtime state or grant merge/release approval.
+
+## Earlier planning checkpoint (12 November; historical)
 
 - Inspected baseline `c690a30`: Phase 1C.1 merged as `395ef7a`; workspace refinement PR #4 merged as `d73f9c4`; repository history includes 0.3.0 release merge `71366f9` and the macOS app-name fix.
 - Preserve the [approved refinement](../../docs/superpowers/specs/2026-11-12-dark-palette-workspace-controls-design.md): neutral dark palette, compact header/connection controls, searchable namespace menu, remembered split sizes and phase/readiness distinction. [Validation limits](../../docs/superpowers/validation/2026-11-12-workspace-refinement.html) remain historical, not retested by this planning update.

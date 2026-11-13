@@ -1,0 +1,586 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>KubeSift · Resource tabs preview</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #1a1d21;
+        color: #d1d2d3;
+        font:
+          13px -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+      }
+      main {
+        max-width: 1180px;
+        margin: 30px auto;
+        padding: 0 28px;
+      }
+      button,
+      input,
+      select {
+        font: inherit;
+        color: inherit;
+      }
+      button,
+      select {
+        cursor: pointer;
+      }
+      button {
+        background: transparent;
+        border: 1px solid #484a50;
+        border-radius: 4px;
+        padding: 7px 11px;
+      }
+      button:hover {
+        background: #35373b;
+      }
+      button:focus-visible,
+      input:focus-visible,
+      summary:focus-visible,
+      select:focus-visible {
+        outline: 2px solid #6fc8f0;
+        outline-offset: 3px;
+      }
+      .preview-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        color: #a3a5a8;
+        font-size: 12px;
+      }
+      .preview-bar b {
+        color: #6fc8f0;
+        font-weight: 500;
+      }
+      select,
+      input {
+        background: #1a1d21;
+        border: 1px solid #484a50;
+        border-radius: 4px;
+        padding: 7px 10px;
+      }
+      .panel {
+        background: #22252a;
+        border: 1px solid #383a40;
+        border-radius: 6px;
+        overflow: hidden;
+      }
+      header {
+        padding: 22px 24px 0;
+      }
+      .heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+      }
+      h1 {
+        margin: 0 0 9px;
+        color: #e8e8e8;
+        font-size: 20px;
+        font-weight: 650;
+      }
+      .path {
+        font:
+          12px ui-monospace,
+          SFMono-Regular,
+          monospace;
+        color: #a3a5a8;
+      }
+      .tabs {
+        display: flex;
+        gap: 25px;
+        margin-top: 24px;
+        border-bottom: 1px solid #383a40;
+      }
+      .tabs button,
+      .tabs span {
+        padding: 0 1px 12px;
+        border: 0;
+        border-radius: 0;
+        color: #a3a5a8;
+      }
+      .tabs button[aria-selected="true"] {
+        border-bottom: 2px solid #1d9bd1;
+        color: #6fc8f0;
+        font-weight: 600;
+      }
+      .body {
+        padding: 20px 24px;
+      }
+      .summary {
+        display: flex;
+        gap: 30px;
+        align-items: center;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #383a40;
+        flex-wrap: wrap;
+      }
+      .summary .label {
+        margin-bottom: 6px;
+      }
+      .label,
+      .muted {
+        color: #a3a5a8;
+        font-size: 12px;
+      }
+      .value {
+        font-size: 14px;
+        color: #e8e8e8;
+      }
+      .blue {
+        color: #6fc8f0;
+      }
+      .amber {
+        color: #ecb22e;
+      }
+      .green {
+        color: #2eb67d;
+      }
+      .facts {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px 36px;
+        padding: 20px 0;
+      }
+      .fact {
+        display: grid;
+        grid-template-columns: 105px 1fr;
+        gap: 10px;
+      }
+      .fact span:last-child {
+        overflow-wrap: anywhere;
+      }
+      h2 {
+        font-size: 13px;
+        font-weight: 600;
+        color: #e8e8e8;
+        margin: 22px 0 12px;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 12px;
+      }
+      th {
+        text-align: left;
+        color: #a3a5a8;
+        font-weight: 400;
+        background: #1e2125;
+        font-size: 11px;
+      }
+      th,
+      td {
+        padding: 12px;
+        border-bottom: 1px solid #383a40;
+      }
+      td {
+        vertical-align: top;
+      }
+      .sub {
+        display: block;
+        color: #a3a5a8;
+        margin-top: 6px;
+        font-size: 11px;
+      }
+      .link {
+        padding: 0;
+        border: 0;
+        color: #6fc8f0;
+        text-align: left;
+      }
+      .pill {
+        font-size: 11px;
+        border: 1px solid #484a50;
+        padding: 3px 6px;
+        border-radius: 3px;
+        display: inline-block;
+        margin: 2px;
+      }
+      details {
+        border-bottom: 1px solid #383a40;
+        padding: 14px 0;
+      }
+      summary {
+        cursor: pointer;
+        font-size: 12px;
+      }
+      details p {
+        color: #a3a5a8;
+        font-size: 12px;
+        line-height: 1.7;
+        padding-left: 16px;
+      }
+      footer {
+        border-top: 1px solid #383a40;
+        padding: 14px 24px;
+        display: flex;
+        justify-content: space-between;
+        color: #a3a5a8;
+        font-size: 11px;
+        gap: 15px;
+      }
+      .toolbar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+      }
+      .toolbar label {
+        margin-left: auto;
+        font-size: 12px;
+        color: #a3a5a8;
+      }
+      .toolbar input[type="checkbox"] {
+        accent-color: #1d9bd1;
+      }
+      .read-only {
+        font-size: 11px;
+        color: #a3a5a8;
+        border: 1px solid #383a40;
+        border-radius: 3px;
+        padding: 3px 7px;
+      }
+      .code {
+        margin: 0;
+        background: #1a1d21;
+        border: 1px solid #383a40;
+        border-radius: 4px;
+        padding: 18px;
+        line-height: 1.8;
+        font:
+          12px/1.8 ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          monospace;
+        overflow: auto;
+        max-height: 520px;
+        min-height: 440px;
+        color: #d1d2d3;
+      }
+      .code .key {
+        color: #6fc8f0;
+      }
+      .code .num {
+        color: #a3a5a8;
+        display: inline-block;
+        width: 36px;
+        text-align: right;
+        padding-right: 18px;
+        user-select: none;
+      }
+      .note {
+        font-size: 12px;
+        color: #a3a5a8;
+        line-height: 1.7;
+        margin-top: 18px;
+      }
+      #notice {
+        color: #6fc8f0;
+        font-size: 12px;
+        min-height: 18px;
+      }
+      .table-wrap {
+        overflow: auto;
+      }
+      .aside-info {
+        margin-top: 14px;
+        color: #a3a5a8;
+        font-size: 11px;
+      }
+      mark {
+        background: #69531c;
+        color: #fff;
+      }
+      .condition-text {
+        max-width: 470px;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      @media (max-width: 700px) {
+        main {
+          padding: 0 12px;
+        }
+        .facts {
+          grid-template-columns: 1fr;
+        }
+        .summary {
+          gap: 20px;
+        }
+        .preview-bar {
+          gap: 12px;
+        }
+        .toolbar label {
+          margin-left: 0;
+        }
+        footer {
+          flex-direction: column;
+        }
+        .body,
+        header {
+          padding-left: 14px;
+          padding-right: 14px;
+        }
+        .path {
+          font-size: 10px;
+        }
+        .tabs {
+          gap: 18px;
+        }
+        .heading {
+          gap: 10px;
+        }
+        h1 {
+          font-size: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="preview-bar">
+        <b>KubeSift / Resource tabs redesign</b
+        ><label
+          >Sample resource &nbsp;
+          <select id="resource">
+            <option value="Pod">Pod</option>
+            <option value="Deployment">Deployment</option>
+          </select></label
+        >
+      </div>
+      <section class="panel">
+        <header>
+          <div class="heading">
+            <div>
+              <h1 id="name">web-6b7f6988c7-xrx97</h1>
+              <div class="path" id="path"></div>
+            </div>
+            <button id="refresh">↻ &nbsp; Refresh section</button>
+          </div>
+          <nav class="tabs" aria-label="Resource detail">
+            <button data-tab="Overview" aria-selected="true">Overview</button><button data-tab="YAML" aria-selected="false">YAML</button
+            ><button data-tab="Events" aria-selected="false">Events</button><span id="logs" title="Being redesigned separately">Logs</span
+            ><button data-tab="Pods" id="pods-tab" hidden aria-selected="false">Pods</button>
+          </nav>
+        </header>
+        <div class="body" id="content"></div>
+        <footer>
+          <span id="footnote">Configuration and observed state · Not live usage</span
+          ><span>Captured 13 Nov 2026, 21:03:18 <span id="version">· Version 48219</span></span>
+        </footer>
+      </section>
+      <p class="note">
+        Interactive mockup · Synthetic data. Switch between Pod and Deployment to explore their tabs. Logs is being redesigned separately.
+      </p>
+      <p id="notice" role="status"></p>
+    </main>
+    <script>
+      let kind = "Pod",
+        tab = "Overview";
+      const content = document.querySelector("#content");
+      const facts = (pairs) =>
+        '<div class="facts">' +
+        pairs.map(([k, v]) => `<div class="fact"><span class="muted">${k}</span><span>${v}</span></div>`).join("") +
+        "</div>";
+      const table = (heads, rows) =>
+        '<div class="table-wrap"><table><thead><tr>' +
+        heads.map((h) => `<th>${h}</th>`).join("") +
+        "</tr></thead><tbody>" +
+        rows.map((r) => "<tr>" + r.map((c) => `<td>${c}</td>`).join("") + "</tr>").join("") +
+        "</tbody></table></div>";
+      const stat = (label, value) => `<div><div class="label">${label}</div><div class="value">${value}</div></div>`;
+      const meta =
+        '<details><summary>Labels <span class="muted">· 2</span></summary><p><span class="pill">app: web</span> <span class="pill">environment: dev</span></p></details><details><summary>Annotations <span class="muted">· None</span></summary><p>No annotations.</p></details>';
+      function overview() {
+        if (kind === "Pod")
+          return (
+            '<div class="summary">' +
+            stat("Phase", '<span class="blue">● Running</span>') +
+            stat("Containers ready", '<span class="amber">0 / 1</span>') +
+            stat("Restarts", "3") +
+            stat("QoS", "Burstable") +
+            "</div>" +
+            facts([
+              ["Node", "dev-local-b-control-plane"],
+              ["Pod IP", "10.244.0.11"],
+              ["Created", "13 Nov 2026, 20:11:47 GMT+4"],
+              ["Started", "13 Nov 2026, 20:11:53 GMT+4"],
+            ]) +
+            "<h2>Conditions</h2>" +
+            table(
+              ["Condition", "Status", "Detail"],
+              [
+                ["Ready", '<span class="amber">False</span>', 'ContainersNotReady<span class="sub">Container web is not ready.</span>'],
+                ["ContainersReady", '<span class="amber">False</span>', "ContainersNotReady"],
+                ["Initialized", '<span class="green">True</span>', "All init containers have completed."],
+                ["PodScheduled", '<span class="green">True</span>', "Assigned to dev-local-b-control-plane"],
+              ],
+            ) +
+            '<h2>Containers <span class="muted">· 1 regular</span></h2>' +
+            table(
+              ["Name / image", "State", "Ready", "Restarts"],
+              [['<strong>web</strong><span class="sub">busybox:1.37.0</span>', "Running", '<span class="amber">No</span>', "3"]],
+            ) +
+            "<details><summary>web · Resources, probes and last termination</summary>" +
+            facts([
+              ["CPU request / limit", "100m / 500m"],
+              ["Memory request / limit", "64Mi / 128Mi"],
+              ["Readiness", "HTTP GET :8080/ every 10s"],
+              ["Last termination", "Error · Exit code 1"],
+              ["Liveness", "Not configured"],
+              ["Startup probe", "Not configured"],
+            ]) +
+            '</details><p class="aside-info">Init containers: none · Ephemeral containers: none</p><details><summary>Volumes and owner</summary><p>Volume: kube-api-access (projected service account volume)<br>Owner: ReplicaSet web-6b7f6988c7</p></details>' +
+            meta
+          );
+        return (
+          '<div class="summary">' +
+          stat("Desired", "3") +
+          stat("Updated", "3") +
+          stat("Ready", '<span class="amber">2 / 3</span>') +
+          stat("Available", "2") +
+          stat("Unavailable", '<span class="amber">1</span>') +
+          "</div>" +
+          facts([
+            ["Strategy", "RollingUpdate"],
+            ["Selector", "app: web"],
+            ["Desired generation", "4"],
+            ["Observed generation", "4"],
+          ]) +
+          "<h2>Conditions</h2>" +
+          table(
+            ["Condition", "Status", "Detail"],
+            [
+              [
+                "Available",
+                '<span class="green">True</span>',
+                'MinimumReplicasAvailable<span class="sub">Deployment has minimum availability.</span>',
+              ],
+              [
+                "Progressing",
+                '<span class="green">True</span>',
+                'NewReplicaSetAvailable<span class="sub">ReplicaSet web-6b7f6988c7 has successfully progressed.</span>',
+              ],
+            ],
+          ) +
+          '<h2>Template containers <span class="muted">· Configuration</span></h2>' +
+          table(
+            ["Name", "Image", "CPU request / limit", "Memory request / limit"],
+            [["web", "busybox:1.37.0", "100m / 500m", "64Mi / 128Mi"]],
+          ) +
+          "<details><summary>Rollout settings and probes</summary>" +
+          facts([
+            ["Max surge", "25%"],
+            ["Max unavailable", "25%"],
+            ["Readiness", "HTTP GET :8080/ every 10s"],
+            ["Liveness / startup", "Not configured"],
+          ]) +
+          "</details><details><summary>Volumes and owner references</summary><p>No configured template volumes. No owner references.</p></details>" +
+          meta
+        );
+      }
+      const yaml = () =>
+        `apiVersion: ${kind === "Pod" ? "v1" : "apps/v1"}\nkind: ${kind}\nmetadata:\n  name: ${kind === "Pod" ? "web-6b7f6988c7-xrx97" : "web"}\n  namespace: kubesift-explorer\n  resourceVersion: "48219"\n  labels:\n    app: web\n    environment: dev\nspec:\n${kind === "Deployment" ? "  replicas: 3\n  selector:\n    matchLabels:\n      app: web\n  template:\n    metadata:\n      labels:\n        app: web\n    spec:\n      containers:\n        - name: web\n          image: busybox:1.37.0" : "  nodeName: dev-local-b-control-plane\n  containers:\n    - name: web\n      image: busybox:1.37.0\n      ports:\n        - containerPort: 8080\n      resources:\n        requests:\n          cpu: 100m\n          memory: 64Mi\n        limits:\n          cpu: 500m\n          memory: 128Mi\n      readinessProbe:\n        httpGet:\n          path: /\n          port: 8080\n        periodSeconds: 10\nstatus:\n  phase: Running"}`;
+      function render() {
+        document.querySelector("#name").textContent = kind === "Pod" ? "web-6b7f6988c7-xrx97" : "web";
+        document.querySelector("#path").textContent = `kind-dev-local-b / kubesift-explorer / ${kind}`;
+        document.querySelector("#logs").hidden = kind !== "Pod";
+        document.querySelector("#pods-tab").hidden = kind !== "Deployment";
+        for (const b of document.querySelectorAll("[data-tab]")) b.setAttribute("aria-selected", String(b.dataset.tab === tab));
+        document.querySelector("#notice").textContent = "";
+        document.querySelector("#footnote").textContent =
+          tab === "YAML"
+            ? "Server representation · Read-only"
+            : tab === "Pods"
+              ? "Owned Pods · ReplicaSet ownership verified"
+              : "Configuration and observed state · Not live usage";
+        if (tab === "Overview") content.innerHTML = overview();
+        if (tab === "YAML") {
+          content.innerHTML =
+            '<div class="toolbar"><input id="search" aria-label="Find in YAML" placeholder="Find in YAML…"><button id="find">Find</button><label><input id="managed" type="checkbox"> Managed fields</label><button id="copy">Copy YAML</button><span class="read-only">Read-only</span></div><pre class="code" id="code" tabindex="0" aria-label="Read-only YAML"></pre><p class="aside-info">May contain sensitive literal values. Server formatting; original comments and ordering are not preserved.</p>';
+          const paint = () => {
+            const text = yaml().replace(
+              "metadata:\n",
+              document.querySelector("#managed").checked ? "metadata:\n  managedFields: []\n" : "metadata:\n",
+            );
+            document.querySelector("#code").textContent = text;
+          };
+          paint();
+          document.querySelector("#managed").onchange = paint;
+          document.querySelector("#find").onclick = () => {
+            const q = document.querySelector("#search").value;
+            document.querySelector("#notice").textContent = q
+              ? yaml().toLowerCase().includes(q.toLowerCase())
+                ? "Found in sample YAML. Match navigation is not implemented in this mockup."
+                : "No match in sample YAML."
+              : "Enter text to find.";
+          };
+          document.querySelector("#copy").onclick = () =>
+            navigator.clipboard
+              .writeText(document.querySelector("#code").textContent)
+              .then(() => (document.querySelector("#notice").textContent = "Sample YAML copied."))
+              .catch(() => (document.querySelector("#notice").textContent = "Select the YAML text to copy."));
+        }
+        if (tab === "Pods") {
+          content.innerHTML =
+            '<div class="toolbar"><strong>3 owned Pods</strong><span class="muted">· 2 ready</span></div>' +
+            table(
+              ["Pod", "Phase", "Ready", "ReplicaSet"],
+              [
+                [
+                  '<button class="link" data-open>web-6b7f6988c7-xrx97 →</button>',
+                  '<span class="blue">● Running</span>',
+                  '<span class="amber">0 / 1</span>',
+                  "web-6b7f6988c7",
+                ],
+                [
+                  '<button class="link" data-open>web-6b7f6988c7-k4m2p →</button>',
+                  '<span class="blue">● Running</span>',
+                  "1 / 1",
+                  "web-6b7f6988c7",
+                ],
+                [
+                  '<button class="link" data-open>web-6b7f6988c7-q8j5n →</button>',
+                  '<span class="blue">● Running</span>',
+                  "1 / 1",
+                  "web-6b7f6988c7",
+                ],
+              ],
+            ) +
+            '<p class="aside-info">All owned Pods loaded. Open a Pod to inspect its conditions, events and logs.</p>';
+          for (const b of document.querySelectorAll("[data-open]"))
+            b.onclick = () =>
+              (document.querySelector("#notice").textContent =
+                "Preview only — in the app, this opens the selected Pod with a Back to Deployment action.");
+        }
+      }
+      for (const b of document.querySelectorAll("[data-tab]"))
+        b.onclick = () => {
+          if (b.dataset.tab === "Events") {
+            location.href = "events.html";
+            return;
+          }
+          tab = b.dataset.tab;
+          render();
+        };
+      document.querySelector("#resource").onchange = (e) => {
+        kind = e.target.value;
+        tab = "Overview";
+        render();
+      };
+      document.querySelector("#refresh").onclick = () =>
+        (document.querySelector("#notice").textContent = "Preview only — sample data is unchanged.");
+      render();
+    </script>
+  </body>
+</html>

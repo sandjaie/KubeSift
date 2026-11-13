@@ -1,5 +1,16 @@
 # Superpowers plans
 
+## Workload refinement · 2026-11-13
+
+The user accepted the visual direction and full ReplicaSets scope and requested a planning-only handoff. The written package awaits review; implementation requires a separate explicit request.
+
+- [Design specification](../specs/2026-11-13-workload-explorer-refinement-design.md).
+- [UI/navigation refinement plan](2026-11-13-workload-ui-refinement.md): Overview, Events, YAML, related Pods, namespace-kind retention and literal technical inputs.
+- [ReplicaSets explorer plan](2026-11-13-replicasets-explorer.md): follows the UI plan and reviewed Phase 1C.2 baseline.
+- [Accepted mockups](../../ux/mocks/index.html#workload-refinement).
+
+Logs redesign is separately owned. Planning develop currently precedes the feature implementation; reconcile the implementation/Logs baseline before execution. This package does not authorize a merge, release or the remaining 1C.3 scope.
+
 The [Phase 1A specification](../specs/2026-11-05-phase-1a-validation-design.md) was approved on 2026-11-05.
 
 - [Phase 1A implementation plan](2026-11-05-phase-1a-validation.md): detailed tasks, minimal tests and separate-session handoff; completed with qualified local validation; see its report.
