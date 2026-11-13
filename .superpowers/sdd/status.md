@@ -2,6 +2,12 @@
 
 Updated 2026-11-13. Current integration branch is `develop`.
 
+## Next planning package · Phase 1C.3b
+
+- Read-only networking scope accepted: Services, EndpointSlices, Ingresses, IngressClasses and NetworkPolicies. [Specification](../../docs/superpowers/specs/2026-11-13-phase-1c3b-networking-design.md) and [plan](../../docs/superpowers/plans/2026-11-13-phase-1c3b-networking.md) prepared for review and separate-session implementation.
+- Baseline inspected: develop at a980966, after 1C.3a merge ccc47ca. No application code or fixtures changed by this planning update. Work in the existing checkout, no worktree.
+- Agent-run automated and desktop verification produces one report, without duplicate manual user UAT. No connectivity probes, networking mutations, installed infrastructure, merge, release or later increment is authorized.
+
 ## Phase 1C.3a · Remaining workloads
 
 - Implemented from the `develop` baseline at `4ad1108`. [Specification](../../docs/superpowers/specs/2026-11-13-phase-1c3a-remaining-workloads-design.md) and [plan](../../docs/superpowers/plans/2026-11-13-phase-1c3a-remaining-workloads.md).

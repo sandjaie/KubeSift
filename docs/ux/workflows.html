@@ -135,6 +135,15 @@
         automatically unhealthy; unavailable/stale health data must be identified. Alerts require evidence, not a decorative badge. Text and
         icons supplement color.
       </p>
+      <h2 id="networking-investigation">Planned Phase 1C.3b networking investigation</h2>
+      <p>
+        Reuse compact inventories, Overview, YAML and namespaced Events for the
+        <a href="../superpowers/specs/2026-11-13-phase-1c3b-networking-design.md">networking specification</a>. Service EndpointSlices and
+        explicit links connect Ingress → Service → EndpointSlice → Pod using the existing Back history. IngressClasses are visibly
+        cluster-scoped, with the namespace chooser disabled and the previous namespace retained. Keep association, ownership and
+        name-resolution evidence distinct. NetworkPolicy views show configuration without asserting effective connectivity. These views are
+        not yet implemented; acceptance uses agent desktop verification.
+      </p>
       <h2 id="remaining-workloads">Phase 1C.3a workload views</h2>
       <p>
         StatefulSets, DaemonSets and Jobs reuse Overview, YAML, Events and related Pods; CronJobs use Overview, YAML, Events and Jobs. The

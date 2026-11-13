@@ -2,6 +2,12 @@
 
 Acceptance follows [agent verification](../../engineering/engineering.html#agent-verification): plans require automated and agent-run desktop checks in one validation report, not a duplicate manual user UAT checklist. This supersedes older user-checklist requirements below without altering historical results. Ask the user only for subjective decisions or a specific check the agent cannot complete.
 
+## Phase 1C.3b · Networking
+
+- [Specification](../specs/2026-11-13-phase-1c3b-networking-design.md): five networking kinds, correct cluster scope, bounded association and safe reference resolution. Scope accepted; written package for review.
+- [Five-task implementation plan](2026-11-13-phase-1c3b-networking.md): typed reads, references, structured views, shared navigation and agent desktop validation.
+- Execute only in a separately authorized session, in the existing checkout without a worktree. The merged 1C.3a baseline is required. No duplicate manual user UAT, mutations, probes or installed infrastructure.
+
 ## Phase 1C.3a · Remaining workloads
 
 - [Specification](../specs/2026-11-13-phase-1c3a-remaining-workloads-design.md): StatefulSets, DaemonSets, Jobs and CronJobs with direct Pod ownership and CronJob → Jobs navigation. Scope accepted; written package for review.
