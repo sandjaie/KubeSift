@@ -2,6 +2,12 @@
 
 Acceptance follows [agent verification](../../engineering/engineering.html#agent-verification): plans require automated and agent-run desktop checks in one validation report, not a duplicate manual user UAT checklist. This supersedes older user-checklist requirements below without altering historical results. Ask the user only for subjective decisions or a specific check the agent cannot complete.
 
+## Phase 1C.3c · Namespace policy and configuration (next; planned)
+
+- [Specification](../specs/2026-11-14-phase-1c3c-configuration-design.md): five core kinds, strict metadata-only Secrets, namespace policy evidence and explicit Pod configuration links.
+- [Five-task plan](2026-11-14-phase-1c3c-configuration.md): bounded readers, reference validation, views, shared state/navigation and complete verification/delivery.
+- Separate authorized implementation session; existing checkout, no worktree. Follow the [fixed roadmap sequence](../../roadmap/roadmap.html#phase-1c3-sequence). Run one fresh whole-PR review after implementation and tests, with targeted fix follow-ups; no routine per-task reviews or duplicate user UAT.
+
 ## Phase 1C.3b · Networking
 
 - [Specification](../specs/2026-11-13-phase-1c3b-networking-design.md): five networking kinds, correct cluster scope, bounded association and safe reference resolution. Scope accepted; written package for review.

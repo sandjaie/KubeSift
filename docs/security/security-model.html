@@ -126,6 +126,14 @@
         Claude is the first adapter. OpenAI API, OpenRouter and other supported providers follow a provider abstraction; arbitrary API keys
         and consumer subscriptions do not imply compatible APIs or model capabilities.
       </p>
+      <h2 id="configuration-read-boundary">Configuration read boundary</h2>
+      <p>
+        Planned <a href="../superpowers/specs/2026-11-14-phase-1c3c-configuration-design.md">Phase 1C.3c</a> permits ConfigMap inspection
+        and strictly metadata-only Secret browsing. Secret requests must not fall back to full objects, and arbitrary metadata such as
+        last-applied annotations must not cross the desktop bridge. Secret value reveal, YAML and Events are outside this increment; generic
+        readers must not bypass that boundary. Metadata-only requests still need ordinary Secret permissions. ConfigMap content and metadata
+        can contain sensitive text; keep captures local and ephemeral, out of logs, telemetry and AI submissions.
+      </p>
       <h2>Evidence and tool contracts</h2>
       <p>
         Collect only bounded, relevant evidence. Exclude credentials and Kubernetes Secret values from model submissions; logs, annotations,

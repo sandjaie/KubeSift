@@ -195,6 +195,27 @@
           </tbody>
         </table>
       </div>
+      <h2 id="configuration">Namespace policy and configuration</h2>
+      <ul>
+        <li>
+          <a href="https://kubernetes.io/docs/reference/using-api/api-concepts/">Metadata-only API negotiation</a>: partial metadata
+          representation, unsupported negotiation and explicit full-object fallback. The
+          <a href="../superpowers/specs/2026-11-14-phase-1c3c-configuration-design.md">1C.3c contract</a> forbids that fallback for Secrets.
+        </li>
+        <li>
+          <a href="https://kubernetes.io/docs/reference/kubernetes-api/core/limit-range-v1/">LimitRange API</a>: item types, quantities,
+          defaults and constraints; keep multiple items distinct.
+        </li>
+        <li>
+          <a href="https://kubernetes.io/docs/reference/kubernetes-api/core/config-map-v1/">ConfigMap API</a>: text/binary data and
+          immutable configuration; values can be sensitive despite the resource kind.
+        </li>
+        <li>
+          <a href="https://kubernetes.io/docs/tasks/administer-cluster/manage-resources/quota-memory-cpu-namespace/"
+            >ResourceQuota allocation example</a
+          >: configured limits and reported accounting are not measured CPU/memory consumption.
+        </li>
+      </ul>
       <h2 id="testing">Testing and evidence</h2>
       <ul>
         <li>

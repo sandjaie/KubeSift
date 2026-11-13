@@ -314,6 +314,44 @@
           this increment. The <a href="../superpowers/validation/phase-1c3b.html">validation report</a> records branch evidence and
           remaining checks.
         </p>
+        <h2 id="phase-1c3-sequence">Remaining Phase 1C.3 sequence</h2>
+        <p>
+          Planning order set on 14 November 2026 after networking merged. Follow this sequence unless the maintainer changes priority; do
+          not ask which area comes next at every handoff. Only 1C.3c has a detailed planning package here; later increments still need their
+          own specifications and explicit implementation requests.
+        </p>
+        <ol>
+          <li>
+            <strong>1C.3c — Namespace policy and configuration (next; planned).</strong> Namespaces, ResourceQuotas, LimitRanges, ConfigMaps
+            and metadata-only Secrets, plus explicit Pod configuration references. Read the
+            <a href="../superpowers/specs/2026-11-14-phase-1c3c-configuration-design.md">specification</a> and
+            <a href="../superpowers/plans/2026-11-14-phase-1c3c-configuration.md">five-task plan</a>. Secret value reveal and Secret YAML
+            are deferred; this planning package is not implemented coverage.
+          </li>
+          <li>
+            <strong>1C.3d — Storage.</strong> PVCs, PVs, StorageClasses, VolumeAttachments, CSIDrivers and CSINodes; Pod → claim → volume →
+            class evidence.
+          </li>
+          <li>
+            <strong>1C.3e — Access control.</strong> ServiceAccounts, Roles, RoleBindings, ClusterRoles and ClusterRoleBindings; explicit
+            subjects and role references without effective-permission claims.
+          </li>
+          <li>
+            <strong>1C.3f — Availability and remaining workload resources.</strong> HPAs, PDBs, ReplicationControllers and
+            ControllerRevisions; scale-target, disruption and revision evidence.
+          </li>
+          <li>
+            <strong>1C.3g — Cluster resources and API discovery.</strong> Nodes, Events, PriorityClasses, RuntimeClasses, Leases, CRDs and
+            APIServices; bounded generic installed-API browsing, partial discovery failures and remaining networking coverage such as legacy
+            Endpoints and installed Gateway API kinds.
+          </li>
+        </ol>
+        <p>
+          Secret reveal remains a separately specified security/UX increment before claiming complete Secret inspection. Snapshot APIs,
+          admission resources and other installed extensions enter through the discovery increment; dedicated editors, writes, metrics, Helm
+          and OpenShift workflows retain their later-phase ownership. Each implementation ends with agent verification and one independent
+          whole-PR review under the engineering workflow, not routine per-task reviews or duplicate manual UAT.
+        </p>
         <h2>Resource coverage to carry into future specifications</h2>
         <p>
           <strong>Phase 1C.3a remaining workloads passed maintainer acceptance.</strong>
@@ -416,10 +454,11 @@
           </table>
         </div>
         <p>
-          At the next planning discussion, settle navigation grouping, dedicated versus generic views, cross-resource links and the order of
-          1C.3 increments. Validate served API versions from the target cluster and current official documentation at implementation time.
-          An absent API, forbidden API and empty collection must remain distinct. Do not promise every extension a dedicated editor or every
-          resource a meaningful log view. Keep a reviewed coverage matrix and record deferred gaps before claiming broad coverage.
+          Use the <a href="#phase-1c3-sequence">ordered increments above</a> for the next planning session. Each specification settles
+          navigation grouping, dedicated versus generic views and cross-resource links. Validate served API versions from the target cluster
+          and current official documentation at implementation time. An absent API, forbidden API and empty collection must remain distinct.
+          Do not promise every extension a dedicated editor or every resource a meaningful log view. Keep a reviewed coverage matrix and
+          record deferred gaps before claiming broad coverage.
         </p>
       </section>
       <section id="phase-1d">
