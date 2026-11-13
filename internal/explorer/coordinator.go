@@ -404,6 +404,15 @@ func (c *Coordinator) Disconnect(ref model.ConnectionRef) error {
 
 // ReadPods schedules the only worker for this connection, cancelling its prior read.
 func (c *Coordinator) ReadPods(ref model.ConnectionRef, ns string) (ConnectionView, error) {
+	return c.changeNamespace(ref, ns, true)
+}
+
+// SetWorkloadNamespace updates the connection view while the workload reader owns inventory.
+func (c *Coordinator) SetWorkloadNamespace(ref model.ConnectionRef, ns string) (ConnectionView, error) {
+	return c.changeNamespace(ref, ns, false)
+}
+
+func (c *Coordinator) changeNamespace(ref model.ConnectionRef, ns string, readPods bool) (ConnectionView, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	w := c.find(ref)
@@ -420,8 +429,11 @@ func (c *Coordinator) ReadPods(ref model.ConnectionRef, ns string) (ConnectionVi
 	w.view.Namespace = ns
 	w.view.Pods = []kube.PodSummary{}
 	w.view.PodProblem = nil
-	w.view.PodLoading = true
-	w.readPods = true
+	w.view.PodLoading = readPods
+	w.readPods = readPods
+	if !readPods {
+		return c.copy(w), nil
+	}
 	if w.requestCancel != nil {
 		w.requestCancel()
 	}

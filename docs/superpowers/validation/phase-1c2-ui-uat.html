@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="../../assets/planning.css" />
+    <script src="../../assets/theme.js"></script>
+    <style>
+      main {
+        max-width: 1100px;
+        margin: auto;
+        padding: 24px;
+      }
+      input,
+      textarea,
+      select {
+        font: inherit;
+        max-width: 100%;
+      }
+      textarea {
+        width: 100%;
+        min-height: 55px;
+      }
+      article {
+        break-inside: avoid;
+        border-bottom: 1px solid #888;
+        padding: 16px 0;
+      }
+      @media print {
+        button {
+          display: none;
+        }
+        main {
+          padding: 0;
+        }
+        textarea {
+          border: 1px solid #aaa;
+        }
+        body {
+          background: white;
+          color: black;
+        }
+      }
+    </style>
+    <title>Phase 1C.2 user UI UAT</title>
+  </head>
+  <body>
+    <main>
+      <a href="../../index.html">Planning index</a>
+      <h1>Phase 1C.2 · User UI UAT</h1>
+      <p>
+        All user results start <strong>Not tested</strong>. Agent evidence is separate in <a href="phase-1c2.html">the technical report</a>.
+        This checklist does not authorize merge.
+      </p>
+      <p>
+        <label>Tester <input /></label> <label>Date <input type="date" /></label> <label>OS <input /></label>
+      </p>
+      <p>
+        <label>App version <input value="0.3.0" /></label> <label>Commit <input placeholder="git rev-parse --short HEAD" /></label>
+        <label>Window sizes <input /></label>
+      </p>
+      <h2>Prerequisites</h2>
+      <p>
+        Use only kind-dev-local-a/b, namespace kubesift-explorer. Fixtures: scripts/dev-clusters.sh --explorer. Preserve shop/billing. Open
+        the locally packaged bin/kubesift.app; this is not a new release.
+      </p>
+      <pre>
+kubectl --context kind-dev-local-a -n kubesift-explorer get pods,deployments
+kubectl --context kind-dev-local-b -n kubesift-explorer get pods,deployments</pre
+      >
+      <p>
+        Discover current web and completed-job Pod names from these lists. Use missing-setting, missing-image, same-pod, multi-container,
+        init-evidence, web-lookalike, web and scaled-zero. Never alter normal credentials or delete shared workloads to manufacture a test.
+      </p>
+      <p>
+        Entered results are <strong>not persisted</strong>; reloading loses changes. Use the browser Print command and Save as PDF before
+        closing, or print and fill by hand. Do not include workload/log payloads in public notes.
+      </p>
+      <article>
+        <h2>1. Cluster/namespace A/B isolation</h2>
+        <p>
+          <strong>Steps:</strong> Connect kind-dev-local-a and kind-dev-local-b. In each select kubesift-explorer and same-pod. Filter one
+          tab; switch tabs.
+        </p>
+        <p>
+          <strong>Expected:</strong> Context, namespace, node and UID belong to the selected tab; filter, kind and selection remain
+          independent.
+        </p>
+        <label
+          >Result
+          <select aria-label="Case 1 result">
+            <option selected>Not tested</option>
+            <option>Pass</option>
+            <option>Fail</option>
+            <option>Blocked</option>
+          </select></label
+        >
+        <p>
+          <label>Notes <textarea aria-label="Case 1 notes"></textarea></label>
+        </p>
+      </article>
+      <article>
+        <h2>2. Pod phase, readiness and reason</h2>
+        <p><strong>Steps:</strong> Select missing-setting, missing-image and a completed-job Pod.</p>
+        <p>
+          <strong>Expected:</strong> Running can coexist with CrashLoopBackOff and 0/1 ready. Pending and Succeeded keep their distinct
+          phase colours.
+        </p>
+        <label
+          >Result
+          <select aria-label="Case 2 result">
+            <option selected>Not tested</option>
+            <option>Pass</option>
+            <option>Fail</option>
+            <option>Blocked</option>
+          </select></label
+        >
+        <p>
+          <label>Notes <textarea aria-label="Case 2 notes"></textarea></label>
+        </p>
+      </article>
+      <article>
+        <h2>3. Deployment counts and zero replicas</h2>
+        <p><strong>Steps:</strong> Choose Deployments. Inspect web and scaled-zero in Overview.</p>
+        <p>
+          <strong>Expected:</strong> scaled-zero shows desired/ready zero; observed status counters are zero, not failure or Unknown.
+          Generations and conditions remain visible.
+        </p>
+        <label
+          >Result
+          <select aria-label="Case 3 result">
+            <option selected>Not tested</option>
+            <option>Pass</option>
+            <option>Fail</option>
+            <option>Blocked</option>
+          </select></label
+        >
+        <p>
+          <label>Notes <textarea aria-label="Case 3 notes"></textarea></label>
+        </p>
+      </article>
+      <article>
+        <h2>4. Page/filter/Refresh</h2>
+        <p>
+          <strong>Steps:</strong> Use Filter this page and Name sort. Refresh. Enable Auto-refresh. If a prepared namespace has &gt;100
+          objects, inspect Next/Previous.
+        </p>
+        <p>
+          <strong>Expected:</strong> Filtering is explicitly page-local; Refresh returns to page one. Later pages pause auto-refresh.
+          Large-page case is Blocked if no prepared fixture; do not create hundreds of objects.
+        </p>
+        <label
+          >Result
+          <select aria-label="Case 4 result">
+            <option selected>Not tested</option>
+            <option>Pass</option>
+            <option>Fail</option>
+            <option>Blocked</option>
+          </select></label
+        >
+        <p>
+          <label>Notes <textarea aria-label="Case 4 notes"></textarea></label>
+        </p>
+      </article>
+      <article>
+        <h2>5. Conditions and container groups</h2>
+        <p>
+          <strong>Steps:</strong> Inspect missing-setting Overview; then init-evidence and multi-container. Expand metadata and
+          configuration.
+        </p>
+        <p>
+          <strong>Expected:</strong> Conditions, waiting/last termination, images, resources and probes are actual evidence.
+          Regular/init/ephemeral groups stay separate; absent ephemeral containers are not invented.
+        </p>
+        <label
+          >Result
+          <select aria-label="Case 5 result">
+            <option selected>Not tested</option>
+            <option>Pass</option>
+            <option>Fail</option>
+            <option>Blocked</option>
+          </select></label
+        >
+        <p>
+          <label>Notes <textarea aria-label="Case 5 notes"></textarea></label>
+        </p>
+      </article>
+      <article>
+        <h2>6. Owned Pods and Back</h2>
+        <p>
+          <strong>Steps:</strong> Deployments → web → Pods → actual web Pod → Back to Deployment. Pods should appear without an intermediate
+          loading click; use Load more Pods only if additional results exist.
+        </p>
+        <p>
+          <strong>Expected:</strong> Partial coverage is explicit. web-lookalike is excluded. Back returns to the captured Deployment,
+          revalidating its UID.
+        </p>
+        <label
+          >Result
+          <select aria-label="Case 6 result">
+            <option selected>Not tested</option>
+            <option>Pass</option>
+            <option>Fail</option>
+            <option>Blocked</option>
+          </select></label
+        >
+        <p>
+          <label>Notes <textarea aria-label="Case 6 notes"></textarea></label>
+        </p>
+      </article>
+      <article>
+        <h2>7. Read-only YAML</h2>
+        <p>
+          <strong>Steps:</strong> Select YAML, search for metadata, use Find next, toggle Show managed fields, then Copy displayed YAML into
+          a local scratch editor.
+        </p>
+        <p>
+          <strong>Expected:</strong> apiVersion/kind, UID and resourceVersion match. Both variants share captured time/version. Copy matches
+          the visible variant; no Apply/Edit control.
+        </p>
+        <label
+          >Result
+          <select aria-label="Case 7 result">
+            <option selected>Not tested</option>
+            <option>Pass</option>
+            <option>Fail</option>
+            <option>Blocked</option>
+          </select></label
+        >
+        <p>
+          <label>Notes <textarea aria-label="Case 7 notes"></textarea></label>
+        </p>
+      </article>
+      <article>
+        <h2>8. UID events and empty/errors</h2>
+        <p><strong>Steps:</strong> Open Events for missing-setting and a healthy Pod; use Refresh section.</p>
+        <p>
+          <strong>Expected:</strong> Events show reason/message/count/time and page-local ordering. No events does not claim no failure.
+          Restricted-reader variant is Blocked unless safe isolated credentials are already prepared.
+        </p>
+        <label
+          >Result
+          <select aria-label="Case 8 result">
+            <option selected>Not tested</option>
+            <option>Pass</option>
+            <option>Fail</option>
+            <option>Blocked</option>
+          </select></label
+        >
+        <p>
+          <label>Notes <textarea aria-label="Case 8 notes"></textarea></label>
+        </p>
+      </article>
+      <article>
+        <h2>9. Automatic live logs</h2>
+        <p><strong>Steps:</strong> Select web Pod → Logs. Observe output immediately; turn Follow off for a snapshot.</p>
+        <p>
+          <strong>Expected:</strong> One log box loads automatically. Current follows by default. The selected container and initial line
+          limit are visible.
+        </p>
+        <label
+          >Result
+          <select aria-label="Case 9 result">
+            <option selected>Not tested</option>
+            <option>Pass</option>
+            <option>Fail</option>
+            <option>Blocked</option>
+          </select></label
+        >
+        <p>
+          <label>Notes <textarea aria-label="Case 9 notes"></textarea></label>
+        </p>
+      </article>
+      <article>
+        <h2>10. Previous and multi-container</h2>
+        <p>
+          <strong>Steps:</strong> Inspect missing-setting → Logs → Previous. Inspect multi-container and choose each named container
+          explicitly.
+        </p>
+        <p>
+          <strong>Expected:</strong> Previous disables Follow. Available prior logs or honest server availability text are shown. Record
+          unavailable previous evidence as Blocked, not Pass. The first regular container loads by default; selecting another replaces the
+          view.
+        </p>
+        <label
+          >Result
+          <select aria-label="Case 10 result">
+            <option selected>Not tested</option>
+            <option>Pass</option>
+            <option>Fail</option>
+            <option>Blocked</option>
+          </select></label
+        >
+        <p>
+          <label>Notes <textarea aria-label="Case 10 notes"></textarea></label>
+        </p>
+      </article>
+      <article>
+        <h2>11. Scroll, search and expand</h2>
+        <p>
+          <strong>Steps:</strong> Scroll to the oldest retained output. Search for heartbeat; use next/previous matches. Expand to window,
+          then press Escape.
+        </p>
+        <p>
+          <strong>Expected:</strong> Reading older text pauses automatic scrolling. Jump to latest returns to incoming output. Search
+          highlights a match. Expansion preserves the reader and Escape restores the panel.
+        </p>
+        <label
+          >Result
+          <select aria-label="Case 11 result">
+            <option selected>Not tested</option>
+            <option>Pass</option>
+            <option>Fail</option>
+            <option>Blocked</option>
+          </select></label
+        >
+        <p>
+          <label>Notes <textarea aria-label="Case 11 notes"></textarea></label>
+        </p>
+      </article>
+      <article>
+        <h2>12. Leave and return</h2>
+        <p>
+          <strong>Steps:</strong> With live logs running, select Overview, then return to Logs. Repeat through Settings and cluster
+          navigation.
+        </p>
+        <p>
+          <strong>Expected:</strong> Leaving releases the reader and retained output. Returning starts a fresh single view. No Sessions dock
+          or duplicate log boxes appear.
+        </p>
+        <label
+          >Result
+          <select aria-label="Case 12 result">
+            <option selected>Not tested</option>
+            <option>Pass</option>
+            <option>Fail</option>
+            <option>Blocked</option>
+          </select></label
+        >
+        <p>
+          <label>Notes <textarea aria-label="Case 12 notes"></textarea></label>
+        </p>
+      </article>
+      <article>
+        <h2>13. Bounds and filter changes</h2>
+        <p>
+          <strong>Steps:</strong> Change container, Current/Previous and line count. Refresh. Inspect a prepared high-volume fixture if
+          available.
+        </p>
+        <p>
+          <strong>Expected:</strong> Changes replace output in one box. Retention stays bounded to 1 MiB with visible omissions; all
+          retained output is scrollable. Mark overflow testing Blocked if no safe fixture is prepared.
+        </p>
+        <label
+          >Result
+          <select aria-label="Case 13 result">
+            <option selected>Not tested</option>
+            <option>Pass</option>
+            <option>Fail</option>
+            <option>Blocked</option>
+          </select></label
+        >
+        <p>
+          <label>Notes <textarea aria-label="Case 13 notes"></textarea></label>
+        </p>
+      </article>
+      <article>
+        <h2>14. Layout, keyboard and saved splits</h2>
+        <p>
+          <strong>Steps:</strong> Use arrow keys/Enter to select rows, including first/last row. Resize list/detail split in current
+          laptop/external layouts; revisit Settings and relaunch.
+        </p>
+        <p>
+          <strong>Expected:</strong> Repeated selection retains Overview. Compact header, searchable namespace, palette and saved
+          independent splits remain usable; record actual dimensions.
+        </p>
+        <label
+          >Result
+          <select aria-label="Case 14 result">
+            <option selected>Not tested</option>
+            <option>Pass</option>
+            <option>Fail</option>
+            <option>Blocked</option>
+          </select></label
+        >
+        <p>
+          <label>Notes <textarea aria-label="Case 14 notes"></textarea></label>
+        </p>
+      </article>
+      <article>
+        <h2>15. Tab-close and exit cleanup</h2>
+        <p>
+          <strong>Steps:</strong> Close a tab with retained logs. Cancel once, then confirm Close tab and sessions. Close remaining
+          sessions; quit and relaunch.
+        </p>
+        <p>
+          <strong>Expected:</strong> In-app confirmation lists affected tab/session count. Cancel preserves sessions; confirm removes them.
+          Relaunch has no restored log payload. Replacement/reconnect race is optional and Blocked without prepared safe prerequisites.
+        </p>
+        <label
+          >Result
+          <select aria-label="Case 15 result">
+            <option selected>Not tested</option>
+            <option>Pass</option>
+            <option>Fail</option>
+            <option>Blocked</option>
+          </select></label
+        >
+        <p>
+          <label>Notes <textarea aria-label="Case 15 notes"></textarea></label>
+        </p>
+      </article>
+    </main>
+  </body>
+</html>

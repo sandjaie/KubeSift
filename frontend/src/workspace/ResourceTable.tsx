@@ -1,60 +1,113 @@
 /*
-Purpose: Render actual basic Pod summaries with keyboard selection.
-Used by: The live workspace.
-Responsibilities: Show read fields and return the selected UID within the owning tab.
-Important: This component never fabricates diagnostics or routes native requests.
+Purpose: Render one live workload page with keyboard selection.
+Used by: The existing workspace list pane.
+Responsibilities: Show truthful optional counts, phase and container failure reasons.
+Important: Sorting and filtering apply only to this page.
 */
-import type { PodSummary } from "../../bindings/github.com/sandjaie/KubeSift/internal/kube/models";
+import type { WorkloadRow, Kind } from "../workloads/model";
 import { PodPhase } from "./PodPhase";
 import { ResourceIcon } from "../ui/ResourceIcon";
+export function age(value: string | null) {
+  if (!value || !Number.isFinite(Date.parse(value))) return "Unknown";
+  const minutes = Math.max(0, Math.floor((Date.now() - Date.parse(value)) / 60000));
+  return minutes < 60 ? `${minutes}m` : minutes < 1440 ? `${Math.floor(minutes / 60)}h` : `${Math.floor(minutes / 1440)}d`;
+}
 export function ResourceTable({
   rows,
+  kind,
   selected,
   onSelect,
 }: {
-  rows: PodSummary[];
+  rows: WorkloadRow[];
+  kind: Kind;
   selected: string | null;
-  onSelect: (uid: string) => void;
+  onSelect: (row: WorkloadRow) => void;
 }) {
+  const selectedVisible = rows.some((row) => row.resource.uid === selected);
   return (
     <div className="resource-list">
-      <table aria-label="Pods">
+      <table aria-label={`${kind}s`}>
         <thead>
           <tr>
             <th>Name</th>
-            <th>Phase</th>
-            <th>Ready</th>
+            {kind === "Pod" ? <th>Phase / reason</th> : null}
+            {kind === "ReplicaSet" ? (
+              <>
+                <th>Desired</th>
+                <th>Current</th>
+                <th>Ready</th>
+              </>
+            ) : (
+              <th>Ready / desired</th>
+            )}
+            {kind === "Pod" ? (
+              <>
+                <th>Restarts</th>
+                <th>Node</th>
+              </>
+            ) : (
+              <>
+                {kind === "Deployment" && <th>Updated</th>}
+                <th>Available</th>
+              </>
+            )}
+            <th>Age</th>
           </tr>
         </thead>
         <tbody>
-          {rows.map((pod, index) => (
+          {rows.map((row, index) => (
             <tr
-              key={pod.uid}
-              aria-selected={selected === pod.uid}
-              tabIndex={selected === pod.uid || (!selected && index === 0) ? 0 : -1}
-              onClick={() => onSelect(pod.uid)}
+              key={row.resource.uid}
+              aria-selected={selected === row.resource.uid}
+              tabIndex={selected === row.resource.uid || (!selectedVisible && index === 0) ? 0 : -1}
+              onClick={() => onSelect(row)}
               onKeyDown={(e) => {
                 if (e.key === "ArrowDown" || e.key === "ArrowUp") {
                   e.preventDefault();
                   const next = Math.max(0, Math.min(rows.length - 1, index + (e.key === "ArrowDown" ? 1 : -1)));
-                  onSelect(rows[next].uid);
+                  onSelect(rows[next]);
                   (e.currentTarget.parentElement?.children[next] as HTMLElement)?.focus();
                 }
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
-                  onSelect(pod.uid);
+                  onSelect(row);
                 }
               }}
             >
               <td>
                 <strong>
-                  <ResourceIcon kind="Pod" size={14} /> {pod.name}
+                  <ResourceIcon kind={kind} size={14} /> {row.resource.name}
                 </strong>
               </td>
-              <td>
-                <PodPhase phase={pod.phase} />
-              </td>
-              <td>{pod.ready ? "Ready" : "Not ready"}</td>
+              {kind === "Pod" ? (
+                <td>
+                  <PodPhase phase={row.phase} />
+                  {row.reason && <span className="warning"> · {row.reason}</span>}
+                </td>
+              ) : null}
+              {kind === "ReplicaSet" ? (
+                <>
+                  <td>{row.desired ?? "Unknown"}</td>
+                  <td>{row.current ?? "Unknown"}</td>
+                  <td>{row.ready ?? "Unknown"}</td>
+                </>
+              ) : (
+                <td>
+                  {row.ready ?? "?"} / {row.desired ?? "?"}
+                </td>
+              )}
+              {kind === "Pod" ? (
+                <>
+                  <td>{row.restarts ?? "Unknown"}</td>
+                  <td>{row.node || "Unknown"}</td>
+                </>
+              ) : (
+                <>
+                  {kind === "Deployment" && <td>{row.updated ?? "Unknown"}</td>}
+                  <td>{row.available ?? "Unknown"}</td>
+                </>
+              )}
+              <td>{age(row.createdAt)}</td>
             </tr>
           ))}
         </tbody>

@@ -70,7 +70,8 @@
         Refresh belongs beside the Pods heading, without a separate toolbar. Column headings stay visible within the scrolling table.
         Single-namespace rows omit repeated namespace subtitles. Phase dots supplement labels: Running blue, Succeeded green, Pending amber,
         Failed red and unknown grey. Keep readiness separate. Selected details use compact label/value rows with context and namespace
-        visible; Identity &amp; source expands selectable UID and full source text.
+        visible. The separate Identity &amp; source disclosure is removed following Phase 1C.2 UAT; object UID and metadata remain available
+        in YAML.
       </p>
       <h3 id="namespace-selector">Searchable namespace selector</h3>
       <p>
@@ -134,16 +135,15 @@
         automatically unhealthy; unavailable/stale health data must be identified. Alerts require evidence, not a decorative badge. Text and
         icons supplement color.
       </p>
-      <h2 id="workload-refinement">Planned workload investigation refinement</h2>
+      <h2 id="workload-refinement">Workload investigation refinement</h2>
       <p>
-        The 13 November discussion accepted compact evidence tables, structured Overview facts, a larger read-only YAML surface and explicit
-        related-resource navigation. The
-        <a href="../superpowers/specs/2026-11-13-workload-explorer-refinement-design.md">refinement specification</a>
-        defines the pending behavior and acceptance criteria; <a href="mocks/index.html#workload-refinement">accepted visual references</a>
-        capture density and hierarchy, not implementation evidence. Preserve the selected workload kind across namespace changes while
-        clearing old-scope evidence. Technical search fields preserve literal input without linguistic suggestions; intentional namespace
-        results remain. Add read-only ReplicaSets browsing and Deployment/ReplicaSet/Pod links. Logs redesign remains separately owned.
-        These are planned changes, not a claim of current support.
+        Pod and Deployment detail use compact evidence tables, structured Overview facts and a larger read-only YAML surface. Workloads
+        includes the read-only ReplicaSets destination. Relationship links and Back validate captured UIDs. Namespace changes preserve the
+        selected workload kind and clear old-scope evidence. Technical search fields preserve literal input, and intentional namespace
+        results remain available. See the
+        <a href="../superpowers/specs/2026-11-13-workload-explorer-refinement-design.md">refinement specification</a>,
+        <a href="mocks/index.html#workload-refinement">approved visual references</a> and
+        <a href="../superpowers/validation/workload-explorer-refinement.html">technical results</a>.
       </p>
       <h2>Resource selection and keyboard behavior</h2>
       <p>
@@ -157,11 +157,10 @@
         the investigation. Full resource identity remains available even when table cells truncate. Log failures may use a red vertical
         gutter alongside the relevant line, with textual severity. Previous-container logs do not enable follow.
       </p>
-      <h2>Sessions dock</h2>
+      <h2>Log lifetime</h2>
       <p>
-        Keep active logs, terminals and port forwards in a persistent bottom dock. Each session identifies cluster, namespace,
-        resource/container, status and stop control. Switching tabs preserves sessions. Dock collapse changes presentation only. Closing a
-        tab with active sessions asks for confirmation, then cancels owned work; it must not silently detach sessions.
+        Phase 1C.2 logs belong to the visible Pod Logs tab. Leaving it stops collection and releases history; returning loads fresh output.
+        These logs have no bottom Sessions dock. Future terminals and port forwards require their own approved persistent-session workflow.
       </p>
       <h2>Global AI panel · Phase 2</h2>
       <p>
@@ -188,7 +187,25 @@
         <a href="../security/security-model.html">security model</a>. Describe actual filtering without promising that all sensitive data
         can be detected.
       </p>
+      <h3>Log viewer</h3>
+      <p>
+        Opening Logs immediately shows one live current-container view. Keep container, Current/Previous, initial line count, Follow and
+        Refresh controls. Previous uses a snapshot. Scroll all retained output, hold a stable reading snapshot when scrolling upward, and
+        use Jump to latest to return. Search retained text with previous/next matches. Log rows scroll horizontally; very long lines
+        continue on bounded display rows. Expand to window fills the application window; Restore size or Escape returns without reopening
+        the reader. Remove Open logs, Clear view, Resume and Close. Display the initial line limit, 1 MiB retention bound and actual
+        loss/errors. Rotated server history may be unavailable.
+      </p>
       <h2>Themes and window sizes</h2>
+      <p>
+        UAT refinement approved 12 November 2026: launch maximized in the selected display’s available desktop work area, without entering
+        macOS full-screen mode. Use the entire selected display work-area rectangle on the first native window show; keep ordinary resizing
+        and saved pane proportions. Opening a Deployment’s Pods tab automatically advances up to eight empty ownership pages to find Pods;
+        keep bounded Load more Pods only when continuation remains. Do not show internal traversal timestamps or completion labels.
+        Inventory pagination places Previous, the page number and Next in one vertically centered group, with Auto-refresh aligned beside it
+        and wrapping as a whole on narrow panes. Separate these controls from the filter row. Do not display the inventory capture timestamp
+        in the table hint; retain stale-data warnings and detail evidence timestamps.
+      </p>
       <p>
         Appearance lives in Settings, not the workspace header. Default to System; support persistent Light and Dark overrides. System
         tracks OS changes. Theme switching preserves layout, sessions and selection. Dark uses neutral charcoal surfaces with blue

@@ -19,12 +19,17 @@ import { NamespaceControl } from "./workspace/NamespaceControl";
 import { Workspace } from "./workspace/Workspace";
 import { CommandPalette } from "./workspace/CommandPalette";
 import { commandForKey } from "./workspace/commands";
+import { Modal } from "./ui/ReviewDialog";
 import { ResizeHandle } from "./ui/ResizeHandle";
 import { ResourceIcon } from "./ui/ResourceIcon";
 import { InvestigationPanel } from "./ai/InvestigationPanel";
+import { useLogSessions } from "./sessions/useLogSessions";
+import { PodLogs } from "./sessions/PodLogs";
+import { useWorkloads } from "./workloads/useWorkloads";
 import "./styles.css";
 export default function App() {
   const controller = useConnections();
+  const logs = useLogSessions();
   const { state } = controller;
   const [page, setPage] = useState<"clusters" | "workspace" | "settings">("clusters");
   const [aiOpen, setAiOpen] = useState(false);
@@ -93,13 +98,35 @@ export default function App() {
     return () => window.removeEventListener("keydown", listener);
   }, []);
   const active = state.active ? state.tabs[state.active] : null;
+  const workloads = useWorkloads(state.active ?? "", active?.view?.ref ?? null, active?.namespace ?? "default", page === "workspace");
   function choose(entry: CatalogEntry) {
     setPage("workspace");
     void controller.connect(entry);
   }
+  const [closeTarget, setCloseTarget] = useState<{ key: string; count: number } | null>(null);
   function close(key: string) {
-    void controller.cancel(key);
+    const count = logs.sessions.filter((s) => s.tab === key).length;
+    if (count) {
+      setCloseTarget({ key, count });
+      return;
+    }
+    void logs.store.closeTab(key).then(() => {
+      workloads.close(key);
+      void controller.cancel(key);
+    });
   }
+  useEffect(() => {
+    for (const session of logs.sessions) {
+      const ref = state.tabs[session.tab]?.view?.ref;
+      if (
+        !ref ||
+        ref.id !== session.request.resource.connection.id ||
+        ref.generation !== session.request.resource.connection.generation ||
+        state.tabs[session.tab]?.view?.state !== "connected"
+      )
+        logs.store.disconnected(session.tab);
+    }
+  }, [state.tabs, logs.store, logs.sessions]);
   function settings() {
     setTrustTarget(null);
     setPage("settings");
@@ -167,7 +194,7 @@ export default function App() {
                 active.view.state === "connecting" ||
                 (!!active.view.problem && active.view.problem.code !== "forbidden")
               }
-              onSelect={(namespace) => void controller.readPods(state.active!, namespace)}
+              onSelect={(namespace) => void controller.selectNamespace(state.active!, namespace)}
             />
             <span className="spacer" />
             <ConnectionControls
@@ -224,9 +251,19 @@ export default function App() {
               <Workspace
                 key={state.active}
                 tab={active}
-                tabId={state.active!}
                 navigationOpen={!hiddenNavigation[state.active!]}
-                controller={controller}
+                controller={workloads}
+                logs={
+                  workloads.selection?.resource.kind === "Pod" && workloads.activeSection === "Logs" ? (
+                    <PodLogs
+                      key={JSON.stringify(workloads.selection.resource)}
+                      resource={workloads.selection.resource}
+                      tab={state.active!}
+                      label={active.entry.context}
+                      controller={logs}
+                    />
+                  ) : undefined
+                }
                 detailWidthPercent={preferences.detailWidthPercent}
                 detailHeightPercent={preferences.detailHeightPercent}
                 onDetailResize={(axis, value) => resize(axis === "x" ? "detailWidthPercent" : "detailHeightPercent", value)}
@@ -264,6 +301,45 @@ export default function App() {
           />
         </div>
       </div>
+      {closeTarget && (
+        <Modal title="Close cluster tab?" onCancel={() => setCloseTarget(null)}>
+          <p>
+            Close {state.tabs[closeTarget.key]?.entry.context} and its {closeTarget.count} retained log sessions?
+          </p>
+          <button
+            className="primary"
+            onClick={() => {
+              const key = closeTarget.key;
+              setCloseTarget(null);
+              void logs.store
+                .closeTab(key)
+                .then(() => {
+                  workloads.close(key);
+                  void controller.cancel(key);
+                })
+                .catch(() => setStartupError("Could not close log sessions; retry closure."));
+            }}
+          >
+            Close tab and sessions
+          </button>
+        </Modal>
+      )}
+      {logs.sessions
+        .filter((session) => session.status === "cleanup-error")
+        .map((session) => (
+          <div role="alert" key={session.id}>
+            {session.error}
+            <button
+              onClick={() => {
+                void logs.store
+                  .close(session.id)
+                  .catch(() => setStartupError("Log cleanup failed; reconnect the cluster to end its readers."));
+              }}
+            >
+              Retry cleanup
+            </button>
+          </div>
+        ))}
       {palette && <CommandPalette available={false} onCommand={() => setPage("clusters")} onClose={() => setPalette(false)} />}
     </div>
   );

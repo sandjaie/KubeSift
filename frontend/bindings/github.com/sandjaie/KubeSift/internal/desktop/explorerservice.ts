@@ -16,6 +16,9 @@ import { Call as $Call, CancellablePromise as $CancellablePromise } from "@wails
 import * as explorer$0 from "../explorer/models.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
+import * as kube$0 from "../kube/models.js";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
 import * as model$0 from "../model/models.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
@@ -25,72 +28,112 @@ import * as sources$0 from "../sources/models.js";
 import * as trust$0 from "../trust/models.js";
 
 export function AddSource(path: string): $CancellablePromise<sources$0.SourceResult> {
-    return $Call.ByID(2913379282, path);
+  return $Call.ByID(2913379282, path);
 }
 
 export function ApproveHelper(source: string, snapshot: string, name: string, review: string): $CancellablePromise<void> {
-    return $Call.ByID(2901286645, source, snapshot, name, review);
+  return $Call.ByID(2901286645, source, snapshot, name, review);
 }
 
 export function CancelAttempt(id: string): $CancellablePromise<void> {
-    return $Call.ByID(3929228331, id);
+  return $Call.ByID(3929228331, id);
+}
+
+export function CancelWorkloadRead(id: string): $CancellablePromise<void> {
+  return $Call.ByID(601396887, id);
+}
+
+export function ClosePodLogs(ref: model$0.SessionRef): $CancellablePromise<void> {
+  return $Call.ByID(1080239256, ref);
 }
 
 export function Disconnect(ref: model$0.ConnectionRef): $CancellablePromise<void> {
-    return $Call.ByID(2590980822, ref);
+  return $Call.ByID(2590980822, ref);
 }
 
 export function GetAttempt(id: string): $CancellablePromise<explorer$0.ConnectionView> {
-    return $Call.ByID(3532223857, id);
+  return $Call.ByID(3532223857, id);
 }
 
 export function GetConnection(ref: model$0.ConnectionRef): $CancellablePromise<explorer$0.ConnectionView> {
-    return $Call.ByID(194278784, ref);
+  return $Call.ByID(194278784, ref);
 }
 
 export function ListSources(): $CancellablePromise<sources$0.SourceResult[] | null> {
-    return $Call.ByID(3320858230);
+  return $Call.ByID(3320858230);
+}
+
+export function OpenPodLogs(req: kube$0.LogRequest): $CancellablePromise<model$0.SessionRef> {
+  return $Call.ByID(1020417316, req);
 }
 
 export function ReadPods(ref: model$0.ConnectionRef, $namespace: string): $CancellablePromise<explorer$0.ConnectionView> {
-    return $Call.ByID(4095964600, ref, $namespace);
+  return $Call.ByID(4095964600, ref, $namespace);
+}
+
+export function ReadRelatedPods(id: string, req: kube$0.RelatedRequest): $CancellablePromise<kube$0.RelatedPage> {
+  return $Call.ByID(429677435, id, req);
+}
+
+export function ReadRelatedReplicaSets(id: string, req: kube$0.RelatedRequest): $CancellablePromise<kube$0.RelatedReplicaSetPage> {
+  return $Call.ByID(3764401356, id, req);
+}
+
+export function ReadResource(id: string, req: kube$0.DetailRequest): $CancellablePromise<kube$0.ResourceDetail> {
+  return $Call.ByID(1281873028, id, req);
+}
+
+export function ReadResourceEvents(id: string, req: kube$0.EventRequest): $CancellablePromise<kube$0.EventPage> {
+  return $Call.ByID(1494188029, id, req);
+}
+
+export function ReadResourceYAML(id: string, req: kube$0.DetailRequest): $CancellablePromise<kube$0.YAMLDocument> {
+  return $Call.ByID(1865491731, id, req);
+}
+
+export function ReadWorkloads(id: string, req: kube$0.PageRequest): $CancellablePromise<kube$0.WorkloadPage> {
+  return $Call.ByID(415147446, id, req);
 }
 
 export function ReloadSource(id: string): $CancellablePromise<sources$0.SourceResult> {
-    return $Call.ByID(3227081372, id);
+  return $Call.ByID(3227081372, id);
 }
 
 export function RemoveSource(id: string, confirmed: boolean): $CancellablePromise<void> {
-    return $Call.ByID(2056915193, id, confirmed);
+  return $Call.ByID(2056915193, id, confirmed);
 }
 
 /**
  * ResetSources only recovers an invalid store; valid configured sources use normal Settings controls.
  */
 export function ResetSources(): $CancellablePromise<void> {
-    return $Call.ByID(498698343);
+  return $Call.ByID(498698343);
 }
 
 export function ReviewHelper(source: string, snapshot: string, name: string): $CancellablePromise<trust$0.PreviewRecord> {
-    return $Call.ByID(2230528976, source, snapshot, name);
+  return $Call.ByID(2230528976, source, snapshot, name);
 }
 
 export function RevokeHelper(fp: string): $CancellablePromise<void> {
-    return $Call.ByID(2437089190, fp);
+  return $Call.ByID(2437089190, fp);
 }
 
 export function SetLabel(source: string, name: string, label: string): $CancellablePromise<void> {
-    return $Call.ByID(880655730, source, name, label);
+  return $Call.ByID(880655730, source, name, label);
 }
 
 export function SetSourceEnabled(id: string, enabled: boolean, confirmed: boolean): $CancellablePromise<void> {
-    return $Call.ByID(1343252026, id, enabled, confirmed);
+  return $Call.ByID(1343252026, id, enabled, confirmed);
+}
+
+export function SetWorkloadNamespace(ref: model$0.ConnectionRef, $namespace: string): $CancellablePromise<explorer$0.ConnectionView> {
+  return $Call.ByID(1110415912, ref, $namespace);
 }
 
 export function StartConnection(req: explorer$0.ConnectRequest): $CancellablePromise<explorer$0.Attempt> {
-    return $Call.ByID(3853708072, req);
+  return $Call.ByID(3853708072, req);
 }
 
 export function TrustedHelpers(): $CancellablePromise<trust$0.Entry[] | null> {
-    return $Call.ByID(229774336);
+  return $Call.ByID(229774336);
 }

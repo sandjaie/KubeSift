@@ -91,6 +91,10 @@ export function NamespaceControl({
       {expanded && (
         <div className="namespace-popover">
           <input
+            spellCheck={false}
+            autoCorrect="off"
+            autoCapitalize="none"
+            autoComplete="off"
             ref={search}
             role="combobox"
             aria-label="Search namespaces"

@@ -1,56 +1,87 @@
 /*
-Purpose: Present only fields returned by the basic live Pod reader.
-Used by: Workspace after explicit Pod selection.
-Responsibilities: Show context, namespace, UID, phase, readiness and container names.
-Important: YAML, logs, events and operational actions remain unavailable.
+Purpose: Present live workload investigation in the approved detail pane.
+Used by: Workspace after explicit resource selection.
+Responsibilities: Keep section failures independent and render cluster fields as inert text.
+Important: Overview configuration is not measured usage and references never fetch Secret values.
 */
-import type { PodSummary } from "../../bindings/github.com/sandjaie/KubeSift/internal/kube/models";
-import { PodPhase } from "./PodPhase";
-import { ResourceIcon } from "../ui/ResourceIcon";
-export function ResourceDetail({ pod, context, source, stale }: { pod: PodSummary; context: string; source: string; stale: boolean }) {
+import type { ReactNode } from "react";
+import type { WorkloadController } from "../workloads/useWorkloads";
+import type { ResourceDetail as Detail, YAMLDocument, EventPage, RelatedPage, RelatedReplicaSetPage, Section } from "../workloads/model";
+import { ResourceYaml } from "./ResourceYaml";
+import { ResourceEvents } from "./ResourceEvents";
+import { DeploymentPods } from "./DeploymentPods";
+import { ReplicaSetList } from "./ReplicaSetList";
+import { ResourceOverview } from "./ResourceOverview";
+export function ResourceDetail({
+  controller: c,
+  context,
+  stale,
+  logs,
+}: {
+  controller: WorkloadController;
+  context: string;
+  stale: boolean;
+  logs?: ReactNode;
+}) {
+  const row = c.selection;
+  if (!row) return null;
+  const section = c.activeSection,
+    state = c.sections[section],
+    data = state?.data;
+  const tabs: Section[] =
+    row.resource.kind === "Pod"
+      ? ["Overview", "YAML", "Events", "Logs"]
+      : ["Overview", "YAML", "Events", "Pods", ...(row.resource.kind === "Deployment" ? ["ReplicaSets" as const] : [])];
   return (
-    <div className="compact-pod-detail">
+    <div className={section === "YAML" ? "compact-pod-detail yaml-detail" : "compact-pod-detail"}>
+      {c.back && (
+        <button onClick={c.backToResource}>
+          ← Back to {c.back.resource.kind} {c.back.resource.name}
+        </button>
+      )}
+      {c.navigationError && <p role="alert">{c.navigationError}</p>}
       <div className="pane-heading">
-        <h2>
-          <ResourceIcon kind="Pod" /> {pod.name}
-        </h2>
+        <h2>{row.resource.name}</h2>
+        {section !== "Logs" && (
+          <button onClick={c.refreshSection} disabled={state?.loading}>
+            Refresh section
+          </button>
+        )}
       </div>
       <p className="detail-identity">
-        {context} / {pod.namespace}
+        {context} / {row.resource.namespace} / {row.resource.kind}
       </p>
-      {stale && <p className="warning detail-identity">Retained data — connection evidence is stale or unavailable.</p>}
-      <dl className="pod-facts">
-        <div>
-          <dt>Phase</dt>
-          <dd>
-            <PodPhase phase={pod.phase} />
-          </dd>
-        </div>
-        {Object.entries({
-          Readiness: pod.ready ? "Ready" : "Not ready",
-          Containers: pod.containers?.join(", ") || "None",
-          Marker: pod.marker || "None",
-        }).map(([name, value]) => (
-          <div key={name}>
-            <dt>{name}</dt>
-            <dd>{value}</dd>
-          </div>
+      {stale && <p className="warning">Retained evidence — connection status is stale.</p>}
+      <div className="detail-tabs" role="tablist">
+        {tabs.map((tab) => (
+          <button key={tab} role="tab" aria-selected={tab === section} onClick={() => c.selectSection(tab)}>
+            {tab}
+          </button>
         ))}
-      </dl>
-      <details key={pod.uid} className="pod-identity-disclosure">
-        <summary>Identity &amp; source</summary>
-        <dl>
-          <div>
-            <dt>UID</dt>
-            <dd>{pod.uid}</dd>
-          </div>
-          <div>
-            <dt>Source</dt>
-            <dd>{source}</dd>
-          </div>
-        </dl>
-      </details>
-      <p className="detail-identity">More resource details are not available yet.</p>
+      </div>
+      {state?.loading && <p>Loading {section}…</p>}
+      {state?.error && (
+        <p role="alert">
+          {state.error} {data ? "Retained section evidence may be stale." : ""}
+        </p>
+      )}
+      {section === "Overview" && data && <ResourceOverview data={data as Detail} onOpenOwner={c.openRelated} />}
+      {section === "YAML" && data && (
+        <ResourceYaml key={JSON.stringify([row.resource.uid, (data as YAMLDocument).fetchedAt])} data={data as YAMLDocument} />
+      )}
+      {section === "Events" && data && <ResourceEvents key={row.resource.uid} data={data as EventPage} onNext={c.nextSection} />}
+      {section === "Pods" && data && (
+        <DeploymentPods
+          showOwner={row.resource.kind !== "ReplicaSet"}
+          data={data as RelatedPage}
+          onNext={c.nextSection}
+          onSelect={c.openRelated}
+        />
+      )}
+      {section === "ReplicaSets" && data && (
+        <ReplicaSetList data={data as RelatedReplicaSetPage} onNext={c.nextSection} onSelect={c.openRelated} />
+      )}
+      {section === "Logs" && logs}
     </div>
   );
 }

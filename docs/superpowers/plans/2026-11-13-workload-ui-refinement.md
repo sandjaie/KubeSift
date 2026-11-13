@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Use superpowers:subagent-driven-development instead only if the user chooses delegated execution. Steps use checkbox syntax for tracking.
 
-**Status:** Planning only; written package awaits review. Implementation belongs in a separately authorized session.
+**Status:** Implemented on the existing Phase 1C.2 feature branch. See [technical results and outstanding checks](../validation/workload-explorer-refinement.html). User acceptance is pending.
 
 **Goal:** Implement the accepted detail layouts, preserve workload kind across namespace changes and suppress unwanted linguistic suggestions in technical inputs.
 
@@ -43,7 +43,7 @@ Create only where useful: `frontend/src/workspace/ResourceOverview.tsx` for type
 
 - [ ] Add reducer regressions: Deployment in namespace A → namespace B retains Deployment, clears rows/cursors/details/filter/scroll/back, preserves auto preferences; same scope is unchanged; tab B is untouched; old-scope response is rejected. Initial tab still starts at Pod. Assert exact kind/state, not implementation syntax.
 - [ ] Run `npm run test --workspace frontend -- --reporter=verbose` and record the expected retention failure before changing logic.
-- [ ] Update scope transition in `state.ts` and the reconciliation fallback in `useWorkloads.ts`; do not let a missing new-scope state select Pod transiently. Preserve cancellation and monotonically changing request epochs.
+- [x] Update scope transition in `state.ts` and the reconciliation fallback in `useWorkloads.ts`; do not let a missing new-scope state select Pod transiently. Preserve cancellation and monotonically changing request epochs.
 - [ ] Add a controller-level test with deferred requests: namespace change while Deployment read is pending results in a new Deployment request only, and old response cannot paint new scope. Cover empty and forbidden responses.
 - [ ] Run `npm test`, `npm run typecheck`, `npm run lint`; commit only Task 1 changes.
 
@@ -52,7 +52,7 @@ Create only where useful: `frontend/src/workspace/ResourceOverview.tsx` for type
 **Interfaces:** `ResourceOverview({ data }: { data: ResourceDetail })` consumes the existing captured objectJSON/ResourceRef. Keep `overviewObject` compatible with its current callers or update every caller in the same change. No new backend health classification.
 
 - [ ] Add synthetic fixtures/assertions for Running but unready, terminating, waiting/terminated containers, zero desired replicas, generation lag, unknown counts, no conditions, multiple Pod IPs and init/ephemeral groups. Use existing test tooling and static rendered markup where appropriate; do not add a test framework solely for presentation.
-- [ ] Implement Spec §1–2 using compact facts, conditions/container tables and disclosures. Keep all currently supported evidence reachable, including uncommon probe/resource/volume configuration. Preserve supported owner metadata pending Task 4 of the ReplicaSets plan.
+- [x] Implement Spec §1–2 using compact facts, conditions/container tables and disclosures. Keep all currently supported evidence reachable, including uncommon probe/resource/volume configuration. Preserve supported owner metadata pending Task 4 of the ReplicaSets plan.
 - [ ] Apply only scoped CSS rules with existing tokens; fix duplicate active-tab underlines if still present, without changing Logs content styles. Preserve the detail header contract.
 - [ ] Run frontend tests/lint/typecheck. Visually compare dark/light, a narrow split and 200% zoom against the approved references; confirm keyboard disclosure operation and full long-value access.
 - [ ] Record actual results and commit the independently usable Overview redesign.
@@ -62,8 +62,8 @@ Create only where useful: `frontend/src/workspace/ResourceOverview.tsx` for type
 **Interfaces:** Preserve `ResourceEvents({ data: EventPage, onNext: (cursor: string) => void })` and `DeploymentPods({ data: RelatedPage, onNext, onSelect })` until the ReplicaSets navigation task explicitly extends them. No fetch on filter/expand.
 
 - [ ] Test page-local warning filter counts, unknown event count/time, literal HTML-like messages and independent occurrence count. Test related Pods empty-complete vs partial/error/continuation states.
-- [ ] Implement Spec §3: event table, expandable details, All/Warnings, exact metadata and honest page-order/continuation wording. Reset view-local state on UID changes; never infer global latest ordering.
-- [ ] Implement Spec §5 Pods table with existing phase/readiness/restart evidence and explicit Pod links. Keep ReplicaSet name readable until the full explorer task makes it navigable. Show counts as “N shown” unless completion supports a total. Load more replaces the bounded batch.
+- [x] Implement Spec §3: event table, expandable details, All/Warnings, exact metadata and honest page-order/continuation wording. Reset view-local state on UID changes; never infer global latest ordering.
+- [x] Implement Spec §5 Pods table with existing phase/readiness/restart evidence and explicit Pod links. Keep ReplicaSet name readable until the full explorer task makes it navigable. Show counts as “N shown” unless completion supports a total. Load more replaces the bounded batch.
 - [ ] Run tests/lint/typecheck; verify long warning messages, zero/unknown counts, complete/partial pages and keyboard behavior in the rendered app. Commit this slice.
 
 ### Task 4: Read-only YAML reader
@@ -71,8 +71,8 @@ Create only where useful: `frontend/src/workspace/ResourceOverview.tsx` for type
 **Interfaces:** Preserve `ResourceYaml({ data }: { data: YAMLDocument })`. Proposed pure search interface: `yamlMatches(text: string, query: string): number[]` with a bounded result strategy documented by the implementation; displayed count must disclose any cap. Matching stays literal and case-insensitive, as existing behavior; empty query has no matches. A helper is optional if existing code provides the same contract.
 
 - [ ] Add tests for empty/no-match, forward/backward wrap, mixed case, multiline text, Unicode offset correctness, managed-fields switching and refreshed-document reset. Assert copied output equals the active YAML string with no line numbers or markup.
-- [ ] Implement compact toolbar, selectable read-only source, keyboard search, match feedback and exact copy per Spec §4. Decide and record bounded highlighting behavior before introducing a dependency; prefer a safe plain-text fallback for large content.
-- [ ] Confirm query/selection reset is scoped to ResourceRef UID and refresh; the two managed-fields representations remain from one capture. Escape hostile strings and preserve whitespace/newlines.
+- [x] Implement compact toolbar, selectable read-only source, keyboard search, match feedback and exact copy per Spec §4. Decide and record bounded highlighting behavior before introducing a dependency; prefer a safe plain-text fallback for large content.
+- [x] Confirm query/selection reset is scoped to ResourceRef UID and refresh; the two managed-fields representations remain from one capture. Escape hostile strings and preserve whitespace/newlines.
 - [ ] Run frontend checks and exercise near-2-MiB synthetic text in the native app: search, scrolling, selection/copy and resize remain usable. Record any fallback threshold and limitations rather than claiming performance from a small sample.
 - [ ] Commit the independently usable YAML reader.
 
@@ -80,15 +80,15 @@ Create only where useful: `frontend/src/workspace/ResourceOverview.tsx` for type
 
 **Interfaces:** Existing input elements in resource filtering, namespace query, YAML search and `LogViewer.tsx`; field-level settings first. Do not add a global input wrapper unless the repository already has one that fits.
 
-- [ ] Re-read the concurrent Logs changes and identify its actual search input before editing. Inventory all technical search/filter fields and distinguish intentional namespace suggestions from linguistic correction.
+- [x] Re-read the concurrent Logs changes and identify its actual search input before editing. Inventory all technical search/filter fields and distinguish intentional namespace suggestions from linguistic correction.
 - [ ] Add assertions that field settings disable spellcheck/correction/capitalization/autocomplete. Preserve existing event handlers and IME behavior. Fetch current platform documentation using the repository's Context7 workflow if implementing library/platform-specific syntax; do not assume attributes prove native behavior.
 - [ ] Verify packaged macOS typing with OS correction enabled: `bootstrap`, mixed-case identifiers, hyphenated names, punctuation, paste and IME composition stay literal and do not show linguistic correction bubbles. Also verify intentional namespace results still work.
 - [ ] If field settings fail, gather native evidence before choosing the smallest scoped WebView adjustment; no system-wide preferences changes. Run applicable frontend/native checks, then commit.
 
 ### Task 6: Integration and handoff
 
-- [ ] Run `scripts/check.sh` and `npm run build`; if bindings/native code changed, regenerate with `wails3 task bindings` and run the package workflow from local development docs.
-- [ ] Add `docs/superpowers/validation/workload-explorer-refinement.html` and a separate `workload-explorer-refinement-ui-uat.html`; report automated/native evidence separately from user acceptance. Keep operational output under ignored `.superpowers/sdd/`.
+- [x] Run `scripts/check.sh` and `npm run build`; if bindings/native code changed, regenerate with `wails3 task bindings` and run the package workflow from local development docs.
+- [x] Add `docs/superpowers/validation/workload-explorer-refinement.html` and a separate `workload-explorer-refinement-ui-uat.html`; report automated/native evidence separately from user acceptance. Keep operational output under ignored `.superpowers/sdd/`.
 - [ ] Verify the shared header and inputs have not regressed the separately implemented Logs tab. Do not claim to solve its high-volume work.
 - [ ] Update owning UX references, concise status and verified plan checkboxes. Commit/push only this task's files per git workflow; no merge/release without applicable authorization.
 

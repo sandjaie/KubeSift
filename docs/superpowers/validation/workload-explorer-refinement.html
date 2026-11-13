@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Workload explorer refinement validation · KubeSift</title>
+    <link rel="stylesheet" href="../../assets/planning.css" />
+    <script src="../../assets/theme.js"></script>
+  </head>
+  <body>
+    <header>
+      <a href="../../index.html">KubeSift / Planning</a>
+      <h1>Workload explorer refinement validation</h1>
+    </header>
+    <main id="content">
+      <p>
+        Implemented on the existing Phase 1C.2 feature branch after integrating the approved planning package from develop at 910864d. The
+        branch began this work at b7401d4, including the reviewed Phase 1C.2 baseline and the high-volume Logs fix. This report records
+        agent checks. <a href="workload-explorer-refinement-ui-uat.html">User acceptance checklist</a>.
+      </p>
+      <h2>Automated and integration results</h2>
+      <ul>
+        <li>
+          Repository checks passed, including Go tests and vet, 28 frontend tests, lint, typecheck, source descriptions and documentation
+          links.
+        </li>
+        <li>Generated Wails bindings, built the production frontend, packaged the native app and verified its ad hoc signature.</li>
+        <li>
+          Ran <code>TestWorkloadInvestigation</code> with the integration build tag and isolated kubeconfigs for kind-dev-local-a and
+          kind-dev-local-b. Both clusters passed read-only ReplicaSet inventory, detail, YAML, Events and ownership checks alongside the
+          existing Pod, Deployment and Logs checks.
+        </li>
+        <li>
+          Synthetic tests cover UID replacement, namespace invalidation, cursor isolation, forbidden children, zero versus unavailable
+          counts, original YAML search offsets and inert event content.
+        </li>
+      </ul>
+      <h2>Native smoke results</h2>
+      <p>
+        In the packaged macOS app, used kind-dev-local-a with kubesift-explorer and shop. Deployment and ReplicaSet namespace retention
+        passed. Verified the Deployment-owned ReplicaSets table, independent ReplicaSet inventory and all four detail tabs, ReplicaSet to
+        Deployment and Pod to ReplicaSet owner navigation, and Back. YAML search reported a match and Copy displayed YAML reported success.
+        The live Logs view opened, and typing bootstrap-aB preserved the literal value.
+      </p>
+      <h2>Review and limits</h2>
+      <p>
+        Review corrections cover in-flight navigation cancellation, independent namespace inventory reads, keyboard access with an off-page
+        selection, partial Pod summaries and smaller Deployment ownership discovery batches to keep continuation tokens bounded. Direct
+        ReplicaSet pages use the existing 100-item bound. Large YAML switches to a selectable plain text surface above 65,536 characters or
+        1,000 lines.
+      </p>
+      <p>
+        Native 200% zoom, light theme, IME, correction with the OS setting independently confirmed, near-limit YAML stress, complete
+        keyboard traversal and clipboard byte comparison remain unrun. Live restricted RBAC and multipage or standalone ReplicaSet fixtures
+        were not added. The related table's full Deployment to ReplicaSet to Pod and double Back journey remains in the user checklist. This
+        follow-up does not establish acceptance of the remaining Phase 1C.3 scope.
+      </p>
+    </main>
+  </body>
+</html>

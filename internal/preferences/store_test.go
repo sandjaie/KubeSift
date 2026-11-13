@@ -112,3 +112,24 @@ func TestDetailSplitMigration(t *testing.T) {
 		t.Fatal("accepted missing v2 split")
 	}
 }
+
+func TestLaunchWorkArea(t *testing.T) {
+	primary := Rect{0, 25, 1512, 900}
+	secondary := Rect{-1920, 40, 1920, 1040}
+	for _, tc := range []struct {
+		name  string
+		saved Rect
+		areas []Rect
+		want  Rect
+	}{
+		{"small saved window fills primary", Rect{0, 25, 1440, 800}, []Rect{primary}, primary},
+		{"remember secondary display", Rect{-1700, 60, 1200, 700}, []Rect{primary, secondary}, secondary},
+		{"removed display falls back to primary", Rect{9000, 9000, 1200, 700}, []Rect{primary}, primary},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := WindowWorkArea(tc.saved, tc.areas); got != tc.want {
+				t.Fatalf("launch bounds = %+v, want entire work area %+v", got, tc.want)
+			}
+		})
+	}
+}

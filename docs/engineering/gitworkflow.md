@@ -21,6 +21,7 @@ This planning exception does not authorize application code changes, merges to `
 ## Commits
 
 - Conventional Commits: `feat:`, `fix:`, `chore:`, `refactor:`, `docs:`, `test:`, `perf:`, `style:`, `ci:`. The branch prefix and the commit type are independent.
+- For phase implementation tasks, include the phase and task number in the subject, for example `feat: phase1c2-task1 add bounded workload inventory reads`. Use the actual phase identifier (such as `phase1c-task1` for Phase 1C task 1). When a commit contains several substantial updates, add a body with concise bullet points explaining the changes and relevant validation.
 - Git does not reject a message that breaks that style. There is no `commit-msg` hook.
 - Release notes come from commits since the last tag. `feat` → Added, `fix` → Fixed, `refactor` / `perf` / `style` → Changed, `docs` → Documentation. `chore`, `test`, and `ci` stay in the pull request commit list and stay out of the changelog body.
 
@@ -28,6 +29,7 @@ This planning exception does not authorize application code changes, merges to `
 
 - Pull requests on [sandjaie/KubeSift](https://github.com/sandjaie/KubeSift) carry a summary and a test plan. Fill the template.
 - At the end of every completed phase, after its acceptance evidence and independent review are complete, create a pull request from the phase feature branch targeting `develop`. Include the actual checks, review resolutions and remaining limitations.
+- GitHub CI runs only for release-producing PRs targeting `main` from `release/*` or `hotfix/*`. Feature PRs targeting `develop` and push events do not trigger CI. Applicable local validation and independent review remain required for feature work.
 - The maintainer has authorized squash-merging completed phase pull requests into `develop` after the exact PR head has passed applicable checks and review; delete the source branch after merge. Do not bypass failed checks or unresolved blocking findings.
 - This phase-completion rule does not authorize merging to `main`, starting the next phase, force pushes or releases.
 

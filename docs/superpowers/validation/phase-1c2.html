@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="../../assets/planning.css" />
+    <script src="../../assets/theme.js"></script>
+    <style>
+      main {
+        max-width: 1100px;
+        margin: auto;
+        padding: 24px;
+      }
+      input,
+      textarea,
+      select {
+        font: inherit;
+        max-width: 100%;
+      }
+      textarea {
+        width: 100%;
+        min-height: 55px;
+      }
+      article {
+        break-inside: avoid;
+        border-bottom: 1px solid #888;
+        padding: 16px 0;
+      }
+      @media print {
+        button {
+          display: none;
+        }
+        main {
+          padding: 0;
+        }
+        textarea {
+          border: 1px solid #aaa;
+        }
+        body {
+          background: white;
+          color: black;
+        }
+      }
+    </style>
+    <title>Phase 1C.2 technical validation</title>
+  </head>
+  <body>
+    <main>
+      <a href="../../index.html">Planning index</a>
+      <h1>Phase 1C.2 · Technical validation</h1>
+      <p>
+        Implementation branch: <code>feature/phase-1c2-workload-investigation</code>. Baseline <code>b19bff7</code>; tested implementation
+        commit <code>823a17e</code>; version remains 0.3.0. Tested on macOS 26.7.1 (25G241), 12 November 2026. Review corrections and final
+        check results are recorded below. No release or Phase 1C.3 work.
+      </p>
+      <p>
+        <strong>User acceptance is pending.</strong> Complete the separate <a href="phase-1c2-ui-uat.html">15-case UI UAT checklist</a>.
+        Every user result remains Not tested. Leave the PR unmerged.
+      </p>
+      <h2>Scope and checks</h2>
+      <p>
+        Typed bounded Pod/Deployment pages, UID-checked overview/YAML, controller-owned related Pods, UID events and bounded container logs
+        share the existing connection and session owners. No write, terminal, forwarding, AI or export control was added.
+      </p>
+      <ul>
+        <li>
+          Go full suite and vet passed after review corrections; kube/session/desktop race tests passed, including the periodic UID check.
+        </li>
+        <li>All 16 frontend tests across seven files, lint and TypeScript passed after review corrections.</li>
+        <li>Bindings, production bundle, scripts/check.sh and wails3 task package passed after review corrections.</li>
+        <li>
+          Opt-in TestWorkloadInvestigation passed against isolated kind-dev-local-a/b: actual lists/details/YAML/events, ownership
+          traversal, current/previous snapshots, Follow/acknowledge/Stop/Close and cleanup; same-named Pod UIDs differ.
+        </li>
+        <li>
+          Fixture inventory now has 29 owned objects per cluster. Added init-evidence, web-lookalike and scaled-zero only. Existing
+          restricted pod-reader preserved; no cluster-wide grants.
+        </li>
+      </ul>
+      <h2>Acceptance evidence</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Agent evidence</th>
+            <th>Limits</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>C21</td>
+            <td>Native A/B namespace/filter navigation, Pod and Deployment pages; service cursor and frontend isolation tests.</td>
+            <td>Live fixture pages are below 100; large/expired pages use synthetic tests.</td>
+          </tr>
+          <tr>
+            <td>C22</td>
+            <td>Native missing-setting conditions, current/last state, configuration and container groups; replacement/size tests.</td>
+            <td>No live ephemeral-container injection; restricted-section coverage uses synthetic service tests.</td>
+          </tr>
+          <tr>
+            <td>C23</td>
+            <td>Native web → bounded ReplicaSet page → owned Pod; web-lookalike excluded in integration.</td>
+            <td>Controller traversal is incremental, not a complete namespace cache.</td>
+          </tr>
+          <tr>
+            <td>C24</td>
+            <td>
+              Native YAML and managed-fields toggle; captured-version/size tests. Review caught missing GVK; corrected and regression
+              tested.
+            </td>
+            <td>
+              Delegated native YAML search and Copy control were exercised; clipboard contents were not compared. No original-comment or
+              secret-free claim.
+            </td>
+          </tr>
+          <tr>
+            <td>C25</td>
+            <td>Native missing-setting events; UID filter/deduplication/403-no-fallback tests.</td>
+            <td>Ordering is page-local; no event retention guarantee.</td>
+          </tr>
+          <tr>
+            <td>C26</td>
+            <td>Native current snapshot and web Follow, Stop/Clear; UTF-8/retention/capacity tests.</td>
+            <td>
+              Previous endpoint sometimes returns runtime “unable to retrieve” text with HTTP 200. Historical evidence availability is not
+              guaranteed.
+            </td>
+          </tr>
+          <tr>
+            <td>C27</td>
+            <td>Native shared detail/dock across Settings/Light theme and A/B navigation; stop/close and periodic identity tests.</td>
+            <td>
+              Review caught Resume race; native walkthrough caught unsupported browser confirmation. Both corrected; the later delegated
+              rebuilt-app confirmation and cleanup retest passed (see below).
+            </td>
+          </tr>
+          <tr>
+            <td>C28</td>
+            <td>
+              Existing neutral palette, phase/readiness distinctions, namespace menu and remembered 56% stacked split remained visible;
+              Light then original Dark restored.
+            </td>
+            <td>No new exhaustive screen-size study; external-monitor layout remains user UAT.</td>
+          </tr>
+          <tr>
+            <td>C29</td>
+            <td>Both native investigation journeys reached actual fixture evidence without mutations or AI calls.</td>
+            <td>
+              Automated integration does not instrument every request; service synthetic APIs constrain read routes. No Lens/K9s parity
+              claim.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <h2>Independent review</h2>
+      <p>
+        Fresh-context KubeSift correctness review examined the complete branch and callers. Five findings: KSF-001 concurrent
+        Resume/late-open ownership; KSF-002 repeated selection clearing evidence; KSF-003 missing YAML apiVersion/kind; KSF-004 Auto-scroll
+        not moving viewport; KSF-005 observed zero Deployment counts shown as Unknown. Focused regressions reproduced the issues; fixes and
+        final suite results are recorded with the final commit.
+      </p>
+      <p>
+        Additional native finding: window.confirm did not present a usable confirmation in the Wails webview. Reused the existing in-app
+        Modal for tab close and Resume. This is a functional correction, not a redesign. Hygiene review KSF-006 identified missing source
+        directory maps; added maps and updated owning directories. Optional unnecessary export modifiers on age and overviewObject remain
+        deferred; no behavioral risk.
+      </p>
+      <h2>Qualifications</h2>
+      <p>
+        Later delegated testing resolved the earlier locked-screen confirmation blocker and exercised YAML search and the Copy control.
+        Clipboard contents, keyboard-only selection, reconnect/replacement, external-monitor sizing, split persistence and background
+        delivery completeness remain unverified. The delegated observations below distinguish completed checks from remaining coverage.
+        Maintainer sign-off remains required before merge. The integration walkthrough does not instrument every request to assert absence
+        of Secret reads or mutations; code review and synthetic route checks are narrower evidence, not a substitute for that assertion.
+      </p>
+      <p>
+        Only local kind clusters were used. Windows/Linux, managed providers and OpenShift are untested. Kubernetes logs remain
+        name-addressed; before/after/periodic UID checks do not make log retrieval atomic. Background WebKit loss risk from Phase 1A
+        remains. This is bounded investigation, not archival/lossless capture. Packaging is local ad-hoc signed, not notarized distribution
+        readiness. Test linking emitted existing deployment-target warnings; commands exited successfully.
+      </p>
+      <p>
+        Detailed execution outputs stay archived in ignored .superpowers/sdd/ under the repository documentation rule; this overrides the
+        skill’s cleanup default at the cost of local disk space. No credentials, full workload payloads or raw log histories are published
+        here.
+      </p>
+      <h2 id="delegated-ui-uat">Delegated native UI acceptance · 2026-11-12</h2>
+      <p>
+        Codex exercised the <a href="phase-1c2-ui-uat.html">UI checklist</a> against the packaged 0.3.0 app on macOS 26.7.1. The test used
+        the synthetic kubesift-explorer namespace on kind-dev-local-a and kind-dev-local-b. The rebuilt-app confirmation retest passed.
+        Cancel preserved the tab and its retained sessions. Confirm removed all eight sessions from A, kept B open, and reduced the session
+        count to zero. Relaunch also showed zero sessions.
+      </p>
+      <p>
+        The walkthrough also verified separate A/B namespaces, nodes and filters, Pod phases and container groups, Deployment ownership
+        navigation, current and previous log snapshots, and rejection of a ninth retained session with recovery after closing one. YAML
+        search and the copy control were exercised. Clipboard contents were not compared.
+      </p>
+      <p>
+        The follow-up verified distinct Pod UIDs and restored tab selections, all five zero replica counters for scaled-zero, Clear on a
+        running log stream, and Resume with an overlap/gap warning and a second segment in the same session. One logical session stayed
+        visible across Light, System and Dark settings and a brief hide and restore.
+      </p>
+      <p>
+        Remaining coverage includes large workload pages, restricted-reader errors, high-volume overflow, background delivery completeness,
+        scroll positioning, full multi-container log selection, external-monitor layout and split persistence, and the optional
+        replacement/reconnect race. This records delegated observations. Maintainer sign-off remains pending.
+      </p>
+      <h2>UAT refinements verified · 2026-11-13</h2>
+      <p>
+        Launch now applies the selected display’s complete work area on the first native window show, rather than relying on macOS zoom.
+        Size is set before top-left position. Native relaunch filled the laptop work area without macOS full-screen mode; synthetic geometry
+        cases cover saved secondary-display placement and fallback after display removal.
+      </p>
+      <p>
+        Deployment Pods automatically skips up to eight empty ownership pages per request. The native web Deployment showed its owned Pod
+        immediately on opening Pods; no discovery-only click was needed. Tests cover owned/lookalike filtering, forbidden evidence and
+        bounded empty traversal. The separate Identity &amp; source disclosure and internal relationship timestamp/completion labels were
+        removed.
+      </p>
+      <p>
+        Logs now prioritizes output with compact controls, conditional Stop/Resume, expandable Search logs and conditional Earlier/Later.
+        UUIDs, generations, repeated detail target paths and routine byte/segment statistics are hidden. Actual omission, gap and error
+        warnings remain visible; cross-target Sessions retain concise cluster/namespace/Pod labels. Native current logs from the local web
+        Pod rendered in the simplified viewer. The user-authorized restart cleared prior sessions; the app was left open on this log view.
+      </p>
+      <p>
+        Validation: kube/desktop/preferences suites, both-context opt-in workload integration, all 16 frontend tests, lint/typecheck, source
+        descriptions, documentation links and local macOS packaging passed. Native checks used kind-dev-local-a in kubesift-explorer;
+        integration explicitly used kind-dev-local-a/b. No release, merge or Phase 1C.3 work. User checklist outcomes remain Not tested
+        pending maintainer sign-off. These focused checks do not expand the earlier platform or high-volume guarantees.
+      </p>
+      <h2>Single live log view · 2026-11-13</h2>
+      <p>
+        Further user-approved Phase 1C.2 task 7 refinement on the new Apple Silicon Mac, macOS 27.0.1. Logs opens one live view, releases it
+        on departure and loads fresh output on return. Container/instance/line changes replace that view. Search, retained-history
+        scrolling, Jump to latest and window expansion replace the earlier session controls and dock.
+      </p>
+      <p>
+        Frontend lifecycle regressions cover cancellation during pending and active opens, late frames, fresh reopening and Unicode-safe
+        search. Repository checks and local macOS packaging passed. Native observations on kind-dev-local-a / kubesift-explorer verified
+        immediate live output, search, expansion, Escape restoration and fresh return from Overview. Review corrections stabilize target
+        identity across inventory refresh and preserve retryable native cleanup failures.
+      </p>
+      <p>
+        Initial history remains the requested tail (200 default, 1,000 maximum), with 1 MiB retained and visible omissions. Full-volume
+        native stress, screen-reader coverage and user UI acceptance remain pending. Earlier validation above describes the prior controls.
+        Use the updated <a href="phase-1c2-ui-uat.html">UAT checklist</a> for this build.
+      </p>
+      <h2>High-volume native test failed · 2026-11-13</h2>
+      <p>
+        Tested build 3d5cce2 on this Mac using temporary Pod log-volume-uat in kind-dev-local-a / kubesift-explorer. The bounded synthetic
+        source emitted 1,000 lines per second, including UTF-8 text and searchable markers. A ten-second source sample contained 10,000
+        lines and 2,830,000 timestamped bytes.
+      </p>
+      <p>
+        The viewer initially showed Live. The subsequent expand/search interaction exceeded the 30-second native automation timeout. WebKit
+        CPU samples reached 98.6–100% of one core and RSS rose from approximately 196 MiB to 379 MiB. Native accessibility inspection still
+        timed out after the source Pod was removed. These observations establish a responsiveness failure in this test; the precise
+        rendering, accessibility or delivery bottleneck remains unisolated.
+      </p>
+      <p>
+        The temporary Pod was deleted and absence verified. KubeSift was terminated and relaunched; its workspace was accessible again.
+        Search, scrolling, retention-warning visibility and normal tab-leave cleanup under this load remain unverified because the
+        interaction stalled. High-volume readiness is failed, and this supersedes the earlier pending stress-test status. User acceptance
+        remains pending.
+      </p>
+      <h2>High-volume rendering correction and retest · 2026-11-13</h2>
+      <p>
+        The full retained-text rendering path was replaced with visible fixed-height rows and overscan. Data notifications are batched at
+        100 ms; native acknowledgements and lifecycle changes remain immediate. Wide lines scroll horizontally, and pathological long lines
+        split into bounded display rows. Reading history freezes one additional bounded snapshot of up to 1 MiB; Jump to latest releases it.
+        Search covers that stable snapshot using original text offsets.
+      </p>
+      <p>
+        The identical resource-limited synthetic Pod in kind-dev-local-a / kubesift-explorer again produced 10,000 timestamped lines and
+        2,830,000 bytes in a ten-second sample. Native live output, visible retention warnings, expand/restore, previous/next search,
+        scrolling upward and downward, Jump to latest, and three Overview/Logs cycles passed on the final build without interaction
+        timeouts. Each return showed one fresh live view. Earlier tests on the optimized build also passed three navigation cycles. The
+        final 30-second process sample ended at 8.1% renderer CPU and approximately 200 MiB RSS, compared with 98.6–100% CPU and increasing
+        RSS in the failed test. These are sampled observations, not a maximum-load guarantee.
+      </p>
+      <p>
+        All 23 frontend tests, repository checks and macOS packaging passed. Regressions cover batching with immediate acknowledgements and
+        cleanup, long-line indexing and original offsets; existing cancellation and Unicode search tests remain passing. Independent review
+        corrected long-line rescanning and cross-row highlighting. The temporary load Pod was removed. This retest resolves the prior
+        same-load responsiveness failure. Longer soak testing and full screen-reader verification remain unrun; user UAT remains pending.
+      </p>
+    </main>
+  </body>
+</html>

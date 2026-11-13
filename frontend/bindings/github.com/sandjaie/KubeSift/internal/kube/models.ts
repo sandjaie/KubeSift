@@ -11,18 +11,131 @@ Important: Wails generates this glue; change Go contracts and regenerate rather 
 // @ts-ignore: Unused imports
 import * as model$0 from "../model/models.js";
 
+export interface DetailRequest {
+  resource: ResourceRef;
+}
+
+export interface EventPage {
+  items: ResourceEvent[] | null;
+  page: PageInfo;
+}
+
+export interface EventRequest {
+  resource: ResourceRef;
+  cursor: string;
+}
+
 export interface ForwardResult {
-    "session": model$0.SessionRef;
-    "localPort": number;
+  session: model$0.SessionRef;
+  localPort: number;
+}
+
+export interface LogRequest {
+  resource: ResourceRef;
+  container: string;
+  previous: boolean;
+  follow: boolean;
+  tailLines: number;
+}
+
+export interface PageInfo {
+  nextCursor: string;
+  resourceVersion: string;
+  fetchedAt: string;
+}
+
+export interface PageRequest {
+  connection: model$0.ConnectionRef;
+  kind: string;
+  namespace: string;
+  cursor: string;
 }
 
 export interface PodSummary {
-    "name": string;
-    "namespace": string;
-    "uid": string;
-    "phase": string;
-    "ready": boolean;
-    "containers": string[] | null;
-    "marker": string;
-    "annotation": string;
+  name: string;
+  namespace: string;
+  uid: string;
+  phase: string;
+  ready: boolean;
+  containers: string[] | null;
+  marker: string;
+  annotation: string;
+}
+
+export interface RelatedPage {
+  items: RelatedPod[] | null;
+  page: PageInfo;
+  complete: boolean;
+  problem: model$0.Problem | null;
+}
+
+export interface RelatedPod {
+  pod: WorkloadRow;
+  replicaSet: ResourceRef;
+}
+
+export interface RelatedReplicaSetPage {
+  items: WorkloadRow[] | null;
+  page: PageInfo;
+  complete: boolean;
+  problem: model$0.Problem | null;
+}
+
+export interface RelatedRequest {
+  resource: ResourceRef;
+  cursor: string;
+}
+
+export interface ResourceDetail {
+  resource: ResourceRef;
+  resourceVersion: string;
+  fetchedAt: string;
+  objectJSON: string;
+}
+
+export interface ResourceEvent {
+  uid: string;
+  type: string;
+  reason: string;
+  message: string;
+  reporter: string;
+  count: number | null;
+  firstAt: string | null;
+  lastAt: string | null;
+}
+
+export interface ResourceRef {
+  connection: model$0.ConnectionRef;
+  apiVersion: string;
+  kind: string;
+  namespace: string;
+  name: string;
+  uid: string;
+}
+
+export interface WorkloadPage {
+  items: WorkloadRow[] | null;
+  page: PageInfo;
+}
+
+export interface WorkloadRow {
+  resource: ResourceRef;
+  phase: string;
+  reason: string;
+  node: string;
+  ready: number | null;
+  desired: number | null;
+  current: number | null;
+  updated: number | null;
+  available: number | null;
+  restarts: number | null;
+  createdAt: string | null;
+}
+
+export interface YAMLDocument {
+  resource: ResourceRef;
+  resourceVersion: string;
+  fetchedAt: string;
+  withoutManagedFields: string;
+  withManagedFields: string;
 }

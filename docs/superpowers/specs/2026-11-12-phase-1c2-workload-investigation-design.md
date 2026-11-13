@@ -34,13 +34,13 @@ Alternatives considered: building generic discovery first delays the requested i
 
 ## Scope boundaries
 
-**Included:** Pod/Deployment inventories and filters, single explicit namespace, basic page navigation, detailed overview, Deployment-owned Pod navigation, read-only YAML, resource-specific events, current/previous container log snapshots/follow, real log sessions in the existing dock, UI UAT deliverable.
+**Included:** Pod/Deployment inventories and filters, single explicit namespace, basic page navigation, detailed overview, Deployment-owned Pod navigation, read-only YAML, resource-specific events, current/previous container log snapshots/follow, one live log view scoped to the visible detail tab, UI UAT deliverable.
 
 **Not included:** editing/applying YAML, restart/scale/delete/rollback, terminal or forwarding product workflows, aggregated Deployment/multi-Pod log streams, AI requests/diagnosis, metrics, arbitrary custom-resource discovery, all-namespace browsing, persistent evidence history, downloading/exporting entire resources/logs, or another visual redesign. Existing backend operation capabilities may remain for tests but are not exposed as shortcuts in these views.
 
 ## 1. Pod and Deployment inventories
 
-Switch between Pods and Deployments in the existing resource navigation. Preserve kind, filter, page, selected UID, detail tab and scroll independently per connection tab and kind. Changing namespace explicitly invalidates outstanding inventory/detail requests, resets the page and selection for the new scope, and leaves explicitly opened log sessions attached to their original targets in Sessions. Connection-generation changes invalidate all data/request ownership for that connection.
+Switch between Pods and Deployments in the existing resource navigation. Preserve kind, filter, page, selected UID, detail tab and scroll independently per connection tab and kind. Changing namespace explicitly invalidates outstanding inventory/detail requests, resets the page and selection for the new scope, and closes the visible log request. Connection-generation changes invalidate all data/request ownership for that connection.
 
 Pod columns: name, Phase, Ready count, restarts, age and node where space permits. Distinguish the API phase from container waiting/termination reason: a Running Pod with CrashLoopBackOff must not look healthy solely because of its phase. Retain phase dot colours (Running blue, Succeeded green, Pending amber, Failed red, Unknown gray), separate readiness and show an actionable waiting/termination reason as a text status. Represent missing/unavailable data as such, not zero.
 
@@ -54,7 +54,7 @@ Auto-refresh is off by default. When enabled for the visible inventory, refresh 
 
 ## 2. Pod details
 
-Replace the “More resource details are not available yet” placeholder with Overview, YAML, Events and Logs tabs. Fetch only the active section; a forbidden section does not erase permitted sections. Keep context/namespace/resource name visible and retain Identity & source with UID, resourceVersion and timestamps where applicable.
+Replace the “More resource details are not available yet” placeholder with Overview, YAML, Events and Logs tabs. Fetch only the active section; a forbidden section does not erase permitted sections. Keep context/namespace/resource name visible and keep object UID and metadata available in YAML; omit the separate Identity & source disclosure per UAT feedback.
 
 Overview contains:
 
@@ -73,7 +73,7 @@ Overview shows desired/updated/ready/available/unavailable counts, observed vers
 
 Resolve relationships through controller ownerReferences: Deployment UID → ReplicaSet controller owner UID → Pod controller owner UID. Label matches may narrow candidates but must not prove ownership. Reuse typed ReplicaSet reads only for this relationship, not a new standalone ReplicaSet explorer commitment. Filter out lookalikes owned by another Deployment, including equal labels or reused names.
 
-Bound related-object pages and show partial coverage/load-next rather than silently scanning an entire namespace. A Pods row identifies its ReplicaSet and phase/readiness. If ReplicaSet/Pod access is forbidden, keep the Deployment overview and show that relationship evidence is unavailable. Empty partial results are not “Deployment has no Pods.” Open a related Pod in the same cluster tab with an explicit Back to Deployment breadcrumb; preserve its original namespace/UID, and return to the Deployment only if that captured identity remains valid.
+Bound related-object pages. Automatically advance through up to eight empty ownership pages per request so opening Pods reaches actual Pod rows without a discovery-only click. Stop at a nonempty Pod page, completion, error or that bound; offer Load more Pods only when continuation remains, without silently scanning an entire namespace. A Pods row identifies its ReplicaSet and phase/readiness. If ReplicaSet/Pod access is forbidden, keep the Deployment overview and show that relationship evidence is unavailable. Empty partial results are not “Deployment has no Pods.” Open a related Pod in the same cluster tab with an explicit Back to Deployment breadcrumb; preserve its original namespace/UID, and return to the Deployment only if that captured identity remains valid.
 
 ## 4. Read-only YAML
 
@@ -93,23 +93,17 @@ Fetch bounded UID-filtered pages (100), clearly label current-page sorting and a
 
 “No events returned” is not “no failure”: retention and permissions can leave gaps. Distinguish empty, forbidden, unavailable API, stale and request failure. Log lines and Kubernetes events remain different evidence types.
 
-## 6. Container logs and Sessions
+## 6. Container logs
 
-Open Logs for an explicit Pod/container. Offer regular/init/existing ephemeral containers with their current state. Select the only eligible container automatically; when several exist, show a clear selector and retain the user's choice only for that Pod UID. No command execution, container creation or shell access is introduced.
+UAT refinement approved 2026-11-13. Opening Logs automatically starts one current-container live view, selecting the first regular container (or the first available init/ephemeral container). Keep container, Current/Previous, initial lines (default 200, maximum 1,000), Follow, Refresh and search. Previous uses a snapshot. Returning to Current enables Follow. Valid filter changes replace the request and history in the same view.
 
-Controls: container, Current/Previous instance, initial tail (default 200, maximum 1,000 lines), server timestamps, Follow toggle, Stop, Clear view and search within retained text. Initial current logs load as a bounded snapshot with Follow off; enabling Follow creates an owned stream. Previous always disables Follow and explains when previous logs do not exist. Current/previous are server availability, not an archival history; see [Kubernetes logging](https://kubernetes.io/docs/concepts/cluster-administration/logging/).
+Leaving the Logs detail tab, Pod, namespace, cluster or workspace releases the reader and retained text, including pending opens. Returning loads fresh output. Product logs have no Sessions dock or background lifetime. Theme changes preserve the mounted view. No Open logs, Clear view, Resume or Close controls appear. Refresh starts fresh after errors or disconnects, with the existing connection recovery workflow when required.
 
-Every opened request/stream has a native session ID and captured connection generation, namespace, Pod name, Pod UID, container and current/previous mode. The existing `model.Target` lacks UID: the implementation plan must extend the log-facing contract and validate selected UID/container against a fresh Pod read before opening or restarting a stream. Reconnect/restart must never silently attach to a replacement Pod with the same name. Kubernetes log requests address Pods by name, so a pre-read cannot create an atomic UID precondition; recheck after stream opening and periodically while following, terminate if identity changed, and label any identity-verification failure honestly. Do not claim this removes all races in the server API.
+The viewer scrolls through all retained text, bounded to 1 MiB of UTF-8. Render only visible fixed-height rows plus overscan, with horizontal scrolling and long lines split into at most 2,048 UTF-16 units per display row. Batch data notifications at 100 ms while acknowledging native delivery immediately. Search retains original text offsets. Scrolling upward freezes one additional bounded 1 MiB reading snapshot so retention eviction does not move text under the reader; Jump to latest releases that snapshot and resumes live output. Search supports previous/next matches and Enter/Shift+Enter. Expand to window fills the application window; Restore size or Escape returns to the detail panel without restarting the stream. Keyboard focus remains inside the expanded viewer.
 
-Use the existing pending-session/register-before-activate, credit/acknowledgement and bounded-buffer lifecycle. Create no second log reader for the same visible session. The Logs detail tab and dock reference the same session/store; switching detail tabs must not duplicate subscriptions. Selecting a different Pod does not retarget an existing log session. Namespace/kind/tab navigation keeps explicit sessions visible in the global dock with their original identities.
+Initial line limits and rotated server logs constrain history. Show the requested initial line count, retention limit and actual omissions/errors/gaps. Preserve split UTF-8 decoding, native queue bounds, acknowledgements and registration before activation. Never imply lossless capture or history since container creation.
 
-Approved bounds: maximum eight log sessions application-wide (including retained stopped snapshots); 1 MiB retained UTF-8 text per session; bounded native queue using existing session limits; a 64 KiB display chunk/window with navigation/search over retained text rather than an unbounded DOM. Bound incomplete lines and decode split UTF-8 sequences correctly. Initial snapshots request a byte cap as well as line tail; follow uses stream backpressure/retention rather than a total-lifetime byte cap. Surface truncation/dropped bytes and time gaps; never silently imply complete logs. Adding a ninth session asks the user to close one, never evicts another cluster's session without consent.
-
-Stopping cancels native work while retaining bounded displayed text; closing releases both native ownership and retained text. Clear view empties display history without restarting the stream or resetting the target, and does not erase loss indicators. Pause auto-scroll is a presentation action, not Stop. Current snapshot EOF is a normal completed state; permission/server errors are not “no logs.”
-
-If Follow ends unexpectedly, retain content and error/gap information and offer explicit Resume after connection recovery; no automatic reconnect of log streams in this increment. Resume starts a new explicitly identified segment after UID/config validation and warns that overlap/gaps are possible. Changed credentials require the existing external-login and Retry workflow. Closing a cluster tab with log sessions confirms the affected sessions and cancels them; Settings navigation, theme changes and dock collapse do not stop or recreate them. App exit releases every native stream and listener. Streams may continue in inactive cluster tabs, but heavy offscreen rendering pauses without breaking native flow control.
-
-The Phase 1A backgrounded WebKit log-delivery/drop limitation remains a known risk. Validate the new product path for visible loss and bounded recovery; do not claim lossless capture, archival storage or a monitoring backend.
+Each request captures connection generation, namespace, Pod name/UID, container and instance. Preserve backend UID/container checks before and after opening and while following. Replacement resources and changed generations never silently rebind. App exit releases readers and listeners. The Phase 1A backgrounded WebKit delivery limitation remains applicable.
 
 ## Data ownership, errors and architecture
 
@@ -131,7 +125,7 @@ Keep automated tests representative and behavior-focused:
 
 - One table-driven service suite for UID ownership, Deployment relationships, partial RBAC, page/cursor identity, event normalization and bounded YAML; reuse existing fakes.
 - One focused log-lifecycle regression group for fixed target/container, previous-without-follow, bounded decoding/retention, stop/close and identity change. Extend existing session tests rather than mirror them.
-- A small frontend state test for A/B isolation, late detail responses, per-kind state and one log session shared by detail/dock.
+- A small frontend state test for A/B isolation, late detail responses, per-kind state and one log reader owned by the visible tab.
 - One opt-in two-cluster investigation walkthrough plus a short packaged-app manual matrix. Keep fixtures synthetic; no snapshots, per-component test explosion, coverage target or new native UI automation framework.
 
 Use additional regression tests only for actual defects or a material uncovered risk. Run existing applicable repository checks and packaging; repeat race/load checks when the changed stream/ownership path justifies them. No need to reproduce all historical 1A performance experiments to validate unrelated presentation changes.
@@ -145,8 +139,8 @@ Use additional regression tests only for actual defects or a material uncovered 
 | C23 | Deployment overview and owned-Pod navigation follow UIDs, exclude label lookalikes and disclose incomplete relationship access |
 | C24 | YAML is read-only, version/time labeled, selectable/searchable, managedFields omission explicit; Copy copies displayed representation only |
 | C25 | Events match selected UID, normalize/deduplicate correctly and distinguish missing/forbidden/stale data; no false globally sorted claim |
-| C26 | Current/previous multi-container logs work where available; Follow/Stop/Clear/scroll have distinct semantics and visible bounded loss |
-| C27 | Sessions survive theme/Settings/navigation without retargeting; close/tab-close/exit clean up; replacement Pod or changed generation never silently rebinds |
+| C26 | Current/previous multi-container logs work where available; one live view supports search, expansion and scrolling with visible bounded loss |
+| C27 | Logs survive theme changes; leaving Logs and app exit clean up; returning loads fresh output; replacement Pod or changed generation never silently rebinds |
 | C28 | Compact header, current palette, namespace popover, phase/readiness distinction and saved split sizes remain intact at existing reviewed sizes |
 | C29 | Failing-Pod and Deployment→Pod investigations complete using actual fixture evidence, with no AI or mutation calls |
 
@@ -159,3 +153,11 @@ The implementation session commits/pushes its feature branch and opens the PR to
 ## Approval and next step
 
 The user approved this specification on 2026-11-12. The [implementation plan](../plans/2026-11-12-phase-1c2-workload-investigation.md) defines seven tasks, minimal behavior-focused checks and the separate UI UAT deliverable. Implementation occurs in a separate session; no application code, cluster mutation or new fixture installation occurred during planning.
+
+## UAT refinement · 12 November 2026
+
+User requested desktop-work-area maximization at launch (not macOS full screen), aligned inventory pagination/Auto-refresh and removal of the inventory capture timestamp. Follow the [owning UX behavior](../../ux/workflows.html#detail-divider) and its Themes and window sizes section. Saved display placement and pane proportions remain; detail evidence timestamps and stale-data warnings remain. These are Phase 1C.2 UAT fixes, not Phase 1C.3 scope.
+
+Follow-up UAT: use explicit work-area dimensions on first native show instead of native zoom; remove the separate Identity & source disclosure and internal relationship timestamp/completion copy. Ownership/UID validation remains native and unchanged.
+
+Logs UAT refinement: prioritize output with compact controls, conditional Stop/Resume, expandable Search logs and conditional Earlier/Later. Remove visible UUID/generation, repeated detail resource path and routine buffer statistics. Keep concise target labels in the cross-target Sessions dock and retain actual errors, omitted-text and gap warnings. Internal immutable targets and bounds are unchanged.

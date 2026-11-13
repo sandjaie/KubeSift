@@ -10,7 +10,8 @@ export const destinations = [
     group: "Workloads",
     items: [
       ["Pod", "Pods", true],
-      ["Deployment", "Deployments", false],
+      ["Deployment", "Deployments", true],
+      ["ReplicaSet", "ReplicaSets", true],
       ["StatefulSet", "StatefulSets", false],
       ["Job", "Jobs", false],
     ],
@@ -53,7 +54,7 @@ export function ResourceNavigation({ kind, onSelect }: { kind: string; onSelect:
         <section key={g.group}>
           <h3>{g.group}</h3>
           {g.items.map(([key, label, available]) => (
-            <button key={key} aria-pressed={kind === key} onClick={() => onSelect(key, available)}>
+            <button key={key} disabled={!available} aria-pressed={kind === key} onClick={() => onSelect(key, available)}>
               <ResourceIcon kind={key} />
               {label}
               {!available && (

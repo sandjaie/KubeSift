@@ -1,6 +1,6 @@
 # Workload explorer refinement design
 
-**Date:** 2026-11-13. **Status:** Requested planning package; scope and visual direction accepted in discussion, written specification awaiting final review. No implementation authorization.
+**Date:** 2026-11-13. **Status:** Implementation authorized and delivered for validation on the existing Phase 1C.2 feature branch. User acceptance remains pending.
 
 ## Intent and decisions
 
@@ -23,7 +23,7 @@ This is a targeted follow-up to [Phase 1C.2](2026-11-12-phase-1c2-workload-inves
 - Technical search/filter inputs do not suggest spelling corrections or modify typed identifiers.
 - Existing shell, neutral light/dark tokens, compact controls and remembered detail split remain.
 
-Excluded: Logs redesign/collection changes, scale/delete/edit/apply/rollback, rollout-history claims, metrics, unrelated resource kinds, cluster infrastructure and release work. This session writes documentation and mockups only.
+Excluded: Logs redesign/collection changes, scale/delete/edit/apply/rollback, rollout-history claims, metrics, unrelated resource kinds, cluster infrastructure and release work.
 
 ## 1. Shared detail presentation
 

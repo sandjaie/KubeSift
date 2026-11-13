@@ -1,7 +1,7 @@
 /*
 Purpose: Wire the native Wails application to domain services.
 Used by: The desktop executable.
-Responsibilities: Register services, restore window geometry and publish session events.
+Responsibilities: Register services, fill the selected display work area on first show and publish session events.
 Important: Geometry persistence is independent of Kubernetes/session policy and uses logical bounds.
 */
 package desktop
@@ -50,20 +50,25 @@ func Run(assets fs.FS) error {
 		return areas
 	}
 	normal := func() bool { return !window.IsMinimised() && !window.IsMaximised() && !window.IsFullscreen() }
-	clamp := func(saved preferences.Rect) {
-		r := preferences.ClampWindow(saved, workAreas())
-		window.SetBounds(application.Rect{X: r.X, Y: r.Y, Width: r.Width, Height: r.Height})
+	setBounds := func(r preferences.Rect) {
+		// Size first: macOS converts top-left position using the current frame height.
+		window.SetSize(r.Width, r.Height)
+		window.SetPosition(r.X, r.Y)
 	}
-	app.Event.OnApplicationEvent(events.Common.ApplicationStarted, func(*application.ApplicationEvent) {
+	window.OnWindowEvent(events.Common.WindowShow, func(*application.WindowEvent) {
+		lock.Lock()
+		if restored || closing {
+			lock.Unlock()
+			return
+		}
+		restored = true
+		lock.Unlock()
 		p, _ := prefs.GetPreferences()
 		r := preferences.Rect{Width: 1440, Height: 900}
 		if p.Window != nil {
 			r = *p.Window
 		}
-		clamp(r)
-		lock.Lock()
-		restored = true
-		lock.Unlock()
+		setBounds(preferences.WindowWorkArea(r, workAreas()))
 	})
 	save := func(*application.WindowEvent) {
 		lock.Lock()
@@ -91,7 +96,7 @@ func Run(assets fs.FS) error {
 	app.Event.OnApplicationEvent(events.Mac.ApplicationDidChangeScreenParameters, func(*application.ApplicationEvent) {
 		if normal() {
 			r := window.Bounds()
-			clamp(preferences.Rect{X: r.X, Y: r.Y, Width: r.Width, Height: r.Height})
+			setBounds(preferences.ClampWindow(preferences.Rect{X: r.X, Y: r.Y, Width: r.Width, Height: r.Height}, workAreas()))
 		}
 	})
 	return app.Run()

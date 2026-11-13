@@ -7,6 +7,7 @@ Important: Icons are decorative; accessible names live on their controls.
 const paths: Record<string, string> = {
   Pod: "M12 2 3 7v10l9 5 9-5V7z M3 7l9 5 9-5 M12 12v10",
   Deployment: "M4 4h7v7H4z M13 13h7v7h-7z M15 4h5v5 M4 15v5h5",
+  ReplicaSet: "M3 7h7v7H3z M14 7h7v7h-7z M8 17h8v4H8z",
   StatefulSet: "M4 4h16v5H4z M4 11h16v4H4z M4 17h16v4H4z",
   Job: "M6 3h12v18H6z M9 11l2 2 4-5",
   Service: "M12 3v6 M4 18v-5h16v5 M12 13v5 M2 18h4v4H2z M10 18h4v4h-4z M18 18h4v4h-4z",
