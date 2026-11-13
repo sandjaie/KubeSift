@@ -1,10 +1,48 @@
-/* Purpose: Applies the planning docs light or dark theme before paint and adds the sidebar switch.
+/* Purpose: Applies the planning docs theme and builds the page outline.
    Used by: every page that links docs/assets/planning.css.
-   Responsibilities: honor a saved choice, otherwise follow the system, and remember the switch.
+   Responsibilities: Remember the theme choice and link to headings in the current document.
    Important: the choice is local to this browser. It does not change the desktop app theme. */
 (function () {
   var key = "kubesift-docs-theme";
   var root = document.documentElement;
+  var docsIndex = new URL("../index.html", document.currentScript.src);
+
+  function addOutline(main) {
+    if (!main) return;
+    var headings = main.querySelectorAll("h2, h3");
+    if (!headings.length) return;
+
+    var outline = document.createElement("details");
+    outline.className = "page-outline";
+    var summary = document.createElement("summary");
+    summary.textContent = "On this page";
+    var nav = document.createElement("nav");
+    nav.setAttribute("aria-label", "On this page");
+    var list = document.createElement("ul");
+    headings.forEach(function (heading) {
+      var section = heading.parentElement;
+      var target = !heading.id && section.matches("section[id]") && section.firstElementChild === heading ? section : heading;
+      if (!target.id) {
+        var slug = heading.textContent.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "section";
+        var id = slug;
+        for (var number = 2; document.getElementById(id); number++) id = slug + "-" + number;
+        heading.id = id;
+      }
+      var item = document.createElement("li");
+      if (heading.tagName === "H3") item.className = "outline-subsection";
+      var link = document.createElement("a");
+      link.href = "#" + encodeURIComponent(target.id);
+      link.textContent = heading.textContent.trim();
+      item.appendChild(link);
+      list.appendChild(item);
+    });
+    nav.appendChild(list);
+    outline.append(summary, nav);
+    main.before(outline);
+    var wide = window.matchMedia("(min-width: 1100px)");
+    outline.open = wide.matches;
+    wide.addEventListener("change", function () { outline.open = wide.matches; });
+  }
   try {
     var saved = localStorage.getItem(key);
     if (saved === "dark" || saved === "light") root.dataset.theme = saved;
@@ -22,7 +60,19 @@
 
   document.addEventListener("DOMContentLoaded", function () {
     var rail = document.querySelector(".rail");
-    if (!rail) return;
+    if (!rail) {
+      rail = document.createElement("aside");
+      rail.className = "rail";
+      var nav = document.createElement("nav");
+      nav.setAttribute("aria-label", "Documentation");
+      var index = document.createElement("a");
+      index.href = docsIndex.href;
+      index.textContent = "KubeSift planning index";
+      nav.appendChild(index);
+      rail.appendChild(nav);
+      document.body.prepend(rail);
+    }
+    addOutline(document.querySelector("main"));
     var button = document.createElement("button");
     button.type = "button";
     button.className = "theme";
