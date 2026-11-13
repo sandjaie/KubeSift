@@ -54,6 +54,23 @@ export interface LogRequest {
   tailLines: number;
 }
 
+export interface NetworkPage {
+  items: NetworkRow[] | null;
+  page: PageInfo;
+}
+
+export interface NetworkReferenceRequest {
+  source: ResourceRef;
+  sourceVersion: string;
+  target: ResourceRef;
+}
+
+export interface NetworkRow {
+  resource: ResourceRef;
+  createdAt: string | null;
+  objectJSON: string;
+}
+
 export interface PageInfo {
   nextCursor: string;
   resourceVersion: string;
@@ -109,6 +126,12 @@ export interface RelatedRequest {
   cursor: string;
 }
 
+export interface ResolvedNetworkReference {
+  association: string;
+  resource: ResourceRef;
+  identityEvidence: string;
+}
+
 export interface ResourceDetail {
   job: JobSummary | null;
   resource: ResourceRef;
@@ -135,6 +158,19 @@ export interface ResourceRef {
   namespace: string;
   name: string;
   uid: string;
+}
+
+export interface ServiceSlicePage {
+  sourceVersion: string;
+  items: ServiceSliceRow[] | null;
+  page: PageInfo;
+  complete: boolean;
+  problem: model$0.Problem | null;
+}
+
+export interface ServiceSliceRow {
+  slice: NetworkRow;
+  association: string;
 }
 
 export interface WorkloadPage {

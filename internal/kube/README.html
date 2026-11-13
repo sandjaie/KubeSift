@@ -6,6 +6,7 @@
     Explicit-target Kubernetes reads and streaming adapters. status.go establishes bounded resource-read evidence and classifies safe
     failures. workloads/bounded_reads own bounded inventories; details/relationships/events bind evidence to UIDs; logs owns retained
     product log reservations and identity verification. No Wails imports or mutable active context. controller_workloads.go projects
-    controller-specific counts and Job status for inventory and detail.
+    controller-specific counts and Job status for inventory and detail. networking.go projects the five typed networking inventories;
+    networking_relationships.go validates Service associations and explicit captured references before opening targets.
   </p>
 </html>

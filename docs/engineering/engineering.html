@@ -452,6 +452,12 @@ npx tsc --noEmit</code></pre>
         skill before editing. If two apply, the process skill goes first.
       </p>
 
+      <p>
+        For Kubernetes readers, relationships, status presentation and integration tests, use the
+        <a href="../../.agents/skills/kubesift-kubernetes-development/SKILL.md">KubeSift Kubernetes development skill</a> and
+        <a href="kubernetes-development.html">Kubernetes reference index</a> to find official API documentation and project decisions.
+      </p>
+
       <h3>Always on</h3>
       <div class="table-scroll">
         <table>
@@ -649,7 +655,11 @@ npx tsc --noEmit</code></pre>
           <tr>
             <td><code>finishing-a-development-branch</code></td>
             <td>Tests pass and the branch needs a home</td>
-            <td>Verify, then offer merge, pull request, or cleanup. Execute the choice.</td>
+            <td>
+              Follow the <a href="gitworkflow.md#pull-requests">authorized completion workflow</a>: update evidence and status, publish a
+              ready PR, and merge into develop after applicable checks and independent review pass. Do not stop at a draft or ask again for
+              merge instructions. Report actual blockers; main and releases need separate authorization.
+            </td>
           </tr>
           <tr>
             <td><code>release-this</code></td>

@@ -1608,3 +1608,14 @@ textarea::placeholder {
 .yaml-key {
   color: var(--accent-ink);
 }
+
+.network-value {
+  overflow-wrap: anywhere;
+  white-space: normal;
+  user-select: text;
+}
+.resource-list .network-value {
+  display: inline-block;
+  min-width: 7ch;
+  max-width: 28ch;
+}

@@ -30,10 +30,12 @@ This planning exception does not authorize application code changes, merges to `
 - Acceptance evidence follows [agent verification](engineering.html#agent-verification). Agent-run desktop checks satisfy the normal UI verification requirement; a duplicate manual user UAT checklist is not a merge gate. Unresolved failures, material verification gaps and explicit authorization requirements still apply.
 
 - Pull requests on [sandjaie/KubeSift](https://github.com/sandjaie/KubeSift) carry a summary and a test plan. Fill the template.
-- At the end of every completed phase, after its acceptance evidence and independent review are complete, create a pull request from the phase feature branch targeting `develop`. Include the actual checks, review resolutions and remaining limitations.
+- At the end of each authorized implementation task or phase, finish applicable automated tests, agent-run UI verification and independent review. Resolve blocking findings, then update the owning status, plan, feature and validation documents to reflect verified implementation and outstanding limitations. Do not mark work merged until the merge is confirmed.
+- Commit and push the completed changes, then create a ready-for-review pull request from the implementation branch targeting `develop`. Include the actual checks, review resolutions and remaining limitations. If a draft PR already exists, mark it ready when these gates pass. Use a draft only for genuinely unfinished work or an explicit user request; a completed, verified implementation must not stop at a draft.
 - GitHub CI runs only for release-producing PRs targeting `main` from `release/*` or `hotfix/*`. Feature PRs targeting `develop` and push events do not trigger CI. Applicable local validation and independent review remain required for feature work.
-- The maintainer has authorized squash-merging completed phase pull requests into `develop` after the exact PR head has passed applicable checks and review; delete the source branch after merge. Do not bypass failed checks or unresolved blocking findings.
-- This phase-completion rule does not authorize merging to `main`, starting the next phase, force pushes or releases.
+- The maintainer has authorized squash-merging completed implementation pull requests into `develop` after the exact PR head has passed applicable checks and review. Continue through merge without asking for another instruction or presenting a merge-choice menu. Wait for any required remote checks or reviews; never bypass protections, failed checks or unresolved blocking findings. CI intentionally not configured for a feature PR is not a missing required check. After changes to the PR head, refresh the applicable validation and review evidence before merging.
+- Verify that the PR actually merged, update any merge-dependent status, and delete the source branch only when it contains no unrelated or ongoing work. Report the PR URL, merge result and verification evidence. If blocked, name the specific failed or unrun gate and continue any work that can resolve it; do not describe a draft or merely enabled auto-merge as completion.
+- This completion rule does not authorize merging unrelated work, merging to `main`, starting the next phase, force pushes or releases. An explicit user request to stop at review or keep a PR open overrides the default.
 
 ## Identity and publication
 
@@ -41,7 +43,7 @@ This planning exception does not authorize application code changes, merges to `
 - Before commits, verify repository-local author identity. Before remote operations, verify remote destination and authentication account separately.
 - Do not infer identity from the OS username or change global Git identity. Confirm an ambiguous account before remote operations.
 - The maintainer has authorized committing and pushing completed task changes by default. After appropriate verification, commit only the task’s changes and push `develop` for planning-only changes or the authorized feature branch for implementation; preserve unrelated work. Report the commit and push result.
-- This standing authorization permits completed-phase merges into `develop` only under the pull-request rule above. Other merges and releases require explicit authorization, including invocation of `release-this` as described below. Force pushes and publication outside the configured repository require separate explicit authorization.
+- This standing authorization permits completed-implementation merges into `develop` only under the pull-request rule above. Other merges and releases require explicit authorization, including invocation of `release-this` as described below. Force pushes and publication outside the configured repository require separate explicit authorization.
 - KubeSift is licensed under Apache-2.0; retain the root LICENSE and required third-party notices.
 - Signing, notarization, and the updater stay open until the release-readiness gate in the roadmap.
 

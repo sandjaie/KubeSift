@@ -1,12 +1,12 @@
 # KubeSift resumable status
 
-Updated 2026-11-13. Current integration branch is `develop`.
+Updated 2026-11-14. Current integration branch is `develop`.
 
-## Next planning package · Phase 1C.3b
+## Phase 1C.3b · Read-only networking
 
-- Read-only networking scope accepted: Services, EndpointSlices, Ingresses, IngressClasses and NetworkPolicies. [Specification](../../docs/superpowers/specs/2026-11-13-phase-1c3b-networking-design.md) and [plan](../../docs/superpowers/plans/2026-11-13-phase-1c3b-networking.md) prepared for review and separate-session implementation.
-- Baseline inspected: develop at a980966, after 1C.3a merge ccc47ca. No application code or fixtures changed by this planning update. Work in the existing checkout, no worktree.
-- Agent-run automated and desktop verification produces one report, without duplicate manual user UAT. No connectivity probes, networking mutations, installed infrastructure, merge, release or later increment is authorized.
+- Implemented on `feature/phase-1c3b-networking` from clean develop `816e372`, in the existing checkout. [Specification](../../docs/superpowers/specs/2026-11-13-phase-1c3b-networking-design.md), [plan](../../docs/superpowers/plans/2026-11-13-phase-1c3b-networking.md) and [validation report](../../docs/superpowers/validation/phase-1c3b.html).
+- Repository checks, targeted race tests, and both networking and workload integration passed on the approved kind contexts. The packaged app passed the Ingress → IngressClass → Back retest. Temporary Jobs, Ingress and IngressClass were removed after validation.
+- Independent review findings were addressed and rechecked. [PR #9](https://github.com/sandjaie/KubeSift/pull/9) carries the implementation and verification record into `develop`. Remaining edge cases are recorded in the validation report.
 
 ## Phase 1C.3a · Remaining workloads
 

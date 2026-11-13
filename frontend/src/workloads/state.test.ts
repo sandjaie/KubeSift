@@ -124,3 +124,87 @@ test("CronJob to Job to Pod restores the originating sections and clears old sco
     state,
   );
 });
+
+test("IngressClass scope ignores namespace changes but invalidates on a new connection generation", () => {
+  let state = reduceWorkloads(initialWorkloads(), { type: "scope", tab: "A", scope: "a/1/ns", clusterScope: "a/1" });
+  state = reduceWorkloads(state, { type: "kind", tab: "A", kind: "IngressClass" });
+  state = reduceWorkloads(state, { type: "patch", tab: "A", scope: "a/1", kind: "IngressClass", patch: { filter: "class", epoch: 4 } });
+  state = reduceWorkloads(state, { type: "scope", tab: "A", scope: "a/1/other", clusterScope: "a/1" });
+  expect(state.A.kinds.IngressClass.filter).toBe("class");
+  state = reduceWorkloads(state, {
+    type: "response",
+    tab: "A",
+    scope: "a/1",
+    kind: "IngressClass",
+    epoch: 4,
+    patch: { error: "class unavailable" },
+  });
+  expect(state.A.kinds.IngressClass.error).toBe("class unavailable");
+  state = reduceWorkloads(state, { type: "scope", tab: "A", scope: "a/2/other", clusterScope: "a/2" });
+  expect(state.A.kind).toBe("IngressClass");
+  expect(state.A.kinds.IngressClass).toEqual(emptyKind());
+});
+
+test("networking Back restores section, position and identity without requiring inventory membership", () => {
+  let state = reduceWorkloads(initialWorkloads(), { type: "scope", tab: "A", scope: "a" });
+  const ref = { connection: { id: "a", generation: 1 }, namespace: "ns", name: "sample", apiVersion: "v1" };
+  const ingress = { resource: { ...ref, kind: "Ingress", uid: "ing" }, section: "Overview", cursor: "" } as const;
+  const service = {
+    resource: { ...ref, kind: "Service", uid: "svc" },
+    section: "EndpointSlices",
+    cursor: "slices",
+    position: { filter: "web", history: ["", "page2"], scroll: 50, sort: "desc" },
+  } as const;
+  const slice = { resource: { ...ref, kind: "EndpointSlice", uid: "slice" }, section: "Overview", cursor: "" } as const;
+  const pod = { resource: { ...ref, kind: "Pod", uid: "pod" }, section: "Logs", cursor: "", identity: "Referenced UID verified" } as const;
+  state = reduceWorkloads(state, {
+    type: "navigate",
+    tab: "A",
+    scope: "a",
+    kind: "Pod",
+    entry: pod,
+    history: [ingress, { ...service, position: { ...service.position, history: ["", "page2"] } }, slice],
+    epoch: 1,
+  });
+  expect(state.A.kinds.Pod).toMatchObject({ section: "Logs", related: true, identity: "Referenced UID verified" });
+  state = reduceWorkloads(state, {
+    type: "navigate",
+    tab: "A",
+    scope: "a",
+    kind: "Service",
+    entry: { ...service, position: { ...service.position, history: ["", "page2"] } },
+    history: [ingress],
+    epoch: 2,
+  });
+  expect(state.A.kinds.Service).toMatchObject({
+    section: "EndpointSlices",
+    sectionCursor: "slices",
+    related: true,
+    filter: "web",
+    scroll: 50,
+    history: ["", "page2"],
+  });
+});
+
+test("selecting the current related row preserves an in-flight Overview when clearing Back", () => {
+  const resource = { connection: { id: "a", generation: 1 }, apiVersion: "v1", kind: "Service", namespace: "ns", name: "web", uid: "web" };
+  let state = reduceWorkloads(initialWorkloads(), { type: "scope", tab: "A", scope: "a" });
+  state = reduceWorkloads(state, {
+    type: "navigate",
+    tab: "A",
+    scope: "a",
+    kind: "Service",
+    entry: { resource, section: "Overview", cursor: "" },
+    history: [],
+    epoch: 1,
+  });
+  state = reduceWorkloads(state, {
+    type: "patch",
+    tab: "A",
+    scope: "a",
+    kind: "Service",
+    patch: { sections: { Overview: { loading: true, error: "", data: null } } },
+  });
+  state = reduceWorkloads(state, { type: "select", tab: "A", row: { resource }, epoch: 2 });
+  expect(state.A.kinds.Service).toMatchObject({ related: false, sectionEpoch: 1, sections: { Overview: { loading: true } } });
+});

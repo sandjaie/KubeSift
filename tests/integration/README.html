@@ -20,6 +20,11 @@
     TestWorkloadInvestigation -count=1. Only kind-dev-local-a/b loopback endpoints are accepted.
   </p>
   <p>
+    networking_test.go uses the same isolated A/B files plus restricted.kubeconfig to verify the existing Service, Ingress, NetworkPolicy
+    and controller-generated EndpointSlice fixtures. Run TestNetworkingInvestigation with the same integration tag and opt-in. Restricted
+    credentials must have the fixture pod-reader rights only; requests check reads, with no fixture writes.
+  </p>
+  <p>
     Keep the synthetic scheduled-job CronJob suspended. Before workload validation, create one temporary Job and let it create a Pod in each
     context using the commands below. The generated Job carries the actual CronJob controller UID. Remove the exact fixture after
     verification and leave the other fixtures in place.

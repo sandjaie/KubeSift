@@ -34,6 +34,12 @@ func eventTime(v *time.Time) time.Time {
 }
 func (s *Service) ReadResourceEvents(ctx context.Context, req EventRequest) (EventPage, error) {
 	result := EventPage{Items: []ResourceEvent{}}
+	if req.Resource.Kind == "IngressClass" {
+		return result, model.Fail("invalid", "Events are not available for cluster-scoped resources")
+	}
+	if err := validResource(req.Resource); err != nil {
+		return result, err
+	}
 	client, err := s.boundedReadClient(ctx, req.Resource.Connection)
 	if err != nil {
 		return result, err

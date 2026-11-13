@@ -10,6 +10,7 @@
 - Do not claim Lens/K9s parity without reviewed capability coverage and evidence.
 
 ## Engineering and security
+- For Kubernetes readers, relationships, status and integration tests, use the [KubeSift Kubernetes development skill](.agents/skills/kubesift-kubernetes-development/SKILL.md) and its linked reference index.
 - Follow the selected architecture and docs/security/security-model.html. Keep domain services independent of the desktop bridge.
 - Use explicit connection/session/resource targets; never execute against a mutable global current context.
 - Apply cancellation, flow control and bounded buffering to long-lived sessions; verify cleanup.
@@ -25,3 +26,4 @@
 
 ## Git and publication
 - Follow docs/engineering/gitworkflow.md.
+- Complete authorized implementation through the workflow's documentation, ready PR and merge steps into develop once applicable checks and independent review pass. Do not stop at a draft PR or request another instruction to merge; report genuine blockers instead. Releases and merges into main remain separately authorized.

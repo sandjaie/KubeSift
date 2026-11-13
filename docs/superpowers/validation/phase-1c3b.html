@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Phase 1C.3b validation · KubeSift</title>
+    <link rel="stylesheet" href="../../assets/planning.css" />
+    <script src="../../assets/theme.js"></script>
+  </head>
+  <body>
+    <header>
+      <a href="../../index.html">KubeSift / Planning</a>
+      <h1>Phase 1C.3b validation</h1>
+      <p>Read-only networking investigation · Agent verification</p>
+    </header>
+    <main id="content">
+      <p>
+        Feature branch <code>feature/phase-1c3b-networking</code>, based on <code>816e372</code>.
+        <a href="../specs/2026-11-13-phase-1c3b-networking-design.md">Specification</a> and
+        <a href="../plans/2026-11-13-phase-1c3b-networking.md">implementation plan</a>. Native tests used the ad-hoc signed KubeSift 0.3.0
+        bundle on arm64 macOS 27.0.1. The reviewed package binary SHA-256 was
+        <code>f70ec7d7865dc4f1c40b7611d534b2150207936b70e9ffb82e1352ab86fa63db</code>.
+      </p>
+      <p>
+        Only <code>kind-dev-local-a</code> and <code>kind-dev-local-b</code> were used, in <code>kubesift-explorer</code>, plus existing
+        <code>pod-reader</code> rights on A. The fixtures were the existing <code>web</code> Ingress, <code>web</code> and
+        <code>stateful</code> Services, controller-generated EndpointSlices and <code>allow-fixture-network</code>. No fixture objects were
+        written; there were no connectivity probes, Secret reads or infrastructure changes.
+      </p>
+      <h2>Automated results</h2>
+      <ul>
+        <li>
+          <strong>Passed:</strong> <code>scripts/check.sh</code>, including full Go tests and vet, source and documentation checks, 38
+          frontend tests, lint and typecheck.
+        </li>
+        <li>
+          <strong>Passed:</strong> Wails binding generation, production frontend build, macOS packaging and targeted Go race tests for kube
+          and desktop.
+        </li>
+        <li>
+          <strong>Passed:</strong> <code>TestNetworkingInvestigation</code> on both local contexts and denied reads using the existing
+          restricted identity. The IngressClass list was empty on both clusters.
+        </li>
+        <li>
+          <strong>Initial failure, resolved:</strong> Combined integration exited nonzero at the existing workload test's retained CronJob
+          Job assertion. The suspended fixture had no retained Job. The test requires a temporary Job documented in the
+          <a href="../../../tests/integration/README.html">integration setup</a>; it was not created under the read-only constraint. The
+          remainder of that test did not run.
+        </li>
+      </ul>
+      <h2>14 November merge check</h2>
+      <p>
+        On PR #9 head <code>f6ad885</code>, the repository suite and networking integration passed again. The read-only fixture check found
+        no Job owned by the suspended CronJob on either context and no IngressClass on either context. The workload test stopped at the same
+        retained Job assertion. In the reviewed package, keyboard resizing from 52% to 32% preserved the selected EndpointSlices section and
+        its owner UID evidence. The split was restored to 52%.
+      </p>
+      <p>
+        With maintainer authorization, both <code>TestNetworkingInvestigation</code> and <code>TestWorkloadInvestigation</code> passed on
+        head <code>5822659</code> using one temporary CronJob-owned Job per context. The packaged app followed the temporary Ingress on A to
+        its explicitly named IngressClass. The class displayed its controller, name resolution, Overview and YAML. Events were absent, the
+        namespace chooser was disabled, and Back restored the original Ingress Overview and <code>kubesift-explorer</code>
+        namespace. Cleanup verified that the labeled Jobs and their Pods, the Ingress and the IngressClass were absent.
+      </p>
+      <h2>Acceptance coverage</h2>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Case</th>
+              <th>Passed observations</th>
+              <th>Open checks</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>N01</td>
+              <td>
+                Five typed lists and scope tests. Native networking navigation, empty cluster-scoped list, disabled chooser, namespaced
+                YAML/Events. Restricted class and Service lists denied without denying allowed Pods.
+              </td>
+              <td>Denied class alongside a permitted Ingress.</td>
+            </tr>
+            <tr>
+              <td>N02</td>
+              <td>Live ClusterIP and headless inventory. Synthetic named target ports, dual IP families and ExternalName alias.</td>
+              <td>Live dual-stack, selectorless, ExternalName and pending load balancer.</td>
+            </tr>
+            <tr>
+              <td>N03</td>
+              <td>
+                Live owner-confirmed association; synthetic label-only, conflict and recreated Service. Synthetic 100-row cap and unknown
+                omitted conditions.
+              </td>
+              <td>Native manual/conflicting slices, multiple address families and full condition matrix.</td>
+            </tr>
+            <tr>
+              <td>N04</td>
+              <td>
+                Native Slice → UID-verified Pod → Logs and Back. Synthetic missing-version, name-only, replaced UID and cross-namespace
+                references.
+              </td>
+              <td>Native missing/replaced and name-only Pod references.</td>
+            </tr>
+            <tr>
+              <td>N05</td>
+              <td>
+                Native Ingress route, absence of class and name-resolved Service. Synthetic class and default backend resolution, wildcard,
+                named port, inert resource and TLS evidence.
+              </td>
+              <td>Live legacy class and TLS edge cases.</td>
+            </tr>
+            <tr>
+              <td>N06</td>
+              <td>
+                Native empty selectors and allow-all rules with enforcement caveat. Synthetic grouping, omitted types, zero rules, CIDR
+                exceptions and named port ranges.
+              </td>
+              <td>Native complex rules and long selectors.</td>
+            </tr>
+            <tr>
+              <td>N07</td>
+              <td>
+                Synthetic stale source, forged and replaced identities, scope/cursor/permission and payload limits. Revalidated association
+                and same-row reselection on reviewed package.
+              </td>
+              <td>Native delayed/denied/deleted references and cursor expiry; no direct delayed-resolution hook test.</td>
+            </tr>
+            <tr>
+              <td>N08</td>
+              <td>
+                Native A/B tabs retained separate resource kinds and namespace; cluster scope disabled the chooser and restored the saved
+                namespace. Reducer checks cover generation changes.
+              </td>
+              <td>Programmatic namespace change with a nonempty class selected on a live cluster.</td>
+            </tr>
+            <tr>
+              <td>N09</td>
+              <td>
+                Full unit suites; native Pod Logs from the investigation and return through Back. Workload integration passed with the
+                temporary retained Jobs.
+              </td>
+              <td>Full native workload inventory regression matrix.</td>
+            </tr>
+            <tr>
+              <td>N10</td>
+              <td>
+                Native keyboard link activation and investigation journey, dark view, light setting, YAML copy acknowledgement; hostile text
+                escaped in synthetic rendering.
+              </td>
+              <td>Exact clipboard equality, measured 200% zoom and full keyboard/assistive technology matrix.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <h2>Independent review</h2>
+      <ul>
+        <li>
+          KSF-001: Revalidate the captured Service and slice label/owner before opening; conflict and changed label cases have regression
+          coverage.
+        </li>
+        <li>
+          KSF-002: Gate results and errors on the current source UID, scope, section and cursor; invalidate pending detail epochs when
+          inventory clears the selection.
+        </li>
+        <li>
+          KSF-003: Preserve pending Overview evidence when reselecting the same related inventory row; covered by the reducer and reviewed
+          package.
+        </li>
+        <li>KSF-004: Kept unrelated generated binding formatting out of the changes and updated source maps.</li>
+      </ul>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kubernetes development references · KubeSift</title>
+    <link rel="stylesheet" href="../assets/planning.css" />
+    <script src="../assets/theme.js"></script>
+  </head>
+  <body>
+    <header>
+      <a href="../index.html">KubeSift / Engineering</a>
+      <h1>Kubernetes development references</h1>
+      <p>A topic index for developing the client application, not a cluster operations runbook.</p>
+    </header>
+    <main id="content">
+      <p>
+        Use the <a href="../../.agents/skills/kubesift-kubernetes-development/SKILL.md">repository development skill</a> to route a task
+        through these references. This page links evidence; it does not duplicate product requirements or grant execution permissions. Read
+        the <a href="../index.html">planning index</a>, current spec and actual checkout before relying on historical status.
+      </p>
+      <h2 id="owners">Project decisions and code locations</h2>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Question</th>
+              <th>Owning source</th>
+              <th>Inspect when changing code</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>What is in scope?</td>
+              <td>
+                <a href="../product/requirements.html">Requirements</a>, <a href="../roadmap/roadmap.html">roadmap</a>,
+                <a href="../superpowers/plans/README.md">active plans/specs</a>
+              </td>
+              <td>Current branch, diff and portable checkpoint; implementation may be ahead of prose.</td>
+            </tr>
+            <tr>
+              <td>Where does Kubernetes logic belong?</td>
+              <td><a href="../architecture/overview.html">Architecture</a>, <a href="engineering.html#source-layout">source layout</a></td>
+              <td>
+                <a href="../../internal/kube/README.html">Kubernetes domain</a>: typed readers, DTOs, bounded decoding and relationships.
+                Desktop adapters are under internal/desktop.
+              </td>
+            </tr>
+            <tr>
+              <td>What can the app or agent access?</td>
+              <td><a href="../security/security-model.html">Security model</a>, <a href="local-development.html">local development</a></td>
+              <td>
+                Target validation, authorization errors, helper trust and local fixture ownership. Documentation lookup does not authorize
+                cluster actions.
+              </td>
+            </tr>
+            <tr>
+              <td>How is evidence presented?</td>
+              <td><a href="../ux/workflows.html">UX workflows</a>, <a href="../ux/mocks/index.html">approved visual references</a></td>
+              <td>
+                Frontend API wrappers/state/controllers under frontend/src/workloads, workspace views and networking views; generated
+                frontend/bindings contracts.
+              </td>
+            </tr>
+            <tr>
+              <td>What proves completion?</td>
+              <td>
+                <a href="engineering.html#agent-verification">Agent verification</a>, <a href="gitworkflow.md">Git/publication rules</a>
+              </td>
+              <td>
+                Adjacent unit tests, tests/integration and the current technical report. Skill use never implies merge or release authority.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <h2 id="api-contracts">API contracts and versions</h2>
+      <p>
+        Start with the pinned k8s.io/api, apimachinery and client-go versions in <a href="../../go.mod">go.mod</a>. A current web page is
+        not proof an older server supports a field or API. Use Context7 as required by repository instructions for current API/library
+        questions; retain the supporting official URL and version context in the task's spec or validation notes. Re-check references when
+        dependencies or supported servers change; do not upgrade dependencies just to match an example.
+      </p>
+      <ul>
+        <li>
+          <a href="https://kubernetes.io/docs/reference/using-api/api-concepts/">API concepts</a>: discovery, resourceVersion, pagination,
+          continuation, watch and expired resource versions. An empty filtered page alone is not end-of-list.
+        </li>
+        <li>
+          <a href="https://github.com/kubernetes/client-go#compatibility-matrix">client-go compatibility and versioning</a>: select
+          documentation appropriate to the pinned client and tested server, not an assumed universal compatibility claim.
+        </li>
+        <li>
+          <a href="https://kubernetes.io/docs/reference/kubernetes-api/">Kubernetes API reference</a>: exact groups, versions, resource
+          scope, fields and subresources. Verify empty-namespace behavior before routing cluster-scoped resources through namespaced
+          helpers.
+        </li>
+        <li>
+          <a href="https://kubernetes.io/docs/reference/access-authn-authz/rbac/">RBAC authorization</a>: resource versus subresource verbs
+          and namespace versus cluster scope. Permission denial is not evidence of an empty collection.
+        </li>
+        <li>
+          <a href="https://github.com/kubernetes/client-go/tree/master/examples">Official client-go examples</a>: usage patterns only.
+          Inspect pinned APIs and existing KubeSift abstractions before adapting example code.
+        </li>
+      </ul>
+      <h2 id="identity">Identity and relationships</h2>
+      <ul>
+        <li>
+          <a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/owners-dependents/">Owners and dependents</a>:
+          ownerReferences, UIDs and scope restrictions. Compare with
+          <a href="../superpowers/specs/2026-11-13-phase-1c3a-remaining-workloads-design.md">workload ownership/navigation decisions</a>.
+        </li>
+        <li>
+          <a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/names/">Object names and UIDs</a>: distinguish a name
+          lookup from identity preserved across deletion and recreation.
+        </li>
+        <li>
+          <a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/">Labels and selectors</a>: use selector syntax
+          correctly; label association is distinct from ownerReference evidence.
+        </li>
+        <li>
+          <a href="../superpowers/specs/2026-11-13-phase-1c3b-networking-design.md">Networking reference contract</a>: allowlisted name
+          references, captured source identity/version, label-associated slices and cluster-scoped IngressClass. This is the product
+          decision, not a general Kubernetes guarantee.
+        </li>
+      </ul>
+      <h2 id="semantics">Resource semantics</h2>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Area</th>
+              <th>Official references</th>
+              <th>Question to resolve</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Pods and controllers</td>
+              <td>
+                <a href="https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/">Pod lifecycle</a>,
+                <a href="https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/">workload API reference</a>
+              </td>
+              <td>Phase versus container readiness/reason; actual conditions versus an inferred health summary.</td>
+            </tr>
+            <tr>
+              <td>StatefulSet / DaemonSet</td>
+              <td>
+                <a href="https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/">StatefulSets</a>,
+                <a href="https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/">DaemonSets</a>
+              </td>
+              <td>Revision counts versus total Pods; node counts versus replicas. Exact UI mapping belongs in the active workload spec.</td>
+            </tr>
+            <tr>
+              <td>Batch workloads</td>
+              <td>
+                <a href="https://kubernetes.io/docs/concepts/workloads/controllers/job/">Jobs</a>,
+                <a href="https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/">CronJobs</a>
+              </td>
+              <td>Failed attempts versus terminal conditions; schedule timezone, suspension and retained history.</td>
+            </tr>
+            <tr>
+              <td>Service backends</td>
+              <td>
+                <a href="https://kubernetes.io/docs/concepts/services-networking/service/">Services</a>,
+                <a href="https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/">EndpointSlices</a>
+              </td>
+              <td>
+                Headless/selectorless/ExternalName, label association, targetRef and ready/serving/terminating conditions; no inferred
+                traffic test.
+              </td>
+            </tr>
+            <tr>
+              <td>Ingress configuration</td>
+              <td><a href="https://kubernetes.io/docs/concepts/services-networking/ingress/">Ingress and IngressClass</a></td>
+              <td>Backend names/ports, class scope, parameters and TLS references versus actual controller behavior.</td>
+            </tr>
+            <tr>
+              <td>Network policy</td>
+              <td><a href="https://kubernetes.io/docs/concepts/services-networking/network-policies/">NetworkPolicies</a></td>
+              <td>Selector grouping, policyTypes, empty rules and additive policies; configuration is not proof of CNI enforcement.</td>
+            </tr>
+            <tr>
+              <td>Events and serialization</td>
+              <td>
+                <a href="https://kubernetes.io/docs/reference/kubernetes-api/cluster-resources/event-v1/">Event API</a>,
+                <a href="../superpowers/specs/2026-11-12-phase-1c2-workload-investigation-design.md">evidence design</a>
+              </td>
+              <td>
+                UID scoping, optional times/counts, retention, page ordering and API-family fallback. Typed serialization does not preserve
+                arbitrary unknown fields or original manifest formatting.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <h2 id="testing">Testing and evidence</h2>
+      <ul>
+        <li>
+          <a href="https://pkg.go.dev/k8s.io/client-go/testing">client-go fake testing scope and limitations</a>: use fake clients for
+          deterministic request/error/identity logic; they do not substitute for the API server and controllers.
+        </li>
+        <li>
+          <a href="https://github.com/kubernetes/client-go/blob/master/examples/fake-client/main_test.go">Official fake-client example</a>:
+          adapt to existing tests; do not infer live RBAC, defaulting or reconciliation from a fake pass.
+        </li>
+        <li>
+          <a href="local-development.html#explorer-fixtures">Local development fixtures</a> and
+          <a href="../../tests/fixtures/explorer/README.html">owned inventory</a>: select existing synthetic cases and approved explicit
+          contexts before creating test data.
+        </li>
+        <li>
+          <a href="../../tests/integration/README.html">Integration entry points</a>: opt-in real API behavior and two-cluster isolation.
+          Inspect the current test files and environment contract; this index does not start tests or create clusters.
+        </li>
+        <li>
+          <a href="engineering.html#agent-verification">Packaged-app desktop verification</a>: agent-run user journeys,
+          clipboard/keyboard/layout/native behavior and one report of passed, failed and unrun checks. No duplicate manual user UAT by
+          default.
+        </li>
+      </ul>
+      <p>
+        Common evidence mistakes: treating a fake list as proof of server pagination, a browser screenshot as proof of native behavior, a
+        status counter as proof of connectivity, or a current name lookup as proof of the original object's UID. Choose the test layer that
+        can actually falsify the claim and keep remaining limitations explicit.
+      </p>
+      <h2 id="maintenance">Maintaining this index</h2>
+      <p>
+        Curated 13 November 2026. Link official upstream sources rather than copying their manuals. When adding a resource, extend the
+        relevant topic only if the link is reusable; keep phase-specific decisions and exact bounds in the owning spec. This is a
+        development reference, not a claim that all listed features are implemented. Code, server capabilities and current task
+        authorization must be checked independently.
+      </p>
+    </main>
+  </body>
+</html>
