@@ -25,7 +25,6 @@ import { ResourceIcon } from "./ui/ResourceIcon";
 import { InvestigationPanel } from "./ai/InvestigationPanel";
 import { useLogSessions } from "./sessions/useLogSessions";
 import { PodLogs } from "./sessions/PodLogs";
-import { SessionsDock } from "./sessions/SessionsDock";
 import { useWorkloads } from "./workloads/useWorkloads";
 import "./styles.css";
 export default function App() {
@@ -325,10 +324,22 @@ export default function App() {
           </button>
         </Modal>
       )}
-      <SessionsDock
-        controller={logs}
-        connections={Object.fromEntries(Object.entries(state.tabs).map(([id, tab]) => [id, tab.view?.ref ?? null]))}
-      />
+      {logs.sessions
+        .filter((session) => session.status === "cleanup-error")
+        .map((session) => (
+          <div role="alert" key={session.id}>
+            {session.error}
+            <button
+              onClick={() => {
+                void logs.store
+                  .close(session.id)
+                  .catch(() => setStartupError("Log cleanup failed; reconnect the cluster to end its readers."));
+              }}
+            >
+              Retry cleanup
+            </button>
+          </div>
+        ))}
       {palette && <CommandPalette available={false} onCommand={() => setPage("clusters")} onClose={() => setPalette(false)} />}
     </div>
   );

@@ -147,11 +147,10 @@
         the investigation. Full resource identity remains available even when table cells truncate. Log failures may use a red vertical
         gutter alongside the relevant line, with textual severity. Previous-container logs do not enable follow.
       </p>
-      <h2>Sessions dock</h2>
+      <h2>Log lifetime</h2>
       <p>
-        Keep active logs, terminals and port forwards in a persistent bottom dock. Each session identifies cluster, namespace,
-        resource/container, status and stop control. Switching tabs preserves sessions. Dock collapse changes presentation only. Closing a
-        tab with active sessions asks for confirmation, then cancels owned work; it must not silently detach sessions.
+        Phase 1C.2 logs belong to the visible Pod Logs tab. Leaving it stops collection and releases history; returning loads fresh output.
+        These logs have no bottom Sessions dock. Future terminals and port forwards require their own approved persistent-session workflow.
       </p>
       <h2>Global AI panel · Phase 2</h2>
       <p>
@@ -180,11 +179,11 @@
       </p>
       <h3>Log viewer</h3>
       <p>
-        Prioritize log output beneath compact container, instance, line-count and Follow controls. A session shows its container/mode,
-        status and applicable Stop or Resume, Clear view, Close and Auto-scroll actions. Search logs expands on demand; Earlier/Later
-        appears only when retained text exceeds the display chunk. Do not show UUIDs, connection generations, repeated resource paths or
-        routine byte/segment statistics. The Sessions dock retains a concise cluster, namespace and Pod label because it spans targets. Keep
-        errors, omitted-text and gap warnings visible; identity checks and buffering bounds remain internal safeguards.
+        Opening Logs immediately shows one live current-container view. Keep container, Current/Previous, initial line count, Follow and
+        Refresh controls. Previous uses a snapshot. Scroll all retained output, pause automatic scrolling when reading older text, and use
+        Jump to latest to return. Search retained text with previous/next matches. Expand to window fills the application window; Restore
+        size or Escape returns without reopening the reader. Remove Open logs, Clear view, Resume and Close. Display the initial line limit,
+        1 MiB retention bound and actual loss/errors. Rotated server history may be unavailable.
       </p>
       <h2>Themes and window sizes</h2>
       <p>

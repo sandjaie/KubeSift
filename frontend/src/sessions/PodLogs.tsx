@@ -1,10 +1,10 @@
 /*
 Purpose: Choose an actual Pod container and open explicit log evidence.
 Used by: The Pod Logs detail section.
-Responsibilities: Load current container configuration and share the application log store.
+Responsibilities: Load containers and own an abortable stream only while this detail tab is visible.
 Important: Selection resets by Pod UID; previous instances never follow.
 */
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ResourceRef } from "../workloads/model";
 import { readRequest, workloadAPI } from "../workloads/api";
 import type { LogSessionsController } from "./useLogSessions";
@@ -23,9 +23,26 @@ export function PodLogs({
   const [containers, setContainers] = useState<{ name: string; group: string; state: string }[]>([]),
     [container, setContainer] = useState("");
   const [previous, setPrevious] = useState(false),
-    [follow, setFollow] = useState(false),
+    [follow, setFollow] = useState(true),
     [tail, setTail] = useState(200),
     [error, setError] = useState("");
+  const [refresh, setRefresh] = useState(0);
+  const store = controller.store;
+  const target = useMemo(
+    () => ({
+      ...resource,
+      connection: { ...resource.connection },
+    }),
+    [
+      resource.connection.id,
+      resource.connection.generation,
+      resource.apiVersion,
+      resource.kind,
+      resource.namespace,
+      resource.uid,
+      resource.name,
+    ],
+  );
   useEffect(() => {
     let active = true;
     const request = readRequest((id) => workloadAPI.ReadResource(id, { resource }));
@@ -45,7 +62,7 @@ export function PodLogs({
           }),
         );
         setContainers(choices);
-        setContainer(choices.length === 1 ? choices[0].name : "");
+        setContainer(choices.find((choice) => choice.group === "Regular")?.name ?? choices[0]?.name ?? "");
       })
       .catch(() => {
         if (active) setError("Container evidence unavailable; refresh or inspect Overview.");
@@ -55,7 +72,20 @@ export function PodLogs({
       request.cancel();
     };
   }, [resource.connection.id, resource.connection.generation, resource.namespace, resource.uid, resource.name]);
-  const sessions = controller.sessions.filter((s) => s.tab === tab && s.request.resource.uid === resource.uid);
+  useEffect(() => {
+    if (!container || !Number.isInteger(tail) || tail < 1 || tail > 1000) return;
+    const view = new AbortController();
+    setError("");
+    void store
+      .open({ resource: target, container, previous, follow: follow && !previous, tailLines: tail }, tab, label, view.signal)
+      .catch((e) => {
+        if (!view.signal.aborted) setError(e instanceof Error ? e.message : "Cannot load logs");
+      });
+    return () => view.abort();
+  }, [store, target, container, previous, follow, tail, tab, label, refresh]);
+  const sessions = controller.sessions
+    .filter((s) => s.tab === tab && s.request.resource.uid === resource.uid && s.status !== "closing" && s.status !== "cleanup-error")
+    .slice(-1);
   return (
     <div className="evidence-section pod-logs">
       <div className="log-open-controls">
@@ -72,7 +102,7 @@ export function PodLogs({
           value={previous ? "previous" : "current"}
           onChange={(e) => {
             setPrevious(e.target.value === "previous");
-            if (e.target.value === "previous") setFollow(false);
+            setFollow(e.target.value === "current");
           }}
         >
           <option value="current">Current</option>
@@ -84,22 +114,14 @@ export function PodLogs({
         <label className="log-checkbox">
           <input type="checkbox" checked={follow} disabled={previous} onChange={(e) => setFollow(e.target.checked)} /> Follow
         </label>
-        <button
-          disabled={!container || tail < 1 || tail > 1000}
-          onClick={() => {
-            setError("");
-            void controller.store
-              .open({ resource, container, previous, follow, tailLines: tail }, tab, label)
-              .catch((e) => setError(e instanceof Error ? e.message : "Cannot open logs"));
-          }}
-        >
-          Open logs
+        <button disabled={!container || !Number.isInteger(tail) || tail < 1 || tail > 1000} onClick={() => setRefresh((n) => n + 1)}>
+          Refresh
         </button>
       </div>
       {previous && <p>Previous instance logs may be unavailable.</p>}
       {error && <p role="alert">{error}</p>}
       {sessions.map((s) => (
-        <LogViewer embedded key={s.id} session={s} store={controller.store} connection={resource.connection} />
+        <LogViewer key={s.id} session={s} />
       ))}
     </div>
   );

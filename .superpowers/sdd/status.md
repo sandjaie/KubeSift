@@ -13,3 +13,5 @@ Updated 2026-11-13. Active branch: `feature/phase-1c2-workload-investigation`. W
 - Delegated native UI walkthrough recorded in the technical report and local delegated-ui-uat.md. Rebuilt confirmation and relaunch cleanup verified. Remaining fixture and layout coverage is listed in the local ledger.
 
 - UAT refinements verified: first-show work-area sizing, automatic bounded Deployment Pod traversal, removal of Identity & source, and simplified Logs controls without UUID/generation/repeated paths. Native local checks and applicable automated checks passed; see the technical report. PR #7 remains unmerged.
+
+- Live-log UAT refinement on the new Mac: one visible live view, abort on departure, fresh return, full retained-text scrolling, search and window expansion. Product Sessions dock removed. See the updated technical report and UAT checklist. User acceptance remains pending; PR #7 requires explicit merge approval.

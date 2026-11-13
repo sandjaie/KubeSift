@@ -1505,3 +1505,23 @@ textarea::placeholder {
   flex: 1;
   min-width: 120px;
 }
+
+.log-expanded {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: var(--bg);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+.log-expanded .log-text {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+}
+.log-text mark {
+  background: var(--accent);
+  color: var(--bg);
+}

@@ -252,11 +252,11 @@ kubectl --context kind-dev-local-b -n kubesift-explorer get pods,deployments</pr
         </p>
       </article>
       <article>
-        <h2>9. Current container snapshot</h2>
-        <p><strong>Steps:</strong> Select web Pod → Logs. Keep Current and Follow off; choose app and Open logs.</p>
+        <h2>9. Automatic live logs</h2>
+        <p><strong>Steps:</strong> Select web Pod → Logs. Observe output immediately; turn Follow off for a snapshot.</p>
         <p>
-          <strong>Expected:</strong> Timestamped bounded tail completes; cluster/namespace/Pod remain identified by the surrounding view and
-          container/mode by the session; UUID/generation are not displayed. No automatic new session on section changes.
+          <strong>Expected:</strong> One log box loads automatically. Current follows by default. The selected container and initial line
+          limit are visible.
         </p>
         <label
           >Result
@@ -279,7 +279,8 @@ kubectl --context kind-dev-local-b -n kubesift-explorer get pods,deployments</pr
         </p>
         <p>
           <strong>Expected:</strong> Previous disables Follow. Available prior logs or honest server availability text are shown. Record
-          unavailable previous evidence as Blocked, not Pass. Multiple containers require explicit selection.
+          unavailable previous evidence as Blocked, not Pass. The first regular container loads by default; selecting another replaces the
+          view.
         </p>
         <label
           >Result
@@ -295,11 +296,14 @@ kubectl --context kind-dev-local-b -n kubesift-explorer get pods,deployments</pr
         </p>
       </article>
       <article>
-        <h2>11. Follow, Stop, Clear and scroll</h2>
-        <p><strong>Steps:</strong> Follow the web Pod logs. Pause Auto-scroll, Clear view, enable Auto-scroll, then Stop.</p>
+        <h2>11. Scroll, search and expand</h2>
         <p>
-          <strong>Expected:</strong> Clear retains target and any loss warnings and does not stop transport. Auto-scroll follows newest
-          output; paused scroll remains still. Stop retains evidence; Resume warns of overlap/gaps.
+          <strong>Steps:</strong> Scroll to the oldest retained output. Search for heartbeat; use next/previous matches. Expand to window,
+          then press Escape.
+        </p>
+        <p>
+          <strong>Expected:</strong> Reading older text pauses automatic scrolling. Jump to latest returns to incoming output. Search
+          highlights a match. Expansion preserves the reader and Escape restores the panel.
         </p>
         <label
           >Result
@@ -315,14 +319,14 @@ kubectl --context kind-dev-local-b -n kubesift-explorer get pods,deployments</pr
         </p>
       </article>
       <article>
-        <h2>12. Shared Sessions and navigation</h2>
+        <h2>12. Leave and return</h2>
         <p>
-          <strong>Steps:</strong> With web Follow running, open Sessions, switch Settings, change Light/Dark/System, return and switch
-          cluster tabs. Briefly background then restore.
+          <strong>Steps:</strong> With live logs running, select Overview, then return to Logs. Repeat through Settings and cluster
+          navigation.
         </p>
         <p>
-          <strong>Expected:</strong> One logical session persists with the original target; no duplicate readers. Observe and note
-          gaps/loss; do not assume lossless background capture.
+          <strong>Expected:</strong> Leaving releases the reader and retained output. Returning starts a fresh single view. No Sessions dock
+          or duplicate log boxes appear.
         </p>
         <label
           >Result
@@ -338,14 +342,14 @@ kubectl --context kind-dev-local-b -n kubesift-explorer get pods,deployments</pr
         </p>
       </article>
       <article>
-        <h2>13. Bounds, loss and capacity</h2>
+        <h2>13. Bounds and filter changes</h2>
         <p>
-          <strong>Steps:</strong> Open up to eight short snapshots. Attempt a ninth; close one and retry. Expand Search logs; use
-          Earlier/Later when enough synthetic text exists.
+          <strong>Steps:</strong> Change container, Current/Previous and line count. Refresh. Inspect a prepared high-volume fixture if
+          available.
         </p>
         <p>
-          <strong>Expected:</strong> Ninth session asks to close one; no silent eviction. Text is ≤1 MiB/session and display ≤64 KiB.
-          High-volume overflow variant is Blocked without a prepared safe fixture.
+          <strong>Expected:</strong> Changes replace output in one box. Retention stays bounded to 1 MiB with visible omissions; all
+          retained output is scrollable. Mark overflow testing Blocked if no safe fixture is prepared.
         </p>
         <label
           >Result

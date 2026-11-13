@@ -4,7 +4,7 @@
   <h1>Product log sessions</h1>
   <p>
     logStore.ts owns bounded UTF-8 evidence, segment identities and offscreen acknowledgements. useLogSessions.ts mounts one application
-    subscription. PodLogs.tsx chooses explicit containers; LogViewer.tsx renders bounded windows; SessionsDock.tsx shares those same
-    sessions across navigation. logStore.test.ts protects lifecycle and retention.
+    subscription. PodLogs.tsx owns the visible tab’s abortable request; LogViewer.tsx shows searchable retained text and window expansion.
+    Leaving Logs releases its stream and history. logStore.test.ts protects lifecycle and retention.
   </p>
 </html>

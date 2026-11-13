@@ -1,121 +1,119 @@
 /*
-Purpose: Render a bounded window of shared retained log evidence.
-Used by: Pod Logs and the global Sessions dock.
-Responsibilities: Separate Stop, Clear, scroll pause and explicit Resume with gap disclosure.
-Important: Rendering never subscribes or opens a native log reader.
+Purpose: Show one live, searchable log view with window expansion.
+Used by: The visible Pod Logs tab.
+Responsibilities: Scroll all retained text, find matches and pause scrolling while reading history.
+Important: The store bounds text at 1 MiB; this view never opens a native reader.
 */
 import { useEffect, useRef, useState } from "react";
-import { displayWindow, scrollLogViewport, type LogSession, type LogStore } from "./logStore";
-import { Modal } from "../ui/ReviewDialog";
-import type { ConnectionRef } from "../bridge";
-export function LogViewer({
-  session: s,
-  store,
-  connection,
-  embedded = false,
-}: {
-  session: LogSession;
-  store: LogStore;
-  connection?: ConnectionRef;
-  embedded?: boolean;
-}) {
-  const [follow, setFollow] = useState(true),
-    [offset, setOffset] = useState(0),
-    [query, setQuery] = useState(""),
-    [notice, setNotice] = useState("");
+import { findLogMatch, scrollLogViewport, type LogSession } from "./logStore";
+export function LogViewer({ session: s }: { session: LogSession }) {
+  const [following, setFollowing] = useState(true);
+  const [expanded, setExpanded] = useState(false);
+  const [query, setQuery] = useState("");
+  const [match, setMatch] = useState(-1);
+  const [notice, setNotice] = useState("");
   const viewport = useRef<HTMLPreElement>(null);
-  const [resumeTarget, setResumeTarget] = useState<{ connection?: ConnectionRef; changed: boolean } | null>(null);
-  useEffect(() => scrollLogViewport(viewport.current, follow), [s.text, follow]);
-  const bytes = new TextEncoder().encode(s.text).length;
-  const start = follow ? Math.max(0, bytes - 65536) : Math.min(offset, Math.max(0, bytes - 1));
-  const attempt = (fn: () => Promise<unknown>) => {
-    void fn().catch(() => setNotice("Session action failed; retry or close the session."));
-  };
+  const selected = useRef<HTMLElement>(null);
+  const expandButton = useRef<HTMLButtonElement>(null);
+  useEffect(() => scrollLogViewport(viewport.current, following), [s.text, following, expanded]);
+  useEffect(() => {
+    if (match >= 0) selected.current?.scrollIntoView({ block: "center" });
+  }, [match, query]);
+  useEffect(() => {
+    if (!expanded) return;
+    expandButton.current?.focus();
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setExpanded(false);
+        expandButton.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", escape);
+    return () => window.removeEventListener("keydown", escape);
+  }, [expanded]);
+  // Retention eviction changes offsets, so an old search selection must be discarded.
+  useEffect(() => {
+    setMatch(-1);
+  }, [s.dropped]);
+  function find(backwards: boolean) {
+    if (!query) return;
+    const next = findLogMatch(s.text, query, match, backwards);
+    setFollowing(false);
+    setMatch(next);
+    setNotice(next < 0 ? "No match in retained logs" : "Match in retained logs");
+    if (next === match) selected.current?.scrollIntoView({ block: "center" });
+  }
   return (
-    <div className="log-viewer">
-      {resumeTarget && (
-        <Modal title="Resume log session?" onCancel={() => setResumeTarget(null)}>
-          <p>
-            {resumeTarget.changed ? "Confirm the newly connected target. " : ""}
-            {s.label} / {s.request.resource.namespace} / {s.request.resource.name} / {s.request.container}
-          </p>
-          <p>The original Pod is checked again before resuming. Logs may overlap or contain a gap.</p>
-          <button
-            className="primary"
-            onClick={() => {
-              const target = resumeTarget.connection;
-              setResumeTarget(null);
-              attempt(() => store.resume(s.id, target));
-            }}
-          >
-            Resume logs
-          </button>
-        </Modal>
-      )}
-      {!embedded && (
-        <p className="log-target">
-          {s.label} · {s.request.resource.namespace} · {s.request.resource.name}
-        </p>
-      )}
+    <section
+      className={`log-viewer${expanded ? " log-expanded" : ""}`}
+      aria-label="Container logs"
+      role={expanded ? "dialog" : undefined}
+      aria-modal={expanded || undefined}
+      onKeyDown={(e) => {
+        if (!expanded || e.key !== "Tab") return;
+        const nodes = Array.from(e.currentTarget.querySelectorAll<HTMLElement>('button:not(:disabled),input,[tabindex="0"]'));
+        const first = nodes[0],
+          last = nodes[nodes.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last?.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first?.focus();
+        }
+      }}
+    >
       <div className="log-toolbar">
-        <strong className="log-session-name">
+        <strong>
           {s.request.container} · {s.request.previous ? "Previous" : "Current"}
         </strong>
         <span className="log-status">
           {s.status === "complete" ? "Loaded" : s.status === "running" ? (s.request.follow ? "Live" : "Loading") : s.status}
         </span>
-        {s.active && <button onClick={() => attempt(() => store.stop(s.id))}>Stop</button>}
-        <button disabled={!s.text} onClick={() => store.clear(s.id)}>
-          Clear view
+        <button ref={expandButton} aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>
+          {expanded ? "Restore size" : "Expand to window"}
         </button>
-        {!s.active && (
+        {!following && (
           <button
             onClick={() => {
-              const changed =
-                connection &&
-                (connection.id !== s.request.resource.connection.id || connection.generation !== s.request.resource.connection.generation);
-              setResumeTarget({ connection, changed: !!changed });
+              setMatch(-1);
+              setFollowing(true);
             }}
           >
-            Resume
+            Jump to latest
           </button>
         )}
-        <button onClick={() => attempt(() => store.close(s.id))}>Close</button>
-        <label className="log-checkbox">
-          <input
-            type="checkbox"
-            checked={follow}
-            onChange={(e) => {
-              setOffset(start);
-              setFollow(e.target.checked);
-            }}
-          />{" "}
-          Auto-scroll
-        </label>
       </div>
-      <details className="log-search">
-        <summary>Search logs</summary>
-        <div className="log-toolbar">
-          <input placeholder="Search logs…" aria-label="Search retained logs" value={query} onChange={(e) => setQuery(e.target.value)} />
-          <button
-            disabled={!query}
-            onClick={() => {
-              const index = s.text.toLowerCase().indexOf(query.toLowerCase());
-              if (index >= 0) {
-                setOffset(new TextEncoder().encode(s.text.slice(0, index)).length);
-                setFollow(false);
-                setNotice("First match in retained text");
-              } else setNotice("No match in retained text");
-            }}
-          >
-            Find
-          </button>
-        </div>
-      </details>
+      {expanded && (
+        <p className="log-target">
+          {s.label} · {s.request.resource.namespace} · {s.request.resource.name}
+        </p>
+      )}
+      <div className="log-toolbar">
+        <input
+          aria-label="Search logs"
+          placeholder="Search logs…"
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setMatch(-1);
+            setNotice("");
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") find(e.shiftKey);
+          }}
+        />
+        <button disabled={!query} onClick={() => find(true)}>
+          Previous match
+        </button>
+        <button disabled={!query} onClick={() => find(false)}>
+          Next match
+        </button>
+      </div>
       {notice && <p role="status">{notice}</p>}
       {s.dropped > 0 && (
         <p className="warning" role="status">
-          Some earlier log text is unavailable ({s.dropped.toLocaleString()} bytes omitted).
+          Earlier output was discarded at the retention limit ({s.dropped.toLocaleString()} bytes omitted).
         </p>
       )}
       {(s.loss || s.error) && (
@@ -123,31 +121,29 @@ export function LogViewer({
           {s.error || s.loss}
         </p>
       )}
-      <pre ref={viewport} className="log-text">
-        {displayWindow(s.text, start) || (s.active ? "Waiting for logs…" : "No log output.")}
+      <pre
+        ref={viewport}
+        className="log-text"
+        tabIndex={0}
+        aria-label="Log output"
+        onScroll={(e) => {
+          const node = e.currentTarget;
+          setFollowing(node.scrollHeight - node.scrollTop - node.clientHeight < 8);
+        }}
+      >
+        {match >= 0 ? (
+          <>
+            {s.text.slice(0, match)}
+            <mark ref={selected}>{s.text.slice(match, match + query.length)}</mark>
+            {s.text.slice(match + query.length)}
+          </>
+        ) : (
+          s.text || (s.active ? "Waiting for logs…" : "No log output.")
+        )}
       </pre>
-      {bytes > 65536 && (
-        <nav className="log-toolbar" aria-label="Log pages">
-          <button
-            disabled={start === 0}
-            onClick={() => {
-              setFollow(false);
-              setOffset(Math.max(0, start - 65536));
-            }}
-          >
-            Earlier
-          </button>
-          <button
-            disabled={start + 65536 >= bytes}
-            onClick={() => {
-              setFollow(false);
-              setOffset(start + 65536);
-            }}
-          >
-            Later
-          </button>
-        </nav>
-      )}
-    </div>
+      <p className="muted">
+        Initial request: last {s.request.tailLines} lines · Up to 1 MiB retained. Older rotated logs may be unavailable.
+      </p>
+    </section>
   );
 }

@@ -32,6 +32,22 @@ const encoder = new TextEncoder();
 export function scrollLogViewport(viewport: { scrollTop: number; scrollHeight: number } | null, enabled: boolean) {
   if (viewport && enabled) viewport.scrollTop = viewport.scrollHeight;
 }
+export function findLogMatch(text: string, query: string, current: number, backwards: boolean): number {
+  if (!query) return -1;
+  const literal = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = new RegExp(`(?=${literal})`, "giu");
+  let first = -1,
+    last = -1,
+    previous = -1;
+  for (const match of text.matchAll(pattern)) {
+    const index = match.index;
+    if (first < 0) first = index;
+    last = index;
+    if (!backwards && index > current) return index;
+    if (index < current) previous = index;
+  }
+  return backwards ? (previous >= 0 ? previous : last) : first;
+}
 function boundedText(text: string, limit: number) {
   const bytes = encoder.encode(text);
   if (bytes.length <= limit) return { text, dropped: 0 };
@@ -39,20 +55,13 @@ function boundedText(text: string, limit: number) {
   while (start < bytes.length && (bytes[start] & 0xc0) === 0x80) start++;
   return { text: new TextDecoder().decode(bytes.subarray(start)), dropped: start };
 }
-export function displayWindow(text: string, offset: number) {
-  const bytes = encoder.encode(text);
-  let start = Math.max(0, Math.min(bytes.length, offset));
-  while (start < bytes.length && (bytes[start] & 0xc0) === 0x80) start++;
-  let end = Math.min(bytes.length, start + 65536);
-  while (end > start && end < bytes.length && (bytes[end] & 0xc0) === 0x80) end--;
-  return new TextDecoder().decode(bytes.subarray(start, end));
-}
 export function createLogStore(bridge: LogBridge) {
   let sessions: LogSession[] = [];
   const listeners = new Set<() => void>();
   const decoders = new Map<string, TextDecoder>();
   const sequences = new Map<string, number>();
   const operations = new Map<string, symbol>();
+  const abortListeners = new Map<string, () => void>();
   let off: (() => void) | null = null;
   const notify = () => listeners.forEach((fn) => fn());
   const update = (id: string, patch: Partial<LogSession>) => {
@@ -97,16 +106,35 @@ export function createLogStore(bridge: LogBridge) {
     }
   }
   async function start(id: string, req: LogRequest, operation: symbol) {
+    const original = find(id);
     const ref = await bridge.open(req);
     const s = find(id);
     if (!s || !s.active || operations.get(id) !== operation) {
-      await bridge.close(ref);
+      try {
+        await bridge.close(ref);
+      } catch (error) {
+        if (original && !find(id)) {
+          sessions = [
+            ...sessions,
+            {
+              ...original,
+              ref,
+              active: false,
+              status: "cleanup-error",
+              error: "Could not release the previous log reader. Retry cleanup.",
+            },
+          ];
+          notify();
+        }
+        throw error;
+      }
       return;
     }
     update(id, { ref, status: "running" });
     await bridge.activate(ref);
   }
-  async function open(request: LogRequest, tab: string, label: string) {
+  async function open(request: LogRequest, tab: string, label: string, signal?: AbortSignal) {
+    if (signal?.aborted) throw new Error("Log view closed");
     if (sessions.length >= 8) throw new Error("Close a session first; maximum eight retained log sessions.");
     const id = crypto.randomUUID();
     sessions = [
@@ -117,6 +145,15 @@ export function createLogStore(bridge: LogBridge) {
     notify();
     const operation = Symbol();
     operations.set(id, operation);
+    if (signal) {
+      const abort = () => {
+        void close(id).catch(() =>
+          update(id, { status: "cleanup-error", error: "Could not release the previous log reader. Retry cleanup." }),
+        );
+      };
+      signal.addEventListener("abort", abort, { once: true });
+      abortListeners.set(id, () => signal.removeEventListener("abort", abort));
+    }
     try {
       await start(id, request, operation);
     } catch (e) {
@@ -135,8 +172,15 @@ export function createLogStore(bridge: LogBridge) {
     const s = find(id);
     if (!s) return;
     operations.delete(id);
+    abortListeners.get(id)?.();
+    abortListeners.delete(id);
     update(id, { active: false, status: "closing" });
-    if (s.ref) await bridge.close(s.ref);
+    try {
+      if (s.ref) await bridge.close(s.ref);
+    } catch (error) {
+      update(id, { status: "cleanup-error", error: "Could not release the previous log reader. Retry cleanup." });
+      throw error;
+    }
     sessions = sessions.filter((s) => s.id !== id);
     decoders.delete(id);
     sequences.delete(id);
