@@ -127,3 +127,21 @@ func (s *ExplorerService) ReadNetworking(id string, req kube.PageRequest) (kube.
 	defer done()
 	return s.core.kube.ReadNetworking(ctx, req)
 }
+
+func (s *ExplorerService) ReadServiceEndpointSlices(id string, req kube.RelatedRequest) (kube.ServiceSlicePage, error) {
+	ctx, done, err := s.beginWorkloadRead(id)
+	if err != nil {
+		return kube.ServiceSlicePage{}, err
+	}
+	defer done()
+	return s.core.kube.ReadServiceEndpointSlices(ctx, req)
+}
+
+func (s *ExplorerService) ResolveNetworkReference(id string, req kube.NetworkReferenceRequest) (kube.ResolvedNetworkReference, error) {
+	ctx, done, err := s.beginWorkloadRead(id)
+	if err != nil {
+		return kube.ResolvedNetworkReference{}, err
+	}
+	defer done()
+	return s.core.kube.ResolveNetworkReference(ctx, req)
+}

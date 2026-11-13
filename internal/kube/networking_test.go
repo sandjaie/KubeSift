@@ -87,3 +87,86 @@ func TestNetworkingInventoryScope(t *testing.T) {
 		})
 	}
 }
+
+func TestNetworkingReferenceChecksSourceBeforeTarget(t *testing.T) {
+	var targetCalls atomic.Int32
+	s, c := workloadServer(t, func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/apis/networking.k8s.io/v1/namespaces/test/ingresses/route":
+			fmt.Fprint(w, `{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"name":"route","namespace":"test","uid":"source","resourceVersion":"2"},"spec":{"ingressClassName":"shared","defaultBackend":{"service":{"name":"web","port":{"name":"http"}}}}}`)
+		case "/api/v1/namespaces/test/services/web":
+			targetCalls.Add(1)
+			fmt.Fprint(w, `{"apiVersion":"v1","kind":"Service","metadata":{"name":"web","namespace":"test","uid":"target"}}`)
+		case "/apis/networking.k8s.io/v1/ingressclasses/shared":
+			targetCalls.Add(1)
+			fmt.Fprint(w, `{"apiVersion":"networking.k8s.io/v1","kind":"IngressClass","metadata":{"name":"shared","uid":"class"}}`)
+		default:
+			t.Errorf("unexpected API call %s", r.URL.Path)
+			http.NotFound(w, r)
+		}
+	})
+	source := ResourceRef{Connection: c, Kind: "Ingress", APIVersion: "networking.k8s.io/v1", Namespace: "test", Name: "route", UID: "source"}
+	target := ResourceRef{Connection: c, Kind: "Service", APIVersion: "v1", Namespace: "test", Name: "web"}
+	for _, change := range []func(*NetworkReferenceRequest){
+		func(r *NetworkReferenceRequest) { r.SourceVersion = "old" },
+		func(r *NetworkReferenceRequest) { r.Target.Name = "unreferenced" },
+		func(r *NetworkReferenceRequest) { r.Target.Namespace = "other" },
+		func(r *NetworkReferenceRequest) { r.Target.Connection.Generation++ },
+		func(r *NetworkReferenceRequest) { r.Target.UID = "forged" },
+	} {
+		req := NetworkReferenceRequest{Source: source, SourceVersion: "2", Target: target}
+		change(&req)
+		if _, err := s.ResolveNetworkReference(context.Background(), req); err == nil {
+			t.Fatalf("unsafe reference accepted: %+v", req)
+		}
+	}
+	if targetCalls.Load() != 0 {
+		t.Fatal("invalid request reached target")
+	}
+	for _, ref := range []ResourceRef{target, {Connection: c, Kind: "IngressClass", APIVersion: "networking.k8s.io/v1", Name: "shared"}} {
+		result, err := s.ResolveNetworkReference(context.Background(), NetworkReferenceRequest{Source: source, SourceVersion: "2", Target: ref})
+		if err != nil || result.IdentityEvidence != "name-resolved" || result.Resource.UID == "" {
+			t.Fatal(result, err)
+		}
+	}
+}
+
+func TestServiceSliceAssociation(t *testing.T) {
+	s, c := workloadServer(t, func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/api/v1/namespaces/test/services/web":
+			fmt.Fprint(w, `{"apiVersion":"v1","kind":"Service","metadata":{"name":"web","namespace":"test","uid":"current"}}`)
+		case "/apis/discovery.k8s.io/v1/namespaces/test/endpointslices":
+			if r.URL.Query().Get("labelSelector") != "kubernetes.io/service-name=web" || r.URL.Query().Get("limit") != "100" {
+				t.Error("unbounded association")
+			}
+			fmt.Fprint(w, `{"apiVersion":"discovery.k8s.io/v1","kind":"EndpointSliceList","metadata":{"continue":"next"},"items":[`)
+			for i, owner := range []string{"", "current", "old"} {
+				if i > 0 {
+					fmt.Fprint(w, ",")
+				}
+				fmt.Fprintf(w, `{"metadata":{"name":"slice-%d","namespace":"test","uid":"s%d","labels":{"kubernetes.io/service-name":"web"},"ownerReferences":[{"apiVersion":"v1","kind":"Service","name":"web","uid":%q}]},"addressType":"IPv4","endpoints":[]}`, i, i, owner)
+			}
+			fmt.Fprint(w, `]}`)
+		default:
+			t.Errorf("unexpected API call %s", r.URL.Path)
+			http.NotFound(w, r)
+		}
+	})
+	ref := ResourceRef{Connection: c, Kind: "Service", APIVersion: "v1", Namespace: "test", Name: "web", UID: "current"}
+	page, e := s.ReadServiceEndpointSlices(context.Background(), RelatedRequest{Resource: ref})
+	if e != nil || page.Complete || len(page.Items) != 3 {
+		t.Fatal(page, e)
+	}
+	for i, want := range []string{"label-only", "owner-confirmed", "owner-conflict"} {
+		if page.Items[i].Association != want {
+			t.Fatal(page.Items[i])
+		}
+	}
+	ref.UID = "old"
+	if _, e = s.ReadServiceEndpointSlices(context.Background(), RelatedRequest{Resource: ref, Cursor: page.Page.NextCursor}); e == nil {
+		t.Fatal("replaced Service accepted")
+	}
+}

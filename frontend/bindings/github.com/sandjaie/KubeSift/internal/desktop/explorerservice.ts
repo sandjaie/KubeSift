@@ -99,6 +99,10 @@ export function ReadResourceYAML(id: string, req: kube$0.DetailRequest): $Cancel
   return $Call.ByID(1865491731, id, req);
 }
 
+export function ReadServiceEndpointSlices(id: string, req: kube$0.RelatedRequest): $CancellablePromise<kube$0.ServiceSlicePage> {
+  return $Call.ByID(414000693, id, req);
+}
+
 export function ReadWorkloads(id: string, req: kube$0.PageRequest): $CancellablePromise<kube$0.WorkloadPage> {
   return $Call.ByID(415147446, id, req);
 }
@@ -116,6 +120,13 @@ export function RemoveSource(id: string, confirmed: boolean): $CancellablePromis
  */
 export function ResetSources(): $CancellablePromise<void> {
   return $Call.ByID(498698343);
+}
+
+export function ResolveNetworkReference(
+  id: string,
+  req: kube$0.NetworkReferenceRequest,
+): $CancellablePromise<kube$0.ResolvedNetworkReference> {
+  return $Call.ByID(3658289995, id, req);
 }
 
 export function ReviewHelper(source: string, snapshot: string, name: string): $CancellablePromise<trust$0.PreviewRecord> {

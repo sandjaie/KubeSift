@@ -6,7 +6,10 @@ Important: A label association does not establish ownership or connectivity.
 */
 package kube
 
-import "time"
+import (
+	"github.com/sandjaie/KubeSift/internal/model"
+	"time"
+)
 
 type NetworkRow struct {
 	Resource   ResourceRef `json:"resource"`
@@ -16,4 +19,25 @@ type NetworkRow struct {
 type NetworkPage struct {
 	Items []NetworkRow `json:"items"`
 	Page  PageInfo     `json:"page"`
+}
+
+type ServiceSliceRow struct {
+	Slice       NetworkRow `json:"slice"`
+	Association string     `json:"association"`
+}
+type ServiceSlicePage struct {
+	Items    []ServiceSliceRow `json:"items"`
+	Page     PageInfo          `json:"page"`
+	Complete bool              `json:"complete"`
+	Problem  *model.Problem    `json:"problem"`
+}
+
+type NetworkReferenceRequest struct {
+	Source        ResourceRef `json:"source"`
+	SourceVersion string      `json:"sourceVersion"`
+	Target        ResourceRef `json:"target"`
+}
+type ResolvedNetworkReference struct {
+	Resource         ResourceRef `json:"resource"`
+	IdentityEvidence string      `json:"identityEvidence"`
 }
