@@ -24,8 +24,6 @@
       <h2>Engineering</h2>
       <a href="engineering/engineering.html">Playbook</a><a href="engineering/local-development.html">Local development</a
       ><a href="engineering/toolchain.html">Toolchain</a>
-      <h2>Working</h2>
-      <a href="superpowers/validation/phase-1a.html">Phase 1A validation</a>
     </aside>
     <header>
       <a href="index.html">KubeSift / Planning</a>
@@ -33,55 +31,11 @@
       <p>Local-first · Multi-cluster · Operations first · AI-assisted investigation</p>
     </header>
     <main id="content">
-      <p class="callout">
-        Phase 1C.1 was merged into develop through PR #3 as <code>395ef7a</code>, with maintainer authorization after the qualified agent
-        UAT. See the <a href="superpowers/validation/phase-1c1.html">technical report and screenshots</a> and
-        <a href="superpowers/validation/phase-1c1-ui-uat.html">UI UAT checklist</a>. Agent UAT passed 12 core/UI cases; 3 optional cases
-        remain blocked. Later workspace refinements and release history are recorded below; they do not turn unrun checks into passes.
-      </p>
-      <p>
-        For current progress, use <a href="status.md">status and evidence</a>, which links the tracked Superpowers checkpoint, task plans
-        and validation reports. The roadmap records scope and sequence only.
-      </p>
-      <h2>Workload explorer refinement</h2>
-      <p>
-        The merged refinement covers compact workload details, namespace-kind retention, literal technical inputs and the read-only
-        ReplicaSets explorer. See the <a href="superpowers/validation/workload-explorer-refinement.html">technical report</a> and
-        <a href="superpowers/validation/workload-explorer-refinement-ui-uat.html">optional historical user checklist</a>.
-      </p>
-      <h2>Phase 1C.3a · Remaining workloads</h2>
-      <p>
-        Phase 1C.3a adds read-only StatefulSets, DaemonSets, Jobs and CronJobs with related Pod and Job navigation. The maintainer confirmed
-        UAT completion. See the
-        <a href="superpowers/specs/2026-11-13-phase-1c3a-remaining-workloads-design.md">design specification</a>,
-        <a href="superpowers/plans/2026-11-13-phase-1c3a-remaining-workloads.md">implementation plan</a>,
-        <a href="superpowers/validation/phase-1c3a.html">technical validation</a> and
-        <a href="superpowers/validation/phase-1c3a-ui-uat.html">packaged-app UAT findings</a>.
-      </p>
-      <p>
-        Acceptance follows <a href="engineering/engineering.html#agent-verification">agent-run automated and desktop verification</a>. The
-        user is not required to repeat verified workflows. Existing user checklists preserve history; current validation reports own
-        remaining failures and unrun checks.
-      </p>
-      <h2>Phase 1C.3b · Read-only networking</h2>
-      <p>
-        Phase 1C.3b adds read-only Services, EndpointSlices, Ingresses, IngressClasses and NetworkPolicies, with Ingress → Service →
-        EndpointSlice → Pod investigation. See the
-        <a href="superpowers/specs/2026-11-13-phase-1c3b-networking-design.md">design specification</a>,
-        <a href="superpowers/plans/2026-11-13-phase-1c3b-networking.md">implementation plan</a> and
-        <a href="superpowers/validation/phase-1c3b.html">validation report</a> for verified and open checks. See
-        <a href="https://github.com/sandjaie/KubeSift/pull/9">PR #9</a> for integration status.
-      </p>
-      <h2>Next: Phase 1C.3c · Namespace policy and configuration</h2>
-      <p>
-        Planned, not implemented: Namespaces, ResourceQuotas, LimitRanges, ConfigMaps and metadata-only Secrets with explicit Pod
-        configuration links. Read the <a href="superpowers/specs/2026-11-14-phase-1c3c-configuration-design.md">specification</a> and
-        <a href="superpowers/plans/2026-11-14-phase-1c3c-configuration.md">implementation plan</a> in the separate implementation session.
-        No worktree. The <a href="roadmap/roadmap.html#phase-1c3-sequence">roadmap now fixes the remaining increment order</a>.
-      </p>
-      <h2>Read the plan</h2>
+      <p>Find the documents that define KubeSift’s scope, design and engineering practices.</p>
+      <h2>Project documents</h2>
       <div class="cards">
-        <a href="product/requirements.html"><strong>Product requirements</strong><span>Scope, users and acceptance journeys</span></a
+        <a href="status.md"><strong>Status and evidence</strong><span>Current progress, plans and verification reports</span></a
+        ><a href="product/requirements.html"><strong>Product requirements</strong><span>Scope, users and acceptance journeys</span></a
         ><a href="architecture/overview.html"><strong>Architecture</strong><span>Wails, Go, sessions and integration boundaries</span></a
         ><a href="security/security-model.html"
           ><strong>Security &amp; AI</strong><span>Credentials, operations and evidence sharing</span></a
@@ -91,37 +45,6 @@
         ><a href="ux/workflows.html"><strong>UX workflows</strong><span>Screen behavior and interaction requirements</span></a
         ><a href="engineering/engineering.html"><strong>Engineering</strong><span>Branching, tests, review and release</span></a>
       </div>
-      <h2>Current implementation and next specification</h2>
-      <p>
-        Workspace refinement PR #4 is merged as <code>d73f9c4</code>. Preserve its neutral dark palette, compact controls, searchable
-        namespace selector, remembered detail split and distinct Pod phase colours. See the
-        <a href="superpowers/specs/2026-11-12-dark-palette-workspace-controls-design.md">approved refinement specification</a> and
-        <a href="superpowers/validation/2026-11-12-workspace-refinement.html">qualified validation report</a>. Repository history includes
-        the 0.3.0 release merge and the subsequent KubeSift macOS app-name fix (<code>c690a30</code>).
-      </p>
-      <p>
-        The <a href="superpowers/specs/2026-11-12-phase-1c2-workload-investigation-design.md">Phase 1C.2 workload investigation spec</a> was
-        approved on 2026-11-12. Its
-        <a href="superpowers/plans/2026-11-12-phase-1c2-workload-investigation.md">implementation plan</a> covers Pods, Deployments,
-        details, read-only YAML, events, logs, tests and a separate user UI UAT checklist. Phase 1C.2 merged into develop as
-        <code>c74940a</code> through <a href="https://github.com/sandjaie/KubeSift/pull/7">PR #7</a>. See the
-        <a href="superpowers/validation/phase-1c2.html">technical validation</a> and the
-        <a href="superpowers/validation/phase-1c2-ui-uat.html">user UI UAT checklist</a>. The historical user checklist is optional under
-        the current agent verification policy; unrun technical checks remain open.
-      </p>
-      <p>
-        Phase 1B was merged through PR #2 (<code>6fc4d83</code>). The approved
-        <a href="superpowers/specs/2026-11-06-phase-1c1-cluster-connections-design.md">Phase 1C.1 specification</a> and
-        <a href="superpowers/plans/2026-11-06-phase-1c1-cluster-connections.md">seven-task plan</a> now have
-        <a href="superpowers/validation/phase-1c1.html">implementation evidence</a>. The maintainer authorized merge with remaining UI
-        coverage explicitly recorded. Historical <a href="superpowers/validation/phase-1a.html">Phase 1A</a> and
-        <a href="superpowers/validation/phase-1b.html">Phase 1B</a> limitations still apply.
-      </p>
-      <p>
-        The workload explorer refinement and read-only ReplicaSets are included in the Phase 1C.2 merge. See
-        <a href="superpowers/validation/workload-explorer-refinement.html">technical results</a> and the
-        <a href="superpowers/validation/workload-explorer-refinement-ui-uat.html">separate user checklist</a>.
-      </p>
       <h2>Approved references</h2>
       <ul>
         <li><a href="ux/mocks/index.html">Dark/light workspace mockups</a></li>
@@ -129,33 +52,12 @@
           <a href="engineering/local-development.html">Local development target and validation ownership</a>
         </li>
       </ul>
-      <h2>Superpowers plans and reports</h2>
+      <h2>Planning and delivery</h2>
       <ul>
-        <li>
-          <a href="superpowers/validation/phase-1a.html">Phase 1A validation and evidence</a>
-        </li>
-        <li>
-          <a href="superpowers/specs/2026-11-05-kubesift-design.md">Design specification (Markdown)</a>
-        </li>
-        <li>
-          <a href="superpowers/specs/2026-11-05-phase-1a-validation-design.md">Phase 1A validation specification (Markdown, approved)</a>
-        </li>
-        <li>
-          <a href="superpowers/plans/2026-11-05-phase-1a-validation.md">Phase 1A implementation plan (Markdown)</a>
-        </li>
-        <li>
-          <a href="superpowers/plans/README.md">Planning workflow and ownership</a>
-        </li>
+        <li><a href="superpowers/plans/README.md">Specifications and implementation plans</a></li>
+        <li><a href="engineering/gitworkflow.md">Git workflow</a></li>
       </ul>
-      <h2>Document ownership</h2>
-      <p>
-        Product requirements own scope; architecture owns system boundaries; security owns safeguards; decisions own status/rationale;
-        roadmap owns phase order; UX owns interaction behavior; engineering owns the development loop;
-        <a href="engineering/gitworkflow.md">git workflow</a> owns branching and publication. Superpowers specs link these sources into a
-        review package; detailed plans translate approved specifications into implementation tasks.
-      </p>
       <p>License: <a href="../LICENSE">Apache-2.0</a>. GitHub: <a href="https://github.com/sandjaie/KubeSift">sandjaie/KubeSift</a>.</p>
-      <footer>2026-11-05 · Draft for review · <a href="index.html">Planning index</a></footer>
     </main>
   </body>
 </html>
