@@ -26,4 +26,5 @@
 
 ## Git and publication
 - Follow docs/engineering/gitworkflow.md.
+- Apply its [independent PR review gate](docs/engineering/gitworkflow.md#independent-pr-review) once to the complete implementation using a fresh reviewer and the repository code-review skill. No routine per-task reviews; fixes receive targeted follow-up before merge.
 - Complete authorized implementation through the workflow's documentation, ready PR and merge steps into develop once applicable checks and independent review pass. Do not stop at a draft PR or request another instruction to merge; report genuine blockers instead. Releases and merges into main remain separately authorized.

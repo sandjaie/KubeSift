@@ -564,8 +564,8 @@ npx tsc --noEmit</code></pre>
             <td><code>subagent-driven-development</code></td>
             <td>Executing a plan whose tasks are independent, in this session</td>
             <td>
-              One fresh implementer sub-agent per task, a review after each task, a whole-branch review at the end. Do not stop between
-              tasks.
+              One fresh implementer sub-agent per task. Run one independent whole-PR review after implementation and verification, following
+              the repository review gate; do not add routine per-task reviews.
             </td>
           </tr>
           <tr>
@@ -598,13 +598,14 @@ npx tsc --noEmit</code></pre>
             <td><code>kubesift-code-review</code></td>
             <td>Feature or fix ready for <code>develop</code></td>
             <td>
-              Senior review of the branch against <code>develop</code>, including uncommitted work. Findings only. Another agent patches
-              them. Record each as <code>KSF-00N</code> in the pull request. Write this skill into the repo before relying on it.
+              One independent review of the complete committed PR candidate using the repository skill. Record base/head identities and KSF
+              findings; the implementer fixes them and the reviewer performs targeted follow-ups. See the
+              <a href="gitworkflow.md#independent-pr-review">PR review gate</a>.
             </td>
           </tr>
           <tr>
             <td><code>requesting-code-review</code></td>
-            <td>End of a task, end of a major feature, before merge</td>
+            <td>Complete PR implementation and verification, before merge</td>
             <td>Dispatch a reviewer sub-agent with the spec and the diff. The reviewer does not inherit the coding session.</td>
           </tr>
           <tr>
@@ -642,7 +643,10 @@ npx tsc --noEmit</code></pre>
           </tr>
         </table>
       </div>
-      <p>The reviewer does not edit. A finding is an id plus a patch another agent can apply.</p>
+      <p>
+        The reviewer reports actionable findings without editing. The implementing agent owns fixes and affected tests; the reviewer
+        rechecks the changed paths.
+      </p>
 
       <h3>Ship, and skill maintenance</h3>
       <div class="table-scroll">
@@ -773,7 +777,7 @@ npx tsc --noEmit</code></pre>
         <li>Review sub-agents do not modify code.</li>
         <li>An implementer sub-agent gets one task, the files, and the test command. The parent integrates.</li>
         <li>Parallelize only when tasks share no files and no state.</li>
-        <li>If a sub-agent is missing from the session, do the review in the main session with the same prompt shape. Say that you did.</li>
+        <li>If a fresh reviewer is unavailable, report the independent review gate as blocked. Self-review does not satisfy it.</li>
       </ul>
 
       <h2 id="kubesift-only">Decisions another playbook must not overwrite</h2>
