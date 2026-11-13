@@ -4,7 +4,7 @@ Used by: The workload controller and focused reducer tests.
 Responsibilities: Reject stale responses and cap page history without a growing payload cache.
 Important: Connection health snapshots never enter this reducer.
 */
-import { resourceKinds } from "./model";
+import { isClusterScoped, resourceKinds, resourceSections } from "./model";
 import type { ResourceKind, KindState, WorkloadsState, ResourceRef, Section, NavigationEntry, TabState } from "./model";
 export const initialWorkloads = (): WorkloadsState => ({});
 export const emptyKind = (): KindState => ({
@@ -35,16 +35,22 @@ export type Action =
   | { type: "section"; tab: string; section: Section; epoch: number }
   | { type: "scope"; tab: string; scope: string; clusterScope?: string }
   | { type: "close"; tab: string }
-  | { type: "kind"; tab: string; kind: ResourceKind }
+  | { type: "kind"; tab: string; kind: ResourceKind; epoch?: number }
   | { type: "navigate"; tab: string; scope: string; kind: ResourceKind; entry: NavigationEntry; history: NavigationEntry[]; epoch: number }
   | { type: "next"; tab: string; cursor: string }
   | { type: "patch"; tab: string; scope: string; kind: ResourceKind; patch: Partial<KindState> }
   | { type: "response"; tab: string; scope: string; kind: ResourceKind; epoch: number; section?: boolean; patch: Partial<KindState> };
-export const kindScope = (tab: TabState, kind: ResourceKind) => (kind === "IngressClass" ? tab.clusterScope : tab.scope);
+export const kindScope = (tab: TabState, kind: ResourceKind) => (isClusterScoped(kind) ? tab.clusterScope : tab.scope);
 
 export function relatedHistory(entries: NavigationEntry[], origin: NavigationEntry, target: ResourceRef) {
   return [...entries.filter(({ resource }) => resource.uid !== origin.resource.uid && resource.uid !== target.uid), origin].slice(-8);
 }
+function clearOutgoingData(t: TabState, destination: ResourceKind, epoch?: number) {
+  if (t.kind !== "ConfigMap" || destination === t.kind) return {};
+  const source = t.kinds.ConfigMap;
+  return { ConfigMap: { ...source, sections: { ...source.sections, Data: undefined }, sectionEpoch: epoch ?? source.sectionEpoch + 1 } };
+}
+
 export function reduceWorkloads(state: WorkloadsState, a: Action): WorkloadsState {
   if (a.type === "close") {
     const next = { ...state };
@@ -64,7 +70,7 @@ export function reduceWorkloads(state: WorkloadsState, a: Action): WorkloadsStat
         kinds: Object.fromEntries(
           resourceKinds.map((kind) => [
             kind,
-            kind === "IngressClass" && t?.clusterScope === clusterScope
+            isClusterScoped(kind) && t?.clusterScope === clusterScope
               ? t.kinds[kind]
               : { ...emptyKind(), auto: t?.kinds[kind].auto ?? false },
           ]),
@@ -75,6 +81,7 @@ export function reduceWorkloads(state: WorkloadsState, a: Action): WorkloadsStat
   }
   if (!t) return state;
   if (a.type === "kind") {
+    if (t.kind === a.kind) return state;
     const target = t.kinds[a.kind];
     return {
       ...state,
@@ -84,6 +91,7 @@ export function reduceWorkloads(state: WorkloadsState, a: Action): WorkloadsStat
         navigation: [],
         kinds: {
           ...t.kinds,
+          ...clearOutgoingData(t, a.kind, a.epoch),
           [a.kind]: target.related ? { ...target, selected: null, related: false, identity: "", sections: {} } : target,
         },
       },
@@ -99,6 +107,7 @@ export function reduceWorkloads(state: WorkloadsState, a: Action): WorkloadsStat
         navigation: a.history,
         kinds: {
           ...t.kinds,
+          ...clearOutgoingData(t, a.kind, a.epoch),
           [a.kind]: {
             ...t.kinds[a.kind],
             ...a.entry.position,
@@ -124,8 +133,13 @@ export function reduceWorkloads(state: WorkloadsState, a: Action): WorkloadsStat
       Object.assign(patch, { section: "Overview", sections: {}, sectionCursor: "", sectionEpoch: a.epoch });
     }
   } else if (a.type === "section") {
-    if (k.section === a.section) return state;
-    patch = { section: a.section, sectionCursor: "", sectionEpoch: a.epoch };
+    if (k.section === a.section || !resourceSections(kind).includes(a.section)) return state;
+    patch = {
+      section: a.section,
+      sectionCursor: "",
+      sectionEpoch: a.epoch,
+      ...(k.section === "Data" ? { sections: { ...k.sections, Data: undefined } } : {}),
+    };
   } else if (a.type === "next") {
     if (!a.cursor || k.history.length >= 20) return state;
     patch = { history: [...k.history, a.cursor] };

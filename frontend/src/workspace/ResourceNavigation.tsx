@@ -31,14 +31,17 @@ export const destinations = [
   {
     group: "Configuration",
     items: [
-      ["ConfigMap", "ConfigMaps", false],
-      ["Secret", "Secrets", false],
+      ["ResourceQuota", "ResourceQuotas", true],
+      ["LimitRange", "LimitRanges", true],
+      ["ConfigMap", "ConfigMaps", true],
+      ["Secret", "Secrets", true],
     ],
   },
   { group: "Storage", items: [["PersistentVolumeClaim", "Volume claims", false]] },
   {
     group: "Cluster & access",
     items: [
+      ["Namespace", "Namespaces", true],
       ["Node", "Nodes", false],
       ["Role", "Roles & bindings", false],
     ],

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Phase 1C.3c validation · KubeSift</title>
+    <link rel="stylesheet" href="../../assets/planning.css" />
+    <script src="../../assets/theme.js"></script>
+  </head>
+  <body>
+    <header>
+      <a href="../../index.html">KubeSift / Planning</a>
+      <h1>Phase 1C.3c validation</h1>
+      <p>Namespace policy and configuration</p>
+    </header>
+    <main id="content">
+      <p>
+        Baseline <code>11dbae3</code>. See the <a href="../specs/2026-11-14-phase-1c3c-configuration-design.md">specification</a> and
+        <a href="../plans/2026-11-14-phase-1c3c-configuration.md">implementation plan</a>. Native verification used the arm64 KubeSift 0.3.0
+        app on macOS 27.0.1. Initial package SHA-256 <code>64e6074ea9c3370f9248d7d259a33a34a219699d8e5cb28112fcc11517597351</code>.
+      </p>
+      <h2>Verification</h2>
+      <ul>
+        <li>
+          Passed configuration, networking and workload integration on explicit <code>kind-dev-local-a</code> and
+          <code>kind-dev-local-b</code>. The synthetic restricted identity could list ConfigMaps while Namespace and Secret lists were
+          denied.
+        </li>
+        <li>
+          Passed native Namespace → ConfigMaps, ResourceQuotas and LimitRanges. The chooser was disabled in Namespace inventory and the
+          selected namespace was applied by explicit browse.
+        </li>
+        <li>
+          Passed native Pod → ConfigMap Data → Back and Pod → Secret Overview → Back. The Secret pane exposed only identity and Overview.
+          Pod Logs reopened after Back.
+        </li>
+        <li>
+          Native text and base64 copy showed success, and the view displayed Unicode, hostile markup literally, and an empty value.
+          Switching Settings and cluster tabs cleared the selected value. A keyboard-narrowed 32% detail split retained the key table.
+        </li>
+        <li>Initial red tests confirmed missing contracts; the final report records any subsequently unresolved checks separately.</li>
+      </ul>
+      <h2>Coverage limits</h2>
+      <p>
+        Native clipboard byte equality and measured 200% zoom are unrun. Synthetic tests cover representation rejection, scope, reference
+        allowlisting and missing versus zero. Native rare status, quota/limit edge cases and failure injection are outside the exercised
+        desktop journeys. Older networking compatibility gaps remain in the
+        <a href="phase-1c3b.html">Phase 1C.3b validation report</a>.
+      </p>
+    </main>
+  </body>
+</html>

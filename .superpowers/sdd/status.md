@@ -2,12 +2,10 @@
 
 Updated 2026-11-14. Current integration branch is `develop`.
 
-## Next: Phase 1C.3c · Namespace policy and configuration
+## Phase 1C.3c · Namespace policy and configuration
 
-- Planning only; no application implementation performed. [Specification](../../docs/superpowers/specs/2026-11-14-phase-1c3c-configuration-design.md) and [five-task plan](../../docs/superpowers/plans/2026-11-14-phase-1c3c-configuration.md) are ready for a separate implementation session in the existing checkout; no worktree.
-- Scope: Namespaces, ResourceQuotas, LimitRanges, ConfigMaps, metadata-only Secrets and allowlisted Pod configuration references. Secret reveal/YAML, writes and later resources are excluded.
-- [Roadmap sequence](../../docs/roadmap/roadmap.html#phase-1c3-sequence): configuration → storage → access control → availability → cluster/API discovery. Implementation must preserve agent desktop verification and one independent whole-PR review, fix/recheck and ready-PR merge workflow.
-- The plan carries forward overlapping 1C.3b gaps without requiring duplicate manual UAT. Current baseline includes merged networking and the review policy at `87f024b`; recheck actual branch before execution.
+- Implemented Namespaces, ResourceQuotas, LimitRanges, ConfigMaps, strict metadata-only Secrets and explicit Pod configuration references. [Spec](../../docs/superpowers/specs/2026-11-14-phase-1c3c-configuration-design.md), [plan](../../docs/superpowers/plans/2026-11-14-phase-1c3c-configuration.md), and [validation report](../../docs/superpowers/validation/phase-1c3c.html).
+- Configuration, networking and workload integration passed on both approved kind contexts. The packaged app verified namespace routes, Pod configuration references and Back. See the report for open coverage and publication status.
 
 ## Phase 1C.3b · Read-only networking
 

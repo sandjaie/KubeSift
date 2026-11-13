@@ -11,6 +11,23 @@ Important: Wails generates this glue; change Go contracts and regenerate rather 
 // @ts-ignore: Unused imports
 import * as model$0 from "../model/models.js";
 
+export interface ConfigurationPage {
+  items: ConfigurationRow[] | null;
+  page: PageInfo;
+}
+
+export interface ConfigurationReferenceRequest {
+  source: ResourceRef;
+  sourceVersion: string;
+  target: ResourceRef;
+}
+
+export interface ConfigurationRow {
+  resource: ResourceRef;
+  createdAt: string | null;
+  objectJSON: string;
+}
+
 export interface CronJobSummary {
   schedule: string;
   timeZone: string | null;
@@ -20,6 +37,7 @@ export interface CronJobSummary {
 }
 
 export interface DetailRequest {
+  includeConfigMapData?: boolean;
   resource: ResourceRef;
 }
 
@@ -124,6 +142,11 @@ export interface RelatedReplicaSetPage {
 export interface RelatedRequest {
   resource: ResourceRef;
   cursor: string;
+}
+
+export interface ResolvedConfigurationReference {
+  resource: ResourceRef;
+  identityEvidence: string;
 }
 
 export interface ResolvedNetworkReference {

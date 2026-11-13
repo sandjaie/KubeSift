@@ -208,3 +208,77 @@ test("selecting the current related row preserves an in-flight Overview when cle
   state = reduceWorkloads(state, { type: "select", tab: "A", row: { resource }, epoch: 2 });
   expect(state.A.kinds.Service).toMatchObject({ related: false, sectionEpoch: 1, sections: { Overview: { loading: true } } });
 });
+
+test("configuration tabs enforce metadata-only Secret scope and reset ConfigMap Data", async () => {
+  const { resourceSections } = await import("./model");
+  expect(resourceSections("Secret")).toEqual(["Overview"]);
+  expect(resourceSections("Namespace")).toEqual(["Overview", "YAML"]);
+  expect(resourceSections("ConfigMap")).toEqual(["Overview", "Data", "YAML", "Events"]);
+  for (const kind of ["ResourceQuota", "LimitRange"] as const) expect(resourceSections(kind)).toEqual(["Overview", "YAML", "Events"]);
+  let state = reduceWorkloads(initialWorkloads(), { type: "scope", tab: "A", scope: "a/ns", clusterScope: "a" });
+  state = reduceWorkloads(state, { type: "kind", tab: "A", kind: "Secret" });
+  expect(reduceWorkloads(state, { type: "section", tab: "A", section: "YAML", epoch: 1 })).toBe(state);
+  state = reduceWorkloads(state, { type: "patch", tab: "A", scope: "a", kind: "Namespace", patch: { filter: "namespace" } });
+  state = reduceWorkloads(state, { type: "kind", tab: "A", kind: "ConfigMap" });
+  state = reduceWorkloads(state, { type: "section", tab: "A", section: "Data", epoch: 2 });
+  state = reduceWorkloads(state, { type: "scope", tab: "A", scope: "a/other", clusterScope: "a" });
+  expect(state.A.kind).toBe("ConfigMap");
+  expect(state.A.kinds.ConfigMap).toEqual(emptyKind());
+  expect(state.A.kinds.Namespace.filter).toBe("namespace");
+  expect(
+    reduceWorkloads(state, {
+      type: "response",
+      tab: "A",
+      kind: "ConfigMap",
+      scope: "a/ns",
+      epoch: 2,
+      section: true,
+      patch: { error: "late" },
+    }),
+  ).toBe(state);
+});
+
+test("Back discards the outgoing ConfigMap capture and rejects late Data", () => {
+  const connection = { id: "a", generation: 1 };
+  const map = { connection, kind: "ConfigMap", apiVersion: "v1", namespace: "ns", name: "map", uid: "map" };
+  const pod = { connection, kind: "Pod", apiVersion: "v1", namespace: "ns", name: "pod", uid: "pod" };
+  let state = reduceWorkloads(initialWorkloads(), { type: "scope", tab: "A", scope: "a" });
+  state = reduceWorkloads(state, {
+    type: "navigate",
+    tab: "A",
+    scope: "a",
+    kind: "ConfigMap",
+    entry: { resource: map, section: "Data", cursor: "" },
+    history: [],
+    epoch: 1,
+  });
+  const sections = {
+    Data: {
+      loading: false,
+      error: "",
+      data: { resource: map, resourceVersion: "1", fetchedAt: "", job: null, objectJSON: '{"data":{"key":"synthetic"}}' },
+    },
+  };
+  state = reduceWorkloads(state, {
+    type: "response",
+    tab: "A",
+    scope: "a",
+    kind: "ConfigMap",
+    epoch: 1,
+    section: true,
+    patch: { sections },
+  });
+  state = reduceWorkloads(state, {
+    type: "navigate",
+    tab: "A",
+    scope: "a",
+    kind: "Pod",
+    entry: { resource: pod, section: "Overview", cursor: "" },
+    history: [],
+    epoch: 2,
+  });
+  expect(state.A.kinds.ConfigMap.sections.Data).toBeUndefined();
+  expect(
+    reduceWorkloads(state, { type: "response", tab: "A", scope: "a", kind: "ConfigMap", epoch: 1, section: true, patch: { sections } }),
+  ).toBe(state);
+});

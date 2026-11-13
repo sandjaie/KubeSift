@@ -145,3 +145,21 @@ func (s *ExplorerService) ResolveNetworkReference(id string, req kube.NetworkRef
 	defer done()
 	return s.core.kube.ResolveNetworkReference(ctx, req)
 }
+
+func (s *ExplorerService) ReadConfiguration(id string, req kube.PageRequest) (kube.ConfigurationPage, error) {
+	ctx, done, err := s.beginWorkloadRead(id)
+	if err != nil {
+		return kube.ConfigurationPage{}, err
+	}
+	defer done()
+	return s.core.kube.ReadConfiguration(ctx, req)
+}
+
+func (s *ExplorerService) ResolveConfigurationReference(id string, req kube.ConfigurationReferenceRequest) (kube.ResolvedConfigurationReference, error) {
+	ctx, done, err := s.beginWorkloadRead(id)
+	if err != nil {
+		return kube.ResolvedConfigurationReference{}, err
+	}
+	defer done()
+	return s.core.kube.ResolveConfigurationReference(ctx, req)
+}

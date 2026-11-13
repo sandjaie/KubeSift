@@ -67,6 +67,10 @@ export function OpenPodLogs(req: kube$0.LogRequest): $CancellablePromise<model$0
   return $Call.ByID(1020417316, req);
 }
 
+export function ReadConfiguration(id: string, req: kube$0.PageRequest): $CancellablePromise<kube$0.ConfigurationPage> {
+  return $Call.ByID(1380409538, id, req);
+}
+
 export function ReadNetworking(id: string, req: kube$0.PageRequest): $CancellablePromise<kube$0.NetworkPage> {
   return $Call.ByID(2674488666, id, req);
 }
@@ -120,6 +124,13 @@ export function RemoveSource(id: string, confirmed: boolean): $CancellablePromis
  */
 export function ResetSources(): $CancellablePromise<void> {
   return $Call.ByID(498698343);
+}
+
+export function ResolveConfigurationReference(
+  id: string,
+  req: kube$0.ConfigurationReferenceRequest,
+): $CancellablePromise<kube$0.ResolvedConfigurationReference> {
+  return $Call.ByID(3646830831, id, req);
 }
 
 export function ResolveNetworkReference(

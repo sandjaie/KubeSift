@@ -67,7 +67,7 @@ func (t boundedTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	response.Body = &boundedBody{Reader: reader, close: body.Close, remaining: readBodyLimit}
 	return response, nil
 }
-func (s *Service) boundedReadClient(ctx context.Context, ref model.ConnectionRef) (kubernetes.Interface, error) {
+func (s *Service) boundedReadConfig(ctx context.Context, ref model.ConnectionRef) (*rest.Config, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, safeError(ctx, err)
 	}
@@ -77,6 +77,14 @@ func (s *Service) boundedReadClient(ctx context.Context, ref model.ConnectionRef
 	}
 	cfg = rest.CopyConfig(cfg)
 	cfg.Wrap(func(next http.RoundTripper) http.RoundTripper { return boundedTransport{next} })
+	return cfg, nil
+}
+
+func (s *Service) boundedReadClient(ctx context.Context, ref model.ConnectionRef) (kubernetes.Interface, error) {
+	cfg, err := s.boundedReadConfig(ctx, ref)
+	if err != nil {
+		return nil, err
+	}
 	client, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
 		return nil, model.Fail("invalid", "Cannot create workload reader")
