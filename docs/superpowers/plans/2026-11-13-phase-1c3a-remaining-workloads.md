@@ -91,7 +91,7 @@ DTO decisions: reuse Desired/Ready/Updated/Available only with documented kind m
 - [x] Run `scripts/check.sh`, `wails3 task bindings`, `npm run build`. Run `KUBESIFT_EXPLORER_INTEGRATION=1 KUBESIFT_EXPLORER_CONFIG_DIR=<absolute-fixture-config-dir> go test -tags=integration ./tests/integration -run 'TestWorkloadInvestigation|TestRemainingWorkloads' -count=1` after validating those kubeconfigs target only the documented local contexts. Run `go test -race ./internal/kube ./internal/desktop` and the documented macOS package workflow.
 - [ ] Create `docs/superpowers/validation/phase-1c3a.html` and `phase-1c3a-ui-uat.html`. Map A01–A10 to test/native evidence and limitations. User results start Not tested; no inferred user acceptance from automated/native agent checks. Test keyboard, 200% zoom, dark/light, narrow split and full navigation/copy/log cleanup in the packaged app.
 - [x] Keep command logs, screenshots not curated for durable evidence, and detailed progress in ignored `.superpowers/sdd/2026-11-13-phase-1c3a/`. Update source descriptions, relevant README files, UX/roadmap/index, portable status and verified plan checkboxes.
-- [ ] Obtain independent correctness/hygiene review per repository rules, resolve findings, re-run affected checks, commit/push the feature branch and prepare a PR to develop. Leave merge/release to explicit authorization and applicable acceptance gates. Do not start 1C.3b.
+- [x] Obtain independent correctness/hygiene review per repository rules, resolve findings, re-run affected checks, commit/push the feature branch and prepare a PR to develop. Leave merge/release to explicit authorization and applicable acceptance gates. Do not start 1C.3b.
 
 ## Separate-session implementation prompt
 
