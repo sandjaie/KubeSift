@@ -96,7 +96,7 @@
 - [x] Use desktop computer-use on the final packaged build for spec journeys: Node, Event→Pod→Back, CRD→instances→object→YAML exact copy→Back, APIService→catalog, namespace retention and both contexts; keyboard, narrow split, light/dark and native zoom. Record actual checks and specific blocked/unrun cases in one report; no duplicate user UAT checklist.
 - [x] Delete only task-owned fixtures (custom objects before CRDs), remove temporary credentials and verify both-context cleanup. Run documentation links/formatting checks and record evidence. Keep detailed operational logs under ignored `.superpowers/sdd/`.
 - [x] Request one fresh independent whole-PR review with `.agents/skills/kubesift-code-review/SKILL.md`, full base/head diff and this spec. Address findings, targeted rechecks and any required rebuild/native retest. Report genuine unresolved blockers; do not claim successful verification without evidence.
-- [ ] Update checkpoint/report and checked tasks, verify local author/remote/auth, push feature branch, open ready PR, satisfy checks/review and merge into develop under standing authorization. Update merge checkpoint and provide result. No draft waiting gate, release or automatic next-phase work.
+- [x] Update checkpoint/report and checked tasks, verify local author/remote/auth, push feature branch, open ready PR, satisfy checks/review and merge into develop under standing authorization. Update merge checkpoint and provide result. No draft waiting gate, release or automatic next-phase work.
 
 ## Planning self-review
 
