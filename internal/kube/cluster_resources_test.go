@@ -34,7 +34,7 @@ func TestClusterResourceRoutes(t *testing.T) {
 					if r.Method != "GET" || r.URL.Query().Get("limit") != "100" {
 						t.Error("expected bounded GET")
 					}
-					fmt.Fprintf(w, `{"kind":%q,"apiVersion":%q,"metadata":{"continue":"next"},"items":[%s]}`, tc.kind+"List", tc.version, raw)
+					fmt.Fprintf(w, `{"kind":%q,"apiVersion":%q,"metadata":{"continue":"next"},"items":[%s]}`, tc.kind+"List", tc.version, `{`+raw[strings.Index(raw, `"metadata"`):])
 				case tc.path + "/sample":
 					fmt.Fprint(w, raw)
 				default:

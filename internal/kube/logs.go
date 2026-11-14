@@ -190,10 +190,11 @@ func (s *Service) ClosePodLogs(ref model.SessionRef) error {
 	s.mu.Unlock()
 	return nil
 }
-func (s *Service) closeConnectionLogs(ref model.ConnectionRef) {
+func (s *Service) closeConnection(ref model.ConnectionRef) {
 	s.sessions.StopConnection(ref)
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	delete(s.discovery, ref)
 	for id, entry := range s.productLogs {
 		if entry.Connection == ref {
 			delete(s.productLogs, id)

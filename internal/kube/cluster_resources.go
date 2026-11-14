@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/sandjaie/KubeSift/internal/model"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -101,9 +102,9 @@ func listJSON(ctx context.Context, request *rest.Request, api apiResource, token
 	}
 	return list, nil
 }
-func objectIdentity(raw []byte, api apiResource, ns string) (rawResource, error) {
+func objectIdentity(raw []byte, api apiResource, ns string, listItem bool) (rawResource, error) {
 	var obj rawResource
-	if json.Unmarshal(raw, &obj) != nil || obj.Kind != api.kind || obj.APIVersion != api.apiVersion() ||
+	if json.Unmarshal(raw, &obj) != nil || ((!listItem || obj.Kind != "") && obj.Kind != api.kind) || ((!listItem || obj.APIVersion != "") && obj.APIVersion != api.apiVersion()) ||
 		obj.Metadata.Namespace != ns || len(obj.Metadata.UID) == 0 || len(obj.Metadata.UID) > 128 {
 		return rawResource{}, model.Fail("invalid", "Server returned an invalid resource identity")
 	}
@@ -118,7 +119,7 @@ func getClusterResource(ctx context.Context, client kubernetes.Interface, ref Re
 	if len(raw) > detailLimit {
 		return nil, nil, model.Fail("capacity", "Resource evidence exceeds the 2 MiB size limit")
 	}
-	obj, err := objectIdentity(raw, api, ref.Namespace)
+	obj, err := objectIdentity(raw, api, ref.Namespace, false)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -154,7 +155,7 @@ func (s *Service) ReadClusterResources(ctx context.Context, req PageRequest) (Cl
 	}
 	list, err := listJSON(ctx, api.read(client, req.Namespace, ""), api, token)
 	if err != nil {
-		return ClusterResourcePage{}, networkingListError(ctx, err)
+		return ClusterResourcePage{}, resourceListError(ctx, err)
 	}
 	page, err := pageInfo(scope, list.Metadata)
 	if err != nil {
@@ -162,7 +163,7 @@ func (s *Service) ReadClusterResources(ctx context.Context, req PageRequest) (Cl
 	}
 	result := ClusterResourcePage{Items: make([]ClusterResourceRow, 0, len(list.Items)), Page: page}
 	for _, raw := range list.Items {
-		obj, err := objectIdentity(raw, api, req.Namespace)
+		obj, err := objectIdentity(raw, api, req.Namespace, true)
 		if err != nil {
 			return ClusterResourcePage{}, err
 		}
@@ -243,4 +244,11 @@ func conditionStatus(fields storageFields, name string) string {
 		}
 	}
 	return "Unknown"
+}
+
+func resourceListError(ctx context.Context, err error) error {
+	if apierrors.IsNotFound(err) || apierrors.IsMethodNotSupported(err) {
+		return model.Fail("api_unavailable", "The selected Kubernetes API is unavailable")
+	}
+	return readError(ctx, err)
 }

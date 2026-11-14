@@ -238,6 +238,21 @@ func capturedDetail(ref ResourceRef, object workloadObject, raw []byte) (Resourc
 		summary := availabilitySummary(ref.Kind, body)
 		result.Availability = &summary
 	}
+	if ref.Kind == "Event" {
+		_, regarding, err := eventEvidence(raw, clusterAPI("Event", ref.APIVersion))
+		if err != nil {
+			return ResourceDetail{}, err
+		}
+		result.EventTarget = supportedEventTarget(ref, regarding)
+	}
+	if clusterAPI(ref.Kind, ref.APIVersion).kind != "" {
+		doc, err := resourceYAMLDocument(ref, object, raw)
+		if err != nil {
+			return ResourceDetail{}, err
+		}
+		doc.FetchedAt = result.FetchedAt
+		result.CapturedYAML = &doc
+	}
 	if err := checkPayload(result); err != nil {
 		return ResourceDetail{}, err
 	}
@@ -284,29 +299,47 @@ func (s *Service) ReadResourceYAML(ctx context.Context, req DetailRequest) (YAML
 	if err = checkPayload(object); err != nil {
 		return result, err
 	}
-	raw, err := detailYAMLJSON(req.Resource, object, captured, true)
+	result, err = resourceYAMLDocument(req.Resource, object, captured)
 	if err != nil {
-		return result, model.Fail("failed", "Cannot encode resource")
-	}
-	with, err := yaml.JSONToYAML(raw)
-	if err != nil {
-		return result, model.Fail("failed", "Cannot serialize resource YAML")
-	}
-	copy := object.DeepCopyObject().(workloadObject)
-	copy.SetManagedFields(nil)
-	raw, err = detailYAMLJSON(req.Resource, copy, captured, false)
-	if err != nil {
-		return result, model.Fail("failed", "Cannot encode resource")
-	}
-	without, err := yaml.JSONToYAML(raw)
-	if err != nil {
-		return result, model.Fail("failed", "Cannot serialize resource YAML")
-	}
-	result = YAMLDocument{Resource: req.Resource, ResourceVersion: object.GetResourceVersion(), FetchedAt: time.Now().UTC(), WithoutManagedFields: string(without), WithManagedFields: string(with)}
-	if err = checkPayload(result); err != nil {
 		return YAMLDocument{}, err
 	}
 	return result, s.connections.Validate(req.Resource.Connection)
+}
+
+func resourceYAMLDocument(ref ResourceRef, object workloadObject, captured []byte) (YAMLDocument, error) {
+	raw, err := detailYAMLJSON(ref, object, captured, true)
+	if err != nil {
+		return YAMLDocument{}, model.Fail("failed", "Cannot encode resource")
+	}
+	render := func(raw []byte) (string, error) {
+		if clusterAPI(ref.Kind, ref.APIVersion).kind != "" {
+			return exactYAML(raw)
+		}
+		encoded, err := yaml.JSONToYAML(raw)
+		if err != nil {
+			return "", model.Fail("failed", "Cannot serialize resource YAML")
+		}
+		return string(encoded), nil
+	}
+	with, err := render(raw)
+	if err != nil {
+		return YAMLDocument{}, err
+	}
+	copy := object.DeepCopyObject().(workloadObject)
+	copy.SetManagedFields(nil)
+	raw, err = detailYAMLJSON(ref, copy, captured, false)
+	if err != nil {
+		return YAMLDocument{}, model.Fail("failed", "Cannot encode resource")
+	}
+	without, err := render(raw)
+	if err != nil {
+		return YAMLDocument{}, err
+	}
+	result := YAMLDocument{Resource: ref, ResourceVersion: object.GetResourceVersion(), FetchedAt: time.Now().UTC(), WithoutManagedFields: without, WithManagedFields: with}
+	if err := checkPayload(result); err != nil {
+		return YAMLDocument{}, err
+	}
+	return result, nil
 }
 
 func detailObject(ctx context.Context, client kubernetes.Interface, ref ResourceRef) (workloadObject, []byte, error) {

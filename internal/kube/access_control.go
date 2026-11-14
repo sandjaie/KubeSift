@@ -9,6 +9,7 @@ package kube
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/sandjaie/KubeSift/internal/model"
@@ -33,6 +34,9 @@ func accessControlVersion(kind string) string {
 func validResourceName(kind, name string) bool {
 	if accessControlVersion(kind) == rbac.SchemeGroupVersion.String() {
 		return name != "" && len(content.IsPathSegmentName(name)) == 0
+	}
+	if kind == "APIService" && strings.HasSuffix(name, ".") {
+		return len(validation.IsDNS1123Label(strings.TrimSuffix(name, "."))) == 0
 	}
 	return len(validation.IsDNS1123Subdomain(name)) == 0
 }

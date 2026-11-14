@@ -111,11 +111,11 @@ func (s *Service) ReadEventInventory(ctx context.Context, req PageRequest) (Even
 		list, err = listJSON(ctx, api.read(client, req.Namespace, ""), api, "")
 	}
 	if err != nil {
-		return EventInventoryPage{}, networkingListError(ctx, err)
+		return EventInventoryPage{}, resourceListError(ctx, err)
 	}
 	result := EventInventoryPage{Items: make([]EventInventoryRow, 0, len(list.Items))}
 	for _, raw := range list.Items {
-		obj, err := objectIdentity(raw, api, req.Namespace)
+		obj, err := objectIdentity(raw, api, req.Namespace, true)
 		if err != nil {
 			return EventInventoryPage{}, err
 		}

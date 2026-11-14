@@ -85,7 +85,13 @@ func (s *Service) boundedReadClient(ctx context.Context, ref model.ConnectionRef
 	if err != nil {
 		return nil, err
 	}
-	client, err := kubernetes.NewForConfig(cfg)
+	httpClient, err := rest.HTTPClientFor(cfg)
+	if err != nil {
+		return nil, model.Fail("invalid", "Cannot create workload transport")
+	}
+	copy := *httpClient
+	copy.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
+	client, err := kubernetes.NewForConfigAndClient(cfg, &copy)
 	if err != nil {
 		return nil, model.Fail("invalid", "Cannot create workload reader")
 	}
