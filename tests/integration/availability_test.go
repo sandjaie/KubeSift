@@ -147,6 +147,9 @@ func TestAvailabilityInvestigation(t *testing.T) {
 				t.Fatal("revision page", history, err)
 			}
 			rev := detail(history.Items[0].Resource)
+			if _, err := reader.ReadResourceEvents(ctx, kube.EventRequest{Resource: rev.Resource}); err != nil {
+				t.Fatal("ControllerRevision Events", err)
+			}
 			resolve(parent, history.SourceVersion, rev.Resource, "controller-owner")
 			resolve(rev.Resource, rev.ResourceVersion, parent, "controller-owner")
 			if kind == "StatefulSet" && history.UpdateRevision != rev.Resource.Name {
@@ -169,6 +172,10 @@ func TestAvailabilityInvestigation(t *testing.T) {
 	var problem *model.Problem
 	if !errors.As(err, &problem) || problem.Code != "forbidden" {
 		t.Fatal("expected target GET denial", err)
+	}
+	_, err = reader.ReadResourceEvents(ctx, kube.EventRequest{Resource: hpa.Resource})
+	if !errors.As(err, &problem) || problem.Code != "forbidden" {
+		t.Fatal("expected independent Events LIST denial", err)
 	}
 	pods, err := reader.ReadPDBSelectedPods(ctx, kube.RelatedRequest{Resource: find(c, "PodDisruptionBudget", "fixture-selected")})
 	if err != nil || pods.Problem == nil || pods.Problem.Code != "forbidden" || pods.Complete {

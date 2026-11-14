@@ -15,7 +15,7 @@ type Metric = Fields & { type?: string };
 type Capture = {
   spec?: Fields & { metrics?: Metric[]; scaleTargetRef?: Reference };
   status?: Fields & { currentMetrics?: Metric[] };
-  metadata?: Fields & { ownerReferences?: Reference[] };
+  metadata?: Fields & { ownerReferences?: (Reference | null)[] };
   data?: unknown;
 };
 
@@ -88,7 +88,7 @@ export function AvailabilityOverview({ data, onOpenReference }: { data: Resource
   const spec = body.spec ?? {},
     status = body.status ?? {};
   const owners = body.metadata?.ownerReferences ?? [];
-  const controlling = owners.filter((o) => o.controller);
+  const controlling = owners.filter((owner): owner is Reference => owner?.controller === true);
   const reference =
     resource.kind === "HorizontalPodAutoscaler" ? spec.scaleTargetRef : controlling.length === 1 ? controlling[0] : undefined;
   const target = availabilityTarget(resource, reference);
@@ -196,8 +196,13 @@ export function AvailabilityOverview({ data, onOpenReference }: { data: Resource
             </>
           )}
           <Facts
-            data={status}
+            data={{
+              conditions: status.conditions,
+              generation: data.availability?.generation,
+              observedGeneration: data.availability?.observedGeneration,
+            }}
             fields={[
+              ["generation", "Current generation"],
               ["observedGeneration", "Observed generation"],
               ["conditions", "Conditions"],
             ]}

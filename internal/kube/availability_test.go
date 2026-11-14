@@ -16,7 +16,7 @@ import (
 
 func TestAvailabilityExactEvidence(t *testing.T) {
 	for _, tc := range []struct{ kind, version, path, fields, observation, revision string }{
-		{"HorizontalPodAutoscaler", "autoscaling/v2", "horizontalpodautoscalers", `"status":{"observedGeneration":9007199254740992,"currentReplicas":0}`, "stale", ""},
+		{"HorizontalPodAutoscaler", "autoscaling/v2", "horizontalpodautoscalers", `"status":{"observedGeneration":9007199254740995,"currentReplicas":0}`, "stale", ""},
 		{"PodDisruptionBudget", "policy/v1", "poddisruptionbudgets", `"spec":{"maxUnavailable":"10%"},"status":{"disruptionsAllowed":0}`, "unknown", ""},
 		{"ControllerRevision", "apps/v1", "controllerrevisions", `"revision":9007199254740993,"data":{"opaque":"sentinel"}`, "", "9007199254740993"},
 	} {
@@ -49,6 +49,9 @@ func TestAvailabilityExactEvidence(t *testing.T) {
 			row := page.Items[0]
 			if row.Summary.Observation != tc.observation || row.Summary.Revision != tc.revision || strings.Contains(row.ObjectJSON, "sentinel") {
 				t.Fatal(row)
+			}
+			if tc.kind == "HorizontalPodAutoscaler" && (row.Summary.Generation != "9007199254740993" || row.Summary.ObservedGeneration != "9007199254740995") {
+				t.Fatal("generation precision lost", row.Summary)
 			}
 			got, err := s.ReadResource(ctx, DetailRequest{Resource: row.Resource})
 			if err != nil || got.Availability == nil || *got.Availability != row.Summary {

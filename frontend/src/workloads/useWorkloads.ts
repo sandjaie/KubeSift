@@ -8,7 +8,16 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import type { ConnectionRef } from "../bridge";
 import { message } from "../connections/api";
 import { readRequest, workloadAPI as api } from "./api";
-import { canAutoRefresh, emptyKind, initialWorkloads, reduceWorkloads, kindScope, relatedHistory, type Action } from "./state";
+import {
+  canAutoRefresh,
+  captureReferenceEvidence,
+  emptyKind,
+  initialWorkloads,
+  reduceWorkloads,
+  kindScope,
+  relatedHistory,
+  type Action,
+} from "./state";
 import { inventoryNamespace, isWorkloadKind, isResourceKind, isClusterScoped, resourceSections } from "./model";
 import { isConfigurationKind, type ConfigurationPage, type NamespaceDestination } from "../configuration/model";
 import { isStorageKind, type StoragePage } from "../storage/model";
@@ -174,11 +183,10 @@ export function useWorkloads(
           sections: { ...sections, [section]: { data, error, loading: false } },
           ...(section === "Overview" && !error
             ? {
-                referenceEvidence:
-                  current.current[tabID]?.kinds[kind].referenceEvidence?.association &&
-                  (data as ResourceDetail | null)?.resourceVersion !== current.current[tabID]?.kinds[kind].referenceEvidence?.targetVersion
-                    ? undefined
-                    : current.current[tabID]?.kinds[kind].referenceEvidence,
+                referenceEvidence: captureReferenceEvidence(
+                  current.current[tabID]?.kinds[kind].referenceEvidence,
+                  data as ResourceDetail | null,
+                ),
               }
             : {}),
         },

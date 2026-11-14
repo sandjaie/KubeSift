@@ -12,8 +12,10 @@ import (
 )
 
 type AvailabilitySummary struct {
-	Observation string `json:"observation"`
-	Revision    string `json:"revision"`
+	Generation         string `json:"generation,omitempty"`
+	ObservedGeneration string `json:"observedGeneration,omitempty"`
+	Observation        string `json:"observation"`
+	Revision           string `json:"revision"`
 }
 type AvailabilityRow struct {
 	Resource   ResourceRef         `json:"resource"`

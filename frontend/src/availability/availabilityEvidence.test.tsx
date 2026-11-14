@@ -57,3 +57,18 @@ test("HPA metric targets and observations keep independent sources and tolerate 
     expect(view).toContain(name);
   expect(view).not.toContain("<button");
 });
+
+test("revision metadata safely displays a null owner entry", () => {
+  const view = render(capture("ControllerRevision", { metadata: { ownerReferences: [null] } }));
+  expect(view).toContain("Captured owner references");
+  expect(view).not.toContain("<button");
+});
+
+test("structured generation evidence uses native decimal strings", () => {
+  const data = capture("HorizontalPodAutoscaler", { status: { observedGeneration: 9007199254740992 } });
+  Object.assign(data.availability!, { generation: "9007199254740994", observedGeneration: "9007199254740993" });
+  const view = render(data);
+  expect(view).toContain("9007199254740994");
+  expect(view).toContain("9007199254740993");
+  expect(view).not.toContain("9007199254740992");
+});

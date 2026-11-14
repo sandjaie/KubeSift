@@ -453,3 +453,24 @@ test("availability destinations expose only their explicit investigation tabs", 
   for (const kind of ["StatefulSet", "DaemonSet"]) expect(resourceSections(kind)).toContain("Revisions");
   expect(resourceSections("Secret")).toEqual(["Overview"]);
 });
+
+test("Back retains an availability association only with its validated capture", () => {
+  const resource = { kind: "Pod", apiVersion: "v1", connection: { id: "a", generation: 1 }, namespace: "test", name: "pod", uid: "pod" };
+  const referenceEvidence = { sourceVersion: "4", targetVersion: "5", identityEvidence: "uid-verified", association: "selector-match" };
+  const detail = { resource, resourceVersion: "6", objectJSON: "{}", fetchedAt: "", job: null };
+  const original = reduceWorkloads(initialWorkloads(), { type: "scope", tab: "A", scope: "a", clusterScope: "cluster" });
+  const back = {
+    type: "navigate" as const,
+    tab: "A",
+    kind: "Pod" as const,
+    scope: "a",
+    epoch: 3,
+    history: [],
+    entry: { resource, referenceEvidence, section: "Overview" as const, cursor: "" },
+  };
+  const changed = reduceWorkloads(original, { ...back, detail });
+  expect(changed.A.kinds.Pod.sections.Overview?.data).toBe(detail);
+  expect(changed.A.kinds.Pod.referenceEvidence).toBeUndefined();
+  const unchanged = reduceWorkloads(original, { ...back, detail: { ...detail, resourceVersion: "5" } });
+  expect(unchanged.A.kinds.Pod.referenceEvidence).toEqual(referenceEvidence);
+});

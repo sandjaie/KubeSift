@@ -138,7 +138,14 @@ func availabilitySummary(kind string, body storageFields) AvailabilitySummary {
 			observation = "current"
 		}
 	}
-	return AvailabilitySummary{Observation: observation}
+	summary := AvailabilitySummary{Observation: observation}
+	if generation != nil {
+		summary.Generation = strconv.FormatInt(*generation, 10)
+	}
+	if observed != nil {
+		summary.ObservedGeneration = strconv.FormatInt(*observed, 10)
+	}
+	return summary
 }
 
 func availabilityList(ctx context.Context, client kubernetes.Interface, req PageRequest, token string, include func(workloadObject) bool) ([]AvailabilityRow, metav1.ListMeta, error) {

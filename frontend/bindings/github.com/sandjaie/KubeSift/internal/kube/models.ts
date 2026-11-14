@@ -47,6 +47,8 @@ export interface AvailabilityRow {
 }
 
 export interface AvailabilitySummary {
+  generation?: string;
+  observedGeneration?: string;
   observation: string;
   revision: string;
 }

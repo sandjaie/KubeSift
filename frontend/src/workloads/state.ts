@@ -61,6 +61,10 @@ function clearOutgoingData(t: TabState, destination: ResourceKind, epoch?: numbe
   return { ConfigMap: { ...source, sections: { ...source.sections, Data: undefined }, sectionEpoch: epoch ?? source.sectionEpoch + 1 } };
 }
 
+export function captureReferenceEvidence(evidence: KindState["referenceEvidence"], detail?: ResourceDetail | null) {
+  return evidence?.association && detail && evidence.targetVersion !== detail.resourceVersion ? undefined : evidence;
+}
+
 export function reduceWorkloads(state: WorkloadsState, a: Action): WorkloadsState {
   if (a.type === "close") {
     const next = { ...state };
@@ -134,7 +138,7 @@ export function reduceWorkloads(state: WorkloadsState, a: Action): WorkloadsStat
             ...destination.kinds[a.kind],
             ...a.entry.position,
             identity: a.entry.identity ?? "",
-            referenceEvidence: a.entry.referenceEvidence,
+            referenceEvidence: captureReferenceEvidence(a.entry.referenceEvidence, a.detail),
             selected: { resource: a.entry.resource },
             related: true,
             section: a.entry.section,

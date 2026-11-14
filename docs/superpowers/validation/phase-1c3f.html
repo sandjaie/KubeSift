@@ -20,7 +20,7 @@
       </p>
       <h2>Automated and integration verification</h2>
       <ul>
-        <li>Repository checks, 61 frontend tests, Go race tests, generated bindings and production build passed.</li>
+        <li>Repository checks, 64 frontend tests, Go race tests, generated bindings and production build passed.</li>
         <li>
           Availability, access control, storage, configuration, networking and workload integration passed on explicit
           <code>kind-dev-local-a</code> and <code>kind-dev-local-b</code>. The restricted fixture could read sources but was denied the HPA
@@ -64,7 +64,27 @@
         used. Earlier unrelated limits remain in the <a href="phase-1c3e.html">access control report</a>.
       </p>
       <h2>Independent review</h2>
-      <p>Review and final head coverage pending.</p>
+      <p>
+        Reviewer <code>availability_pr_review</code> reviewed the whole candidate <code>a30704c</code> from base and merge base
+        <code>f38cf23</code>.
+      </p>
+      <ul>
+        <li>KSF-001 (P2): Null entries in captured owner references no longer crash revision Overview.</li>
+        <li>KSF-002 (P2): Back and section reloads discard availability association when the target capture version changes.</li>
+        <li>KSF-003 (P2): Current and observed generation display uses exact native decimal strings.</li>
+        <li>KSF-004 (P3): Validation now records normal fixture cleanup and checks for leftovers.</li>
+      </ul>
+      <p>
+        Final executable <code>9f139971fb31f4edad44c4d1c6489a634fc76fb202e4c25b0fea552ff6d0f800</code> passed the native HPA generation
+        display, target link and Back retest. Full checks, race and targeted two-cluster integration passed; the latter also verified
+        ControllerRevision Events and independently denied HPA Events. Nested frontend evidence above one page was not exercised in a native
+        fixture. Targeted recheck pending.
+      </p>
+      <p>
+        Both clusters removed the owned fixture HPA before its target or controllers, then deleted the foreground dependents and the fixture
+        namespace. Regression fixtures were deleted by exact owned names and labels. Exact namespace, cluster object and retained Job
+        lookups verified no owned fixture leftovers on either context.
+      </p>
     </main>
   </body>
 </html>
