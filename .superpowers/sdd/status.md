@@ -2,6 +2,12 @@
 
 Updated 2026-11-14. Current integration branch is `develop`.
 
+## Phase 1C.3g · Cluster resources and API discovery
+
+- Planning package prepared on `develop`; implementation has not started. [Specification](../../docs/superpowers/specs/2026-11-14-phase-1c3g-cluster-discovery-design.md) and [six-task plan](../../docs/superpowers/plans/2026-11-14-phase-1c3g-cluster-discovery.md).
+- Seven dedicated infrastructure destinations plus bounded installed-API browsing, scoped discovery failures and strict dedicated/Secret reader boundaries. Existing checkout, no worktree; separate implementation session.
+- Implementation owns automated/two-cluster/packaged native checks and one independent whole-PR review, then ready-PR merge under the existing policy. No duplicate manual UAT or later-phase authorization.
+
 ## Phase 1C.3f · Availability and remaining workloads
 
 - Implemented on `feature/phase-1c3f-availability` from `f38cf23`. [Specification](../../docs/superpowers/specs/2026-11-14-phase-1c3f-availability-design.md), [plan](../../docs/superpowers/plans/2026-11-14-phase-1c3f-availability.md), and [validation report](../../docs/superpowers/validation/phase-1c3f.html).
@@ -55,7 +61,7 @@ Historical references to pending user acceptance below no longer impose a repeat
 
 - UAT refinements verified: first-show work-area sizing, automatic bounded Deployment Pod traversal, removal of Identity & source, and simplified Logs controls without UUID/generation/repeated paths. Native local checks and applicable automated checks passed; see the technical report.
 
-- Live-log UAT refinement on the new Mac: one visible live view, abort on departure, fresh return, full retained-text scrolling, search and window expansion. Product Sessions dock removed. See the updated technical report and UAT checklist. User acceptance remains pending.
+- Live-log UAT refinement on the new Mac: one visible live view, abort on departure, fresh return, full retained-text scrolling, search and window expansion. Product Sessions dock removed. See the [live log plan](../../docs/superpowers/plans/2026-11-13-live-log-refinement.md), the updated technical report and UAT checklist. User acceptance remains pending.
 
 - High-volume native test of 3d5cce2 failed at approximately 1,000 lines/s (283 KB/s). WebKit saturated one CPU core and native interaction timed out. Temporary test Pod removed; app relaunched successfully. The fix and same-load retest are recorded below.
 

@@ -2,6 +2,12 @@
 
 Acceptance follows [agent verification](../../engineering/engineering.html#agent-verification): plans require automated and agent-run desktop checks in one validation report, not a duplicate manual user UAT checklist. This supersedes older user-checklist requirements below without altering historical results. Ask the user only for subjective decisions or a specific check the agent cannot complete.
 
+## Phase 1C.3g · Cluster resources and API discovery
+
+- [Specification](../specs/2026-11-14-phase-1c3g-cluster-discovery-design.md): seven infrastructure destinations, lazy scoped discovery and guarded generic installed-API investigation.
+- [Six-task plan](2026-11-14-phase-1c3g-cluster-discovery.md): dedicated readers, discovery, generic captures, dedicated views, browser/state and verification/review/delivery.
+- Separate implementation session in the existing checkout, no worktree. Current progress belongs in the [checkpoint](../../../.superpowers/sdd/status.md).
+
 ## Phase 1C.3f · Availability and remaining workloads
 
 - [Specification](../specs/2026-11-14-phase-1c3f-availability-design.md): HPA, PDB, RC and ControllerRevision evidence, bounded selector/owner relationships and safe captured navigation.
@@ -51,15 +57,15 @@ Logs redesign is separately owned. Planning develop currently precedes the featu
 
 The [Phase 1A specification](../specs/2026-11-05-phase-1a-validation-design.md) was approved on 2026-11-05.
 
-- [Phase 1A implementation plan](2026-11-05-phase-1a-validation.md): detailed tasks, minimal tests and separate-session handoff; completed with qualified local validation; see its report.
+- [Phase 1A implementation plan](2026-11-05-phase-1a-validation.md): detailed tasks, minimal tests and separate-session handoff; completed with qualified local validation; see its [report](../validation/phase-1a.html). The earlier [outline](2026-11-05-phase-1a-validation-outline.md) is historical and was expanded by the specification.
 
 The [Phase 1B UI specification](../specs/2026-11-06-phase-1b-ui-design.md) was approved on 2026-11-06.
 
-- [Phase 1B UI foundation implementation plan](2026-11-06-phase-1b-ui-foundation.md): six tasks, minimal verification and a separate-session implementation prompt. Merged through PR #2; see the Phase 1B validation report for actual checks and limitations.
+- [Phase 1B UI foundation implementation plan](2026-11-06-phase-1b-ui-foundation.md): six tasks, minimal verification and a separate-session implementation prompt. Merged through PR #2; see the [Phase 1B validation report](../validation/phase-1b.html) for actual checks and limitations.
 
 The [Phase 1C.1 specification](../specs/2026-11-06-phase-1c1-cluster-connections-design.md) was approved on 2026-11-06.
 
-- [Phase 1C.1 implementation plan](2026-11-06-phase-1c1-cluster-connections.md): seven tasks, focused tests, two-cluster validation and a post-implementation user UI UAT checklist. Merged through PR #3 after qualified agent UAT and maintainer authorization; see its report for coverage limits.
+- [Phase 1C.1 implementation plan](2026-11-06-phase-1c1-cluster-connections.md): seven tasks, focused tests, two-cluster validation and a post-implementation user UI UAT checklist. Merged through PR #3 after qualified agent UAT and maintainer authorization; see its [report](../validation/phase-1c1.html) for coverage limits.
 
 The [workspace refinement specification](../specs/2026-11-12-dark-palette-workspace-controls-design.md) was approved on 2026-11-12.
 
@@ -74,3 +80,4 @@ Implementation requires an explicit request after plan review; the user may auth
 The [Phase 1C.2 workload investigation specification](../specs/2026-11-12-phase-1c2-workload-investigation-design.md) was approved on 2026-11-12.
 
 - [Phase 1C.2 implementation plan](2026-11-12-phase-1c2-workload-investigation.md): seven tasks for bounded workloads/details/events/logs, focused tests and a separate HTML user UI UAT checklist. Ready for review and implementation in a separate session; no implementation performed by this planning update.
+- [Live log refinement](2026-11-13-live-log-refinement.md): one visible live view, cancelled on departure, with search and expansion. Completed on the Phase 1C.2 branch.

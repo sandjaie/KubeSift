@@ -24,7 +24,7 @@
       ><a href="../ux/mocks/index.html">Mockups</a>
       <h2>Engineering</h2>
       <a href="../engineering/engineering.html">Playbook</a><a href="../engineering/local-development.html">Local development</a
-      ><a href="../engineering/toolchain.html">Toolchain</a>
+      ><a href="../engineering/toolchain.html">Toolchain</a><a href="../engineering/kubernetes-development.html">Kubernetes references</a>
       <h2>Working</h2>
       <a href="../superpowers/validation/phase-1a.html">Phase 1A validation</a>
     </aside>
@@ -134,6 +134,13 @@
         context name. Display environment separately from connection state and observed alert counts. A disconnected cluster is not
         automatically unhealthy; unavailable/stale health data must be identified. Alerts require evidence, not a decorative badge. Text and
         icons supplement color.
+      </p>
+      <h2 id="cluster-discovery">Cluster resources and API discovery design</h2>
+      <p>
+        The <a href="../superpowers/specs/2026-11-14-phase-1c3g-cluster-discovery-design.md">Phase 1C.3g specification</a> defines dedicated
+        infrastructure views and an API resources browser under Extensions. Group/version/resource selection is explicit and lazy; partial
+        discovery errors remain local. Namespace changes retain the destination. Known resources use their dedicated readers, including
+        metadata-only Secrets. Generic objects use captured, bounded Overview and YAML views with no inferred health or operations.
       </p>
       <h2 id="availability-investigation">Phase 1C.3f availability investigation</h2>
       <p>

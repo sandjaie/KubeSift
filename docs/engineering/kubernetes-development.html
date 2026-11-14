@@ -8,6 +8,25 @@
     <script src="../assets/theme.js"></script>
   </head>
   <body>
+    <aside class="rail">
+      <a class="skip" href="#content">Skip to content</a
+      ><a class="mark" href="../index.html"><span class="mark-name">KubeSift</span><span class="mark-sub">Planning</span></a>
+      <h2>Index</h2>
+      <a href="../index.html">Planning index</a>
+      <h2>Product</h2>
+      <a href="../product/requirements.html">Requirements</a><a href="../product/feature-matrix.html">Capabilities</a>
+      <h2>Architecture</h2>
+      <a href="../architecture/overview.html">Overview</a><a href="../architecture/decisions.html">Decisions</a>
+      <h2>Safeguards</h2>
+      <a href="../security/security-model.html">Security and AI</a>
+      <h2>Delivery</h2>
+      <a href="../roadmap/roadmap.html">Roadmap</a><a href="../ux/workflows.html">UX workflows</a
+      ><a href="../ux/mocks/index.html">Mockups</a>
+      <h2>Engineering</h2>
+      <a href="../engineering/engineering.html">Playbook</a><a href="../engineering/local-development.html">Local development</a
+      ><a href="../engineering/toolchain.html">Toolchain</a
+      ><a href="../engineering/kubernetes-development.html" aria-current="page">Kubernetes references</a>
+    </aside>
     <header>
       <a href="../index.html">KubeSift / Engineering</a>
       <h1>Kubernetes development references</h1>
@@ -252,6 +271,27 @@
           The <a href="../superpowers/specs/2026-11-14-phase-1c3e-access-control-design.md">access-control specification</a> owns the
           read-only field allowlist, captured-target navigation and deliberate exclusion of effective-permission calculation and
           access-review/token calls.
+        </li>
+      </ul>
+      <h2 id="discovery">Cluster resources and discovery</h2>
+      <ul>
+        <li>
+          <a href="https://kubernetes.io/docs/concepts/overview/kubernetes-api/">Kubernetes API discovery</a>: group/version/resource
+          identity, aggregated versus unaggregated discovery and resource scope.
+        </li>
+        <li>
+          <a href="https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning/"
+            >CRD versioning</a
+          >: served, storage and stored versions are different evidence.
+        </li>
+        <li>
+          <a href="https://kubernetes.io/docs/concepts/architecture/leases/">Leases</a> and
+          <a href="https://kubernetes.io/docs/concepts/architecture/nodes/">Nodes</a>: reported coordination and node evidence do not
+          establish live process health or utilization.
+        </li>
+        <li>
+          The <a href="../superpowers/specs/2026-11-14-phase-1c3g-cluster-discovery-design.md">discovery specification</a> owns bounded
+          catalog loading, native descriptor validation, generic capture rules and dedicated Secret safeguards.
         </li>
       </ul>
       <h2 id="availability">Availability and revision evidence</h2>
