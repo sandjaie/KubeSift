@@ -135,6 +135,14 @@
         automatically unhealthy; unavailable/stale health data must be identified. Alerts require evidence, not a decorative badge. Text and
         icons supplement color.
       </p>
+      <h2 id="availability-investigation">Phase 1C.3f availability investigation design</h2>
+      <p>
+        The <a href="../superpowers/specs/2026-11-14-phase-1c3f-availability-design.md">availability specification</a> extends Workloads
+        with HPAs, PDBs, ReplicationControllers and ControllerRevisions. Keep ConfigMaps and Secrets in Workloads. HPA targets and reported
+        metrics are separate; PDB Selected Pods are label matches, not owned children. StatefulSet/DaemonSet Revisions show retained
+        UID-owned history with captured markers, not rollback controls. Preserve lazy rendering, exact validated target captures and Back;
+        stale observations never imply authorization to scale or evict. Delivery evidence belongs in checkpoint and reports.
+      </p>
       <h2 id="access-control-investigation">Phase 1C.3e access-control investigation</h2>
       <p>
         ConfigMaps and Secrets appear under Workloads after CronJobs. Configuration retains ResourceQuotas and LimitRanges. This changes

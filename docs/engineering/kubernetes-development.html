@@ -254,6 +254,26 @@
           access-review/token calls.
         </li>
       </ul>
+      <h2 id="availability">Availability and revision evidence</h2>
+      <ul>
+        <li>
+          <a href="https://kubernetes.io/docs/reference/kubernetes-api/autoscaling/horizontal-pod-autoscaler-v2/">HPA v2 API</a>: configured
+          metric targets and controller-reported observations are separate evidence.
+        </li>
+        <li>
+          <a href="https://kubernetes.io/docs/reference/kubernetes-api/policy/pod-disruption-budget-v1/">PDB v1 API</a>: null versus empty
+          selector, observation generation and reported allowance; label selection is not ownership or eviction authorization.
+        </li>
+        <li>
+          <a href="https://kubernetes.io/docs/reference/kubernetes-api/apps/controller-revision-v1/">ControllerRevision</a> and
+          <a href="https://kubernetes.io/docs/reference/kubernetes-api/apps/stateful-set-v1/">StatefulSet status</a>: opaque retained data
+          and captured revision references, not complete rollout history.
+        </li>
+        <li>
+          The <a href="../superpowers/specs/2026-11-14-phase-1c3f-availability-design.md">availability specification</a> owns exact
+          supported targets, relationship bounds and no-mutation behavior.
+        </li>
+      </ul>
       <h2 id="testing">Testing and evidence</h2>
       <ul>
         <li>

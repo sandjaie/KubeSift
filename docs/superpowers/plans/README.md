@@ -2,6 +2,12 @@
 
 Acceptance follows [agent verification](../../engineering/engineering.html#agent-verification): plans require automated and agent-run desktop checks in one validation report, not a duplicate manual user UAT checklist. This supersedes older user-checklist requirements below without altering historical results. Ask the user only for subjective decisions or a specific check the agent cannot complete.
 
+## Phase 1C.3f · Availability and remaining workloads
+
+- [Specification](../specs/2026-11-14-phase-1c3f-availability-design.md): HPA, PDB, RC and ControllerRevision evidence, bounded selector/owner relationships and safe captured navigation.
+- [Five-task plan](2026-11-14-phase-1c3f-availability.md): readers, relationships/resolver, views, state integration and complete verification/review/delivery.
+- Separate implementation session; existing checkout, no worktree. Current progress is in the [checkpoint](../../../.superpowers/sdd/status.md). One whole-PR review, agent desktop verification, no duplicate manual UAT or installed metrics infrastructure.
+
 ## Phase 1C.3e · Read-only access control
 
 - [Specification](../specs/2026-11-14-phase-1c3e-access-control-design.md): five ServiceAccount/RBAC kinds, rule and subject scope, RBAC naming and explicit references without effective-access claims.

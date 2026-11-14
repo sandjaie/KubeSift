@@ -2,6 +2,13 @@
 
 Updated 2026-11-14. Current integration branch is `develop`.
 
+## Next: Phase 1C.3f · Availability and remaining workloads
+
+- Planning only; separate implementation session, existing checkout and no worktree. [Specification](../../docs/superpowers/specs/2026-11-14-phase-1c3f-availability-design.md) and [five-task plan](../../docs/superpowers/plans/2026-11-14-phase-1c3f-availability.md).
+- Scope: HPA, PDB, ReplicationController and ControllerRevision views; explicit scale targets, label-selected PDB Pods, RC-owned Pods and StatefulSet/DaemonSet revision history. No live metrics reads/installations, scaling, eviction, rollback or other product writes.
+- Baseline checked at develop `f276cdc`, including access-control merge `dea9197`. Preserve ConfigMaps/Secrets in Workloads, validated target captures, null-safe/lazy nested rendering and existing Secret/Logs behavior. Earlier native-denial and compatibility gaps remain named in reports.
+- Implementation must complete automated/integration and packaged desktop checks, update checkpoint/plan/report, obtain one independent whole-PR review and targeted fix rechecks, then ready PR and merge. 1C.3g is later work, not authorized here.
+
 ## Phase 1C.3e · Read-only access control
 
 - Implemented on `feature/phase-1c3e-access-control` from `c41a54c`. [Specification](../../docs/superpowers/specs/2026-11-14-phase-1c3e-access-control-design.md), [plan](../../docs/superpowers/plans/2026-11-14-phase-1c3e-access-control.md), and [validation report](../../docs/superpowers/validation/phase-1c3e.html).
