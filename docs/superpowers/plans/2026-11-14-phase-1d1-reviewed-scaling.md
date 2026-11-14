@@ -81,7 +81,7 @@ Five safety issues drive tests:
 - [x] Run full Go tests/vet, targeted race suites, frontend tests/lint/typecheck, bindings, build/package, both-cluster scaling and affected read tests. Marker synthetic tests passed. The historical live marker suite requires contexts outside the approved pair and remains unrun. See the validation report.
 - [x] On the final packaged app use desktop computer-use for prepare/cancel, confirmed scale, zero acknowledgement and restore, permission denial, externally changed target requiring re-review, switching tabs/namespace during review, target-bound result/Back and both contexts. Verify keyboard, narrow split, appearances and zoom; record limitations without duplicate manual UAT.
 - [x] Delete only owned fixtures/temporary credentials, verify both-context cleanup. Update validation report with actual evidence and remaining limits, checklist and checkpoint. Keep roadmap scope-only and detailed execution logs ignored. Run documentation checks/formatting.
-- [ ] Request one fresh independent whole-PR review using `.agents/skills/kubesift-code-review/SKILL.md` with base/head/spec and safety evidence; fix findings and perform targeted rechecks. Refresh review evidence if head changes. Push feature branch, open ready PR and merge into develop after required gates under standing authorization. No release or subsequent phase.
+- [x] Request one fresh independent whole-PR review using `.agents/skills/kubesift-code-review/SKILL.md` with base/head/spec and safety evidence; fix findings and perform targeted rechecks. Refresh review evidence if head changes. Push feature branch, open ready PR and merge into develop after required gates under standing authorization. No release or subsequent phase.
 
 ## Plan self-review
 

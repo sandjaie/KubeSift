@@ -4,9 +4,9 @@ Updated 2026-11-15. Current integration branch is `develop`.
 
 ## Phase 1D.1 · Reviewed workload scaling
 
-- Implemented on `feature/phase-1d1-reviewed-scaling` from `905daf9`. [Specification](../../docs/superpowers/specs/2026-11-14-phase-1d1-reviewed-scaling-design.md), [plan](../../docs/superpowers/plans/2026-11-14-phase-1d1-reviewed-scaling.md), and [validation](../../docs/superpowers/validation/phase-1d1.html).
+- [PR #15](https://github.com/sandjaie/KubeSift/pull/15) squash-merged into `develop` as `9005fcc` on 2026-11-15 Dubai time. Implemented in the existing checkout from `905daf9`. [Specification](../../docs/superpowers/specs/2026-11-14-phase-1d1-reviewed-scaling-design.md), [plan](../../docs/superpowers/plans/2026-11-14-phase-1d1-reviewed-scaling.md), and [validation](../../docs/superpowers/validation/phase-1d1.html).
 - Automated, two-cluster scaling and packaged native evidence recorded. Includes server-enforced UID/version, explicit dry-run/confirm and retained unknown outcomes.
-- The independent whole-PR review and targeted recheck passed. Ready for feature PR delivery.
+- The independent whole-PR review and targeted recheck passed.
 
 ## Phase 1C.3g · Cluster resources and API discovery
 
