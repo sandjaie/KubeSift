@@ -33,7 +33,8 @@ func networkVersion(kind string) string {
 }
 
 func isClusterScopedResource(kind string) bool {
-	return kind == "IngressClass" || kind == "Namespace" || kind == "ClusterRole" || kind == "ClusterRoleBinding" ||
+	api := clusterResources[kind]
+	return (api.kind != "" && !api.namespaced) || kind == "IngressClass" || kind == "Namespace" || kind == "ClusterRole" || kind == "ClusterRoleBinding" ||
 		(storageVersion(kind) != "" && kind != "PersistentVolumeClaim")
 }
 

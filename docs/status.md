@@ -5,7 +5,7 @@ This is the entry point to progress documents, not a second status tracker.
 | Question | Authoritative document |
 | --- | --- |
 | What is current, blocked or next to execute? | [Tracked Superpowers checkpoint](../.superpowers/sdd/status.md) |
-| Which implementation steps are done? | Checkboxes in the relevant [implementation plan](superpowers/plans/README.md) |
+| Which implementation steps are done? | Checkboxes in the relevant [implementation plan](superpowers/plans/README.html) |
 | What was tested, reviewed and integrated; what remains unverified? | The phase validation report linked from the checkpoint and plan |
 | What is the intended scope, order and dependency structure? | [Roadmap](roadmap/roadmap.html) |
 | Where are detailed local execution notes? | Ignored `.superpowers/sdd/` ledgers; not a portable source of completion evidence |

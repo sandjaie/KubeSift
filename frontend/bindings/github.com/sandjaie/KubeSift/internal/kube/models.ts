@@ -11,6 +11,51 @@ Important: Wails generates this glue; change Go contracts and regenerate rather 
 // @ts-ignore: Unused imports
 import * as model$0 from "../model/models.js";
 
+export interface APIGroup {
+  group: string;
+  versions: string[] | null;
+  preferred: string;
+}
+
+export interface APIGroupCatalog {
+  groups: APIGroup[] | null;
+  coreProblem: model$0.Problem | null;
+  apisProblem: model$0.Problem | null;
+  fetchedAt: string;
+  epoch: string;
+}
+
+export interface APIGroupRequest {
+  connection: model$0.ConnectionRef;
+  refresh: boolean;
+}
+
+export interface APIResourceCatalog {
+  resources: APIResourceDescriptor[] | null;
+  fetchedAt: string;
+  epoch: string;
+}
+
+export interface APIResourceDescriptor {
+  group: string;
+  version: string;
+  resource: string;
+  kind: string;
+  namespaced: boolean;
+  list: boolean;
+  get: boolean;
+  mode: string;
+  reason: string;
+  handle: string;
+}
+
+export interface APIResourceRequest {
+  connection: model$0.ConnectionRef;
+  group: string;
+  version: string;
+  refresh: boolean;
+}
+
 export interface AccessControlPage {
   items: AccessControlRow[] | null;
   page: PageInfo;
@@ -53,6 +98,17 @@ export interface AvailabilitySummary {
   revision: string;
 }
 
+export interface ClusterResourcePage {
+  items: ClusterResourceRow[] | null;
+  page: PageInfo;
+}
+
+export interface ClusterResourceRow {
+  resource: ResourceRef;
+  createdAt: string | null;
+  objectJSON: string;
+}
+
 export interface ConfigurationPage {
   items: ConfigurationRow[] | null;
   page: PageInfo;
@@ -93,6 +149,18 @@ export interface DetailRequest {
   resource: ResourceRef;
 }
 
+export interface EventInventoryPage {
+  items: EventInventoryRow[] | null;
+  page: PageInfo;
+}
+
+export interface EventInventoryRow {
+  resource: ResourceRef;
+  event: ResourceEvent;
+  regarding: string;
+  target: ResourceRef | null;
+}
+
 export interface EventPage {
   items: ResourceEvent[] | null;
   page: PageInfo;
@@ -103,9 +171,58 @@ export interface EventRequest {
   cursor: string;
 }
 
+export interface EventTargetRequest {
+  source: ResourceRef;
+  sourceVersion: string;
+}
+
 export interface ForwardResult {
   session: model$0.SessionRef;
   localPort: number;
+}
+
+export interface GenericDetailRequest {
+  connection: model$0.ConnectionRef;
+  handle: string;
+  namespace: string;
+  name: string;
+  uid: string;
+}
+
+export interface GenericPageRequest {
+  connection: model$0.ConnectionRef;
+  handle: string;
+  namespace: string;
+  cursor: string;
+}
+
+export interface GenericResourceDetail {
+  resource: GenericResourceRef;
+  resourceVersion: string;
+  fetchedAt: string;
+  objectJSON: string;
+  yaml: string;
+}
+
+export interface GenericResourcePage {
+  items: GenericResourceRow[] | null;
+  page: PageInfo;
+}
+
+export interface GenericResourceRef {
+  connection: model$0.ConnectionRef;
+  group: string;
+  version: string;
+  resource: string;
+  kind: string;
+  namespace: string;
+  name: string;
+  uid: string;
+}
+
+export interface GenericResourceRow {
+  resource: GenericResourceRef;
+  createdAt: string | null;
 }
 
 export interface JobSummary {
@@ -218,6 +335,10 @@ export interface ResolvedConfigurationReference {
   identityEvidence: string;
 }
 
+export interface ResolvedEventTarget {
+  detail: ResourceDetail;
+}
+
 export interface ResolvedNetworkReference {
   association: string;
   resource: ResourceRef;
@@ -234,6 +355,8 @@ export interface ResolvedStorageReference {
 }
 
 export interface ResourceDetail {
+  eventTarget?: ResourceRef | null;
+  capturedYAML?: YAMLDocument | null;
   availability?: AvailabilitySummary | null;
   job: JobSummary | null;
   resource: ResourceRef;

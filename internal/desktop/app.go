@@ -1,7 +1,7 @@
 /*
 Purpose: Wire the native Wails application to domain services.
 Used by: The desktop executable.
-Responsibilities: Register services, fill the selected display work area on first show and publish session events.
+Responsibilities: Register services, size the first window to the selected display and publish session events.
 Important: Geometry persistence is independent of Kubernetes/session policy and uses logical bounds.
 */
 package desktop
@@ -68,7 +68,7 @@ func Run(assets fs.FS) error {
 		if p.Window != nil {
 			r = *p.Window
 		}
-		setBounds(preferences.WindowWorkArea(r, workAreas()))
+		setBounds(preferences.LaunchWindowBounds(r, workAreas()))
 	})
 	save := func(*application.WindowEvent) {
 		lock.Lock()

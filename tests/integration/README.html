@@ -64,3 +64,11 @@ done</code></pre>
     require metrics-server.
   </p>
 </html>
+<p>
+  TestClusterDiscovery uses the same explicit A/B configurations and discovery-restricted.kubeconfig on A. Create the owned
+  <a href="../fixtures/explorer/phase-1c3g.json">Phase 1C.3g fixture</a> with kubectl create on the two approved contexts after checking
+  names are unused. Wait for the two CRDs to be Established, then create a Widget named sample with spec.count 9007199254740993 in each
+  scope. Create discovery-event in kubesift-discovery-check with the actual discovery-pod UID as its regarding reference. Use the synthetic
+  fixture-reader identity for restricted reads. Delete the two owned Widgets before deleting the CRDs and verify the namespace and cluster
+  fixture names are absent afterward.
+</p>

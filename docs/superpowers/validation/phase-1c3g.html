@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Phase 1C.3g validation · KubeSift</title>
+    <link rel="stylesheet" href="../../assets/planning.css" />
+    <script src="../../assets/theme.js"></script>
+  </head>
+  <body>
+    <aside class="rail">
+      <a class="skip" href="#content">Skip to content</a
+      ><a class="mark" href="../../index.html"><span class="mark-name">KubeSift</span><span class="mark-sub">Planning</span></a>
+      <h2>Index</h2>
+      <a href="../../index.html">Planning index</a>
+      <h2>Product</h2>
+      <a href="../../product/requirements.html">Requirements</a><a href="../../product/feature-matrix.html">Capabilities</a>
+      <h2>Architecture</h2>
+      <a href="../../architecture/overview.html">Overview</a><a href="../../architecture/decisions.html">Decisions</a>
+      <h2>Safeguards</h2>
+      <a href="../../security/security-model.html">Security and AI</a>
+      <h2>Delivery</h2>
+      <a href="../../roadmap/roadmap.html">Roadmap</a><a href="../../ux/workflows.html">UX workflows</a
+      ><a href="../../ux/mocks/index.html">Mockups</a>
+      <h2>Engineering</h2>
+      <a href="../../engineering/engineering.html">Playbook</a><a href="../../engineering/local-development.html">Local development</a
+      ><a href="../../engineering/toolchain.html">Toolchain</a
+      ><a href="../../engineering/kubernetes-development.html">Kubernetes references</a>
+      <h2>Superpowers</h2>
+      <a href="../../superpowers/specs/2026-11-05-kubesift-design.md">Design specification</a
+      ><a href="../../superpowers/plans/README.html">Plans</a
+      ><a href="../../superpowers/validation/index.html" aria-current="page">Validation</a
+      ><a href="../../superpowers/evidence/index.html">Evidence</a>
+    </aside>
+    <header>
+      <a href="../../index.html">KubeSift / Planning</a>
+      <h1>Phase 1C.3g validation</h1>
+      <p>Cluster resources, API discovery and macOS launch sizing</p>
+    </header>
+    <main id="content">
+      <p>
+        Baseline <code>3147a6e</code> includes <code>9e12a44</code>. See the
+        <a href="../specs/2026-11-14-phase-1c3g-cluster-discovery-design.md">specification</a> and
+        <a href="../plans/2026-11-14-phase-1c3g-cluster-discovery.md">plan</a>.
+      </p>
+      <h2>Automated and kind integration</h2>
+      <ul>
+        <li>
+          Repository source descriptions, documentation links, Go tests and vet, 72 frontend tests, lint and typecheck passed. Race runs
+          covered kube, desktop and preferences; Wails bindings, production build and signed local package passed.
+        </li>
+        <li>
+          Native fake APIs cover fixed scope, modern Event absence fallback and denial, historical target replacement, lazy partial
+          discovery, protected routes, expiry and LRU, malformed discovery, metadata projection, tampered cursors and exact numeric tokens.
+        </li>
+        <li>
+          Cluster discovery plus workload, networking, configuration (including strict Secret metadata), storage, access control and
+          availability integration passed on <code>kind-dev-local-a</code> and <code>kind-dev-local-b</code>. The new suite checked all
+          seven fixed kinds, Event-to-Pod UID resolution, namespaced and cluster Widget objects with a duplicate Kind, Endpoints, an exact
+          large integer in YAML, both cluster and namespace isolation, and forbidden generic list and get under a restricted identity.
+        </li>
+      </ul>
+      <h2>Packaged desktop evidence</h2>
+      <p>
+        Arm64 KubeSift 0.3.0 on macOS 27.0.1. Tested executable SHA-256:
+        <code>10947c90c97eebb76bfb424b2a1943873eef306db194fbaaf83d8d78dd998bf0</code>.
+      </p>
+      <ul>
+        <li>Opened a real Node detail and observed independent Ready and scheduling fields.</li>
+        <li>Opened the synthetic Event, followed its referenced Pod with a verified UID, and returned to the captured Event.</li>
+        <li>
+          Opened the namespaced Widget from its CRD, saw the exact count 9007199254740993 in the YAML, used Copy displayed YAML (success
+          reported by the app), and navigated back through inventory to the CRD. The clipboard bytes were not independently read.
+        </li>
+        <li>
+          APIServices v1.apps opened apps/v1. The API filter transferred focus to the resource selector on Tab. The detail divider narrowed
+          from 52% to 36% by keyboard; both light and dark appearances were observed and System appearance restored.
+        </li>
+        <li>
+          Switching namespace to default kept Widget selected and showed an empty page. A second tab displayed the distinct B Node;
+          returning to A restored its discovery selection and namespace.
+        </li>
+        <li>
+          On the attached large display the initial frame was 3,200 × 2,040 capture pixels (1,600 × 1,020 logical points), native zoom
+          expanded it toward the display work area, and a second zoom restored the capped frame. Unit tests cover compact, offset, portrait
+          and unplugged display work areas. A physical move between displays and a physical compact display were not tested.
+        </li>
+      </ul>
+      <h2>Limits and delivery</h2>
+      <p>
+        No Gateway or snapshot stack was installed, and no such API was verified. Synthetic CRDs validate generic browsing, not extension
+        semantics. Mounted-component race tests and the uncommon error and rendering matrix are not exhaustive. No narrow operating-system
+        window frame was verified; the divider check narrowed the detail pane inside the supported workspace.
+      </p>
+      <p>
+        Removed the owned custom objects before their CRDs, cleaned temporary fixtures on both contexts, and removed isolated test
+        kubeconfigs.
+      </p>
+      <h2>Independent review</h2>
+      <p>
+        Reviewer: <code>whole_pr_review</code>. Base and merge base <code>3147a6e</code>; initial whole-PR candidate <code>21b8455</code>.
+        The initial review blocked merge on three defects.
+      </p>
+      <ul>
+        <li>
+          KSF-001: Lease Events now use the fixed UID-checked object reader. The focused test demonstrated the failure and the signed retest
+          loaded the legitimate empty Events tab.
+        </li>
+        <li>
+          KSF-002: Generic inventory accepts a valid server-defined list kind while checking the list API version and item identity. Tested
+          with WidgetCollection in fake responses and real CRDs on both kind contexts.
+        </li>
+        <li>
+          KSF-003: Event-to-ConfigMap navigation uses the standard count-only Overview; the regression verifies one target GET and that data
+          values do not cross the bridge. Event-to-Pod navigation was rerun in the package.
+        </li>
+        <li>
+          The discovery lifecycle regression checks test late cancellation, stale descriptor handles and connection-generation scope. The
+          native retest restored the captured YAML after switching tabs, then cleared it on namespace change and explicit refresh.
+        </li>
+      </ul>
+      <p>
+        Review-fix executable SHA-256: <code>6303354366d11cae1ea67b40d9353add953e8521dc81b164adafb83d961534c4</code>. The same reviewer
+        checked the fix delta through <code>df91b78</code> and found no remaining blockers.
+      </p>
+    </main>
+  </body>
+</html>

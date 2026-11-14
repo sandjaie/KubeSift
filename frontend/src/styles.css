@@ -1626,3 +1626,17 @@ textarea::placeholder {
   overflow-wrap: anywhere;
   user-select: text;
 }
+
+.api-browser select {
+  max-width: 100%;
+  min-width: 0;
+}
+.catalog-back {
+  align-self: flex-start;
+  max-width: calc(100% - 40px);
+  margin: 0 20px 12px;
+  overflow-wrap: anywhere;
+}
+.catalog-pages {
+  padding: 12px 20px 0;
+}

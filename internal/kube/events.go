@@ -32,9 +32,12 @@ func eventTime(v *time.Time) time.Time {
 	}
 	return *v
 }
+func eventAPIAbsent(err error) bool {
+	return apierrors.IsNotFound(err) || apierrors.IsMethodNotSupported(err)
+}
 func (s *Service) ReadResourceEvents(ctx context.Context, req EventRequest) (EventPage, error) {
 	result := EventPage{Items: []ResourceEvent{}}
-	if isClusterScopedResource(req.Resource.Kind) || req.Resource.Kind == "Secret" {
+	if isClusterScopedResource(req.Resource.Kind) || req.Resource.Kind == "Secret" || req.Resource.Kind == "Event" {
 		return result, model.Fail("invalid", "Events are unavailable for this kind")
 	}
 	if err := validResource(req.Resource); err != nil {
@@ -65,7 +68,7 @@ func (s *Service) ReadResourceEvents(ctx context.Context, req EventRequest) (Eve
 	if family == "modern" {
 		list, e := client.EventsV1().Events(req.Resource.Namespace).List(ctx, metav1.ListOptions{Limit: 100, Continue: token, FieldSelector: fields.OneTermEqualSelector("regarding.uid", req.Resource.UID).String()})
 		if e != nil {
-			if req.Cursor == "" && (apierrors.IsNotFound(e) || apierrors.IsMethodNotSupported(e)) {
+			if req.Cursor == "" && eventAPIAbsent(e) {
 				family = "core"
 			} else {
 				return result, readError(ctx, e)
@@ -79,19 +82,7 @@ func (s *Service) ReadResourceEvents(ctx context.Context, req EventRequest) (Eve
 				if string(event.Regarding.UID) != req.Resource.UID || event.UID == "" {
 					continue
 				}
-				first := firstTime(event.DeprecatedFirstTimestamp.Time, event.EventTime.Time, event.CreationTimestamp.Time)
-				var series time.Time
-				var count *int32
-				if event.DeprecatedCount > 0 {
-					v := event.DeprecatedCount
-					count = &v
-				}
-				if event.Series != nil {
-					series = event.Series.LastObservedTime.Time
-					v := event.Series.Count
-					count = &v
-				}
-				result.Items = append(result.Items, ResourceEvent{UID: string(event.UID), Type: event.Type, Reason: event.Reason, Message: event.Note, Reporter: event.ReportingController, Count: count, FirstAt: first, LastAt: firstTime(series, event.DeprecatedLastTimestamp.Time, event.EventTime.Time, eventTime(first))})
+				result.Items = append(result.Items, modernEvent(event))
 			}
 		}
 	}
@@ -108,23 +99,7 @@ func (s *Service) ReadResourceEvents(ctx context.Context, req EventRequest) (Eve
 			if string(event.InvolvedObject.UID) != req.Resource.UID || event.UID == "" {
 				continue
 			}
-			first := firstTime(event.FirstTimestamp.Time, event.EventTime.Time, event.CreationTimestamp.Time)
-			var series time.Time
-			var count *int32
-			if event.Count > 0 {
-				v := event.Count
-				count = &v
-			}
-			if event.Series != nil {
-				series = event.Series.LastObservedTime.Time
-				v := event.Series.Count
-				count = &v
-			}
-			reporter := event.ReportingController
-			if reporter == "" {
-				reporter = event.Source.Component
-			}
-			result.Items = append(result.Items, ResourceEvent{UID: string(event.UID), Type: event.Type, Reason: event.Reason, Message: event.Message, Reporter: reporter, Count: count, FirstAt: first, LastAt: firstTime(series, event.LastTimestamp.Time, event.EventTime.Time, eventTime(first))})
+			result.Items = append(result.Items, legacyEvent(event))
 		}
 	}
 	unique := map[string]ResourceEvent{}

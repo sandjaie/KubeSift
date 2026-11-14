@@ -71,6 +71,8 @@ type DetailRequest struct {
 	Resource             ResourceRef `json:"resource"`
 }
 type ResourceDetail struct {
+	EventTarget     *ResourceRef         `json:"eventTarget,omitempty"`
+	CapturedYAML    *YAMLDocument        `json:"capturedYAML,omitempty"`
 	Availability    *AvailabilitySummary `json:"availability,omitempty"`
 	Job             *JobSummary          `json:"job"`
 	Resource        ResourceRef          `json:"resource"`

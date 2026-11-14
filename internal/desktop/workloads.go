@@ -235,3 +235,66 @@ func (s *ExplorerService) ResolveAvailabilityReference(id string, req kube.Avail
 	defer done()
 	return s.core.kube.ResolveAvailabilityReference(ctx, req)
 }
+
+func (s *ExplorerService) ReadClusterResources(id string, req kube.PageRequest) (kube.ClusterResourcePage, error) {
+	ctx, done, err := s.beginWorkloadRead(id)
+	if err != nil {
+		return kube.ClusterResourcePage{}, err
+	}
+	defer done()
+	return s.core.kube.ReadClusterResources(ctx, req)
+}
+
+func (s *ExplorerService) ReadEventInventory(id string, req kube.PageRequest) (kube.EventInventoryPage, error) {
+	ctx, done, err := s.beginWorkloadRead(id)
+	if err != nil {
+		return kube.EventInventoryPage{}, err
+	}
+	defer done()
+	return s.core.kube.ReadEventInventory(ctx, req)
+}
+
+func (s *ExplorerService) ResolveEventTarget(id string, req kube.EventTargetRequest) (kube.ResolvedEventTarget, error) {
+	ctx, done, err := s.beginWorkloadRead(id)
+	if err != nil {
+		return kube.ResolvedEventTarget{}, err
+	}
+	defer done()
+	return s.core.kube.ResolveEventTarget(ctx, req)
+}
+
+func (s *ExplorerService) ReadAPIGroups(id string, req kube.APIGroupRequest) (kube.APIGroupCatalog, error) {
+	ctx, done, err := s.beginWorkloadRead(id)
+	if err != nil {
+		return kube.APIGroupCatalog{}, err
+	}
+	defer done()
+	return s.core.kube.ReadAPIGroups(ctx, req.Connection, req.Refresh)
+}
+
+func (s *ExplorerService) ReadAPIResources(id string, req kube.APIResourceRequest) (kube.APIResourceCatalog, error) {
+	ctx, done, err := s.beginWorkloadRead(id)
+	if err != nil {
+		return kube.APIResourceCatalog{}, err
+	}
+	defer done()
+	return s.core.kube.ReadAPIResources(ctx, req.Connection, req.Group, req.Version, req.Refresh)
+}
+
+func (s *ExplorerService) ReadGenericResources(id string, req kube.GenericPageRequest) (kube.GenericResourcePage, error) {
+	ctx, done, err := s.beginWorkloadRead(id)
+	if err != nil {
+		return kube.GenericResourcePage{}, err
+	}
+	defer done()
+	return s.core.kube.ReadGenericResources(ctx, req)
+}
+
+func (s *ExplorerService) ReadGenericDetail(id string, req kube.GenericDetailRequest) (kube.GenericResourceDetail, error) {
+	ctx, done, err := s.beginWorkloadRead(id)
+	if err != nil {
+		return kube.GenericResourceDetail{}, err
+	}
+	defer done()
+	return s.core.kube.ReadGenericDetail(ctx, req)
+}

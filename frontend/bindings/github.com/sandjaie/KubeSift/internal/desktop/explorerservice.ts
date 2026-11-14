@@ -67,6 +67,14 @@ export function OpenPodLogs(req: kube$0.LogRequest): $CancellablePromise<model$0
   return $Call.ByID(1020417316, req);
 }
 
+export function ReadAPIGroups(id: string, req: kube$0.APIGroupRequest): $CancellablePromise<kube$0.APIGroupCatalog> {
+  return $Call.ByID(1311856368, id, req);
+}
+
+export function ReadAPIResources(id: string, req: kube$0.APIResourceRequest): $CancellablePromise<kube$0.APIResourceCatalog> {
+  return $Call.ByID(1461669093, id, req);
+}
+
 export function ReadAccessControl(id: string, req: kube$0.PageRequest): $CancellablePromise<kube$0.AccessControlPage> {
   return $Call.ByID(2491109527, id, req);
 }
@@ -75,12 +83,28 @@ export function ReadAvailability(id: string, req: kube$0.PageRequest): $Cancella
   return $Call.ByID(1936161523, id, req);
 }
 
+export function ReadClusterResources(id: string, req: kube$0.PageRequest): $CancellablePromise<kube$0.ClusterResourcePage> {
+  return $Call.ByID(2224206763, id, req);
+}
+
 export function ReadConfiguration(id: string, req: kube$0.PageRequest): $CancellablePromise<kube$0.ConfigurationPage> {
   return $Call.ByID(1380409538, id, req);
 }
 
 export function ReadControllerRevisions(id: string, req: kube$0.RelatedRequest): $CancellablePromise<kube$0.ControllerRevisionPage> {
   return $Call.ByID(3551851450, id, req);
+}
+
+export function ReadEventInventory(id: string, req: kube$0.PageRequest): $CancellablePromise<kube$0.EventInventoryPage> {
+  return $Call.ByID(3259958076, id, req);
+}
+
+export function ReadGenericDetail(id: string, req: kube$0.GenericDetailRequest): $CancellablePromise<kube$0.GenericResourceDetail> {
+  return $Call.ByID(2666548396, id, req);
+}
+
+export function ReadGenericResources(id: string, req: kube$0.GenericPageRequest): $CancellablePromise<kube$0.GenericResourcePage> {
+  return $Call.ByID(448559530, id, req);
 }
 
 export function ReadNetworking(id: string, req: kube$0.PageRequest): $CancellablePromise<kube$0.NetworkPage> {
@@ -165,6 +189,10 @@ export function ResolveConfigurationReference(
   req: kube$0.ConfigurationReferenceRequest,
 ): $CancellablePromise<kube$0.ResolvedConfigurationReference> {
   return $Call.ByID(3646830831, id, req);
+}
+
+export function ResolveEventTarget(id: string, req: kube$0.EventTargetRequest): $CancellablePromise<kube$0.ResolvedEventTarget> {
+  return $Call.ByID(530657353, id, req);
 }
 
 export function ResolveNetworkReference(

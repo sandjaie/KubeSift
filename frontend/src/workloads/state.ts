@@ -6,6 +6,7 @@ Important: Connection health snapshots never enter this reducer.
 */
 import { isClusterScoped, resourceKinds, resourceSections } from "./model";
 import type { ResourceKind, KindState, WorkloadsState, ResourceRef, Section, NavigationEntry, TabState, ResourceDetail } from "./model";
+import type { CatalogSeed } from "../discovery/model";
 export const initialWorkloads = (): WorkloadsState => ({});
 export const emptyKind = (): KindState => ({
   filter: "",
@@ -31,6 +32,7 @@ export function canAutoRefresh(s: KindState, visible: boolean) {
   return visible && s.auto && s.history.length === 1 && !s.loading;
 }
 export type Action =
+  | { type: "catalog"; tab: string; clusterScope: string; route?: CatalogSeed }
   | { type: "select"; tab: string; row: { resource: ResourceRef }; epoch: number }
   | { type: "section"; tab: string; section: Section; epoch: number }
   | { type: "scope"; tab: string; scope: string; clusterScope?: string }
@@ -80,6 +82,7 @@ export function reduceWorkloads(state: WorkloadsState, a: Action): WorkloadsStat
       [a.tab]: {
         scope: a.scope,
         clusterScope,
+        catalog: t?.clusterScope === clusterScope ? t?.catalog : undefined,
         kind: t?.kind ?? "Pod",
         kinds: Object.fromEntries(
           resourceKinds.map((kind) => [
@@ -94,6 +97,10 @@ export function reduceWorkloads(state: WorkloadsState, a: Action): WorkloadsStat
     };
   }
   if (!t) return state;
+  if (a.type === "catalog") {
+    if (a.clusterScope !== t.clusterScope) return state;
+    return { ...state, [a.tab]: { ...t, catalog: a.route } };
+  }
   if (a.type === "kind") {
     if (t.kind === a.kind) return state;
     const target = t.kinds[a.kind];

@@ -85,7 +85,7 @@ export function ResourceTable({
   );
 }
 
-export function InventoryTable<T extends Pick<WorkloadRow, "resource" | "createdAt">>({
+export function InventoryTable<T extends { resource: Pick<WorkloadRow["resource"], "name" | "uid">; createdAt: WorkloadRow["createdAt"] }>({
   rows,
   kind,
   label,

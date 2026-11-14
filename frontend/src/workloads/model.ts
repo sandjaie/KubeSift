@@ -38,6 +38,14 @@ import {
   type SelectedPodPage,
   type ControllerRevisionPage,
 } from "../availability/model";
+import {
+  clusterKinds,
+  isClusterKind,
+  isClusterInfrastructure,
+  type ClusterKind,
+  type ClusterResourcePage,
+  type EventInventoryPage,
+} from "../cluster/model";
 export const workloadKinds = [
   "Pod",
   "Deployment",
@@ -52,14 +60,24 @@ export type Kind = (typeof workloadKinds)[number];
 export function isWorkloadKind(kind: string): kind is Kind {
   return workloadKinds.some((item) => item === kind);
 }
-export type ResourceKind = Kind | NetworkKind | ConfigurationKind | StorageKind | AccessControlKind | AvailabilityKind;
-export const resourceKinds = [
+export type ResourceKind =
+  | Kind
+  | NetworkKind
+  | ConfigurationKind
+  | StorageKind
+  | AccessControlKind
+  | AvailabilityKind
+  | ClusterKind
+  | "APIResources";
+export const resourceKinds: ResourceKind[] = [
   ...workloadKinds,
   ...networkKinds,
   ...configurationKinds,
   ...storageKinds,
   ...accessControlKinds,
   ...availabilityKinds,
+  ...clusterKinds,
+  "APIResources",
 ];
 export const isResourceKind = (kind: string): kind is ResourceKind =>
   isWorkloadKind(kind) ||
@@ -67,8 +85,11 @@ export const isResourceKind = (kind: string): kind is ResourceKind =>
   isConfigurationKind(kind) ||
   isStorageKind(kind) ||
   isAccessControlKind(kind) ||
-  isAvailabilityKind(kind);
+  isAvailabilityKind(kind) ||
+  isClusterKind(kind) ||
+  kind === "APIResources";
 export const isClusterScoped = (kind: string) =>
+  isClusterInfrastructure(kind) ||
   kind === "IngressClass" ||
   kind === "Namespace" ||
   kind === "ClusterRole" ||
@@ -92,7 +113,7 @@ export function resourceSections(kind: string): Section[] {
   const sections: Section[] = ["Overview"];
   if (kind === "ConfigMap") sections.push("Data");
   sections.push("YAML");
-  if (!isClusterScoped(kind)) sections.push("Events");
+  if (!isClusterScoped(kind) && kind !== "Event" && kind !== "APIResources") sections.push("Events");
   if (kind === "Pod") sections.push("Logs");
   else if (kind === "Service") sections.push("EndpointSlices");
   else if (kind === "PodDisruptionBudget") sections.push("Selected Pods");
@@ -127,7 +148,16 @@ export interface KindState {
   sort: "asc" | "desc";
   scroll: number;
   history: string[];
-  page: WorkloadPage | NetworkPage | ConfigurationPage | StoragePage | AccessControlPage | AvailabilityPage | null;
+  page:
+    | WorkloadPage
+    | NetworkPage
+    | ConfigurationPage
+    | StoragePage
+    | AccessControlPage
+    | AvailabilityPage
+    | ClusterResourcePage
+    | EventInventoryPage
+    | null;
   selected: { resource: ResourceRef } | null;
   related: boolean;
   identity: string;
@@ -144,6 +174,7 @@ export interface KindState {
   auto: boolean;
 }
 export interface NavigationEntry {
+  detail?: ResourceDetail;
   resource: ResourceRef;
   section: Section;
   cursor: string;
@@ -152,7 +183,9 @@ export interface NavigationEntry {
   referenceEvidence?: ReferenceEvidence;
   position?: Pick<KindState, "filter" | "sort" | "scroll" | "history">;
 }
+import type { CatalogSeed } from "../discovery/model";
 export interface TabState {
+  catalog?: CatalogSeed;
   scope: string;
   clusterScope: string;
   kind: ResourceKind;

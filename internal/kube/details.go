@@ -61,6 +61,9 @@ func validResourceAddress(ref ResourceRef) error {
 	if version == "" {
 		version = availabilityVersion(ref.Kind)
 	}
+	if version == "" {
+		version = clusterAPI(ref.Kind, ref.APIVersion).apiVersion()
+	}
 	if version == "" && configurationKind(ref.Kind) {
 		version = "v1"
 	}
@@ -76,6 +79,10 @@ func checkedObject(ctx context.Context, client kubernetes.Interface, ref Resourc
 	return getResource(ctx, client, ref)
 }
 func getResource(ctx context.Context, client kubernetes.Interface, ref ResourceRef) (workloadObject, error) {
+	if clusterAPI(ref.Kind, ref.APIVersion).kind != "" {
+		object, _, err := getClusterResource(ctx, client, ref)
+		return object, err
+	}
 	if storageVersion(ref.Kind) != "" {
 		object, _, err := getStorage(ctx, client, ref)
 		return object, err
@@ -184,12 +191,27 @@ func (s *Service) ReadResource(ctx context.Context, req DetailRequest) (Resource
 	if err != nil {
 		return result, err
 	}
+	result, err = s.readOverview(ctx, client, req)
+	if err != nil {
+		return ResourceDetail{}, err
+	}
+	if ctx.Err() != nil {
+		return ResourceDetail{}, safeError(ctx, ctx.Err())
+	}
+	return result, s.connections.Validate(req.Resource.Connection)
+}
+
+func (s *Service) readOverview(ctx context.Context, client kubernetes.Interface, req DetailRequest) (ResourceDetail, error) {
+	result := ResourceDetail{}
 	if req.Resource.Kind == "ResourceQuota" || req.Resource.Kind == "LimitRange" {
 		return s.readPolicyOverview(ctx, client, req.Resource)
 	}
 	object, captured, err := detailObject(ctx, client, req.Resource)
 	if err != nil {
 		return result, err
+	}
+	if object.GetName() != req.Resource.Name || object.GetNamespace() != req.Resource.Namespace {
+		return result, model.Fail("invalid", "Server did not return the requested resource identity")
 	}
 	if err = checkPayload(object); err != nil {
 		return result, err
@@ -206,13 +228,13 @@ func (s *Service) ReadResource(ctx context.Context, req DetailRequest) (Resource
 		if e = checkPayload(result); e != nil {
 			return ResourceDetail{}, e
 		}
-		return result, s.connections.Validate(req.Resource.Connection)
+		return result, nil
 	}
 	result, err = capturedDetail(req.Resource, object, captured)
 	if err != nil {
 		return ResourceDetail{}, err
 	}
-	return result, s.connections.Validate(req.Resource.Connection)
+	return result, nil
 }
 
 func capturedDetail(ref ResourceRef, object workloadObject, raw []byte) (ResourceDetail, error) {
@@ -235,6 +257,21 @@ func capturedDetail(ref ResourceRef, object workloadObject, raw []byte) (Resourc
 		summary := availabilitySummary(ref.Kind, body)
 		result.Availability = &summary
 	}
+	if ref.Kind == "Event" {
+		_, regarding, err := eventEvidence(raw, clusterAPI("Event", ref.APIVersion))
+		if err != nil {
+			return ResourceDetail{}, err
+		}
+		result.EventTarget = supportedEventTarget(ref, regarding)
+	}
+	if clusterAPI(ref.Kind, ref.APIVersion).kind != "" {
+		doc, err := resourceYAMLDocument(ref, object, raw)
+		if err != nil {
+			return ResourceDetail{}, err
+		}
+		doc.FetchedAt = result.FetchedAt
+		result.CapturedYAML = &doc
+	}
 	if err := checkPayload(result); err != nil {
 		return ResourceDetail{}, err
 	}
@@ -242,7 +279,7 @@ func capturedDetail(ref ResourceRef, object workloadObject, raw []byte) (Resourc
 }
 
 func detailYAMLJSON(ref ResourceRef, object workloadObject, captured []byte, managed bool) ([]byte, error) {
-	if availabilityVersion(ref.Kind) == "" {
+	if availabilityVersion(ref.Kind) == "" && clusterAPI(ref.Kind, ref.APIVersion).kind == "" {
 		return storageYAMLJSON(object, captured)
 	}
 	if managed {
@@ -281,32 +318,53 @@ func (s *Service) ReadResourceYAML(ctx context.Context, req DetailRequest) (YAML
 	if err = checkPayload(object); err != nil {
 		return result, err
 	}
-	raw, err := detailYAMLJSON(req.Resource, object, captured, true)
+	result, err = resourceYAMLDocument(req.Resource, object, captured)
 	if err != nil {
-		return result, model.Fail("failed", "Cannot encode resource")
-	}
-	with, err := yaml.JSONToYAML(raw)
-	if err != nil {
-		return result, model.Fail("failed", "Cannot serialize resource YAML")
-	}
-	copy := object.DeepCopyObject().(workloadObject)
-	copy.SetManagedFields(nil)
-	raw, err = detailYAMLJSON(req.Resource, copy, captured, false)
-	if err != nil {
-		return result, model.Fail("failed", "Cannot encode resource")
-	}
-	without, err := yaml.JSONToYAML(raw)
-	if err != nil {
-		return result, model.Fail("failed", "Cannot serialize resource YAML")
-	}
-	result = YAMLDocument{Resource: req.Resource, ResourceVersion: object.GetResourceVersion(), FetchedAt: time.Now().UTC(), WithoutManagedFields: string(without), WithManagedFields: string(with)}
-	if err = checkPayload(result); err != nil {
 		return YAMLDocument{}, err
 	}
 	return result, s.connections.Validate(req.Resource.Connection)
 }
 
+func resourceYAMLDocument(ref ResourceRef, object workloadObject, captured []byte) (YAMLDocument, error) {
+	raw, err := detailYAMLJSON(ref, object, captured, true)
+	if err != nil {
+		return YAMLDocument{}, model.Fail("failed", "Cannot encode resource")
+	}
+	render := func(raw []byte) (string, error) {
+		if clusterAPI(ref.Kind, ref.APIVersion).kind != "" {
+			return exactYAML(raw)
+		}
+		encoded, err := yaml.JSONToYAML(raw)
+		if err != nil {
+			return "", model.Fail("failed", "Cannot serialize resource YAML")
+		}
+		return string(encoded), nil
+	}
+	with, err := render(raw)
+	if err != nil {
+		return YAMLDocument{}, err
+	}
+	copy := object.DeepCopyObject().(workloadObject)
+	copy.SetManagedFields(nil)
+	raw, err = detailYAMLJSON(ref, copy, captured, false)
+	if err != nil {
+		return YAMLDocument{}, model.Fail("failed", "Cannot encode resource")
+	}
+	without, err := render(raw)
+	if err != nil {
+		return YAMLDocument{}, err
+	}
+	result := YAMLDocument{Resource: ref, ResourceVersion: object.GetResourceVersion(), FetchedAt: time.Now().UTC(), WithoutManagedFields: without, WithManagedFields: with}
+	if err := checkPayload(result); err != nil {
+		return YAMLDocument{}, err
+	}
+	return result, nil
+}
+
 func detailObject(ctx context.Context, client kubernetes.Interface, ref ResourceRef) (workloadObject, []byte, error) {
+	if clusterAPI(ref.Kind, ref.APIVersion).kind != "" {
+		return getClusterResource(ctx, client, ref)
+	}
 	if storageVersion(ref.Kind) != "" {
 		return getStorage(ctx, client, ref)
 	}
