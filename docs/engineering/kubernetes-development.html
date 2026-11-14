@@ -236,6 +236,24 @@
           exact bounds.
         </li>
       </ul>
+      <h2 id="access-control">Access-control configuration</h2>
+      <ul>
+        <li>
+          <a href="https://kubernetes.io/docs/reference/access-authn-authz/rbac/">RBAC scope, rules and naming</a>: role object scope
+          differs from binding scope; RBAC names use path-segment validation, not DNS validation.
+        </li>
+        <li>
+          <a href="https://github.com/kubernetes/kubernetes/blob/v1.37.0/pkg/registry/rbac/validation/rule.go"
+            >Versioned upstream subject resolution</a
+          >: explicit versus binding-default ServiceAccount namespace. Inspect pinned API Subject/RoleRef definitions too; external
+          User/Group identities are not ordinary resource targets.
+        </li>
+        <li>
+          The <a href="../superpowers/specs/2026-11-14-phase-1c3e-access-control-design.md">access-control specification</a> owns the
+          read-only field allowlist, captured-target navigation and deliberate exclusion of effective-permission calculation and
+          access-review/token calls.
+        </li>
+      </ul>
       <h2 id="testing">Testing and evidence</h2>
       <ul>
         <li>

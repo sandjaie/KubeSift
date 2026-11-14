@@ -2,6 +2,13 @@
 
 Updated 2026-11-14. Current integration branch is `develop`.
 
+## Next: Phase 1C.3e · Read-only access control
+
+- Planning only; separate implementation session, existing checkout and no worktree. [Specification](../../docs/superpowers/specs/2026-11-14-phase-1c3e-access-control-design.md) and [five-task plan](../../docs/superpowers/plans/2026-11-14-phase-1c3e-access-control.md).
+- Scope: ServiceAccounts, Roles, RoleBindings, ClusterRoles and ClusterRoleBindings, with explicit Pod/binding reference navigation. No effective-permission claims, token/review APIs, impersonation, Secret lookups or product mutations.
+- Baseline checked at develop `94fd096`, including storage merge `eff5135`. Preserve storage's lazy nested rendering and validated target captures; carry forward its named native-denial/CSI and earlier coverage limits without relabeling unrun checks.
+- Implementation must run automated/integration and packaged desktop verification, update checkpoint/plan/report, obtain one independent whole-PR review with targeted fix rechecks, then ready PR and merge under the existing workflow. 1C.3f follows in the roadmap but is not authorized by this package.
+
 ## Phase 1C.3d · Read-only storage
 
 - Implemented in the existing checkout on `feature/phase-1c3d-storage` from `1d955d7`. [Specification](../../docs/superpowers/specs/2026-11-14-phase-1c3d-storage-design.md), [plan](../../docs/superpowers/plans/2026-11-14-phase-1c3d-storage.md), and [validation report](../../docs/superpowers/validation/phase-1c3d.html).

@@ -135,6 +135,14 @@
         automatically unhealthy; unavailable/stale health data must be identified. Alerts require evidence, not a decorative badge. Text and
         icons supplement color.
       </p>
+      <h2 id="access-control-investigation">Phase 1C.3e access-control investigation design</h2>
+      <p>
+        The <a href="../superpowers/specs/2026-11-14-phase-1c3e-access-control-design.md">access-control specification</a> places
+        ServiceAccounts and the four RBAC kinds in Access control, retaining Namespaces and Nodes under Cluster. Rules and subjects keep
+        their boundaries; binding scope is distinct from a subject's namespace. Explicit Pod/account and binding/role/account links open the
+        validated target capture and retain Back behavior. User/Group identities are inert strings. No effective-permission summary, token
+        controls, permission-changing actions or Secret fetching belongs in this design. Delivery evidence remains in status and reports.
+      </p>
       <h2 id="storage-investigation">Phase 1C.3d storage investigation</h2>
       <p>
         The <a href="../superpowers/specs/2026-11-14-phase-1c3d-storage-design.md">storage specification</a> extends the existing compact
