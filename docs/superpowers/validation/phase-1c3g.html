@@ -46,7 +46,7 @@
       <h2>Automated and kind integration</h2>
       <ul>
         <li>
-          Repository source descriptions, documentation links, Go tests and vet, 69 frontend tests, lint and typecheck passed. Race runs
+          Repository source descriptions, documentation links, Go tests and vet, 72 frontend tests, lint and typecheck passed. Race runs
           covered kube, desktop and preferences; Wails bindings, production build and signed local package passed.
         </li>
         <li>
@@ -92,7 +92,33 @@
         semantics. No narrow operating-system window frame was verified; the divider check narrowed the detail pane inside the supported
         workspace.
       </p>
-      <p>Independent review and delivery pending.</p>
+      <h2>Independent review</h2>
+      <p>
+        Reviewer: <code>whole_pr_review</code>. Base and merge base <code>3147a6e</code>; initial whole-PR candidate <code>21b8455</code>.
+        The initial review blocked merge on three defects.
+      </p>
+      <ul>
+        <li>
+          KSF-001: Lease Events now use the fixed UID-checked object reader. The focused test demonstrated the failure and the signed retest
+          loaded the legitimate empty Events tab.
+        </li>
+        <li>
+          KSF-002: Generic inventory accepts a valid server-defined list kind while checking the list API version and item identity. Tested
+          with WidgetCollection in fake responses and real CRDs on both kind contexts.
+        </li>
+        <li>
+          KSF-003: Event-to-ConfigMap navigation uses the standard count-only Overview; the regression verifies one target GET and that data
+          values do not cross the bridge. Event-to-Pod navigation was rerun in the package.
+        </li>
+        <li>
+          The discovery lifecycle regression checks test late cancellation, stale descriptor handles and connection-generation scope. The
+          native retest restored the captured YAML after switching tabs, then cleared it on namespace change and explicit refresh.
+        </li>
+      </ul>
+      <p>
+        Review-fix executable SHA-256: <code>6303354366d11cae1ea67b40d9353add953e8521dc81b164adafb83d961534c4</code>. Targeted independent
+        recheck pending.
+      </p>
     </main>
   </body>
 </html>

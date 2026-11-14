@@ -53,7 +53,7 @@ func (s *Service) ReadGenericResources(ctx context.Context, req GenericPageReque
 	if err != nil {
 		return GenericResourcePage{}, err
 	}
-	list, err := listJSON(ctx, api.read(client, req.Namespace, ""), api, token)
+	list, err := listJSON(ctx, api.read(client, req.Namespace, ""), api, token, false)
 	if err != nil {
 		return GenericResourcePage{}, resourceListError(ctx, err)
 	}

@@ -183,7 +183,9 @@ export interface NavigationEntry {
   referenceEvidence?: ReferenceEvidence;
   position?: Pick<KindState, "filter" | "sort" | "scroll" | "history">;
 }
+import type { CatalogSeed } from "../discovery/model";
 export interface TabState {
+  catalog?: CatalogSeed;
   scope: string;
   clusterScope: string;
   kind: ResourceKind;

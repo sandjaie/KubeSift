@@ -14,6 +14,8 @@ import { GenericResourceTable } from "./GenericResourceTable";
 import { GenericResourceDetail } from "./GenericResourceDetail";
 import {
   visibleGenericRoute,
+  currentGenericDescriptor,
+  newestRead,
   type CatalogSeed,
   type APIGroupCatalog,
   type APIResourceCatalog,
@@ -27,21 +29,14 @@ function useRead<T>(key: string, read: (id: string) => Promise<T>): Load<T> {
   const [state, set] = useState<Load<T> & { key: string }>({ key: "" });
   useEffect(() => {
     if (!key) return;
-    let active = true;
-    const current = readRequest(read);
+    const gate = newestRead();
     set({ key, loading: true });
-    void current.promise.then(
-      (data) => {
-        if (active) set({ key, data });
-      },
-      (error) => {
-        if (active) set({ key, error: message(error) });
-      },
+    gate.start(
+      readRequest(read),
+      (data) => set({ key, data }),
+      (error) => set({ key, error: message(error) }),
     );
-    return () => {
-      active = false;
-      current.cancel();
-    };
+    return gate.cancel;
     // The key contains every input used by the request.
   }, [key]);
   return state.key === key ? state : { loading: !!key };
@@ -74,7 +69,7 @@ export function APIResourceBrowser({
   const [groupFilter, setGroupFilter] = useState("");
   const [filter, setFilter] = useState("");
   const [detail, setDetail] = useState<{ key: string; error?: string; loading?: boolean }>({ key: "" });
-  const pending = useRef<null | (() => void)>(null);
+  const [pending] = useState(newestRead);
   const latestRoute = useRef(route);
   latestRoute.current = route;
   const active = route && visibleGenericRoute(route, namespace);
@@ -85,14 +80,6 @@ export function APIResourceBrowser({
   const scope = descriptor?.namespaced ? namespace : "";
   const history = active?.history ?? [""];
   const cursor = history[history.length - 1] ?? "";
-  const key = descriptor?.mode === "generic" ? JSON.stringify([descriptor.handle, scope]) : "";
-  useLayoutEffect(
-    () => () => {
-      pending.current?.();
-      pending.current = null;
-    },
-    [key, cursor],
-  );
   const root = useRead<APIGroupCatalog>(JSON.stringify(["root", refresh]), (id) =>
     api.ReadAPIGroups(id, { connection, refresh: refresh > 0 }),
   );
@@ -101,6 +88,9 @@ export function APIResourceBrowser({
     active?.version && root.data ? JSON.stringify([root.data.epoch, active.group, active.version]) : "",
     (id) => api.ReadAPIResources(id, { connection, group: active!.group, version: active!.version, refresh: false }),
   );
+  const liveDescriptor = currentGenericDescriptor(descriptor, resources.data);
+  const key = liveDescriptor ? JSON.stringify([connection.id, connection.generation, liveDescriptor.handle, scope]) : "";
+  useLayoutEffect(() => pending.cancel, [pending, key, cursor]);
   const inventory = useRead<GenericResourcePage>(key && JSON.stringify([key, cursor]), (id) =>
     api.ReadGenericResources(id, { connection, handle: descriptor!.handle, namespace: scope, cursor }),
   );
@@ -115,13 +105,12 @@ export function APIResourceBrowser({
     (g) => g.group === active?.group || (g.group || "core").toLowerCase().includes(groupFilter.trim().toLowerCase()),
   );
   const rows = (inventory.data?.items ?? []).filter((r) => r.resource.name.toLowerCase().includes(filter.trim().toLowerCase()));
-  const capture = active?.capture;
+  const capture = liveDescriptor && !inventory.error ? active?.capture : undefined;
   const patch = (next: Partial<CatalogSeed>) => {
     if (active) onRoute({ ...active, ...next });
   };
   const clearDetail = () => {
-    pending.current?.();
-    pending.current = null;
+    pending.cancel();
     setDetail({ key: "" });
   };
   const selecting = (candidate?: APIResourceDescriptor) => {
@@ -130,27 +119,20 @@ export function APIResourceBrowser({
     patch({ descriptor: candidate, history: [""], namespace, capture: undefined, section: "Overview" });
   };
   function open(resource: GenericResourceRef) {
-    if (!descriptor || !key) return;
+    if (!liveDescriptor || !key) return;
     clearDetail();
-    const req = readRequest((id) =>
-      api.ReadGenericDetail(id, { connection, handle: descriptor.handle, namespace: scope, name: resource.name, uid: resource.uid }),
-    );
-    pending.current = req.cancel;
     setDetail({ key, loading: true });
-    void req.promise.then(
+    pending.start(
+      readRequest((id) =>
+        api.ReadGenericDetail(id, { connection, handle: liveDescriptor.handle, namespace: scope, name: resource.name, uid: resource.uid }),
+      ),
       (data) => {
-        if (pending.current !== req.cancel) return;
-        pending.current = null;
         setDetail({ key });
         const route = latestRoute.current;
-        if (route?.descriptor?.handle === descriptor.handle)
-          onRoute({ ...route, namespace, capture: data, section: capture?.resource.uid === resource.uid ? active?.section : "Overview" });
+        if (route?.descriptor?.handle === liveDescriptor.handle)
+          onRoute({ ...route, namespace, capture: data, section: capture?.resource.uid === resource.uid ? route.section : "Overview" });
       },
-      (error) => {
-        if (pending.current !== req.cancel) return;
-        pending.current = null;
-        setDetail({ key, error: message(error) });
-      },
+      (error) => setDetail({ key, error: message(error) }),
     );
   }
   return (
@@ -270,7 +252,7 @@ export function APIResourceBrowser({
         {resources.data && !options.length && (
           <p className="state-message">{resourceFilter ? "No matches among loaded resources." : "No top-level resources advertised."}</p>
         )}
-        {resources.data && descriptor?.mode === "generic" && !resources.data.resources?.some((r) => r.handle === descriptor.handle) && (
+        {resources.data && descriptor?.mode === "generic" && !liveDescriptor && (
           <p role="alert">The resource selection expired or changed. Reselect it or refresh resources.</p>
         )}
 

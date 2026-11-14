@@ -33,3 +33,63 @@ test("namespace change keeps the descriptor and clears namespaced page history o
   expect(visibleGenericRoute(route, "second")).toMatchObject({ descriptor, namespace: "second", history: [""] });
   expect(visibleGenericRoute({ ...route, descriptor: { ...descriptor, namespaced: false } }, "second").history).toEqual(["", "next"]);
 });
+
+test("departed requests cannot deliver late success or failure even if cancellation races", async () => {
+  const { newestRead } = await import("./model");
+  const gate = newestRead();
+  let finishOld!: (value: string) => void;
+  let failOld!: (error: Error) => void;
+  let finishNew!: (value: string) => void;
+  let cancellations = 0;
+  const results: string[] = [];
+  const onError = (error: unknown) => results.push(String(error));
+  gate.start(
+    {
+      promise: new Promise<string>((resolve) => {
+        finishOld = resolve;
+      }),
+      cancel: () => {
+        cancellations++;
+      },
+    },
+    (value) => results.push(value),
+    onError,
+  );
+  gate.start(
+    {
+      promise: new Promise<string>((_resolve, reject) => {
+        failOld = reject;
+      }),
+      cancel: () => {
+        cancellations++;
+      },
+    },
+    (value) => results.push(value),
+    onError,
+  );
+  gate.start(
+    {
+      promise: new Promise<string>((resolve) => {
+        finishNew = resolve;
+      }),
+      cancel: () => {
+        cancellations++;
+      },
+    },
+    (value) => results.push(value),
+    onError,
+  );
+  finishNew("new connection");
+  finishOld("old connection");
+  failOld(new Error("late denial"));
+  await Promise.resolve();
+  expect(results).toEqual(["new connection"]);
+  expect(cancellations).toBe(2);
+});
+
+test("expired and replaced descriptors do not restore a generic capture", async () => {
+  const { currentGenericDescriptor } = await import("./model");
+  expect(currentGenericDescriptor(descriptor, catalog)).toEqual(descriptor);
+  expect(currentGenericDescriptor(descriptor, { ...catalog, resources: [{ ...descriptor, handle: "replacement" }] })).toBeUndefined();
+  expect(currentGenericDescriptor(descriptor, { ...catalog, resources: [] })).toBeUndefined();
+});

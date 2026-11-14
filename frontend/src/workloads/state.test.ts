@@ -474,3 +474,19 @@ test("Back retains an availability association only with its validated capture",
   const unchanged = reduceWorkloads(original, { ...back, detail: { ...detail, resourceVersion: "5" } });
   expect(unchanged.A.kinds.Pod.referenceEvidence).toEqual(referenceEvidence);
 });
+
+test("catalog routes persist per connection and stale generation actions cannot restore them", () => {
+  let state = reduceWorkloads(initialWorkloads(), { type: "scope", tab: "A", scope: "a/default", clusterScope: "a/1" });
+  state = reduceWorkloads(state, { type: "scope", tab: "B", scope: "b/default", clusterScope: "b/1" });
+  const routeA = { group: "first.test", version: "v1" };
+  const routeB = { group: "other.test", version: "v2" };
+  state = reduceWorkloads(state, { type: "catalog", tab: "A", clusterScope: "a/1", route: routeA });
+  state = reduceWorkloads(state, { type: "catalog", tab: "B", clusterScope: "b/1", route: routeB });
+  state = reduceWorkloads(state, { type: "scope", tab: "A", scope: "a/other", clusterScope: "a/1" });
+  expect(state.A.catalog).toBe(routeA);
+  expect(state.B.catalog).toBe(routeB);
+  const replaced = reduceWorkloads(state, { type: "scope", tab: "A", scope: "new/default", clusterScope: "a/2" });
+  expect(replaced.A.catalog).toBeUndefined();
+  expect(reduceWorkloads(replaced, { type: "catalog", tab: "A", clusterScope: "a/1", route: routeA })).toBe(replaced);
+  expect(reduceWorkloads(replaced, { type: "close", tab: "B" }).B).toBeUndefined();
+});

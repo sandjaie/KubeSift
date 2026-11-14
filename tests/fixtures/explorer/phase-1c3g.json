@@ -106,6 +106,7 @@
         "scope": "Namespaced",
         "names": {
           "kind": "Widget",
+          "listKind": "WidgetCollection",
           "plural": "widgets",
           "singular": "widget"
         },
@@ -143,6 +144,7 @@
         "scope": "Cluster",
         "names": {
           "kind": "Widget",
+          "listKind": "WidgetCollection",
           "plural": "widgets",
           "singular": "widget"
         },

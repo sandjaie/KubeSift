@@ -84,7 +84,7 @@ type rawList struct {
 	Items    []json.RawMessage `json:"items"`
 }
 
-func listJSON(ctx context.Context, request *rest.Request, api apiResource, token string) (rawList, error) {
+func listJSON(ctx context.Context, request *rest.Request, api apiResource, token string, fixedKind bool) (rawList, error) {
 	request.Param("limit", "100")
 	if token != "" {
 		request.Param("continue", token)
@@ -94,7 +94,7 @@ func listJSON(ctx context.Context, request *rest.Request, api apiResource, token
 		return rawList{}, err
 	}
 	var list rawList
-	if json.Unmarshal(raw, &list) != nil || list.APIVersion != api.apiVersion() || list.Kind != api.kind+"List" || list.Items == nil {
+	if json.Unmarshal(raw, &list) != nil || list.APIVersion != api.apiVersion() || (!discoveryKind.MatchString(list.Kind) || (fixedKind && list.Kind != api.kind+"List")) || list.Items == nil {
 		return rawList{}, model.Fail("invalid", "Server returned an invalid resource inventory")
 	}
 	if len(list.Items) > 100 {
@@ -153,7 +153,7 @@ func (s *Service) ReadClusterResources(ctx context.Context, req PageRequest) (Cl
 	if err != nil {
 		return ClusterResourcePage{}, err
 	}
-	list, err := listJSON(ctx, api.read(client, req.Namespace, ""), api, token)
+	list, err := listJSON(ctx, api.read(client, req.Namespace, ""), api, token, true)
 	if err != nil {
 		return ClusterResourcePage{}, resourceListError(ctx, err)
 	}

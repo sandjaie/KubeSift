@@ -50,3 +50,46 @@ export function visibleGenericRoute(route: CatalogSeed, namespace: string): Cata
   if (!route.descriptor?.namespaced || route.namespace === namespace) return route;
   return { ...route, namespace, history: [""], capture: undefined, section: "Overview" };
 }
+
+export function currentGenericDescriptor(descriptor: APIResourceDescriptor | undefined, catalog: APIResourceCatalog | undefined) {
+  return descriptor?.mode === "generic" &&
+    catalog?.resources?.some(
+      (candidate) =>
+        candidate.handle === descriptor.handle &&
+        candidate.group === descriptor.group &&
+        candidate.version === descriptor.version &&
+        candidate.resource === descriptor.resource &&
+        candidate.kind === descriptor.kind &&
+        candidate.namespaced === descriptor.namespaced &&
+        candidate.mode === "generic",
+    )
+    ? descriptor
+    : undefined;
+}
+
+// Cancellation releases native work; ownership rejects replies that already raced it.
+export function newestRead() {
+  let active: (() => void) | undefined;
+  const cancel = () => {
+    const stop = active;
+    active = undefined;
+    stop?.();
+  };
+  return {
+    cancel,
+    start<T>(request: { promise: Promise<T>; cancel: () => void }, success: (data: T) => void, failure: (error: unknown) => void) {
+      cancel();
+      const owner = () => request.cancel();
+      active = owner;
+      const settle = (callback: () => void) => {
+        if (active !== owner) return;
+        active = undefined;
+        callback();
+      };
+      void request.promise.then(
+        (data) => settle(() => success(data)),
+        (error) => settle(() => failure(error)),
+      );
+    },
+  };
+}

@@ -71,7 +71,7 @@
 
 - [ ] Add failing rendering tests for all seven kinds, missing versus zero/false, Node scheduling independent from Ready, unknown Lease health, Event count/time/source and honest page ordering. Large CRD schemas must start collapsed and render bounded pages/text only.
 - [x] Implement approved grouping/columns/Overview/YAML and source details; use established tokens, controls and expansion patterns. No new dashboard or redesign. CRD Browse instances and APIService View resources emit descriptor-validated navigation intents, never direct URLs.
-- [ ] Wire Event target open to exact resolver result with no second GET; non-navigable incomplete/unsupported references remain useful text. Source refresh/reentry invalidates stale evidence. Add tests for target replacement/denial and Back.
+- [x] Wire Event target open to exact resolver result with no second GET; non-navigable incomplete/unsupported references remain useful text. Source refresh/reentry invalidates stale evidence. Add tests for target replacement/denial and Back.
 - [x] Run frontend tests, lint/typecheck and commit dedicated views.
 
 ## Task 5 — API browser and route/state integration (G04–G08)
@@ -80,7 +80,7 @@
 **Modify:** `frontend/src/workloads/model.ts`, `state.ts`, `state.test.ts`, `useWorkloads.ts`, `api.ts`; `frontend/src/workspace/Workspace.tsx`, `ResourceNavigation.tsx`, detail dispatch and existing style tokens only where needed.
 
 - [ ] Introduce a discriminated dedicated/generic/catalog route; generic route identity includes connection generation, GVR, scope/namespace and handle epoch. Audit every existing fixed-kind dispatch for unsafe assumptions rather than broadening ResourceRef to arbitrary strings.
-- [ ] Write state tests for namespace retention, cluster-scope retention, separate connection catalogs/routes, changing group/version/resource, TTL/LRU eviction, removed APIs, refresh, Back, cancellation and out-of-order results. Expired handles require visible refresh/reselection; never silently map to a different resource.
+- [x] Write state tests for namespace retention, cluster-scope retention, separate connection catalogs/routes, changing group/version/resource, TTL/LRU eviction, removed APIs, refresh, Back, cancellation and out-of-order results. Expired handles require visible refresh/reselection; never silently map to a different resource.
 - [x] Implement lazy group/version/resource selection, loaded-catalog filtering, partial/denied/cap/error states and dedicated redirect explanation. No implicit fallback version, auto-loaded all-group catalogs, automatic all-page fetch or Pods reset.
 - [x] Implement metadata tables and escaped collapsed generic raw view/YAML using exact captured text. Search and expansion must be bounded; disable text correction on identifier/search controls. CRD/APIService catalog jumps require current descriptor match and correct scope.
 - [ ] Test no hidden spec/status inventory payload, no eager recursive generic rendering, matching YAML copy, accessible keyboard controls and nested pagination. Run full frontend tests/lint/typecheck plus relevant Go tests; commit integrated UI.

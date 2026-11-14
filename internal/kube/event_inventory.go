@@ -16,7 +16,6 @@ import (
 	"github.com/sandjaie/KubeSift/internal/model"
 	core "k8s.io/api/core/v1"
 	events "k8s.io/api/events/v1"
-	"k8s.io/client-go/kubernetes"
 )
 
 func modernEvent(event events.Event) ResourceEvent {
@@ -105,10 +104,10 @@ func (s *Service) ReadEventInventory(ctx context.Context, req PageRequest) (Even
 	if err != nil {
 		return EventInventoryPage{}, err
 	}
-	list, err := listJSON(ctx, api.read(client, req.Namespace, ""), api, token)
+	list, err := listJSON(ctx, api.read(client, req.Namespace, ""), api, token, true)
 	if req.Cursor == "" && eventAPIAbsent(err) {
 		api = coreEvents
-		list, err = listJSON(ctx, api.read(client, req.Namespace, ""), api, "")
+		list, err = listJSON(ctx, api.read(client, req.Namespace, ""), api, "", true)
 	}
 	if err != nil {
 		return EventInventoryPage{}, resourceListError(ctx, err)
@@ -174,19 +173,12 @@ func (s *Service) ResolveEventTarget(ctx context.Context, req EventTargetRequest
 	if target == nil {
 		return ResolvedEventTarget{}, model.Fail("invalid", "Event has no supported target with a complete identity")
 	}
-	detail, err := captureEventTarget(ctx, client, *target)
+	detail, err := s.readOverview(ctx, client, DetailRequest{Resource: *target})
 	if err != nil {
 		return ResolvedEventTarget{}, err
 	}
+	if ctx.Err() != nil {
+		return ResolvedEventTarget{}, safeError(ctx, ctx.Err())
+	}
 	return ResolvedEventTarget{Detail: detail}, s.connections.Validate(req.Source.Connection)
-}
-func captureEventTarget(ctx context.Context, client kubernetes.Interface, target ResourceRef) (ResourceDetail, error) {
-	object, raw, err := detailObject(ctx, client, target)
-	if err != nil {
-		return ResourceDetail{}, err
-	}
-	if object.GetName() != target.Name || object.GetNamespace() != target.Namespace {
-		return ResourceDetail{}, model.Fail("invalid", "Server did not return the requested target identity")
-	}
-	return capturedDetail(target, object, raw)
 }

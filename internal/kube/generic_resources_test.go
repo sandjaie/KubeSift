@@ -32,7 +32,7 @@ func TestGenericInventoryCaptureAndGuards(t *testing.T) {
 			if r.Method != "GET" || r.URL.Query().Get("limit") != "100" {
 				t.Error("expected bounded GET")
 			}
-			fmt.Fprintf(w, `{"kind":"PodList","apiVersion":"example.test/v1","metadata":{"continue":"next"},"items":[%s]}`, raw)
+			fmt.Fprintf(w, `{"kind":"WidgetCollection","apiVersion":"example.test/v1","metadata":{"continue":"next"},"items":[%s]}`, raw)
 		case "/apis/example.test/v1/namespaces/default/widgets/sample":
 			resourceCalls++
 			fmt.Fprint(w, raw)

@@ -49,7 +49,6 @@ export function useWorkloads(
   const serial = useRef(0);
   const pendingNavigation = useRef<(() => void) | null>(null);
   const seededOverview = useRef<ResourceDetail | undefined>(undefined);
-  const [catalogRoutes, setCatalogRoutes] = useState<Record<string, CatalogSeed>>({});
   const [navigationError, setNavigationError] = useState("");
   const cancelNavigation = () => {
     pendingNavigation.current?.();
@@ -90,13 +89,6 @@ export function useWorkloads(
     };
   }, [tabID, visible, commit]);
   useEffect(() => {
-    const prior = current.current[tabID]?.clusterScope;
-    if (prior && prior !== clusterScope)
-      setCatalogRoutes((old) => {
-        const next = { ...old };
-        delete next[prior];
-        return next;
-      });
     if (tabID) commit({ type: "scope", tab: tabID, scope: namespaceScope, clusterScope });
   }, [tabID, namespaceScope, clusterScope, commit]);
   useEffect(() => {
@@ -330,17 +322,10 @@ export function useWorkloads(
   }
   return {
     kind,
-    catalogRoute: catalogRoutes[clusterScope],
-    setCatalogRoute: (seed: CatalogSeed | null) => {
-      setCatalogRoutes((old) => {
-        const next = { ...old };
-        if (seed) next[clusterScope] = seed;
-        else delete next[clusterScope];
-        return next;
-      });
-    },
+    catalogRoute: t?.catalog,
+    setCatalogRoute: (seed: CatalogSeed | null) => commit({ type: "catalog", tab: tabID, clusterScope, route: seed ?? undefined }),
     restoreCatalogSource: () => {
-      const entry = catalogRoutes[clusterScope]?.origin;
+      const entry = t?.catalog?.origin;
       if (entry) show(entry, [], entry.detail);
     },
     browseCatalog: (source: ResourceDetail, intent: CatalogIntent) => {
@@ -356,9 +341,11 @@ export function useWorkloads(
         },
         (seed) => {
           const { filter, sort, scroll, history } = inventory;
-          setCatalogRoutes((old) => ({
-            ...old,
-            [clusterScope]: {
+          commit({
+            type: "catalog",
+            tab: tabID,
+            clusterScope,
+            route: {
               ...seed,
               origin: {
                 resource: source.resource,
@@ -369,7 +356,7 @@ export function useWorkloads(
                 position: { filter, sort, scroll, history },
               },
             },
-          }));
+          });
           commit({ type: "kind", tab: tabID, kind: "APIResources", epoch: ++serial.current });
         },
       );
@@ -574,16 +561,7 @@ export function useWorkloads(
         else navigate(entry, t.navigation.slice(0, -1));
       }
     },
-    close: (tab: string) => {
-      const connectionKey = current.current[tab]?.clusterScope;
-      if (connectionKey)
-        setCatalogRoutes((old) => {
-          const next = { ...old };
-          delete next[connectionKey];
-          return next;
-        });
-      commit({ type: "close", tab });
-    },
+    close: (tab: string) => commit({ type: "close", tab }),
   };
 }
 export type WorkloadController = ReturnType<typeof useWorkloads>;

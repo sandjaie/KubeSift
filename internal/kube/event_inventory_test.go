@@ -68,3 +68,52 @@ func TestEventInventoryTarget(t *testing.T) {
 		t.Fatalf("expected denial without fallback: %v", err)
 	}
 }
+
+func TestLeaseResourceEvents(t *testing.T) {
+	s, ref := workloadServer(t, func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/apis/coordination.k8s.io/v1/namespaces/default/leases/fixture":
+			fmt.Fprint(w, `{"kind":"Lease","apiVersion":"coordination.k8s.io/v1","metadata":{"name":"fixture","namespace":"default","uid":"lease-id"}}`)
+		case "/apis/events.k8s.io/v1/namespaces/default/events":
+			if r.URL.Query().Get("fieldSelector") != "regarding.uid=lease-id" {
+				t.Error("Event filter did not bind the Lease UID")
+			}
+			fmt.Fprint(w, `{"kind":"EventList","apiVersion":"events.k8s.io/v1","items":[]}`)
+		default:
+			t.Errorf("unexpected path %s", r.URL.Path)
+			w.WriteHeader(404)
+		}
+	})
+	lease := ResourceRef{Connection: ref, Kind: "Lease", APIVersion: "coordination.k8s.io/v1", Namespace: "default", Name: "fixture", UID: "lease-id"}
+	if _, err := s.ReadResourceEvents(context.Background(), EventRequest{Resource: lease}); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestEventConfigMapTargetUsesOverviewProjection(t *testing.T) {
+	gets := 0
+	s, ref := workloadServer(t, func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/api/v1/namespaces/default/events/fixture":
+			fmt.Fprint(w, `{"kind":"Event","apiVersion":"v1","metadata":{"name":"fixture","namespace":"default","uid":"event-id","resourceVersion":"3"},"involvedObject":{"kind":"ConfigMap","apiVersion":"v1","name":"configuration","namespace":"default","uid":"map-id"}}`)
+		case "/api/v1/namespaces/default/configmaps/configuration":
+			gets++
+			fmt.Fprint(w, `{"kind":"ConfigMap","apiVersion":"v1","metadata":{"name":"configuration","namespace":"default","uid":"map-id","resourceVersion":"8"},"data":{"literal":"synthetic-value"},"binaryData":{"bytes":"AP8="}}`)
+		default:
+			t.Errorf("unexpected path %s", r.URL.Path)
+			w.WriteHeader(404)
+		}
+	})
+	resolved, err := s.ResolveEventTarget(context.Background(), EventTargetRequest{
+		Source: ResourceRef{Connection: ref, Kind: "Event", APIVersion: "v1", Namespace: "default", Name: "fixture", UID: "event-id"}, SourceVersion: "3"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw := resolved.Detail.ObjectJSON
+	if gets != 1 || strings.Contains(raw, "synthetic-value") || strings.Contains(raw, "AP8=") ||
+		!strings.Contains(raw, `"textKeys":1`) || !strings.Contains(raw, `"binaryKeys":1`) {
+		t.Fatalf("incorrect Overview evidence: %s; gets=%d", raw, gets)
+	}
+}
