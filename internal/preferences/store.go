@@ -141,7 +141,7 @@ func Save(path string, p Preferences) error {
 }
 
 // WindowWorkArea chooses the saved display by overlap, falling back to primary.
-// Returning the complete work area keeps launch independent of the saved window size.
+// The saved rectangle selects a display; its size is handled separately.
 func WindowWorkArea(saved Rect, areas []Rect) Rect {
 	valid := make([]Rect, 0, len(areas))
 	for _, a := range areas {
@@ -162,6 +162,13 @@ func WindowWorkArea(saved Rect, areas []Rect) Rect {
 		}
 	}
 	return best
+}
+
+// LaunchWindowBounds centers a workspace-sized frame within the chosen logical work area.
+func LaunchWindowBounds(saved Rect, areas []Rect) Rect {
+	area := WindowWorkArea(saved, areas)
+	width, height := min(area.Width, 1600), min(area.Height, 1020)
+	return Rect{X: area.X + (area.Width-width)/2, Y: area.Y + (area.Height-height)/2, Width: width, Height: height}
 }
 
 // ClampWindow keeps normal window bounds inside the selected display.
