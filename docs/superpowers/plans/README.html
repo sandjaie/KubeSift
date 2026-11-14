@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Implementation plans · KubeSift</title>
+    <link rel="stylesheet" href="../../assets/planning.css" />
+    <script src="../../assets/theme.js"></script>
+  </head>
+  <body>
+    <aside class="rail">
+      <a class="skip" href="#content">Skip to content</a
+      ><a class="mark" href="../../index.html"><span class="mark-name">KubeSift</span><span class="mark-sub">Planning</span></a>
+      <h2>Index</h2>
+      <a href="../../index.html">Planning index</a>
+      <h2>Product</h2>
+      <a href="../../product/requirements.html">Requirements</a><a href="../../product/feature-matrix.html">Capabilities</a>
+      <h2>Architecture</h2>
+      <a href="../../architecture/overview.html">Overview</a><a href="../../architecture/decisions.html">Decisions</a>
+      <h2>Safeguards</h2>
+      <a href="../../security/security-model.html">Security and AI</a>
+      <h2>Delivery</h2>
+      <a href="../../roadmap/roadmap.html">Roadmap</a><a href="../../ux/workflows.html">UX workflows</a
+      ><a href="../../ux/mocks/index.html">Mockups</a>
+      <h2>Engineering</h2>
+      <a href="../../engineering/engineering.html">Playbook</a><a href="../../engineering/local-development.html">Local development</a
+      ><a href="../../engineering/toolchain.html">Toolchain</a
+      ><a href="../../engineering/kubernetes-development.html">Kubernetes references</a>
+      <h2>Superpowers</h2>
+      <a href="../index.html">Overview</a><a href="../specs/index.html">Specs</a><a href="README.html" aria-current="page">Plans</a
+      ><a href="../validation/index.html">Validation</a><a href="../evidence/index.html">Evidence</a>
+    </aside>
+    <header>
+      <a href="../../index.html">KubeSift / Planning</a>
+      <h1>Implementation plans</h1>
+      <p>Execution tasks for each approved specification. Each plan stays Markdown.</p>
+    </header>
+    <main id="content">
+      <p>
+        Acceptance follows <a href="../../engineering/engineering.html#agent-verification">agent verification</a>: plans require automated
+        and agent-run desktop checks in one validation report, not a duplicate manual user UAT checklist. This supersedes older
+        user-checklist requirements below without altering historical results. Ask the user only for subjective decisions or a specific
+        check the agent cannot complete.
+      </p>
+      <h2>Phase 1C.3g · Cluster resources and API discovery</h2>
+      <ul>
+        <li>
+          <a href="../specs/2026-11-14-phase-1c3g-cluster-discovery-design.md">Specification</a>: seven infrastructure destinations, lazy
+          scoped discovery and guarded generic installed-API investigation.
+        </li>
+        <li>
+          <a href="2026-11-14-phase-1c3g-cluster-discovery.md">Six-task plan</a>: dedicated readers, discovery, generic captures, dedicated
+          views, browser/state and verification/review/delivery.
+        </li>
+        <li>
+          Separate implementation session in the existing checkout, no worktree. Current progress belongs in the
+          <a href="../../../.superpowers/sdd/status.md">checkpoint</a>.
+        </li>
+      </ul>
+      <h2>Phase 1C.3f · Availability and remaining workloads</h2>
+      <ul>
+        <li>
+          <a href="../specs/2026-11-14-phase-1c3f-availability-design.md">Specification</a>: HPA, PDB, RC and ControllerRevision evidence,
+          bounded selector/owner relationships and safe captured navigation.
+        </li>
+        <li>
+          <a href="2026-11-14-phase-1c3f-availability.md">Five-task plan</a>: readers, relationships/resolver, views, state integration and
+          complete verification/review/delivery.
+        </li>
+        <li>
+          Separate implementation session; existing checkout, no worktree. Current progress is in the
+          <a href="../../../.superpowers/sdd/status.md">checkpoint</a>. One whole-PR review, agent desktop verification, no duplicate manual
+          UAT or installed metrics infrastructure.
+        </li>
+      </ul>
+      <h2>Phase 1C.3e · Read-only access control</h2>
+      <ul>
+        <li>
+          <a href="../specs/2026-11-14-phase-1c3e-access-control-design.md">Specification</a>: five ServiceAccount/RBAC kinds, rule and
+          subject scope, RBAC naming and explicit references without effective-access claims.
+        </li>
+        <li>
+          <a href="2026-11-14-phase-1c3e-access-control.md">Five-task plan</a>: bounded readers, captured reference resolution, structured
+          views, state integration and complete verification/review/delivery.
+        </li>
+        <li>
+          Separate implementation session, existing checkout, no worktree. Current progress belongs in the
+          <a href="../../../.superpowers/sdd/status.md">checkpoint</a>. No per-task review gates or duplicate manual UAT.
+        </li>
+      </ul>
+      <h2>Phase 1C.3d · Read-only storage</h2>
+      <ul>
+        <li>
+          <a href="../specs/2026-11-14-phase-1c3d-storage-design.md">Specification</a>: six storage kinds, explicit scopes, observed
+          binding/attachment evidence and validated reference navigation.
+        </li>
+        <li>
+          <a href="2026-11-14-phase-1c3d-storage.md">Five-task plan</a>: bounded readers, reference resolver, structured views,
+          state/navigation integration and full verification/review/delivery.
+        </li>
+        <li>
+          Separate implementation session, existing checkout, no worktree. Use the
+          <a href="../../../.superpowers/sdd/status.md">checkpoint</a> for current progress. Preserve one whole-PR review, agent desktop
+          verification and ready-PR merge; no duplicate user UAT or installed storage infrastructure.
+        </li>
+      </ul>
+      <h2>Phase 1C.3c · Namespace policy and configuration</h2>
+      <ul>
+        <li>
+          <a href="../specs/2026-11-14-phase-1c3c-configuration-design.md">Specification</a>: five core kinds, strict metadata-only Secrets,
+          namespace policy evidence and explicit Pod configuration links.
+        </li>
+        <li>
+          <a href="2026-11-14-phase-1c3c-configuration.md">Five-task plan</a>: bounded readers, reference validation, views, shared
+          state/navigation and complete verification/delivery.
+        </li>
+        <li>
+          Separate authorized implementation session; existing checkout, no worktree. Follow the
+          <a href="../../roadmap/roadmap.html#phase-1c3-sequence">fixed roadmap sequence</a>. Run one fresh whole-PR review after
+          implementation and tests, with targeted fix follow-ups; no routine per-task reviews or duplicate user UAT.
+        </li>
+      </ul>
+      <h2>Phase 1C.3b · Networking</h2>
+      <ul>
+        <li>
+          <a href="../specs/2026-11-13-phase-1c3b-networking-design.md">Specification</a>: five networking kinds, correct cluster scope,
+          bounded association and safe reference resolution. Scope accepted; written package for review.
+        </li>
+        <li>
+          <a href="2026-11-13-phase-1c3b-networking.md">Five-task implementation plan</a>: typed reads, references, structured views, shared
+          navigation and agent desktop validation.
+        </li>
+        <li>
+          Execute only in a separately authorized session, in the existing checkout without a worktree. The merged 1C.3a baseline is
+          required. No duplicate manual user UAT, mutations, probes or installed infrastructure.
+        </li>
+      </ul>
+      <h2>Phase 1C.3a · Remaining workloads</h2>
+      <ul>
+        <li>
+          <a href="../specs/2026-11-13-phase-1c3a-remaining-workloads-design.md">Specification</a>: StatefulSets, DaemonSets, Jobs and
+          CronJobs with direct Pod ownership and CronJob → Jobs navigation. Scope accepted; written package for review.
+        </li>
+        <li>
+          <a href="2026-11-13-phase-1c3a-remaining-workloads.md">Five-task implementation plan</a>: typed readers, bounded relationships,
+          existing UI extension, navigation and explicit validation/user UAT.
+        </li>
+        <li>
+          Implementation belongs in a separate authorized session. Use the existing checkout; no worktree. The merged Phase 1C.2 baseline is
+          required; prior user UAT gaps remain separate.
+        </li>
+      </ul>
+      <h2>Workload refinement · 2026-11-13</h2>
+      <p>
+        The user accepted the visual direction and full ReplicaSets scope and requested a planning-only handoff. The written package awaits
+        review; implementation requires a separate explicit request.
+      </p>
+      <ul>
+        <li><a href="../specs/2026-11-13-workload-explorer-refinement-design.md">Design specification</a>.</li>
+        <li>
+          <a href="2026-11-13-workload-ui-refinement.md">UI/navigation refinement plan</a>: Overview, Events, YAML, related Pods,
+          namespace-kind retention and literal technical inputs.
+        </li>
+        <li>
+          <a href="2026-11-13-replicasets-explorer.md">ReplicaSets explorer plan</a>: follows the UI plan and reviewed Phase 1C.2 baseline.
+        </li>
+        <li><a href="../../ux/mocks/index.html#workload-refinement">Accepted mockups</a>.</li>
+      </ul>
+      <p>
+        Logs redesign is separately owned. Planning develop currently precedes the feature implementation; reconcile the implementation/Logs
+        baseline before execution. This package does not authorize a merge, release or the remaining 1C.3 scope.
+      </p>
+      <p>The <a href="../specs/2026-11-05-phase-1a-validation-design.md">Phase 1A specification</a> was approved on 2026-11-05.</p>
+      <ul>
+        <li>
+          <a href="2026-11-05-phase-1a-validation.md">Phase 1A implementation plan</a>: detailed tasks, minimal tests and separate-session
+          handoff; completed with qualified local validation; see its <a href="../validation/phase-1a.html">report</a>. The earlier
+          <a href="2026-11-05-phase-1a-validation-outline.md">outline</a> is historical and was expanded by the specification.
+        </li>
+      </ul>
+      <p>The <a href="../specs/2026-11-06-phase-1b-ui-design.md">Phase 1B UI specification</a> was approved on 2026-11-06.</p>
+      <ul>
+        <li>
+          <a href="2026-11-06-phase-1b-ui-foundation.md">Phase 1B UI foundation implementation plan</a>: six tasks, minimal verification and
+          a separate-session implementation prompt. Merged through PR #2; see the
+          <a href="../validation/phase-1b.html">Phase 1B validation report</a> for actual checks and limitations.
+        </li>
+      </ul>
+      <p>
+        The <a href="../specs/2026-11-06-phase-1c1-cluster-connections-design.md">Phase 1C.1 specification</a> was approved on 2026-11-06.
+      </p>
+      <ul>
+        <li>
+          <a href="2026-11-06-phase-1c1-cluster-connections.md">Phase 1C.1 implementation plan</a>: seven tasks, focused tests, two-cluster
+          validation and a post-implementation user UI UAT checklist. Merged through PR #3 after qualified agent UAT and maintainer
+          authorization; see its <a href="../validation/phase-1c1.html">report</a> for coverage limits.
+        </li>
+      </ul>
+      <p>
+        The <a href="../specs/2026-11-12-dark-palette-workspace-controls-design.md">workspace refinement specification</a> was approved on
+        2026-11-12.
+      </p>
+      <ul>
+        <li>
+          <a href="2026-11-12-dark-palette-workspace-controls.md">Workspace theme and controls plan</a>: neutral dark palette, searchable
+          namespaces and remembered detail splits, implemented in the same session at the user’s request. See the
+          <a href="../validation/2026-11-12-workspace-refinement.html">validation report</a>. Further UI/UX discussion stays in this plan.
+        </li>
+      </ul>
+      <p>
+        Plan completion tracking follows the
+        <a href="../../engineering/engineering.html#documentation-layout">engineering documentation guidance</a>: mark verified completed
+        steps <code>[x]</code> in the permanent plan as work finishes.
+      </p>
+      <p>
+        The <a href="../../roadmap/roadmap.html">roadmap</a> owns phase order. This directory owns execution tasks. Future plans follow the
+        Superpowers writing-plans workflow after the relevant design is approved. Keep scope, safeguards and permanent instructions in their
+        owning documents and link to them.
+      </p>
+      <p>
+        Implementation requires an explicit request after plan review; the user may authorize execution in the same session. Later
+        milestones are not authorized by the Phase 1A plan.
+      </p>
+      <p>
+        The <a href="../specs/2026-11-12-phase-1c2-workload-investigation-design.md">Phase 1C.2 workload investigation specification</a> was
+        approved on 2026-11-12.
+      </p>
+      <ul>
+        <li>
+          <a href="2026-11-12-phase-1c2-workload-investigation.md">Phase 1C.2 implementation plan</a>: seven tasks for bounded
+          workloads/details/events/logs, focused tests and a separate HTML user UI UAT checklist. Ready for review and implementation in a
+          separate session; no implementation performed by this planning update.
+        </li>
+        <li>
+          <a href="2026-11-13-live-log-refinement.md">Live log refinement</a>: one visible live view, cancelled on departure, with search
+          and expansion. Completed on the Phase 1C.2 branch.
+        </li>
+      </ul>
+    </main>
+  </body>
+</html>
