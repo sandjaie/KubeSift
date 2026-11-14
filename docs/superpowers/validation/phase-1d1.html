@@ -110,6 +110,10 @@
         full Go suite. No PVCs were deleted. Desktop tests exercised Escape and navigation after execution. Native modal focus prevents
         background tab/namespace interaction while reviewing.
       </p>
+      <p>
+        Verified removal of the scaling fixture namespace on both contexts and cleaned the temporary read fixtures, isolated kubeconfigs,
+        and app source.
+      </p>
       <h2>Independent review</h2>
       <p>
         Reviewer <code>scaling_pr_review</code> independently checked the complete <code>905daf9..e0b9691</code> candidate. The original
@@ -132,7 +136,9 @@
         UID rejection above an empty detail pane. Full checks, focused safety race tests and both-cluster integration passed after the
         fixes. For repeatable real-server races, the test waits for stable fixture status and advances the annotation with a fresh value.
       </p>
-      <p>Targeted independent recheck and ready-PR delivery pending.</p>
+      <p>
+        The same reviewer checked the delta through <code>a0d9418</code> and confirmed both findings resolved with no remaining blockers.
+      </p>
     </main>
   </body>
 </html>
