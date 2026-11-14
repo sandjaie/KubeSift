@@ -12,6 +12,7 @@ import { canAutoRefresh, emptyKind, initialWorkloads, reduceWorkloads, kindScope
 import { inventoryNamespace, isWorkloadKind, isResourceKind, isClusterScoped, resourceSections } from "./model";
 import { isConfigurationKind, type ConfigurationPage, type NamespaceDestination } from "../configuration/model";
 import { isStorageKind, type StoragePage } from "../storage/model";
+import { isAccessControlKind, type AccessControlPage } from "../access-control/model";
 import type { NetworkPage } from "../networking/model";
 import type {
   Evidence,
@@ -22,7 +23,7 @@ import type {
   NavigationEntry,
   ResourceRef,
   ResourceDetail,
-  StorageLinkEvidence,
+  ReferenceEvidence,
 } from "./model";
 export function useWorkloads(
   tabID: string,
@@ -82,10 +83,11 @@ export function useWorkloads(
     if (!visible || !connection || !t) return;
     const epoch = ++serial.current;
     commit({ type: "patch", tab: tabID, scope, kind, patch: { epoch, loading: true, error: "" } });
-    const request = readRequest<WorkloadPage | NetworkPage | ConfigurationPage | StoragePage>((id) => {
+    const request = readRequest<WorkloadPage | NetworkPage | ConfigurationPage | StoragePage | AccessControlPage>((id) => {
       const req = { connection, namespace: targetNamespace, kind, cursor };
       if (isWorkloadKind(kind)) return api.ReadWorkloads(id, req);
       if (isStorageKind(kind)) return api.ReadStorage(id, req);
+      if (isAccessControlKind(kind)) return api.ReadAccessControl(id, req);
       return isConfigurationKind(kind) ? api.ReadConfiguration(id, req) : api.ReadNetworking(id, req);
     });
     let active = true;
@@ -233,17 +235,20 @@ export function useWorkloads(
     if (canOpen(entry.resource, entry.namespace))
       navigationRequest(
         (id) => api.ReadResource(id, { resource: entry.resource }),
-        (detail) => show(entry, history, entry.storageLink ? detail : undefined),
+        (detail) => show(entry, history, entry.referenceEvidence ? detail : undefined),
       );
   }
   function openFromSelection(
     resource: ResourceRef,
     identity?: string,
     resolved = false,
-    storageLink?: StorageLinkEvidence,
+    referenceEvidence?: ReferenceEvidence,
     detail?: ResourceDetail,
   ) {
-    const destinationNamespace = storageLink && resource.kind === "PersistentVolumeClaim" ? resource.namespace : namespace;
+    const destinationNamespace =
+      referenceEvidence && (resource.kind === "PersistentVolumeClaim" || resource.kind === "ServiceAccount")
+        ? resource.namespace
+        : namespace;
     if (!t || !selected || !canOpen(resource, destinationNamespace) || resource.uid === selected.resource.uid) return;
     const { filter, sort, scroll, history } = inventory;
     const entries = relatedHistory(
@@ -253,13 +258,20 @@ export function useWorkloads(
         section,
         cursor: inventory.sectionCursor,
         identity: inventory.identity,
-        storageLink: inventory.storageLink,
+        referenceEvidence: inventory.referenceEvidence,
         namespace,
         position: { filter, sort, scroll, history },
       },
       resource,
     );
-    const entry: NavigationEntry = { resource, section: "Overview", cursor: "", identity, storageLink, namespace: destinationNamespace };
+    const entry: NavigationEntry = {
+      resource,
+      section: "Overview",
+      cursor: "",
+      identity,
+      referenceEvidence,
+      namespace: destinationNamespace,
+    };
     if (resolved) show(entry, entries, detail);
     else navigate(entry, entries);
   }
@@ -289,7 +301,7 @@ export function useWorkloads(
       setNavigationError("");
       patch({
         history: [""],
-        storageLink: undefined,
+        referenceEvidence: undefined,
         refresh: inventory.refresh + 1,
         ...(section === "Data"
           ? {
@@ -305,7 +317,7 @@ export function useWorkloads(
       setNavigationError("");
       patch({
         sectionCursor: "",
-        storageLink: undefined,
+        referenceEvidence: undefined,
         sectionRefresh: inventory.sectionRefresh + 1,
         ...(section === "Data" ? { sections: { ...inventory.sections, Data: undefined }, sectionEpoch: ++serial.current } : {}),
       });
@@ -346,6 +358,21 @@ export function useWorkloads(
       navigationRequest(
         (id) => api.ResolveStorageReference(id, { source: source.resource, sourceVersion: source.resourceVersion, target }),
         ({ resource, detail, ...link }) => openFromSelection(resource, undefined, true, link, detail),
+      );
+    },
+    openAccessControlReference: (source: ResourceDetail, target: ResourceRef) => {
+      const destinationNamespace = target.kind === "ServiceAccount" ? target.namespace : namespace;
+      if (
+        !selected ||
+        section !== "Overview" ||
+        inventory.sections.Overview?.data !== source ||
+        inventory.sections.Overview?.loading ||
+        !canOpen(target, destinationNamespace)
+      )
+        return;
+      navigationRequest(
+        (id) => api.ResolveAccessControlReference(id, { source: source.resource, sourceVersion: source.resourceVersion, target }),
+        ({ resource, detail, ...evidence }) => openFromSelection(resource, undefined, true, evidence, detail),
       );
     },
     openConfigurationReference: (source: ResourceDetail, target: ResourceRef) => {

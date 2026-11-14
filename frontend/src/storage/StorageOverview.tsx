@@ -28,12 +28,21 @@ type Capture = Properties & {
   status?: Properties & { capacity?: Properties };
 };
 
-export function EvidencePage<T>({ items, render }: { items: T[]; render: (item: T, index: number) => ReactNode }) {
+export function EvidencePage<T>({
+  items,
+  render,
+  wrap,
+}: {
+  items: T[];
+  render: (item: T, index: number) => ReactNode;
+  wrap?: (rows: ReactNode[]) => ReactNode;
+}) {
   const [page, setPage] = useState(0);
   const start = Math.min(page, Math.max(0, Math.ceil(items.length / 100) - 1)) * 100;
+  const rows = items.slice(start, start + 100).map((item, index) => render(item, start + index));
   return (
     <>
-      {items.slice(start, start + 100).map((item, index) => render(item, start + index))}
+      {wrap ? wrap(rows) : rows}
       {items.length > 100 && (
         <div className="detail-tabs">
           <button disabled={start === 0} onClick={() => setPage(start / 100 - 1)}>

@@ -35,4 +35,9 @@
     claims, a scheduling-gated Pod, and a PVC-only test identity. Check the namespace, class and volume names for collisions before
     creation. Delete only these owned objects after verification; never force finalizers or create the host path.
   </p>
+  <p>
+    phase-1c3e.yaml creates two owned namespaces, narrow synthetic RBAC and a scheduling-gated reference Pod with automount disabled. Check
+    namespace and cluster object names and the private aggregation label for collisions. Cleanup uses the fixture label and exact names;
+    never edit built-in roles.
+  </p>
 </html>

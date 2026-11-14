@@ -11,6 +11,23 @@ Important: Wails generates this glue; change Go contracts and regenerate rather 
 // @ts-ignore: Unused imports
 import * as model$0 from "../model/models.js";
 
+export interface AccessControlPage {
+  items: AccessControlRow[] | null;
+  page: PageInfo;
+}
+
+export interface AccessControlReferenceRequest {
+  source: ResourceRef;
+  target: ResourceRef;
+  sourceVersion: string;
+}
+
+export interface AccessControlRow {
+  resource: ResourceRef;
+  createdAt: string | null;
+  objectJSON: string;
+}
+
 export interface ConfigurationPage {
   items: ConfigurationRow[] | null;
   page: PageInfo;
@@ -142,6 +159,14 @@ export interface RelatedReplicaSetPage {
 export interface RelatedRequest {
   resource: ResourceRef;
   cursor: string;
+}
+
+export interface ResolvedAccessControlReference {
+  detail: ResourceDetail;
+  resource: ResourceRef;
+  sourceVersion: string;
+  targetVersion: string;
+  identityEvidence: string;
 }
 
 export interface ResolvedConfigurationReference {

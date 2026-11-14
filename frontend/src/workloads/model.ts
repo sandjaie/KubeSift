@@ -29,17 +29,22 @@ import type {
 import { isNetworkKind, networkKinds, type NetworkKind, type NetworkPage, type ServiceSlicePage } from "../networking/model";
 import { configurationKinds, isConfigurationKind, type ConfigurationKind, type ConfigurationPage } from "../configuration/model";
 import { isStorageKind, storageKinds, type StorageKind, type StoragePage, type ResolvedStorageReference } from "../storage/model";
+import { accessControlKinds, isAccessControlKind, type AccessControlKind, type AccessControlPage } from "../access-control/model";
 export const workloadKinds = ["Pod", "Deployment", "ReplicaSet", "StatefulSet", "DaemonSet", "Job", "CronJob"] as const;
 export type Kind = (typeof workloadKinds)[number];
 export function isWorkloadKind(kind: string): kind is Kind {
   return workloadKinds.some((item) => item === kind);
 }
-export type ResourceKind = Kind | NetworkKind | ConfigurationKind | StorageKind;
-export const resourceKinds = [...workloadKinds, ...networkKinds, ...configurationKinds, ...storageKinds];
+export type ResourceKind = Kind | NetworkKind | ConfigurationKind | StorageKind | AccessControlKind;
+export const resourceKinds = [...workloadKinds, ...networkKinds, ...configurationKinds, ...storageKinds, ...accessControlKinds];
 export const isResourceKind = (kind: string): kind is ResourceKind =>
-  isWorkloadKind(kind) || isNetworkKind(kind) || isConfigurationKind(kind) || isStorageKind(kind);
+  isWorkloadKind(kind) || isNetworkKind(kind) || isConfigurationKind(kind) || isStorageKind(kind) || isAccessControlKind(kind);
 export const isClusterScoped = (kind: string) =>
-  kind === "IngressClass" || kind === "Namespace" || (isStorageKind(kind) && kind !== "PersistentVolumeClaim");
+  kind === "IngressClass" ||
+  kind === "Namespace" ||
+  kind === "ClusterRole" ||
+  kind === "ClusterRoleBinding" ||
+  (isStorageKind(kind) && kind !== "PersistentVolumeClaim");
 export const inventoryNamespace = (kind: ResourceKind, namespace: string) => (isClusterScoped(kind) ? "" : namespace);
 export type Section = "Overview" | "YAML" | "Events" | "Pods" | "Logs" | "ReplicaSets" | "Jobs" | "EndpointSlices" | "Data";
 export function resourceSections(kind: string): Section[] {
@@ -62,20 +67,19 @@ export interface SectionState {
   error: string;
   data: Evidence | null;
 }
-export type StorageLinkEvidence = Pick<
-  ResolvedStorageReference,
-  "bindingEvidence" | "sourceVersion" | "targetVersion" | "identityEvidence"
->;
+export type ReferenceEvidence = Pick<ResolvedStorageReference, "sourceVersion" | "targetVersion" | "identityEvidence"> & {
+  bindingEvidence?: string;
+};
 export interface KindState {
   filter: string;
   sort: "asc" | "desc";
   scroll: number;
   history: string[];
-  page: WorkloadPage | NetworkPage | ConfigurationPage | StoragePage | null;
+  page: WorkloadPage | NetworkPage | ConfigurationPage | StoragePage | AccessControlPage | null;
   selected: { resource: ResourceRef } | null;
   related: boolean;
   identity: string;
-  storageLink?: StorageLinkEvidence;
+  referenceEvidence?: ReferenceEvidence;
   section: Section;
   sections: Partial<Record<Section, SectionState>>;
   loading: boolean;
@@ -93,7 +97,7 @@ export interface NavigationEntry {
   cursor: string;
   identity?: string;
   namespace?: string;
-  storageLink?: StorageLinkEvidence;
+  referenceEvidence?: ReferenceEvidence;
   position?: Pick<KindState, "filter" | "sort" | "scroll" | "history">;
 }
 export interface TabState {

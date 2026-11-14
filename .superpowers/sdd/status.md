@@ -2,13 +2,11 @@
 
 Updated 2026-11-14. Current integration branch is `develop`.
 
-## Next: Phase 1C.3e · Read-only access control
+## Phase 1C.3e · Read-only access control
 
-- Planning only; separate implementation session, existing checkout and no worktree. [Specification](../../docs/superpowers/specs/2026-11-14-phase-1c3e-access-control-design.md) and [five-task plan](../../docs/superpowers/plans/2026-11-14-phase-1c3e-access-control.md).
-- Scope: ServiceAccounts, Roles, RoleBindings, ClusterRoles and ClusterRoleBindings, with explicit Pod/binding reference navigation. No effective-permission claims, token/review APIs, impersonation, Secret lookups or product mutations.
-- Included navigation refinement: move ConfigMaps and Secrets under Workloads after CronJobs; keep ResourceQuotas and LimitRanges under Configuration. Placement only; preserve configuration routing and Secret safeguards.
-- Baseline checked at develop `94fd096`, including storage merge `eff5135`. Preserve storage's lazy nested rendering and validated target captures; carry forward its named native-denial/CSI and earlier coverage limits without relabeling unrun checks.
-- Implementation must run automated/integration and packaged desktop verification, update checkpoint/plan/report, obtain one independent whole-PR review with targeted fix rechecks, then ready PR and merge under the existing workflow. 1C.3f follows in the roadmap but is not authorized by this package.
+- Implemented on `feature/phase-1c3e-access-control` from `c41a54c`. [Specification](../../docs/superpowers/specs/2026-11-14-phase-1c3e-access-control-design.md), [plan](../../docs/superpowers/plans/2026-11-14-phase-1c3e-access-control.md), and [validation report](../../docs/superpowers/validation/phase-1c3e.html).
+- Both-cluster integration and packaged checks covered explicit role and ServiceAccount links, cross-scope Back, rules, subjects, YAML, and ConfigMap/Secret grouping. See the report for verification limits.
+- Independent whole-PR review and targeted fix rechecks passed. Ready PR and merge verification are next.
 
 ## Phase 1C.3d · Read-only storage
 

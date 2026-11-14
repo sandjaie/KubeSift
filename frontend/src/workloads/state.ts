@@ -103,7 +103,7 @@ export function reduceWorkloads(state: WorkloadsState, a: Action): WorkloadsStat
           ...t.kinds,
           ...clearOutgoingData(t, a.kind, a.epoch),
           [a.kind]: target.related
-            ? { ...target, selected: null, related: false, identity: "", storageLink: undefined, sections: {} }
+            ? { ...target, selected: null, related: false, identity: "", referenceEvidence: undefined, sections: {} }
             : target,
         },
       },
@@ -134,7 +134,7 @@ export function reduceWorkloads(state: WorkloadsState, a: Action): WorkloadsStat
             ...destination.kinds[a.kind],
             ...a.entry.position,
             identity: a.entry.identity ?? "",
-            storageLink: a.entry.storageLink,
+            referenceEvidence: a.entry.referenceEvidence,
             selected: { resource: a.entry.resource },
             related: true,
             section: a.entry.section,
@@ -151,7 +151,7 @@ export function reduceWorkloads(state: WorkloadsState, a: Action): WorkloadsStat
   let patch: Partial<KindState>;
   if (a.type === "select") {
     if (k.selected?.resource.uid === a.row.resource.uid && !k.related && !t.navigation.length) return state;
-    patch = { related: false, identity: "", storageLink: undefined, selected: a.row };
+    patch = { related: false, identity: "", referenceEvidence: undefined, selected: a.row };
     if (k.selected?.resource.uid !== a.row.resource.uid || k.section !== "Overview") {
       Object.assign(patch, { section: "Overview", sections: {}, sectionCursor: "", sectionEpoch: a.epoch });
     }

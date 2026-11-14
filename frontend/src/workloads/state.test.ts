@@ -306,7 +306,12 @@ test("storage navigation keeps a claim outside the page and restores the saved n
     },
   };
   const detail = { resource: claim, objectJSON: "{}", resourceVersion: "8", fetchedAt: "", job: null };
-  const storageLink = { sourceVersion: "7", targetVersion: "8", identityEvidence: "uid-verified", bindingEvidence: "references-agree" };
+  const referenceEvidence = {
+    sourceVersion: "7",
+    targetVersion: "8",
+    identityEvidence: "uid-verified",
+    bindingEvidence: "references-agree",
+  };
   let s = reduceWorkloads(initialWorkloads(), { type: "scope", tab: "A", scope: "saved-scope", clusterScope: "cluster" });
   s = reduceWorkloads(s, { type: "kind", tab: "A", kind: "PersistentVolume" });
   s = reduceWorkloads(s, {
@@ -315,7 +320,7 @@ test("storage navigation keeps a claim outside the page and restores the saved n
     scope: "cluster",
     nextScope: "other-scope",
     kind: "PersistentVolumeClaim",
-    entry: { resource: claim, section: "Overview", cursor: "", namespace: "other", storageLink },
+    entry: { resource: claim, section: "Overview", cursor: "", namespace: "other", referenceEvidence },
     detail,
     history: [original],
     epoch: 4,
@@ -325,7 +330,7 @@ test("storage navigation keeps a claim outside the page and restores the saved n
   expect(s.A.kinds.PersistentVolumeClaim.selected?.resource).toEqual(claim);
   expect(s.A.kinds.PersistentVolumeClaim.related).toBe(true);
   expect(s.A.kinds.PersistentVolumeClaim.sections.Overview?.data).toBe(detail);
-  expect(s.A.kinds.PersistentVolumeClaim.storageLink).toBe(storageLink);
+  expect(s.A.kinds.PersistentVolumeClaim.referenceEvidence).toBe(referenceEvidence);
   expect(
     reduceWorkloads(s, {
       type: "response",
@@ -358,6 +363,82 @@ test("storage navigation keeps a claim outside the page and restores the saved n
       kind: "PersistentVolumeClaim",
       section: true,
       epoch: 4,
+      patch: { error: "late" },
+    }),
+  ).toBe(s);
+});
+
+test("access control keeps scope and the validated capture through explicit cross-namespace navigation", async () => {
+  const { isClusterScoped, resourceSections } = await import("./model");
+  const { destinations } = await import("../workspace/ResourceNavigation");
+  expect(resourceSections("ClusterRole")).toEqual(["Overview", "YAML"]);
+  expect(resourceSections("ClusterRoleBinding")).toEqual(["Overview", "YAML"]);
+  for (const kind of ["ServiceAccount", "Role", "RoleBinding"]) {
+    expect(isClusterScoped(kind)).toBe(false);
+    expect(resourceSections(kind)).toEqual(["Overview", "YAML", "Events"]);
+  }
+  expect(
+    destinations
+      .find(({ group }) => group === "Workloads")
+      ?.items.slice(-2)
+      .map(([kind]) => kind),
+  ).toEqual(["ConfigMap", "Secret"]);
+  expect(resourceSections("Secret")).toEqual(["Overview"]);
+  const connection = { id: "a", generation: 1 };
+  const binding = {
+    connection,
+    kind: "RoleBinding",
+    apiVersion: "rbac.authorization.k8s.io/v1",
+    name: "system:Fixture",
+    uid: "b",
+    namespace: "local",
+  };
+  const subject = { ...binding, kind: "ServiceAccount", apiVersion: "v1", name: "reader", uid: "s", namespace: "other" };
+  const detail = { resource: subject, resourceVersion: "8", objectJSON: "{}", fetchedAt: "", job: null };
+  const origin = {
+    resource: binding,
+    namespace: "local",
+    section: "Overview" as const,
+    cursor: "",
+    position: { filter: "bind", sort: "asc" as const, scroll: 20, history: ["", "next"] },
+  };
+  let s = reduceWorkloads(initialWorkloads(), { type: "scope", tab: "A", scope: "local", clusterScope: "cluster" });
+  s = reduceWorkloads(s, { type: "kind", tab: "A", kind: "RoleBinding" });
+  s = reduceWorkloads(s, {
+    type: "navigate",
+    tab: "A",
+    scope: "local",
+    nextScope: "other",
+    kind: "ServiceAccount",
+    history: [origin],
+    epoch: 2,
+    entry: { resource: subject, namespace: "other", section: "Overview", cursor: "" },
+    detail,
+  });
+  expect(s.A.scope).toBe("other");
+  expect(s.A.kinds.ServiceAccount.sections.Overview?.data).toBe(detail);
+  expect(s.A.kinds.ServiceAccount.related).toBe(true);
+  s = reduceWorkloads(s, {
+    type: "navigate",
+    tab: "A",
+    scope: "other",
+    nextScope: "local",
+    kind: "RoleBinding",
+    entry: origin,
+    history: [],
+    epoch: 3,
+  });
+  expect(s.A.scope).toBe("local");
+  expect(s.A.kinds.RoleBinding.filter).toBe("bind");
+  expect(s.A.kinds.RoleBinding.history).toEqual(["", "next"]);
+  expect(
+    reduceWorkloads(s, {
+      type: "response",
+      tab: "A",
+      scope: "other",
+      kind: "ServiceAccount",
+      epoch: 2,
+      section: true,
       patch: { error: "late" },
     }),
   ).toBe(s);

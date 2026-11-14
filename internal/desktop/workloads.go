@@ -181,3 +181,21 @@ func (s *ExplorerService) ResolveStorageReference(id string, req kube.StorageRef
 	defer done()
 	return s.core.kube.ResolveStorageReference(ctx, req)
 }
+
+func (s *ExplorerService) ReadAccessControl(id string, req kube.PageRequest) (kube.AccessControlPage, error) {
+	ctx, done, err := s.beginWorkloadRead(id)
+	if err != nil {
+		return kube.AccessControlPage{}, err
+	}
+	defer done()
+	return s.core.kube.ReadAccessControl(ctx, req)
+}
+
+func (s *ExplorerService) ResolveAccessControlReference(id string, req kube.AccessControlReferenceRequest) (kube.ResolvedAccessControlReference, error) {
+	ctx, done, err := s.beginWorkloadRead(id)
+	if err != nil {
+		return kube.ResolvedAccessControlReference{}, err
+	}
+	defer done()
+	return s.core.kube.ResolveAccessControlReference(ctx, req)
+}

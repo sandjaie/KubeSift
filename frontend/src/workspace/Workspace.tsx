@@ -16,6 +16,8 @@ import { ConfigurationTable } from "../configuration/ConfigurationTable";
 import { configurationLabels, isConfigurationKind, type ConfigurationRow } from "../configuration/model";
 import { isStorageKind, storageLabels, type StorageRow } from "../storage/model";
 import { StorageTable } from "../storage/StorageTable";
+import { isAccessControlKind, accessControlLabels, type AccessControlRow } from "../access-control/model";
+import { AccessControlTable } from "../access-control/AccessControlTable";
 import { NetworkTable } from "../networking/NetworkTable";
 import type { WorkloadRow } from "../workloads/model";
 import { ResourceTable } from "./ResourceTable";
@@ -46,13 +48,15 @@ export function Workspace({
 }) {
   const i = c.inventory,
     kind = c.kind;
-  const label = isNetworkKind(kind)
-    ? networkLabels[kind]
-    : isConfigurationKind(kind)
-      ? configurationLabels[kind]
-      : isStorageKind(kind)
-        ? storageLabels[kind]
-        : `${kind}s`;
+  const label = isAccessControlKind(kind)
+    ? accessControlLabels[kind]
+    : isNetworkKind(kind)
+      ? networkLabels[kind]
+      : isConfigurationKind(kind)
+        ? configurationLabels[kind]
+        : isStorageKind(kind)
+          ? storageLabels[kind]
+          : `${kind}s`;
   const stale = tab.pollFailed || visibleState(tab.view) !== "connected";
   const rows = [...(i.page?.items ?? [])]
     .filter((row) => row.resource.name.toLowerCase().includes(i.filter.toLowerCase()))
@@ -136,7 +140,14 @@ export function Workspace({
             {i.loading && <p>Loading {label}…</p>}
             {i.error && <p role="alert">{i.error}</p>}
             {rows.length ? (
-              isStorageKind(kind) ? (
+              isAccessControlKind(kind) ? (
+                <AccessControlTable
+                  rows={rows as AccessControlRow[]}
+                  kind={kind}
+                  selected={c.selection?.resource.uid ?? null}
+                  onSelect={c.selectResource}
+                />
+              ) : isStorageKind(kind) ? (
                 <StorageTable
                   rows={rows as StorageRow[]}
                   kind={kind}

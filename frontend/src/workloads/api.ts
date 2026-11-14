@@ -1,5 +1,5 @@
 /*
-Purpose: Adapt generated explorer reads to independently cancellable invocations.
+Purpose: Adapt generated explorer inventories and reference reads to independently cancellable invocations.
 Used by: The explorer inventory and detail controller.
 Responsibilities: Issue unique request IDs and expose native cancellation.
 Important: Cancellation is paired with reducer epochs; it is not a guarantee against late replies.
