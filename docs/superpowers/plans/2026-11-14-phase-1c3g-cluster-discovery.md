@@ -18,6 +18,8 @@
 - No product writes/watch/proxy/subresources, installers, metrics, release or Phase 1D. Only approved explicit local kind contexts for task-owned test fixtures.
 - Progress in this checklist and tracked checkpoint; evidence in `docs/superpowers/validation/phase-1c3g.html`; roadmap remains scope-only. Follow agent verification and whole-PR review/ready-merge policy.
 
+[Validation evidence](../validation/phase-1c3g.html) records observed results and remaining gaps.
+
 ## Review focus
 
 1. Discovery bypasses Secret/dedicated boundaries or constructs arbitrary routes: Task 2/3 negative-I/O tests.
@@ -36,7 +38,7 @@
 - [ ] Add failing tests for every fixed API/scope, namespace requirement, invalid identity, missing/forbidden API, malformed collections, pagination and output caps. Dedicated readers must not perform discovery.
 - [ ] Test exact numbers/quantities and absent/false/zero, Node Ready versus scheduling, Lease evidence without expiry inference, CRD versions/conditions and APIService local versus service-backed configuration. Use bounded raw fixed-GVR reads for CRD/APIService without new client dependencies.
 - [ ] Test Event modern/core fallback on absence only, no fallback on denial, actual family bound into continuation, page-only sort, missing time/count, series normalization and UID mismatch. Reject unsafe source/target scopes before target reads; no Events-on-Event recursion.
-- [ ] Run focused Go tests to observe failures, implement readers/DTOs/details and event resolver. Register fixed version/scope and existing YAML capture integration; verify no writes, direct service/webhook calls or cluster-wide Event scans. Run `go test ./internal/kube ./internal/desktop` and commit.
+- [x] Run focused Go tests to observe failures, implement readers/DTOs/details and event resolver. Register fixed version/scope and existing YAML capture integration; verify no writes, direct service/webhook calls or cluster-wide Event scans. Run `go test ./internal/kube ./internal/desktop` and commit.
 
 ## Task 2 — Scoped discovery catalog and guarded handles (G04–G05)
 
@@ -47,8 +49,8 @@
 
 - [ ] Test independent `/api` and `/apis` failures, preferred version mismatch, inconsistent groupVersion, duplicate descriptors, malformed paths and slash subresources. Pin Accept to unaggregated JSON; assert no OpenAPI, aggregate-Service or all-group fan-out calls.
 - [ ] Test five-minute TTL, eight-document LRU, generation/epoch binding, explicit refresh, close cleanup, limits (512 groups/32 versions/1,024 descriptors), response caps and expired/evicted handles. Reject oversize documents explicitly.
-- [ ] Build a canonical dedicated group/resource/GVR registry and Secret guard, verified against existing dispatch: every supported GVR routes dedicated, unsupported versions of those group/resources unavailable; all core secrets generic routes blocked before I/O regardless of claimed kind/scope/version/alias. Do not infer paths from short names or Kind.
-- [ ] Implement minimal scoped cache/registry and methods after failing tests. Verify actual LIST/GET RBAC errors remain distinct from advertised verbs; no trial authorization mutation/review. Run unit/race tests and commit.
+- [x] Build a canonical dedicated group/resource/GVR registry and Secret guard, verified against existing dispatch: every supported GVR routes dedicated, unsupported versions of those group/resources unavailable; all core secrets generic routes blocked before I/O regardless of claimed kind/scope/version/alias. Do not infer paths from short names or Kind.
+- [x] Implement minimal scoped cache/registry and methods after failing tests. Verify actual LIST/GET RBAC errors remain distinct from advertised verbs; no trial authorization mutation/review. Run unit/race tests and commit.
 
 ## Task 3 — Generic inventory and raw captures (G05–G07)
 
@@ -60,7 +62,7 @@
 - [ ] Write negative-I/O tests for forged/mismatched/expired handles, namespace/scope, path escape, subresources, Secret bypasses, unsupported dedicated versions and cross-context/cross-GVR continuation. Verify custom resources with colliding Kind remain distinct.
 - [ ] Test one page/call, expired continuation, metadata-only DTOs despite rich native response, object/list GVK and identity validation, forbidden list versus get, missing API and stale UID. No whole-list raw object data in bridge/error/log output.
 - [ ] Test unknown JSON fields, integer beyond JS safe range, decimals, nulls, unusual valid object names, YAML capture/copy fidelity, oversized compressed/decoded bodies, output cap and cancellation. Reuse raw capture pipeline only if it passes these precision tests; do not marshal via float64/unstructured number conversion blindly.
-- [ ] Implement guarded list/get using descriptor-bound paths and existing transport. Regenerate `wails3 task bindings`, add wrappers in `frontend/src/workloads/api.ts` and typecheck. Commit backend contracts and generated changes.
+- [x] Implement guarded list/get using descriptor-bound paths and existing transport. Regenerate `wails3 task bindings`, add wrappers in `frontend/src/workloads/api.ts` and typecheck. Commit backend contracts and generated changes.
 
 ## Task 4 — Dedicated evidence views (G01–G03, G08)
 
@@ -68,9 +70,9 @@
 **Modify:** `frontend/src/workspace/ResourceNavigation.tsx`, `ResourceDetail.tsx`, `ResourceOverview.tsx`, shared table dispatch, `frontend/src/ui/ResourceIcon.tsx`.
 
 - [ ] Add failing rendering tests for all seven kinds, missing versus zero/false, Node scheduling independent from Ready, unknown Lease health, Event count/time/source and honest page ordering. Large CRD schemas must start collapsed and render bounded pages/text only.
-- [ ] Implement approved grouping/columns/Overview/YAML and source details; use established tokens, controls and expansion patterns. No new dashboard or redesign. CRD Browse instances and APIService View resources emit descriptor-validated navigation intents, never direct URLs.
+- [x] Implement approved grouping/columns/Overview/YAML and source details; use established tokens, controls and expansion patterns. No new dashboard or redesign. CRD Browse instances and APIService View resources emit descriptor-validated navigation intents, never direct URLs.
 - [ ] Wire Event target open to exact resolver result with no second GET; non-navigable incomplete/unsupported references remain useful text. Source refresh/reentry invalidates stale evidence. Add tests for target replacement/denial and Back.
-- [ ] Run frontend tests, lint/typecheck and commit dedicated views.
+- [x] Run frontend tests, lint/typecheck and commit dedicated views.
 
 ## Task 5 — API browser and route/state integration (G04–G08)
 
@@ -79,8 +81,8 @@
 
 - [ ] Introduce a discriminated dedicated/generic/catalog route; generic route identity includes connection generation, GVR, scope/namespace and handle epoch. Audit every existing fixed-kind dispatch for unsafe assumptions rather than broadening ResourceRef to arbitrary strings.
 - [ ] Write state tests for namespace retention, cluster-scope retention, separate connection catalogs/routes, changing group/version/resource, TTL/LRU eviction, removed APIs, refresh, Back, cancellation and out-of-order results. Expired handles require visible refresh/reselection; never silently map to a different resource.
-- [ ] Implement lazy group/version/resource selection, loaded-catalog filtering, partial/denied/cap/error states and dedicated redirect explanation. No implicit fallback version, auto-loaded all-group catalogs, automatic all-page fetch or Pods reset.
-- [ ] Implement metadata tables and escaped collapsed generic raw view/YAML using exact captured text. Search and expansion must be bounded; disable text correction on identifier/search controls. CRD/APIService catalog jumps require current descriptor match and correct scope.
+- [x] Implement lazy group/version/resource selection, loaded-catalog filtering, partial/denied/cap/error states and dedicated redirect explanation. No implicit fallback version, auto-loaded all-group catalogs, automatic all-page fetch or Pods reset.
+- [x] Implement metadata tables and escaped collapsed generic raw view/YAML using exact captured text. Search and expansion must be bounded; disable text correction on identifier/search controls. CRD/APIService catalog jumps require current descriptor match and correct scope.
 - [ ] Test no hidden spec/status inventory payload, no eager recursive generic rendering, matching YAML copy, accessible keyboard controls and nested pagination. Run full frontend tests/lint/typecheck plus relevant Go tests; commit integrated UI.
 
 ## Task 6 — Integration, native verification and delivery (G01–G09)
@@ -88,10 +90,10 @@
 **Create:** `tests/integration/cluster_discovery_test.go`, `docs/superpowers/validation/phase-1c3g.html`.
 **Modify:** integration README, owning implementation READMEs, checkpoint and this checklist. Correct UX/spec only if implementation exposes a real contract conflict; do not silently relax safeguards or acceptance.
 
-- [ ] Add task-owned synthetic fixtures on both explicit kind-dev-local-a/b: namespaced and cluster-scoped custom CRDs without webhooks/controllers, large-number custom values, duplicate Kind across groups, Event+Pod, core Endpoints, PriorityClass/RuntimeClass/Lease and restricted discovery/read credentials. Inspect existing Nodes/APIServices; never modify their operational state. Reject external contexts. Track cleanup identities.
+- [x] Add task-owned synthetic fixtures on both explicit kind-dev-local-a/b: namespaced and cluster-scoped custom CRDs without webhooks/controllers, large-number custom values, duplicate Kind across groups, Event+Pod, core Endpoints, PriorityClass/RuntimeClass/Lease and restricted discovery/read credentials. Inspect existing Nodes/APIServices; never modify their operational state. Reject external contexts. Track cleanup identities.
 - [ ] Exercise native Go readers against both clusters for dedicated and generic paths, denied list/get, strict Secret route, CRD→instances matching, removed discovery and namespace isolation. Use HTTP fakes for malformed discovery, bounds, stale async races and unusual status combinations; report this distinction. Existing installed Gateway/snapshot APIs are optional observations, not required installations.
-- [ ] Run documented Go full tests/vet/race, frontend tests/lint/typecheck, binding generation consistency, build and package. Run affected integration and prior workload/network/configuration/storage/access/availability suites with their documented opt-in settings. Preserve prior validation limitations as history, not newly passed claims.
-- [ ] Use desktop computer-use on the final packaged build for spec journeys: Node, Event→Pod→Back, CRD→instances→object→YAML exact copy→Back, APIService→catalog, namespace retention and both contexts; keyboard, narrow split, light/dark and native zoom. Record actual checks and specific blocked/unrun cases in one report; no duplicate user UAT checklist.
+- [x] Run documented Go full tests/vet/race, frontend tests/lint/typecheck, binding generation consistency, build and package. Run affected integration and prior workload/network/configuration/storage/access/availability suites with their documented opt-in settings. Preserve prior validation limitations as history, not newly passed claims.
+- [x] Use desktop computer-use on the final packaged build for spec journeys: Node, Event→Pod→Back, CRD→instances→object→YAML exact copy→Back, APIService→catalog, namespace retention and both contexts; keyboard, narrow split, light/dark and native zoom. Record actual checks and specific blocked/unrun cases in one report; no duplicate user UAT checklist.
 - [ ] Delete only task-owned fixtures (custom objects before CRDs), remove temporary credentials and verify both-context cleanup. Run documentation links/formatting checks and record evidence. Keep detailed operational logs under ignored `.superpowers/sdd/`.
 - [ ] Request one fresh independent whole-PR review with `.agents/skills/kubesift-code-review/SKILL.md`, full base/head diff and this spec. Address findings, targeted rechecks and any required rebuild/native retest. Report genuine unresolved blockers; do not claim successful verification without evidence.
 - [ ] Update checkpoint/report and checked tasks, verify local author/remote/auth, push feature branch, open ready PR, satisfy checks/review and merge into develop under standing authorization. Update merge checkpoint and provide result. No draft waiting gate, release or automatic next-phase work.

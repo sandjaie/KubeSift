@@ -1,0 +1,170 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "Namespace",
+      "metadata": {
+        "name": "kubesift-discovery-check",
+        "labels": {
+          "kubesift.dev/fixture": "phase1c3g-validation"
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Pod",
+      "metadata": {
+        "name": "discovery-pod",
+        "labels": {
+          "kubesift.dev/fixture": "phase1c3g-validation"
+        },
+        "namespace": "kubesift-discovery-check"
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "pause",
+            "image": "registry.k8s.io/pause:3.10"
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Endpoints",
+      "metadata": {
+        "name": "discovery-endpoints",
+        "labels": {
+          "kubesift.dev/fixture": "phase1c3g-validation"
+        },
+        "namespace": "kubesift-discovery-check"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "fixture-reader",
+        "labels": {
+          "kubesift.dev/fixture": "phase1c3g-validation"
+        },
+        "namespace": "kubesift-discovery-check"
+      }
+    },
+    {
+      "apiVersion": "coordination.k8s.io/v1",
+      "kind": "Lease",
+      "metadata": {
+        "name": "discovery-lease",
+        "labels": {
+          "kubesift.dev/fixture": "phase1c3g-validation"
+        },
+        "namespace": "kubesift-discovery-check"
+      },
+      "spec": {
+        "holderIdentity": "fixture",
+        "leaseDurationSeconds": 30
+      }
+    },
+    {
+      "apiVersion": "scheduling.k8s.io/v1",
+      "kind": "PriorityClass",
+      "metadata": {
+        "name": "kubesift-discovery-check",
+        "labels": {
+          "kubesift.dev/fixture": "phase1c3g-validation"
+        }
+      },
+      "value": 0,
+      "globalDefault": false,
+      "description": "Synthetic validation fixture"
+    },
+    {
+      "apiVersion": "node.k8s.io/v1",
+      "kind": "RuntimeClass",
+      "metadata": {
+        "name": "kubesift-discovery-check",
+        "labels": {
+          "kubesift.dev/fixture": "phase1c3g-validation"
+        }
+      },
+      "handler": "kubesift-fixture"
+    },
+    {
+      "apiVersion": "apiextensions.k8s.io/v1",
+      "kind": "CustomResourceDefinition",
+      "metadata": {
+        "name": "widgets.discovery.kubesift.dev",
+        "labels": {
+          "kubesift.dev/fixture": "phase1c3g-validation"
+        }
+      },
+      "spec": {
+        "group": "discovery.kubesift.dev",
+        "scope": "Namespaced",
+        "names": {
+          "kind": "Widget",
+          "plural": "widgets",
+          "singular": "widget"
+        },
+        "versions": [
+          {
+            "name": "v1",
+            "served": true,
+            "storage": true,
+            "schema": {
+              "openAPIV3Schema": {
+                "type": "object",
+                "properties": {
+                  "spec": {
+                    "type": "object",
+                    "x-kubernetes-preserve-unknown-fields": true
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apiextensions.k8s.io/v1",
+      "kind": "CustomResourceDefinition",
+      "metadata": {
+        "name": "widgets.other-discovery.kubesift.dev",
+        "labels": {
+          "kubesift.dev/fixture": "phase1c3g-validation"
+        }
+      },
+      "spec": {
+        "group": "other-discovery.kubesift.dev",
+        "scope": "Cluster",
+        "names": {
+          "kind": "Widget",
+          "plural": "widgets",
+          "singular": "widget"
+        },
+        "versions": [
+          {
+            "name": "v1",
+            "served": true,
+            "storage": true,
+            "schema": {
+              "openAPIV3Schema": {
+                "type": "object",
+                "properties": {
+                  "spec": {
+                    "type": "object",
+                    "x-kubernetes-preserve-unknown-fields": true
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

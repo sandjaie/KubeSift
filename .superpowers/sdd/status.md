@@ -4,9 +4,9 @@ Updated 2026-11-14. Current integration branch is `develop`.
 
 ## Phase 1C.3g · Cluster resources and API discovery
 
-- Planning package prepared on `develop`; implementation has not started. [Specification](../../docs/superpowers/specs/2026-11-14-phase-1c3g-cluster-discovery-design.md) and [six-task plan](../../docs/superpowers/plans/2026-11-14-phase-1c3g-cluster-discovery.md).
-- Seven dedicated infrastructure destinations plus bounded installed-API browsing, scoped discovery failures and strict dedicated/Secret reader boundaries. Existing checkout, no worktree; separate implementation session.
-- Implementation owns automated/two-cluster/packaged native checks and one independent whole-PR review, then ready-PR merge under the existing policy. No duplicate manual UAT or later-phase authorization.
+- Candidate on `feature/phase-1c3g-cluster-discovery` in the existing checkout from `3147a6e` (includes planning commit `9e12a44`). [Specification](../../docs/superpowers/specs/2026-11-14-phase-1c3g-cluster-discovery-design.md), [plan](../../docs/superpowers/plans/2026-11-14-phase-1c3g-cluster-discovery.md), and [validation](../../docs/superpowers/validation/phase-1c3g.html).
+- Seven fixed infrastructure views and a bounded installed API browser. Repository checks, the two approved kind contexts and the primary packaged macOS journeys passed. The candidate also caps the initial window on larger displays and includes the maintainer’s documentation commits.
+- Pending final independent review and delivery. See the validation report for exact observations and limits.
 
 ## Phase 1C.3f · Availability and remaining workloads
 
