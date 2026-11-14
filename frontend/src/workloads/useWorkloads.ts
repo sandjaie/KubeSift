@@ -23,6 +23,8 @@ import { isConfigurationKind, type ConfigurationPage, type NamespaceDestination 
 import { isStorageKind, type StoragePage } from "../storage/model";
 import { isAccessControlKind, type AccessControlPage } from "../access-control/model";
 import { isAvailabilityKind, type AvailabilityPage } from "../availability/model";
+import { isClusterKind, type EventInventoryPage, type ClusterResourcePage, type CatalogIntent } from "../cluster/model";
+import { selectCatalogIntent, type CatalogSeed } from "../discovery/model";
 import type { NetworkPage } from "../networking/model";
 import type {
   Evidence,
@@ -47,6 +49,7 @@ export function useWorkloads(
   const serial = useRef(0);
   const pendingNavigation = useRef<(() => void) | null>(null);
   const seededOverview = useRef<ResourceDetail | undefined>(undefined);
+  const [catalogRoutes, setCatalogRoutes] = useState<Record<string, CatalogSeed>>({});
   const [navigationError, setNavigationError] = useState("");
   const cancelNavigation = () => {
     pendingNavigation.current?.();
@@ -87,22 +90,38 @@ export function useWorkloads(
     };
   }, [tabID, visible, commit]);
   useEffect(() => {
+    const prior = current.current[tabID]?.clusterScope;
+    if (prior && prior !== clusterScope)
+      setCatalogRoutes((old) => {
+        const next = { ...old };
+        delete next[prior];
+        return next;
+      });
     if (tabID) commit({ type: "scope", tab: tabID, scope: namespaceScope, clusterScope });
   }, [tabID, namespaceScope, clusterScope, commit]);
   useEffect(() => {
-    if (!visible || !connection || !t) return;
+    if (!visible || !connection || !t || kind === "APIResources") return;
     const epoch = ++serial.current;
     commit({ type: "patch", tab: tabID, scope, kind, patch: { epoch, loading: true, error: "" } });
-    const request = readRequest<WorkloadPage | NetworkPage | ConfigurationPage | StoragePage | AccessControlPage | AvailabilityPage>(
-      (id) => {
-        const req = { connection, namespace: targetNamespace, kind, cursor };
-        if (isWorkloadKind(kind)) return api.ReadWorkloads(id, req);
-        if (isAvailabilityKind(kind)) return api.ReadAvailability(id, req);
-        if (isStorageKind(kind)) return api.ReadStorage(id, req);
-        if (isAccessControlKind(kind)) return api.ReadAccessControl(id, req);
-        return isConfigurationKind(kind) ? api.ReadConfiguration(id, req) : api.ReadNetworking(id, req);
-      },
-    );
+    const request = readRequest<
+      | WorkloadPage
+      | NetworkPage
+      | ConfigurationPage
+      | StoragePage
+      | AccessControlPage
+      | AvailabilityPage
+      | ClusterResourcePage
+      | EventInventoryPage
+    >((id) => {
+      const req = { connection, namespace: targetNamespace, kind, cursor };
+      if (kind === "Event") return api.ReadEventInventory(id, req);
+      if (isClusterKind(kind)) return api.ReadClusterResources(id, req);
+      if (isWorkloadKind(kind)) return api.ReadWorkloads(id, req);
+      if (isAvailabilityKind(kind)) return api.ReadAvailability(id, req);
+      if (isStorageKind(kind)) return api.ReadStorage(id, req);
+      if (isAccessControlKind(kind)) return api.ReadAccessControl(id, req);
+      return isConfigurationKind(kind) ? api.ReadConfiguration(id, req) : api.ReadNetworking(id, req);
+    });
     let active = true;
     void request.promise
       .then((page) => {
@@ -137,6 +156,11 @@ export function useWorkloads(
   }, [tabID, scope, kind, cursor, inventory.refresh, visible, !!t, commit]);
   useEffect(() => {
     if (!visible || !selected || section === "Logs" || !resourceSections(kind).includes(section)) return;
+    const capturedYAML = isClusterKind(kind) ? (inventory.sections.Overview?.data as ResourceDetail | undefined)?.capturedYAML : undefined;
+    if (section === "YAML" && capturedYAML) {
+      patch({ sections: { ...inventory.sections, YAML: { data: capturedYAML, error: "", loading: false } } });
+      return;
+    }
     const epoch = ++serial.current;
     const existing = current.current[tabID]?.kinds[kind].sections ?? {};
     if (section === "Overview" && seededOverview.current && existing.Overview?.data === seededOverview.current) {
@@ -284,6 +308,10 @@ export function useWorkloads(
         cursor: inventory.sectionCursor,
         identity: inventory.identity,
         referenceEvidence: inventory.referenceEvidence,
+        detail:
+          selected.resource.kind === "Event" && section === "Overview"
+            ? (inventory.sections.Overview?.data as ResourceDetail | undefined)
+            : undefined,
         namespace,
         position: { filter, sort, scroll, history },
       },
@@ -302,6 +330,71 @@ export function useWorkloads(
   }
   return {
     kind,
+    catalogRoute: catalogRoutes[clusterScope],
+    setCatalogRoute: (seed: CatalogSeed | null) => {
+      setCatalogRoutes((old) => {
+        const next = { ...old };
+        if (seed) next[clusterScope] = seed;
+        else delete next[clusterScope];
+        return next;
+      });
+    },
+    restoreCatalogSource: () => {
+      const entry = catalogRoutes[clusterScope]?.origin;
+      if (entry) show(entry, [], entry.detail);
+    },
+    browseCatalog: (source: ResourceDetail, intent: CatalogIntent) => {
+      if (!connection || section !== "Overview" || inventory.sections.Overview?.data !== source || inventory.sections.Overview?.loading)
+        return;
+      navigationRequest(
+        async (id) => {
+          const groups = await api.ReadAPIGroups(id, { connection, refresh: false });
+          if (!groups.groups?.some((g) => g.group === intent.group && g.versions?.includes(intent.version)))
+            throw new Error("The captured API group and version are not currently advertised.");
+          const catalog = await api.ReadAPIResources(id, { connection, group: intent.group, version: intent.version, refresh: false });
+          return selectCatalogIntent(intent, catalog);
+        },
+        (seed) => {
+          const { filter, sort, scroll, history } = inventory;
+          setCatalogRoutes((old) => ({
+            ...old,
+            [clusterScope]: {
+              ...seed,
+              origin: {
+                resource: source.resource,
+                section: "Overview",
+                cursor: "",
+                namespace,
+                detail: source,
+                position: { filter, sort, scroll, history },
+              },
+            },
+          }));
+          commit({ type: "kind", tab: tabID, kind: "APIResources", epoch: ++serial.current });
+        },
+      );
+    },
+    openEventTarget: (source: ResourceDetail) => {
+      if (
+        kind !== "Event" ||
+        section !== "Overview" ||
+        inventory.sections.Overview?.data !== source ||
+        inventory.sections.Overview?.loading ||
+        !source.eventTarget
+      )
+        return;
+      navigationRequest(
+        (id) => api.ResolveEventTarget(id, { source: source.resource, sourceVersion: source.resourceVersion }),
+        ({ detail }) =>
+          openFromSelection(
+            detail.resource,
+            undefined,
+            true,
+            { identityEvidence: "uid-verified", sourceVersion: source.resourceVersion, targetVersion: detail.resourceVersion },
+            detail,
+          ),
+      );
+    },
     inventory,
     selection: selected,
     activeSection: section,
@@ -343,6 +436,15 @@ export function useWorkloads(
       patch({
         sectionCursor: "",
         referenceEvidence: undefined,
+        ...(isClusterKind(kind)
+          ? {
+              sections: {
+                ...inventory.sections,
+                Overview: section === "YAML" ? undefined : inventory.sections.Overview,
+                YAML: section === "Overview" ? undefined : inventory.sections.YAML,
+              },
+            }
+          : {}),
         sectionRefresh: inventory.sectionRefresh + 1,
         ...(section === "Data" ? { sections: { ...inventory.sections, Data: undefined }, sectionEpoch: ++serial.current } : {}),
       });
@@ -467,9 +569,21 @@ export function useWorkloads(
     },
     backToResource: () => {
       const entry = t?.navigation[t.navigation.length - 1];
-      if (entry && t) navigate(entry, t.navigation.slice(0, -1));
+      if (entry && t) {
+        if (entry.detail) show(entry, t.navigation.slice(0, -1), entry.detail);
+        else navigate(entry, t.navigation.slice(0, -1));
+      }
     },
-    close: (tab: string) => commit({ type: "close", tab }),
+    close: (tab: string) => {
+      const connectionKey = current.current[tab]?.clusterScope;
+      if (connectionKey)
+        setCatalogRoutes((old) => {
+          const next = { ...old };
+          delete next[connectionKey];
+          return next;
+        });
+      commit({ type: "close", tab });
+    },
   };
 }
 export type WorkloadController = ReturnType<typeof useWorkloads>;

@@ -38,6 +38,8 @@ import { DeploymentPods } from "./DeploymentPods";
 import { RelatedJobs } from "./RelatedJobs";
 import { ReplicaSetList } from "./ReplicaSetList";
 import { ResourceOverview } from "./ResourceOverview";
+import { isClusterKind } from "../cluster/model";
+import { ClusterOverview } from "../cluster/ClusterOverview";
 export function ResourceDetail({
   controller: c,
   context,
@@ -119,7 +121,14 @@ export function ResourceDetail({
       )}
       {section === "Overview" &&
         data &&
-        (isAvailabilityKind(kind) ? (
+        (isClusterKind(kind) ? (
+          <ClusterOverview
+            key={JSON.stringify([row.resource.uid, (data as Detail).resourceVersion])}
+            data={data as Detail}
+            onTarget={() => c.openEventTarget(data as Detail)}
+            onBrowse={(intent) => c.browseCatalog(data as Detail, intent)}
+          />
+        ) : isAvailabilityKind(kind) ? (
           <AvailabilityOverview data={data as Detail} onOpenReference={(target) => c.openAvailabilityReference(data as Detail, target)} />
         ) : isAccessControlKind(kind) ? (
           <AccessControlOverview data={data as Detail} onOpenReference={(target) => c.openAccessControlReference(data as Detail, target)} />

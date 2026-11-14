@@ -25,6 +25,10 @@ import type { WorkloadRow } from "../workloads/model";
 import { ResourceTable } from "./ResourceTable";
 import { ResourceDetail } from "./ResourceDetail";
 import { ResizeHandle } from "../ui/ResizeHandle";
+import { isClusterKind, clusterLabels, type ClusterResourceRow, type EventInventoryRow } from "../cluster/model";
+import { ClusterTable } from "../cluster/ClusterTable";
+import { EventInventory } from "../cluster/EventInventory";
+import { APIResourceBrowser } from "../discovery/APIResourceBrowser";
 export function Workspace({
   tab,
   controller: c,
@@ -50,21 +54,23 @@ export function Workspace({
 }) {
   const i = c.inventory,
     kind = c.kind;
-  const label = isAvailabilityKind(kind)
-    ? availabilityLabels[kind]
-    : isAccessControlKind(kind)
-      ? accessControlLabels[kind]
-      : isNetworkKind(kind)
-        ? networkLabels[kind]
-        : isConfigurationKind(kind)
-          ? configurationLabels[kind]
-          : isStorageKind(kind)
-            ? storageLabels[kind]
-            : `${kind}s`;
+  const label = isClusterKind(kind)
+    ? clusterLabels[kind]
+    : isAvailabilityKind(kind)
+      ? availabilityLabels[kind]
+      : isAccessControlKind(kind)
+        ? accessControlLabels[kind]
+        : isNetworkKind(kind)
+          ? networkLabels[kind]
+          : isConfigurationKind(kind)
+            ? configurationLabels[kind]
+            : isStorageKind(kind)
+              ? storageLabels[kind]
+              : `${kind}s`;
   const stale = tab.pollFailed || visibleState(tab.view) !== "connected";
   const rows = [...(i.page?.items ?? [])]
     .filter((row) => row.resource.name.toLowerCase().includes(i.filter.toLowerCase()))
-    .sort((a, b) => a.resource.name.localeCompare(b.resource.name) * (i.sort === "asc" ? 1 : -1));
+    .sort((a, b) => (kind === "Event" ? 0 : a.resource.name.localeCompare(b.resource.name) * (i.sort === "asc" ? 1 : -1)));
   return (
     <div className="workspace live-workspace">
       <div className="explorer">
@@ -88,128 +94,164 @@ export function Workspace({
             />
           </>
         )}
-        <ResourceSplit
-          widthPercent={detailWidthPercent}
-          heightPercent={detailHeightPercent}
-          onResize={onDetailResize}
-          onCommit={onCommitSize}
-        >
-          <section
-            className="list-pane"
-            onScroll={(e) => c.patch({ scroll: e.currentTarget.scrollTop })}
-            ref={(node) => {
-              if (node && Math.abs(node.scrollTop - i.scroll) > 2) node.scrollTop = i.scroll;
-            }}
+        {kind === "APIResources" ? (
+          tab.view?.ref && (
+            <APIResourceBrowser
+              key={JSON.stringify(tab.view.ref)}
+              connection={tab.view.ref}
+              namespace={tab.namespace}
+              route={c.catalogRoute}
+              onRoute={c.setCatalogRoute}
+              onBack={c.restoreCatalogSource}
+              onDedicated={c.selectKind}
+              widthPercent={detailWidthPercent}
+              heightPercent={detailHeightPercent}
+              onResize={onDetailResize}
+              onCommit={onCommitSize}
+            />
+          )
+        ) : (
+          <ResourceSplit
+            widthPercent={detailWidthPercent}
+            heightPercent={detailHeightPercent}
+            onResize={onDetailResize}
+            onCommit={onCommitSize}
           >
-            <div className="pane-heading">
-              <h2>{label}</h2>
-              {c.clusterScoped && <span className="muted">Cluster-scoped</span>}
-              {kind === "Secret" && <span className="muted">Metadata only</span>}
-              <span className="muted">{rows.length} shown</span>
-              <button disabled={!tab.view?.ref || i.loading} onClick={c.refresh}>
-                ↻ Refresh
-              </button>
-            </div>
-            <div className="filter-bar">
-              <input
-                spellCheck={false}
-                autoCorrect="off"
-                autoCapitalize="none"
-                autoComplete="off"
-                aria-label="Filter this page"
-                placeholder="Filter this page…"
-                value={i.filter}
-                onChange={(e) => c.patch({ filter: e.target.value })}
-              />
-              <button onClick={() => c.patch({ sort: i.sort === "asc" ? "desc" : "asc" })}>Name {i.sort === "asc" ? "↑" : "↓"}</button>
-            </div>
-            <div className="inventory-controls">
-              <nav className="inventory-pagination" aria-label="Resource pages">
-                <button disabled={i.history.length === 1 || i.loading} onClick={c.previous}>
-                  Previous
+            <section
+              className="list-pane"
+              onScroll={(e) => c.patch({ scroll: e.currentTarget.scrollTop })}
+              ref={(node) => {
+                if (node && Math.abs(node.scrollTop - i.scroll) > 2) node.scrollTop = i.scroll;
+              }}
+            >
+              <div className="pane-heading">
+                <h2>{label}</h2>
+                {c.clusterScoped && <span className="muted">Cluster-scoped</span>}
+                {(kind === "Event" || kind === "Lease") && <span className="muted">Namespace: {tab.namespace}</span>}
+                {kind === "Secret" && <span className="muted">Metadata only</span>}
+                <span className="muted">{rows.length} shown</span>
+                <button disabled={!tab.view?.ref || i.loading} onClick={c.refresh}>
+                  ↻ Refresh
                 </button>
-                <span className="inventory-page">Page {i.history.length}</span>
-                <button disabled={!i.page?.page.nextCursor || i.history.length >= 20 || i.loading} onClick={c.next}>
-                  Next
-                </button>
-              </nav>
-              <label className="inventory-auto-refresh">
-                <input type="checkbox" checked={i.auto} onChange={(e) => c.patch({ auto: e.target.checked })} /> Auto-refresh
-              </label>
-            </div>
-            {i.history.length >= 20 && <p className="warning">History limit reached. Refresh to restart pagination.</p>}
-            {i.auto && i.history.length > 1 && <p className="muted">Auto-refresh paused after page one.</p>}
-            {stale && i.page && <p className="warning table-hint">Retained data — connection evidence is not current.</p>}
-            <p className="table-hint">↑ ↓ Select · Filter and sort apply to this page.</p>
-            {i.loading && <p>Loading {label}…</p>}
-            {i.error && <p role="alert">{i.error}</p>}
-            {rows.length ? (
-              isAvailabilityKind(kind) ? (
-                <AvailabilityTable
-                  rows={rows as AvailabilityRow[]}
-                  kind={kind}
-                  selected={c.selection?.resource.uid ?? null}
-                  onSelect={c.selectResource}
-                />
-              ) : isAccessControlKind(kind) ? (
-                <AccessControlTable
-                  rows={rows as AccessControlRow[]}
-                  kind={kind}
-                  selected={c.selection?.resource.uid ?? null}
-                  onSelect={c.selectResource}
-                />
-              ) : isStorageKind(kind) ? (
-                <StorageTable
-                  rows={rows as StorageRow[]}
-                  kind={kind}
-                  selected={c.selection?.resource.uid ?? null}
-                  onSelect={c.selectResource}
-                />
-              ) : isNetworkKind(kind) ? (
-                <NetworkTable
-                  rows={rows as NetworkRow[]}
-                  kind={kind}
-                  selected={c.selection?.resource.uid ?? null}
-                  onSelect={c.selectResource}
-                />
-              ) : isConfigurationKind(kind) ? (
-                <ConfigurationTable
-                  rows={rows as ConfigurationRow[]}
-                  kind={kind}
-                  selected={c.selection?.resource.uid ?? null}
-                  onSelect={c.selectResource}
-                />
-              ) : (
-                <ResourceTable
-                  rows={rows as WorkloadRow[]}
-                  kind={kind}
-                  selected={c.selection?.resource.uid ?? null}
-                  onSelect={c.selectResource}
-                />
-              )
-            ) : (
-              !i.loading && (
-                <p className="state-message">
-                  {i.filter
-                    ? "No matches on this page."
-                    : i.page
-                      ? "No resources returned on this page."
-                      : "Connect or Retry to read resources."}
-                </p>
-              )
-            )}
-          </section>
-          <section className="detail-pane">
-            {c.selection ? (
-              <ResourceDetail controller={c} context={tab.entry.context} stale={stale} logs={logs} />
-            ) : (
-              <div className="state-message">
-                <h2>Select a {kind}</h2>
-                <p>Inspect captured resource evidence.</p>
               </div>
-            )}
-          </section>
-        </ResourceSplit>
+              <div className="filter-bar">
+                <input
+                  spellCheck={false}
+                  autoCorrect="off"
+                  autoCapitalize="none"
+                  autoComplete="off"
+                  aria-label="Filter this page"
+                  placeholder="Filter this page…"
+                  value={i.filter}
+                  onChange={(e) => c.patch({ filter: e.target.value })}
+                />
+                {kind !== "Event" && (
+                  <button onClick={() => c.patch({ sort: i.sort === "asc" ? "desc" : "asc" })}>Name {i.sort === "asc" ? "↑" : "↓"}</button>
+                )}
+              </div>
+              <div className="inventory-controls">
+                <nav className="inventory-pagination" aria-label="Resource pages">
+                  <button disabled={i.history.length === 1 || i.loading} onClick={c.previous}>
+                    Previous
+                  </button>
+                  <span className="inventory-page">Page {i.history.length}</span>
+                  <button disabled={!i.page?.page.nextCursor || i.history.length >= 20 || i.loading} onClick={c.next}>
+                    Next
+                  </button>
+                </nav>
+                <label className="inventory-auto-refresh">
+                  <input type="checkbox" checked={i.auto} onChange={(e) => c.patch({ auto: e.target.checked })} /> Auto-refresh
+                </label>
+              </div>
+              {i.history.length >= 20 && <p className="warning">History limit reached. Refresh to restart pagination.</p>}
+              {i.auto && i.history.length > 1 && <p className="muted">Auto-refresh paused after page one.</p>}
+              {stale && i.page && <p className="warning table-hint">Retained data — connection evidence is not current.</p>}
+              <p className="table-hint">
+                ↑ ↓ Select · {kind === "Event" ? "Newest observed first within this page only." : "Filter and sort apply to this page."}
+              </p>
+              {i.loading && <p>Loading {label}…</p>}
+              {i.error && <p role="alert">{i.error}</p>}
+              {rows.length ? (
+                kind === "Event" ? (
+                  <EventInventory
+                    rows={rows as EventInventoryRow[]}
+                    selected={c.selection?.resource.uid ?? null}
+                    onSelect={c.selectResource}
+                  />
+                ) : isClusterKind(kind) ? (
+                  <ClusterTable
+                    kind={kind}
+                    rows={rows as ClusterResourceRow[]}
+                    selected={c.selection?.resource.uid ?? null}
+                    onSelect={c.selectResource}
+                  />
+                ) : isAvailabilityKind(kind) ? (
+                  <AvailabilityTable
+                    rows={rows as AvailabilityRow[]}
+                    kind={kind}
+                    selected={c.selection?.resource.uid ?? null}
+                    onSelect={c.selectResource}
+                  />
+                ) : isAccessControlKind(kind) ? (
+                  <AccessControlTable
+                    rows={rows as AccessControlRow[]}
+                    kind={kind}
+                    selected={c.selection?.resource.uid ?? null}
+                    onSelect={c.selectResource}
+                  />
+                ) : isStorageKind(kind) ? (
+                  <StorageTable
+                    rows={rows as StorageRow[]}
+                    kind={kind}
+                    selected={c.selection?.resource.uid ?? null}
+                    onSelect={c.selectResource}
+                  />
+                ) : isNetworkKind(kind) ? (
+                  <NetworkTable
+                    rows={rows as NetworkRow[]}
+                    kind={kind}
+                    selected={c.selection?.resource.uid ?? null}
+                    onSelect={c.selectResource}
+                  />
+                ) : isConfigurationKind(kind) ? (
+                  <ConfigurationTable
+                    rows={rows as ConfigurationRow[]}
+                    kind={kind}
+                    selected={c.selection?.resource.uid ?? null}
+                    onSelect={c.selectResource}
+                  />
+                ) : (
+                  <ResourceTable
+                    rows={rows as WorkloadRow[]}
+                    kind={kind}
+                    selected={c.selection?.resource.uid ?? null}
+                    onSelect={c.selectResource}
+                  />
+                )
+              ) : (
+                !i.loading && (
+                  <p className="state-message">
+                    {i.filter
+                      ? "No matches on this page."
+                      : i.page
+                        ? "No resources returned on this page."
+                        : "Connect or Retry to read resources."}
+                  </p>
+                )
+              )}
+            </section>
+            <section className="detail-pane">
+              {c.selection ? (
+                <ResourceDetail controller={c} context={tab.entry.context} stale={stale} logs={logs} />
+              ) : (
+                <div className="state-message">
+                  <h2>Select a {kind}</h2>
+                  <p>Inspect captured resource evidence.</p>
+                </div>
+              )}
+            </section>
+          </ResourceSplit>
+        )}
       </div>
     </div>
   );

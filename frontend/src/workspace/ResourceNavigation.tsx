@@ -8,6 +8,7 @@ import { ResourceIcon } from "../ui/ResourceIcon";
 import { storageKinds, storageLabels } from "../storage/model";
 import { accessControlKinds, accessControlLabels } from "../access-control/model";
 import { availabilityKinds, availabilityLabels } from "../availability/model";
+import { clusterLabels } from "../cluster/model";
 export const destinations = [
   {
     group: "Workloads",
@@ -48,13 +49,15 @@ export const destinations = [
     group: "Cluster",
     items: [
       ["Namespace", "Namespaces", true],
-      ["Node", "Nodes", false],
+      ...(["Node", "Event", "PriorityClass", "RuntimeClass", "Lease"] as const).map((kind) => [kind, clusterLabels[kind], true] as const),
     ],
   },
   {
     group: "Extensions",
     items: [
-      ["Widget", "Custom resources", false],
+      ["CustomResourceDefinition", clusterLabels.CustomResourceDefinition, true],
+      ["APIService", clusterLabels.APIService, true],
+      ["APIResources", "API resources", true],
       ["Helm", "Helm", false],
       ["OpenShift", "OpenShift", false],
     ],
