@@ -2,6 +2,12 @@
 
 Updated 2026-11-14. Current integration branch is `develop`.
 
+## Phase 1D.1 · Reviewed workload scaling
+
+- Planning package prepared; implementation has not started. [Specification](../../docs/superpowers/specs/2026-11-14-phase-1d1-reviewed-scaling-design.md) and [five-task plan](../../docs/superpowers/plans/2026-11-14-phase-1d1-reviewed-scaling.md).
+- First operations slice: Deployment/StatefulSet scale review, mandatory server dry-run, immutable UID/version-bound confirmation, single dispatch and explicit uncertain outcomes. Other operations remain later increments.
+- Separate implementation session in the existing checkout, no worktree. Agent verification and one independent whole-PR review precede ready-PR merge; no repeat user UAT or release authorization.
+
 ## Phase 1C.3g · Cluster resources and API discovery
 
 - [PR #14](https://github.com/sandjaie/KubeSift/pull/14) squash-merged into `develop` as `48ffb33` on 2026-11-14. Implemented in the existing checkout from `3147a6e` (includes planning commit `9e12a44`). [Specification](../../docs/superpowers/specs/2026-11-14-phase-1c3g-cluster-discovery-design.md), [plan](../../docs/superpowers/plans/2026-11-14-phase-1c3g-cluster-discovery.md), and [validation](../../docs/superpowers/validation/phase-1c3g.html).

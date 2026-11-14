@@ -137,6 +137,13 @@
         automatically unhealthy; unavailable/stale health data must be identified. Alerts require evidence, not a decorative badge. Text and
         icons supplement color.
       </p>
+      <h2 id="reviewed-scaling">Reviewed workload scaling design</h2>
+      <p>
+        The <a href="../superpowers/specs/2026-11-14-phase-1d1-reviewed-scaling-design.md">Phase 1D.1 specification</a> defines Scale for
+        Deployment and StatefulSet details: captured target, before/after review, mandatory dry-run and deliberate confirmation. Navigation
+        invalidates pending review; dispatched results stay bound to their original target. Accepted does not mean ready, and uncertain
+        outcomes are never retried automatically. Reuse the approved dialogs and appearance rather than adding a new Sessions dock.
+      </p>
       <h2 id="cluster-discovery">Cluster resources and API discovery design</h2>
       <p>
         The <a href="../superpowers/specs/2026-11-14-phase-1c3g-cluster-discovery-design.md">Phase 1C.3g specification</a> defines dedicated

@@ -277,6 +277,23 @@
           access-review/token calls.
         </li>
       </ul>
+      <h2 id="reviewed-operations">Reviewed resource operations</h2>
+      <ul>
+        <li>
+          <a href="https://kubernetes.io/docs/reference/kubernetes-api/apps/deployment-v1/">Deployment API</a> and
+          <a href="https://kubernetes.io/docs/reference/kubernetes-api/apps/stateful-set-v1/">StatefulSet API</a>: scale subresource routes
+          and dry-run options.
+        </li>
+        <li>
+          <a href="https://kubernetes.io/docs/reference/using-api/api-concepts/">API concepts</a>: conditional updates, conflicts and
+          dry-run semantics. Server acceptance does not establish controller convergence.
+        </li>
+        <li>
+          The <a href="../superpowers/specs/2026-11-14-phase-1d1-reviewed-scaling-design.md">scaling specification</a> owns supported
+          operations, preconditions, review, permissions and result handling. Verify real-server concurrency enforcement and transport
+          request counts; a mocked service call is insufficient proof of no retries.
+        </li>
+      </ul>
       <h2 id="discovery">Cluster resources and discovery</h2>
       <ul>
         <li>

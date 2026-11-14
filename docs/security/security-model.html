@@ -118,6 +118,12 @@
           promise confirmation for each shell command.
         </li>
       </ul>
+      <p>
+        The <a href="../superpowers/specs/2026-11-14-phase-1d1-reviewed-scaling-design.md">reviewed scaling specification</a> defines the
+        first product write boundary: fixed Deployment/StatefulSet scale endpoints, advisory permission hints, required server dry-run,
+        native UID/version-bound single-use review and no automatic retry of ambiguous writes. Generic discovery and Secret browsing remain
+        read-only. Bounded in-memory operation results are session feedback, not durable audit history.
+      </p>
       <h2>AI availability and provider routing</h2>
       <p>
         AI investigation is available in Phase 2. Application default provider plus per-cluster overrides references profiles stored
