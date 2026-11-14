@@ -5,7 +5,7 @@ Responsibilities: Page each array and mount nested content only while open.
 Important: These fields describe recorded rules, not what a subject can do.
 */
 import { useState, type ReactNode } from "react";
-import { EvidencePage } from "../storage/StorageOverview";
+import { EvidencePage } from "../ui/EvidencePage";
 import { recognizedRule, ruleValue, type Aggregation, type Rule } from "./model";
 
 export function Disclosure({ label, children }: { label: string; children: ReactNode }) {

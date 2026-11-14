@@ -6,7 +6,7 @@ Important: No target read occurs until the user opens an explicit claim referenc
 */
 import type { ResourceDetail, ResourceRef } from "../workloads/model";
 import { podVolumes } from "./model";
-import { EvidencePage } from "./StorageOverview";
+import { EvidencePage } from "../ui/EvidencePage";
 
 export function PodStorage({ data, onOpenReference }: { data: ResourceDetail; onOpenReference: (target: ResourceRef) => void }) {
   const rows = podVolumes(data);

@@ -5,7 +5,7 @@ Responsibilities: Explain lookup namespace and render external subjects as liter
 Important: Subject namespace is independent of binding scope.
 */
 import type { ResourceRef } from "../workloads/model";
-import { EvidencePage } from "../storage/StorageOverview";
+import { EvidencePage } from "../ui/EvidencePage";
 import { subjectTarget, type Subject } from "./model";
 
 export function BindingSubjects({

@@ -507,7 +507,7 @@
         if (tab === "Overview") content.innerHTML = overview();
         if (tab === "YAML") {
           content.innerHTML =
-            '<div class="toolbar"><input id="search" aria-label="Find in YAML" placeholder="Find in YAML…"><button id="find">Find</button><label><input id="managed" type="checkbox"> Managed fields</label><button id="copy">Copy YAML</button><span class="read-only">Read-only</span></div><pre class="code" id="code" tabindex="0" aria-label="Read-only YAML"></pre><p class="aside-info">May contain sensitive literal values. Server formatting; original comments and ordering are not preserved.</p>';
+            '<div class="toolbar"><input id="search" aria-label="Find in YAML" placeholder="Find in YAML…"><button id="find">Find</button><label><input id="managed" type="checkbox"> Show managed fields</label><button id="copy" aria-label="Copy displayed YAML" title="Copy displayed YAML"><span aria-hidden="true">⧉</span></button></div><pre class="code" id="code" tabindex="0" aria-label="Read-only YAML"></pre><p class="aside-info">Server formatting; original comments and ordering are not preserved.</p>';
           const paint = () => {
             const text = yaml().replace(
               "metadata:\n",
@@ -525,10 +525,21 @@
                 : "No match in sample YAML."
               : "Enter text to find.";
           };
-          document.querySelector("#copy").onclick = () =>
+          const copy = document.querySelector("#copy");
+          let copyTimer;
+          copy.onclick = () =>
             navigator.clipboard
               .writeText(document.querySelector("#code").textContent)
-              .then(() => (document.querySelector("#notice").textContent = "Sample YAML copied."))
+              .then(() => {
+                const icon = copy.querySelector("span");
+                icon.textContent = "✓";
+                copy.title = "Displayed YAML copied";
+                clearTimeout(copyTimer);
+                copyTimer = setTimeout(() => {
+                  icon.textContent = "⧉";
+                  copy.title = "Copy displayed YAML";
+                }, 2000);
+              })
               .catch(() => (document.querySelector("#notice").textContent = "Select the YAML text to copy."));
         }
         if (tab === "Pods") {

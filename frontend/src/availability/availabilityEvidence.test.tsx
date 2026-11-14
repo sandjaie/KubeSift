@@ -41,6 +41,7 @@ test("revision is exact and opaque, with unsupported and ambiguous owners kept i
   });
   const view = render(data);
   expect(view).toContain("9007199254740993");
+  expect(view).toContain("Historical data </span>");
   expect(view).not.toContain("do-not-mount");
   expect(view).not.toContain("<button");
   expect(availabilityTarget(data.resource, owner)?.uid).toBe("owner");

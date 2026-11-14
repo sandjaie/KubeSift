@@ -5,6 +5,7 @@ Responsibilities: Keep routing fields literal and offer only supported explicit 
 Important: Displayed configuration and reported status do not establish reachability.
 */
 import { useState, type ReactNode } from "react";
+import { ResourceInspector } from "../ui/ResourceInspector";
 import type { ResourceDetail, ResourceRef } from "../workloads/model";
 import { evidenceTime, overviewObject } from "../workspace/ResourceOverview";
 import { addressText, defaultClassAnnotation, managerLabel, refText, serviceLabel } from "./model";
@@ -289,12 +290,7 @@ function IngressOverview({ o, resource, open }: { o: Capture<IngressSpec>; resou
         <p>None specified.</p>
       )}
       <p className="muted">TLS names are configuration references. Certificate contents and status are not inspected.</p>
-      {Object.keys(o.metadata?.annotations ?? {}).length > 0 && (
-        <details>
-          <summary>Annotations</summary>
-          <p className="network-value">{entries(o.metadata?.annotations)}</p>
-        </details>
-      )}
+      {Object.keys(o.metadata?.annotations ?? {}).length > 0 && <ResourceInspector label="Annotations" value={o.metadata?.annotations} />}
     </>
   );
 }

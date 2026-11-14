@@ -5,14 +5,14 @@ Responsibilities: Search, toggle captured managed fields and copy the active sou
 Important: Literal values may be sensitive. Nothing is exported automatically.
 */
 import { useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { CopyTextButton } from "../ui/CopyTextButton";
 import type { YAMLDocument } from "../workloads/model";
 import { evidenceTime } from "./ResourceOverview";
 import { yamlMatches, yamlMatchLimit } from "./yamlSearch";
 
-export function ResourceYaml({ data }: { data: YAMLDocument }) {
+export function ResourceYaml({ data, containsConfigData }: { data: YAMLDocument; containsConfigData: boolean }) {
   const [managed, setManaged] = useState(false);
   const [query, setQuery] = useState("");
-  const [notice, setNotice] = useState("");
   const [match, setMatch] = useState<{ text: string; query: string; index: number }>();
   const area = useRef<HTMLTextAreaElement>(null);
   const mark = useRef<HTMLElement>(null);
@@ -44,7 +44,7 @@ export function ResourceYaml({ data }: { data: YAMLDocument }) {
   let start = 0;
   return (
     <div className="evidence-section yaml-evidence">
-      <div className="filter-bar">
+      <div className="evidence-toolbar yaml-toolbar">
         <input
           aria-label="Search displayed YAML"
           placeholder="Search displayed YAML"
@@ -59,41 +59,33 @@ export function ResourceYaml({ data }: { data: YAMLDocument }) {
             setMatch(undefined);
           }}
         />
-        <button disabled={!total} onClick={() => move(true)}>
-          Previous match
-        </button>
-        <button disabled={!total} onClick={() => move(false)}>
-          Next match
-        </button>
-        {query && (
-          <span role="status">
-            {total ? `${index < 0 ? "" : `${index + 1} of `}${total}${matches.length > total ? "+" : ""} matches` : "No matches"}
-          </span>
-        )}
-        <label>
+        <div className="evidence-toolbar" role="group" aria-label="YAML search navigation">
+          <button disabled={!total} aria-label="Previous match" title="Previous match" onClick={() => move(true)}>
+            <span aria-hidden="true">↑</span>
+          </button>
+          <button disabled={!total} aria-label="Next match" title="Next match" onClick={() => move(false)}>
+            <span aria-hidden="true">↓</span>
+          </button>
+          {query && (
+            <span className="muted" role="status">
+              {total ? `${index < 0 ? "" : `${index + 1} of `}${total}${matches.length > total ? "+" : ""} matches` : "No matches"}
+            </span>
+          )}
+        </div>
+        <label className="yaml-managed">
           <input
             type="checkbox"
             checked={managed}
             onChange={(event) => {
               setManaged(event.target.checked);
               setMatch(undefined);
-              setNotice("");
             }}
-          />{" "}
+          />
           Show managed fields
         </label>
-        <button
-          onClick={() =>
-            void navigator.clipboard
-              .writeText(text)
-              .then(() => setNotice("Displayed YAML copied"))
-              .catch(() => setNotice("Copy unavailable; select text to copy"))
-          }
-        >
-          Copy displayed YAML
-        </button>
+        <CopyTextButton label="Copy displayed YAML" copiedLabel="Displayed YAML copied" key={String(managed)} text={text} />
       </div>
-      <p className="muted">May contain sensitive literal values. {notice && <span role="status">{notice}</span>}</p>
+      {containsConfigData && <p className="muted yaml-note">ConfigMap values can contain sensitive configuration. Check before sharing.</p>}
       {highlight ? (
         <pre className="yaml-view yaml-source" tabIndex={0} aria-label="Read-only server YAML">
           {lines.map((line, row) => {

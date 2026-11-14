@@ -55,7 +55,7 @@ describe("storage evidence", () => {
       matchLabelExpressions: Array.from({ length: 20 }, () => ({ key: "fixture", values: ["deep-sentinel"] })),
     }));
     const markup = overview("StorageClass", { allowedTopologies: topologies });
-    expect(markup).toContain("Show 100 entries");
+    expect(markup).toContain("100 items");
     expect(markup.includes("deep-sentinel")).toBe(false);
     expect(markup.length).toBeLessThan(3000);
   });

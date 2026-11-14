@@ -1,10 +1,13 @@
 /*
-Purpose: Browse and copy one captured ConfigMap value as inert text.
+Purpose: Browse and copy captured ConfigMap values as inert text.
 Used by: ConfigMap Data detail tab.
 Responsibilities: Bound rendered key rows and preserve empty text and canonical base64.
-Important: Selection and values are held only while viewing the capture.
+Important: Values are held only while viewing the capture.
 */
 import { useMemo, useState } from "react";
+import { Disclosure } from "../access-control/PolicyRules";
+import { CopyTextButton } from "../ui/CopyTextButton";
+import { EvidencePage } from "../ui/EvidencePage";
 import type { ResourceDetail } from "../workloads/model";
 import { overviewObject } from "../workspace/ResourceOverview";
 import type { ConfigurationCapture } from "./model";
@@ -25,99 +28,58 @@ export function configMapKeys(data: ResourceDetail) {
 export function ConfigMapData({ data }: { data: ResourceDetail }) {
   const keys = useMemo(() => configMapKeys(data), [data]);
   const [filter, setFilter] = useState("");
-  const [page, setPage] = useState(0);
-  const [selected, setSelected] = useState<(typeof keys)[number]>();
-  const [wrap, setWrap] = useState(false);
-  const [feedback, setFeedback] = useState("");
   const matches = keys.filter(({ key }) => key.toLowerCase().includes(filter.toLowerCase()));
-  const rows = matches.slice(page * 100, (page + 1) * 100);
-  async function copy(value: string) {
-    try {
-      await navigator.clipboard.writeText(value);
-      setFeedback("Copied");
-    } catch {
-      setFeedback("Copy failed");
-    }
-  }
   return (
     <div className="evidence-section">
-      <p className="muted">Values may contain sensitive text. Binary values are shown as base64.</p>
-      <input
-        aria-label="Filter captured keys"
-        placeholder="Filter captured keys…"
-        spellCheck={false}
-        autoCorrect="off"
-        autoCapitalize="none"
-        autoComplete="off"
-        value={filter}
-        onChange={(e) => {
-          setFilter(e.target.value);
-          setPage(0);
-          setSelected(undefined);
-          setFeedback("");
-        }}
-      />
-      <p>
-        {rows.length} shown / {matches.length} matching / {keys.length} captured
-      </p>
-      {rows.length > 0 && (
-        <div className="evidence-table-wrap">
-          <table className="evidence-table">
-            <thead>
-              <tr>
-                <th>Key</th>
-                <th>Type</th>
-                <th>Bytes</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={`${row.type}/${row.key}`}>
-                  <td>
-                    <button
-                      aria-pressed={selected === row}
-                      className="network-value"
-                      onClick={() => {
-                        setSelected(row);
-                        setFeedback("");
-                      }}
-                    >
-                      {row.key}
-                    </button>
-                  </td>
-                  <td>{row.type}</td>
-                  <td>{row.bytes}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-      {matches.length > 100 && (
-        <nav className="inventory-pagination" aria-label="Captured key pages">
-          <button disabled={page === 0} onClick={() => setPage(page - 1)}>
-            Previous
-          </button>
-          <button disabled={(page + 1) * 100 >= matches.length} onClick={() => setPage(page + 1)}>
-            Next
-          </button>
-        </nav>
-      )}
-      {selected && (
-        <section>
-          <h3 className="network-value">
-            {selected.key} · {selected.type}
-          </h3>
-          <label>
-            <input type="checkbox" checked={wrap} onChange={(e) => setWrap(e.target.checked)} /> Wrap
-          </label>{" "}
-          <button onClick={() => void copy(selected.value)}>{selected.type === "Base64" ? "Copy base64" : "Copy value"}</button>
-          <span role="status"> {feedback}</span>
-          {selected.value === "" && <p>Empty value</p>}
-          <pre className="configuration-value" style={{ whiteSpace: wrap ? "pre-wrap" : "pre" }}>
-            {selected.value}
-          </pre>
-        </section>
+      <div className="evidence-toolbar config-map-toolbar">
+        <input
+          aria-label="Filter captured keys"
+          placeholder="Filter captured keys…"
+          spellCheck={false}
+          autoCorrect="off"
+          autoCapitalize="none"
+          autoComplete="off"
+          value={filter}
+          onChange={(event) => setFilter(event.target.value)}
+        />
+        <span className="muted" role="status">
+          {matches.length === keys.length ? keys.length : `${matches.length} of ${keys.length}`} {keys.length === 1 ? "key" : "keys"}
+        </span>
+      </div>
+      {keys.length > 0 && <p className="muted yaml-note">Values can contain sensitive configuration. Check before sharing.</p>}
+      {!matches.length && <p>{keys.length ? "No keys match this filter." : "No keys captured."}</p>}
+      {matches.length > 0 && (
+        <EvidencePage
+          key={filter}
+          items={matches}
+          wrap={(rows) => <ul className="config-map-entries">{rows}</ul>}
+          render={({ key, type, bytes, value }) => {
+            const label = type === "Base64" ? "Copy base64" : "Copy value";
+            const long = value.length > 120 || value.includes("\n");
+            return (
+              <li key={`${type}/${key}`}>
+                <div className="config-map-entry-heading">
+                  <code>{key}</code>
+                  <span className="muted">
+                    {type} · {bytes} {bytes === 1 ? "byte" : "bytes"}
+                  </span>
+                  <CopyTextButton label={`${label} for ${key}`} copiedLabel={`Copied ${key}`} text={value} />
+                </div>
+                {long ? (
+                  <Disclosure label={`View ${key}`}>
+                    <pre className="configuration-value" tabIndex={0}>
+                      {value}
+                    </pre>
+                  </Disclosure>
+                ) : value === "" ? (
+                  <span className="muted">Empty value</span>
+                ) : (
+                  <pre className="configuration-value">{value}</pre>
+                )}
+              </li>
+            );
+          }}
+        />
       )}
     </div>
   );

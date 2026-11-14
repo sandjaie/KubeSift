@@ -5,6 +5,7 @@ Responsibilities: Show exact reported quantities, independent limit items and sa
 Important: Policy configuration does not predict admission or measure consumption.
 */
 import type { ReactNode } from "react";
+import { ResourceInspector } from "../ui/ResourceInspector";
 import type { ResourceDetail } from "../workloads/model";
 import { evidenceTime, overviewObject } from "../workspace/ResourceOverview";
 import { scopeSummary, type ConfigurationCapture, type NamespaceDestination, type Quantities } from "./model";
@@ -19,18 +20,6 @@ function Facts({ items }: { items: [string, ReactNode][] }) {
         </div>
       ))}
     </dl>
-  );
-}
-function Entries({ title, values }: { title: string; values?: Record<string, string> }) {
-  return (
-    <details>
-      <summary>{title}</summary>
-      {Object.keys(values ?? {}).length ? (
-        <Facts items={Object.entries(values ?? {}).sort(([a], [b]) => a.localeCompare(b))} />
-      ) : (
-        <p>None reported.</p>
-      )}
-    </details>
   );
 }
 function QuantitiesTable({ columns, maps }: { columns: string[]; maps: (Quantities | undefined)[] }) {
@@ -167,8 +156,8 @@ export function ConfigurationOverview({
           ]}
         />
       )}
-      <Entries title="Labels" values={o.metadata?.labels} />
-      <Entries title="Annotations" values={o.metadata?.annotations} />
+      <ResourceInspector label="Labels" value={o.metadata?.labels ?? {}} empty="None reported" />
+      <ResourceInspector label="Annotations" value={o.metadata?.annotations ?? {}} empty="None reported" />
     </div>
   );
 }
