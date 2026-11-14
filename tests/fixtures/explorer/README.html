@@ -40,4 +40,9 @@
     namespace and cluster object names and the private aggregation label for collisions. Cleanup uses the fixture label and exact names;
     never edit built-in roles.
   </p>
+  <p>
+    phase-1c3f.json creates an isolated kubesift-availability-check namespace, a fixed-size HPA on its own Deployment, three PDB selector
+    cases, an RC and small StatefulSet and DaemonSet controllers. Check namespace ownership, remove the HPA before controllers, and use
+    ordinary foreground deletion.
+  </p>
 </html>

@@ -71,11 +71,12 @@ type DetailRequest struct {
 	Resource             ResourceRef `json:"resource"`
 }
 type ResourceDetail struct {
-	Job             *JobSummary `json:"job"`
-	Resource        ResourceRef `json:"resource"`
-	ResourceVersion string      `json:"resourceVersion"`
-	FetchedAt       time.Time   `json:"fetchedAt"`
-	ObjectJSON      string      `json:"objectJSON"`
+	Availability    *AvailabilitySummary `json:"availability,omitempty"`
+	Job             *JobSummary          `json:"job"`
+	Resource        ResourceRef          `json:"resource"`
+	ResourceVersion string               `json:"resourceVersion"`
+	FetchedAt       time.Time            `json:"fetchedAt"`
+	ObjectJSON      string               `json:"objectJSON"`
 }
 type YAMLDocument struct {
 	Resource             ResourceRef `json:"resource"`

@@ -73,3 +73,12 @@ func cronJobRow(c model.ConnectionRef, job batch.CronJob) WorkloadRow {
 	}
 	return WorkloadRow{Resource: resourceRef(c, "CronJob", "batch/v1", job.ObjectMeta), CronJob: summary, CreatedAt: created(job.ObjectMeta)}
 }
+
+func replicationControllerRow(c model.ConnectionRef, controller core.ReplicationController) WorkloadRow {
+	status := controller.Status
+	row := WorkloadRow{Resource: resourceRef(c, "ReplicationController", "v1", controller.ObjectMeta), Desired: controller.Spec.Replicas, CreatedAt: created(controller.ObjectMeta)}
+	if status.ObservedGeneration != 0 || len(status.Conditions) != 0 || status.Replicas != 0 || status.FullyLabeledReplicas != 0 || status.ReadyReplicas != 0 || status.AvailableReplicas != 0 {
+		row.Current, row.Ready, row.Available = &status.Replicas, &status.ReadyReplicas, &status.AvailableReplicas
+	}
+	return row
+}

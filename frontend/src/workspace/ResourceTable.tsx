@@ -48,6 +48,12 @@ const workloadColumns: Record<Kind, Column[]> = {
     { label: "Ready", value: (row) => row.ready },
     available,
   ],
+  ReplicationController: [
+    { label: "Desired", value: (row) => row.desired },
+    { label: "Reported current", value: (row) => row.current },
+    { label: "Reported ready", value: (row) => row.ready },
+    { ...available, label: "Reported available" },
+  ],
   StatefulSet: [ready, { label: "Total Pods", value: (row) => row.total }, { ...updated, label: "Updated Pods" }],
   DaemonSet: [
     { ...ready, label: "Ready / desired nodes" },

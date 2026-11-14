@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Phase 1C.3f validation · KubeSift</title>
+    <link rel="stylesheet" href="../../assets/planning.css" />
+    <script src="../../assets/theme.js"></script>
+  </head>
+  <body>
+    <header>
+      <a href="../../index.html">KubeSift / Planning</a>
+      <h1>Phase 1C.3f validation</h1>
+      <p>Availability and remaining workloads</p>
+    </header>
+    <main id="content">
+      <p>
+        Baseline <code>f38cf23</code>. See the <a href="../specs/2026-11-14-phase-1c3f-availability-design.md">specification</a> and
+        <a href="../plans/2026-11-14-phase-1c3f-availability.md">implementation plan</a>.
+      </p>
+      <h2>Automated and integration verification</h2>
+      <ul>
+        <li>Repository checks, 61 frontend tests, Go race tests, generated bindings and production build passed.</li>
+        <li>
+          Availability, access control, storage, configuration, networking and workload integration passed on explicit
+          <code>kind-dev-local-a</code> and <code>kind-dev-local-b</code>. The restricted fixture could read sources but was denied the HPA
+          target GET, Selected Pods LIST and revision LIST. No trial mutation or access-review probe was used.
+        </li>
+        <li>
+          Synthetic ordered requests cover exact int64 revision and generation comparisons, cursor and body limits, ambiguous ownership,
+          selector scoping and version-checked links. API fixtures use one fixed-size HPA target and controller-generated revisions only.
+        </li>
+      </ul>
+      <h2>Packaged desktop verification</h2>
+      <p>
+        Arm64 KubeSift 0.3.0 on macOS 27.0.1. Initial full walkthrough executable SHA-256
+        <code>c8ad72db42cd60ccedf49cb6c8b4b1e56830f171b04fdd62c2194c53859fccd0</code>.
+      </p>
+      <ul>
+        <li>HPA → Deployment → Back showed explicit name resolution and separate metric targets and reported observations.</li>
+        <li>
+          PDB unset, empty and expression selectors produced respectively zero, four and one fixture matches. A keyboard-activated selected
+          Pod opened its Logs and Back restored Selected Pods. RC opened the same Pod through the separate owned Pods tab.
+        </li>
+        <li>
+          StatefulSet and DaemonSet Revisions opened retained history, lazy historical data and the verified owner. StatefulSet showed
+          captured current and update markers; DaemonSet had no such badge. Back restored the revision. The PDB inventory retained its kind
+          after namespace change, and ConfigMaps and Secrets stayed in Workloads.
+        </li>
+        <li>
+          Both appearances, keyboard selection, a 32% detail split and native 200% zoom passed. PDB YAML copy matched all 575 displayed
+          characters including the final newline. Original appearance, size and zoom were restored.
+        </li>
+      </ul>
+      <p>
+        After RC identity validation was tightened, executable
+        <code>1b49d79711e5bc726daf51fc9c9e644f43a5679ae26224bc1a629f5239a557d4</code> passed the native RC counters, owned Pod and Back
+        retest.
+      </p>
+      <h2>Coverage limits</h2>
+      <p>
+        Restricted denial was verified through integration; denied-target UI was not injected in the native walkthrough. Metric source
+        shapes and very large or stale revision/status cases used synthetic fixtures. No metrics infrastructure or live metrics query was
+        used. Earlier unrelated limits remain in the <a href="phase-1c3e.html">access control report</a>.
+      </p>
+      <h2>Independent review</h2>
+      <p>Review and final head coverage pending.</p>
+    </main>
+  </body>
+</html>

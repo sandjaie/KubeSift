@@ -199,3 +199,39 @@ func (s *ExplorerService) ResolveAccessControlReference(id string, req kube.Acce
 	defer done()
 	return s.core.kube.ResolveAccessControlReference(ctx, req)
 }
+
+func (s *ExplorerService) ReadAvailability(id string, req kube.PageRequest) (kube.AvailabilityPage, error) {
+	ctx, done, err := s.beginWorkloadRead(id)
+	if err != nil {
+		return kube.AvailabilityPage{}, err
+	}
+	defer done()
+	return s.core.kube.ReadAvailability(ctx, req)
+}
+
+func (s *ExplorerService) ReadPDBSelectedPods(id string, req kube.RelatedRequest) (kube.SelectedPodPage, error) {
+	ctx, done, err := s.beginWorkloadRead(id)
+	if err != nil {
+		return kube.SelectedPodPage{}, err
+	}
+	defer done()
+	return s.core.kube.ReadPDBSelectedPods(ctx, req)
+}
+
+func (s *ExplorerService) ReadControllerRevisions(id string, req kube.RelatedRequest) (kube.ControllerRevisionPage, error) {
+	ctx, done, err := s.beginWorkloadRead(id)
+	if err != nil {
+		return kube.ControllerRevisionPage{}, err
+	}
+	defer done()
+	return s.core.kube.ReadControllerRevisions(ctx, req)
+}
+
+func (s *ExplorerService) ResolveAvailabilityReference(id string, req kube.AvailabilityReferenceRequest) (kube.ResolvedAvailabilityReference, error) {
+	ctx, done, err := s.beginWorkloadRead(id)
+	if err != nil {
+		return kube.ResolvedAvailabilityReference{}, err
+	}
+	defer done()
+	return s.core.kube.ResolveAvailabilityReference(ctx, req)
+}

@@ -71,12 +71,24 @@ export function ReadAccessControl(id: string, req: kube$0.PageRequest): $Cancell
   return $Call.ByID(2491109527, id, req);
 }
 
+export function ReadAvailability(id: string, req: kube$0.PageRequest): $CancellablePromise<kube$0.AvailabilityPage> {
+  return $Call.ByID(1936161523, id, req);
+}
+
 export function ReadConfiguration(id: string, req: kube$0.PageRequest): $CancellablePromise<kube$0.ConfigurationPage> {
   return $Call.ByID(1380409538, id, req);
 }
 
+export function ReadControllerRevisions(id: string, req: kube$0.RelatedRequest): $CancellablePromise<kube$0.ControllerRevisionPage> {
+  return $Call.ByID(3551851450, id, req);
+}
+
 export function ReadNetworking(id: string, req: kube$0.PageRequest): $CancellablePromise<kube$0.NetworkPage> {
   return $Call.ByID(2674488666, id, req);
+}
+
+export function ReadPDBSelectedPods(id: string, req: kube$0.RelatedRequest): $CancellablePromise<kube$0.SelectedPodPage> {
+  return $Call.ByID(344444611, id, req);
 }
 
 export function ReadPods(ref: model$0.ConnectionRef, $namespace: string): $CancellablePromise<explorer$0.ConnectionView> {
@@ -139,6 +151,13 @@ export function ResolveAccessControlReference(
   req: kube$0.AccessControlReferenceRequest,
 ): $CancellablePromise<kube$0.ResolvedAccessControlReference> {
   return $Call.ByID(3735718236, id, req);
+}
+
+export function ResolveAvailabilityReference(
+  id: string,
+  req: kube$0.AvailabilityReferenceRequest,
+): $CancellablePromise<kube$0.ResolvedAvailabilityReference> {
+  return $Call.ByID(3149506112, id, req);
 }
 
 export function ResolveConfigurationReference(

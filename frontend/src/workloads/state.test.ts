@@ -443,3 +443,13 @@ test("access control keeps scope and the validated capture through explicit cros
     }),
   ).toBe(s);
 });
+
+test("availability destinations expose only their explicit investigation tabs", async () => {
+  const { resourceSections } = await import("./model");
+  expect(resourceSections("HorizontalPodAutoscaler")).toEqual(["Overview", "YAML", "Events"]);
+  expect(resourceSections("PodDisruptionBudget")).toEqual(["Overview", "YAML", "Events", "Selected Pods"]);
+  expect(resourceSections("ControllerRevision")).toEqual(["Overview", "YAML", "Events"]);
+  expect(resourceSections("ReplicationController")).toEqual(["Overview", "YAML", "Events", "Pods"]);
+  for (const kind of ["StatefulSet", "DaemonSet"]) expect(resourceSections(kind)).toContain("Revisions");
+  expect(resourceSections("Secret")).toEqual(["Overview"]);
+});

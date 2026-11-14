@@ -7,6 +7,7 @@ Important: Unimplemented kinds never display invented live data.
 import { ResourceIcon } from "../ui/ResourceIcon";
 import { storageKinds, storageLabels } from "../storage/model";
 import { accessControlKinds, accessControlLabels } from "../access-control/model";
+import { availabilityKinds, availabilityLabels } from "../availability/model";
 export const destinations = [
   {
     group: "Workloads",
@@ -14,10 +15,12 @@ export const destinations = [
       ["Pod", "Pods", true],
       ["Deployment", "Deployments", true],
       ["ReplicaSet", "ReplicaSets", true],
+      ["ReplicationController", "ReplicationControllers", true],
       ["StatefulSet", "StatefulSets", true],
       ["DaemonSet", "DaemonSets", true],
       ["Job", "Jobs", true],
       ["CronJob", "CronJobs", true],
+      ...availabilityKinds.map((kind) => [kind, availabilityLabels[kind], true] as const),
       ["ConfigMap", "ConfigMaps", true],
       ["Secret", "Secrets", true],
     ],

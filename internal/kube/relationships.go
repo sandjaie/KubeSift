@@ -12,7 +12,9 @@ import (
 	"github.com/sandjaie/KubeSift/internal/model"
 	appsv1 "k8s.io/api/apps/v1"
 	batch "k8s.io/api/batch/v1"
+	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"time"
 )
@@ -51,7 +53,7 @@ func (s *Service) ReadRelatedPods(ctx context.Context, req RelatedRequest) (Rela
 func (s *Service) readRelatedPodPage(ctx context.Context, req RelatedRequest) (RelatedPage, error) {
 	result := RelatedPage{Items: []RelatedPod{}, Page: PageInfo{FetchedAt: time.Now().UTC()}}
 	switch req.Resource.Kind {
-	case "Deployment", "ReplicaSet", "StatefulSet", "DaemonSet", "Job":
+	case "Deployment", "ReplicaSet", "StatefulSet", "DaemonSet", "Job", "ReplicationController":
 	default:
 		return result, model.Fail("invalid", "Pod-owning controller identity required")
 	}
@@ -79,6 +81,11 @@ func (s *Service) readRelatedPodPage(ctx context.Context, req RelatedRequest) (R
 			configured = controller.Spec.Selector
 		case *batch.Job:
 			configured = controller.Spec.Selector
+		case *core.ReplicationController:
+			if controller.Name != req.Resource.Name || controller.Namespace != req.Resource.Namespace {
+				return result, model.Fail("invalid", "Invalid ReplicationController identity")
+			}
+			configured = &metav1.LabelSelector{MatchLabels: controller.Spec.Selector}
 		}
 		if configured == nil {
 			return result, model.Fail("invalid", "Controller selector unavailable")
@@ -99,7 +106,14 @@ func (s *Service) readRelatedPodPage(ctx context.Context, req RelatedRequest) (R
 			return result, model.Fail("capacity", "Server exceeded page size")
 		}
 		for _, pod := range list.Items {
-			if ownedBy(pod.OwnerReferences, req.Resource.UID) {
+			matches := ownedBy(pod.OwnerReferences, req.Resource.UID)
+			if req.Resource.Kind == "ReplicationController" {
+				matches = pod.Namespace == req.Resource.Namespace && selector.Matches(labels.Set(pod.Labels)) && exactOwner(pod.OwnerReferences, req.Resource)
+				if matches && validResource(podRow(req.Resource.Connection, pod).Resource) != nil {
+					return result, model.Fail("invalid", "Server returned an invalid Pod identity")
+				}
+			}
+			if matches {
 				result.Items = append(result.Items, RelatedPod{Pod: podRow(req.Resource.Connection, pod), Controller: req.Resource})
 			}
 		}
@@ -108,6 +122,11 @@ func (s *Service) readRelatedPodPage(ctx context.Context, req RelatedRequest) (R
 		result.Page.NextCursor, err = encodeCursor(scope, list.Continue)
 		if err != nil {
 			return result, err
+		}
+		if req.Resource.Kind == "ReplicationController" {
+			if err := s.finishAvailability(ctx, req.Resource.Connection, result); err != nil {
+				return RelatedPage{}, err
+			}
 		}
 		return result, s.connections.Validate(req.Resource.Connection)
 	}
