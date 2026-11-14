@@ -76,9 +76,18 @@
     var button = document.createElement("button");
     button.type = "button";
     button.className = "theme";
+    button.innerHTML =
+      '<svg class="theme-icon theme-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"></circle><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5 5l1.6 1.6M17.4 17.4 19 19M19 5l-1.6 1.6M6.6 17.4 5 19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg>' +
+      '<span class="theme-name"></span>' +
+      '<span class="theme-switch" aria-hidden="true"><span class="theme-knob"></span></span>' +
+      '<svg class="theme-icon theme-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 3.2a8.2 8.2 0 1 0 5.3 13.2A7 7 0 0 1 15.5 3.2z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"></path></svg>';
+    var name = button.querySelector(".theme-name");
     function label() {
       var on = dark();
-      button.textContent = on ? "Light mode" : "Dark mode";
+      button.classList.toggle("theme-dark", on);
+      button.classList.toggle("theme-light", !on);
+      name.textContent = on ? "Dark" : "Light";
+      button.setAttribute("aria-label", on ? "Dark mode on" : "Light mode on");
       button.setAttribute("aria-pressed", on ? "true" : "false");
     }
     button.addEventListener("click", function () {
@@ -87,9 +96,13 @@
       try { localStorage.setItem(key, next); } catch (e) {}
       label();
     });
-    var mark = rail.querySelector(".mark");
-    if (mark) mark.insertAdjacentElement("afterend", button);
-    else rail.appendChild(button);
+    var scroll = document.createElement("div");
+    scroll.className = "rail-scroll";
+    Array.from(rail.childNodes).forEach(function (node) {
+      if (node.nodeType === 1 && node.classList.contains("skip")) return;
+      scroll.appendChild(node);
+    });
+    rail.append(scroll, button);
     label();
     window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function () {
       if (!chosen()) label();
