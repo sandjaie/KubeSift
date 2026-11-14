@@ -6,7 +6,7 @@ Updated 2026-11-14. Current integration branch is `develop`.
 
 - Implemented on `feature/phase-1c3e-access-control` from `c41a54c`. [Specification](../../docs/superpowers/specs/2026-11-14-phase-1c3e-access-control-design.md), [plan](../../docs/superpowers/plans/2026-11-14-phase-1c3e-access-control.md), and [validation report](../../docs/superpowers/validation/phase-1c3e.html).
 - Both-cluster integration and packaged checks covered explicit role and ServiceAccount links, cross-scope Back, rules, subjects, YAML, and ConfigMap/Secret grouping. See the report for verification limits.
-- Independent whole-PR review and targeted fix rechecks passed. Ready PR and merge verification are next.
+- Independent whole-PR review and targeted fix rechecks passed. [PR #12](https://github.com/sandjaie/KubeSift/pull/12) was squash-merged into `develop` as `dea9197` on 2026-11-14.
 
 ## Phase 1C.3d · Read-only storage
 
