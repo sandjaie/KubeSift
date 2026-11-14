@@ -137,6 +137,11 @@
       </p>
       <h2 id="access-control-investigation">Phase 1C.3e access-control investigation design</h2>
       <p>
+        In this phase, move ConfigMaps and Secrets into Workloads after CronJobs. Configuration retains ResourceQuotas and LimitRanges. This
+        changes sidebar placement only; resource identities, readers, tabs, namespace/Back behavior and Secret metadata-only safeguards
+        remain unchanged. This supersedes their historical Configuration placement.
+      </p>
+      <p>
         The <a href="../superpowers/specs/2026-11-14-phase-1c3e-access-control-design.md">access-control specification</a> places
         ServiceAccounts and the four RBAC kinds in Access control, retaining Namespaces and Nodes under Cluster. Rules and subjects keep
         their boundaries; binding scope is distinct from a subject's namespace. Explicit Pod/account and binding/role/account links open the

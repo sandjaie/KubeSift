@@ -14,6 +14,8 @@ Follow the roadmap's access-control scope. No product writes, token generation, 
 
 Create an **Access control** navigation group with all five kinds. Rename the existing Cluster & access group to **Cluster**, retaining Namespaces and Nodes in place, and remove its combined Roles & bindings placeholder. This is a resource grouping extension, not a shell redesign.
 
+As the user-requested small navigation refinement in this phase, move **ConfigMaps** and **Secrets** from Configuration to **Workloads**, after CronJobs in that order. **Configuration** retains ResourceQuotas and LimitRanges. Each destination appears once. This changes sidebar placement only: retain kind IDs, configuration reader/model routing, tabs, namespace selection, Back history and existing metadata-only Secret safeguards. A navigation group does not determine backend resource type; do not reclassify these kinds as workload controllers or expose workload-only tabs/actions. This supersedes their sidebar placement in the historical 1C.3c specification.
+
 | Kind / API | Scope | Inventory columns after Name | Tabs |
 | --- | --- | --- | --- |
 | ServiceAccount / v1 | Selected namespace | Automount configuration, Image pull references, Age | Overview, YAML, Events |

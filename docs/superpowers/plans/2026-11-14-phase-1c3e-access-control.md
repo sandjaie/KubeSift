@@ -74,6 +74,7 @@
 - [ ] Add reducer/controller tests for all kinds, namespace-kind retention, cluster chooser state, per-tab scopes, RoleBinding→ClusterRole→Back and cross-namespace SA→Back. Preserve original filter/page/scroll within existing history bounds.
 - [ ] Test related object outside list page, late inventory/detail/resolver success/error, source refresh/cancellation, target capture applied without second GET and badge invalidation. Verify outgoing ConfigMap Data clearing and existing storage binding evidence remain correct.
 - [ ] Add Access control group, retain Cluster Namespaces/Nodes, remove combined placeholder; dispatch inventories/sections and mount PodIdentity. No new token/action/log tabs; no automatic role/subject fetch on selection.
+- [ ] In the same navigation registry, move ConfigMaps and Secrets into Workloads after CronJobs; retain ResourceQuotas and LimitRanges under Configuration. Keep each destination once and preserve kind IDs, configuration routing and existing tabs/security. Do not change workloadKinds or controller behavior merely to change sidebar placement. Include this in the packaged walkthrough: both destinations open their existing views, namespace changes retain kind, Pod reference/Back navigation works, and Secrets still expose only metadata Overview.
 - [ ] Run frontend tests/lint/typecheck/build and Go bridge tests. Update source descriptions; commit integration without per-task reviews.
 
 ## Task 5 — Verification, one whole-PR review and merge (A01–A10)
