@@ -26,6 +26,10 @@ import { PodStorage } from "../storage/PodStorage";
 import { isAccessControlKind } from "../access-control/model";
 import { AccessControlOverview } from "../access-control/AccessControlOverview";
 import { PodIdentity } from "../access-control/PodIdentity";
+import { isAvailabilityKind, type SelectedPodPage, type ControllerRevisionPage } from "../availability/model";
+import { AvailabilityOverview } from "../availability/AvailabilityOverview";
+import { SelectedPods } from "../availability/SelectedPods";
+import { ControllerRevisions } from "../availability/ControllerRevisions";
 import { NetworkOverview } from "../networking/NetworkOverview";
 import { ServiceEndpointSlices } from "../networking/ServiceEndpointSlices";
 import { ResourceYaml } from "./ResourceYaml";
@@ -82,6 +86,15 @@ export function ResourceDetail({
       {link && (
         <div className="muted" title={`Source version ${link.sourceVersion}; target version ${link.targetVersion}`}>
           <p>{link.identityEvidence === "uid-verified" ? "Referenced UID verified" : "Resolved by name at open time"}</p>
+          {link.association && (
+            <p>
+              {link.association === "selector-match"
+                ? "Selector match · Label association"
+                : link.association === "controller-owner"
+                  ? "Controller owner verified"
+                  : "Explicit scale target"}
+            </p>
+          )}
           {capturedLink && link.bindingEvidence && link.bindingEvidence !== "not-applicable" && (
             <p>
               {link.bindingEvidence === "references-agree" ? "Binding references agree" : "Reference only; binding unconfirmed"} · Observed
@@ -106,7 +119,9 @@ export function ResourceDetail({
       )}
       {section === "Overview" &&
         data &&
-        (isAccessControlKind(kind) ? (
+        (isAvailabilityKind(kind) ? (
+          <AvailabilityOverview data={data as Detail} onOpenReference={(target) => c.openAvailabilityReference(data as Detail, target)} />
+        ) : isAccessControlKind(kind) ? (
           <AccessControlOverview data={data as Detail} onOpenReference={(target) => c.openAccessControlReference(data as Detail, target)} />
         ) : isStorageKind(kind) ? (
           <StorageOverview data={data as Detail} onOpenReference={(target) => c.openStorageReference(data as Detail, target)} />
@@ -143,6 +158,20 @@ export function ResourceDetail({
         <ResourceYaml key={JSON.stringify([row.resource.uid, (data as YAMLDocument).fetchedAt])} data={data as YAMLDocument} />
       )}
       {section === "Events" && data && <ResourceEvents key={row.resource.uid} data={data as EventPage} onNext={c.nextSection} />}
+      {section === "Selected Pods" && data && (
+        <SelectedPods
+          data={data as SelectedPodPage}
+          onNext={c.nextSection}
+          onSelect={(target) => c.openAvailabilityReference(data as SelectedPodPage, target)}
+        />
+      )}
+      {section === "Revisions" && data && (
+        <ControllerRevisions
+          data={data as ControllerRevisionPage}
+          onNext={c.nextSection}
+          onSelect={(target) => c.openAvailabilityReference(data as ControllerRevisionPage, target)}
+        />
+      )}
       {section === "Pods" && data && (
         <DeploymentPods
           showOwner={row.resource.kind === "Deployment"}

@@ -8,11 +8,21 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import type { ConnectionRef } from "../bridge";
 import { message } from "../connections/api";
 import { readRequest, workloadAPI as api } from "./api";
-import { canAutoRefresh, emptyKind, initialWorkloads, reduceWorkloads, kindScope, relatedHistory, type Action } from "./state";
+import {
+  canAutoRefresh,
+  captureReferenceEvidence,
+  emptyKind,
+  initialWorkloads,
+  reduceWorkloads,
+  kindScope,
+  relatedHistory,
+  type Action,
+} from "./state";
 import { inventoryNamespace, isWorkloadKind, isResourceKind, isClusterScoped, resourceSections } from "./model";
 import { isConfigurationKind, type ConfigurationPage, type NamespaceDestination } from "../configuration/model";
 import { isStorageKind, type StoragePage } from "../storage/model";
 import { isAccessControlKind, type AccessControlPage } from "../access-control/model";
+import { isAvailabilityKind, type AvailabilityPage } from "../availability/model";
 import type { NetworkPage } from "../networking/model";
 import type {
   Evidence,
@@ -83,13 +93,16 @@ export function useWorkloads(
     if (!visible || !connection || !t) return;
     const epoch = ++serial.current;
     commit({ type: "patch", tab: tabID, scope, kind, patch: { epoch, loading: true, error: "" } });
-    const request = readRequest<WorkloadPage | NetworkPage | ConfigurationPage | StoragePage | AccessControlPage>((id) => {
-      const req = { connection, namespace: targetNamespace, kind, cursor };
-      if (isWorkloadKind(kind)) return api.ReadWorkloads(id, req);
-      if (isStorageKind(kind)) return api.ReadStorage(id, req);
-      if (isAccessControlKind(kind)) return api.ReadAccessControl(id, req);
-      return isConfigurationKind(kind) ? api.ReadConfiguration(id, req) : api.ReadNetworking(id, req);
-    });
+    const request = readRequest<WorkloadPage | NetworkPage | ConfigurationPage | StoragePage | AccessControlPage | AvailabilityPage>(
+      (id) => {
+        const req = { connection, namespace: targetNamespace, kind, cursor };
+        if (isWorkloadKind(kind)) return api.ReadWorkloads(id, req);
+        if (isAvailabilityKind(kind)) return api.ReadAvailability(id, req);
+        if (isStorageKind(kind)) return api.ReadStorage(id, req);
+        if (isAccessControlKind(kind)) return api.ReadAccessControl(id, req);
+        return isConfigurationKind(kind) ? api.ReadConfiguration(id, req) : api.ReadNetworking(id, req);
+      },
+    );
     let active = true;
     void request.promise
       .then((page) => {
@@ -150,6 +163,8 @@ export function useWorkloads(
       if (section === "Events") return api.ReadResourceEvents(id, { resource, cursor: inventory.sectionCursor });
       if (section === "ReplicaSets") return api.ReadRelatedReplicaSets(id, { resource, cursor: inventory.sectionCursor });
       if (section === "Jobs") return api.ReadRelatedJobs(id, { resource, cursor: inventory.sectionCursor });
+      if (section === "Selected Pods") return api.ReadPDBSelectedPods(id, { resource, cursor: inventory.sectionCursor });
+      if (section === "Revisions") return api.ReadControllerRevisions(id, { resource, cursor: inventory.sectionCursor });
       if (section === "Pods") return api.ReadRelatedPods(id, { resource, cursor: inventory.sectionCursor });
       return api.ReadResource(id, { resource, includeConfigMapData: section === "Data" });
     });
@@ -164,7 +179,17 @@ export function useWorkloads(
         kind,
         epoch,
         section: true,
-        patch: { sections: { ...sections, [section]: { data, error, loading: false } } },
+        patch: {
+          sections: { ...sections, [section]: { data, error, loading: false } },
+          ...(section === "Overview" && !error
+            ? {
+                referenceEvidence: captureReferenceEvidence(
+                  current.current[tabID]?.kinds[kind].referenceEvidence,
+                  data as ResourceDetail | null,
+                ),
+              }
+            : {}),
+        },
       });
     };
     void request.promise
@@ -372,6 +397,22 @@ export function useWorkloads(
         return;
       navigationRequest(
         (id) => api.ResolveAccessControlReference(id, { source: source.resource, sourceVersion: source.resourceVersion, target }),
+        ({ resource, detail, ...evidence }) => openFromSelection(resource, undefined, true, evidence, detail),
+      );
+    },
+    openAvailabilityReference: (capture: Evidence & { sourceVersion?: string; resourceVersion?: string }, target: ResourceRef) => {
+      if (
+        !selected ||
+        !["Overview", "Selected Pods", "Revisions"].includes(section) ||
+        inventory.sections[section]?.data !== capture ||
+        inventory.sections[section]?.loading ||
+        !canOpen(target)
+      )
+        return;
+      const sourceVersion = capture.sourceVersion ?? capture.resourceVersion;
+      if (!sourceVersion) return;
+      navigationRequest(
+        (id) => api.ResolveAvailabilityReference(id, { source: selected.resource, sourceVersion, target }),
         ({ resource, detail, ...evidence }) => openFromSelection(resource, undefined, true, evidence, detail),
       );
     },

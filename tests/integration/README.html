@@ -58,4 +58,9 @@ done</code></pre>
     fixture-reader ServiceAccount identity. Apply the owned Phase 1C.3e fixture first. The test performs only inventory, detail, Events and
     explicit reference reads.
   </p>
+  <p>
+    TestAvailabilityInvestigation uses the same explicit A/B files plus availability-restricted.kubeconfig on A, with the fixture-reader
+    ServiceAccount in kubesift-availability-check. Apply the collision-checked Phase 1C.3f fixture first. The suite only reads and does not
+    require metrics-server.
+  </p>
 </html>

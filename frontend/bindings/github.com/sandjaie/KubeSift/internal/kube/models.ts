@@ -28,6 +28,31 @@ export interface AccessControlRow {
   objectJSON: string;
 }
 
+export interface AvailabilityPage {
+  items: AvailabilityRow[] | null;
+  page: PageInfo;
+}
+
+export interface AvailabilityReferenceRequest {
+  source: ResourceRef;
+  sourceVersion: string;
+  target: ResourceRef;
+}
+
+export interface AvailabilityRow {
+  resource: ResourceRef;
+  createdAt: string | null;
+  objectJSON: string;
+  summary: AvailabilitySummary;
+}
+
+export interface AvailabilitySummary {
+  generation?: string;
+  observedGeneration?: string;
+  observation: string;
+  revision: string;
+}
+
 export interface ConfigurationPage {
   items: ConfigurationRow[] | null;
   page: PageInfo;
@@ -43,6 +68,16 @@ export interface ConfigurationRow {
   resource: ResourceRef;
   createdAt: string | null;
   objectJSON: string;
+}
+
+export interface ControllerRevisionPage {
+  sourceVersion: string;
+  currentRevision: string;
+  updateRevision: string;
+  items: AvailabilityRow[] | null;
+  page: PageInfo;
+  complete: boolean;
+  problem: model$0.Problem | null;
 }
 
 export interface CronJobSummary {
@@ -169,6 +204,15 @@ export interface ResolvedAccessControlReference {
   identityEvidence: string;
 }
 
+export interface ResolvedAvailabilityReference {
+  detail: ResourceDetail;
+  resource: ResourceRef;
+  sourceVersion: string;
+  targetVersion: string;
+  identityEvidence: string;
+  association: string;
+}
+
 export interface ResolvedConfigurationReference {
   resource: ResourceRef;
   identityEvidence: string;
@@ -190,6 +234,7 @@ export interface ResolvedStorageReference {
 }
 
 export interface ResourceDetail {
+  availability?: AvailabilitySummary | null;
   job: JobSummary | null;
   resource: ResourceRef;
   resourceVersion: string;
@@ -215,6 +260,15 @@ export interface ResourceRef {
   namespace: string;
   name: string;
   uid: string;
+}
+
+export interface SelectedPodPage {
+  sourceVersion: string;
+  selectorJSON: string;
+  items: WorkloadRow[] | null;
+  page: PageInfo;
+  complete: boolean;
+  problem: model$0.Problem | null;
 }
 
 export interface ServiceSlicePage {

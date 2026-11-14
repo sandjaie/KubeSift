@@ -27,7 +27,7 @@ type workloadObject interface {
 
 func workloadVersion(kind string) string {
 	switch kind {
-	case "Pod":
+	case "Pod", "ReplicationController":
 		return "v1"
 	case "Deployment", "ReplicaSet", "StatefulSet", "DaemonSet":
 		return "apps/v1"
@@ -58,6 +58,9 @@ func validResourceAddress(ref ResourceRef) error {
 	if version == "" {
 		version = accessControlVersion(ref.Kind)
 	}
+	if version == "" {
+		version = availabilityVersion(ref.Kind)
+	}
 	if version == "" && configurationKind(ref.Kind) {
 		version = "v1"
 	}
@@ -78,6 +81,10 @@ func getResource(ctx context.Context, client kubernetes.Interface, ref ResourceR
 		return object, err
 	}
 
+	if availabilityVersion(ref.Kind) != "" {
+		object, _, err := getAvailability(ctx, client, ref)
+		return object, err
+	}
 	var object workloadObject
 	var err error
 	switch ref.Kind {
@@ -91,6 +98,8 @@ func getResource(ctx context.Context, client kubernetes.Interface, ref ResourceR
 		object, err = client.RbacV1().ClusterRoles().Get(ctx, ref.Name, metav1.GetOptions{})
 	case "ClusterRoleBinding":
 		object, err = client.RbacV1().ClusterRoleBindings().Get(ctx, ref.Name, metav1.GetOptions{})
+	case "ReplicationController":
+		object, err = client.CoreV1().ReplicationControllers(ref.Namespace).Get(ctx, ref.Name, metav1.GetOptions{})
 	case "Pod":
 		object, err = client.CoreV1().Pods(ref.Namespace).Get(ctx, ref.Name, metav1.GetOptions{})
 	case "Deployment":
@@ -141,7 +150,7 @@ func getResource(ctx context.Context, client kubernetes.Interface, ref ResourceR
 			return nil, model.Fail("invalid", "Server did not return the requested access control identity")
 		}
 	}
-	if (networkVersion(ref.Kind) != "" || configurationKind(ref.Kind)) && (object.GetName() != ref.Name || object.GetNamespace() != ref.Namespace || object.GetUID() == "") {
+	if (networkVersion(ref.Kind) != "" || configurationKind(ref.Kind) || ref.Kind == "ReplicationController") && (object.GetName() != ref.Name || object.GetNamespace() != ref.Namespace || object.GetUID() == "") {
 		return nil, model.Fail("invalid", "Server did not return the requested resource identity")
 	}
 	if ref.UID != "" && string(object.GetUID()) != ref.UID {
@@ -199,22 +208,60 @@ func (s *Service) ReadResource(ctx context.Context, req DetailRequest) (Resource
 		}
 		return result, s.connections.Validate(req.Resource.Connection)
 	}
-	raw := captured
-	if raw == nil {
-		raw, err = json.Marshal(object)
-		if err != nil {
-			return result, model.Fail("failed", "Cannot encode resource")
-		}
-	}
-	result = ResourceDetail{Resource: req.Resource, ResourceVersion: object.GetResourceVersion(), FetchedAt: time.Now().UTC(), ObjectJSON: string(raw)}
-	if job, ok := object.(*batch.Job); ok {
-		result.Job = summarizeJob(job)
-	}
-	if err = checkPayload(result); err != nil {
+	result, err = capturedDetail(req.Resource, object, captured)
+	if err != nil {
 		return ResourceDetail{}, err
 	}
 	return result, s.connections.Validate(req.Resource.Connection)
 }
+
+func capturedDetail(ref ResourceRef, object workloadObject, raw []byte) (ResourceDetail, error) {
+	if raw == nil {
+		var err error
+		raw, err = json.Marshal(object)
+		if err != nil {
+			return ResourceDetail{}, model.Fail("failed", "Cannot encode resource")
+		}
+	}
+	result := ResourceDetail{Resource: ref, ResourceVersion: object.GetResourceVersion(), FetchedAt: time.Now().UTC(), ObjectJSON: string(raw)}
+	if job, ok := object.(*batch.Job); ok {
+		result.Job = summarizeJob(job)
+	}
+	if availabilityVersion(ref.Kind) != "" {
+		var body storageFields
+		if json.Unmarshal(raw, &body) != nil {
+			return ResourceDetail{}, model.Fail("invalid", "Invalid availability evidence")
+		}
+		summary := availabilitySummary(ref.Kind, body)
+		result.Availability = &summary
+	}
+	if err := checkPayload(result); err != nil {
+		return ResourceDetail{}, err
+	}
+	return result, nil
+}
+
+func detailYAMLJSON(ref ResourceRef, object workloadObject, captured []byte, managed bool) ([]byte, error) {
+	if availabilityVersion(ref.Kind) == "" {
+		return storageYAMLJSON(object, captured)
+	}
+	if managed {
+		return captured, nil
+	}
+	var body storageFields
+	if err := json.Unmarshal(captured, &body); err != nil {
+		return nil, err
+	}
+	meta := body.fields("metadata")
+	delete(meta, "managedFields")
+	raw, err := json.Marshal(meta)
+	if err != nil {
+		return nil, err
+	}
+	body["metadata"] = raw
+	return json.Marshal(body)
+}
+
 func (s *Service) ReadResourceYAML(ctx context.Context, req DetailRequest) (YAMLDocument, error) {
 	result := YAMLDocument{}
 	if req.Resource.Kind == "Secret" {
@@ -234,7 +281,7 @@ func (s *Service) ReadResourceYAML(ctx context.Context, req DetailRequest) (YAML
 	if err = checkPayload(object); err != nil {
 		return result, err
 	}
-	raw, err := storageYAMLJSON(object, captured)
+	raw, err := detailYAMLJSON(req.Resource, object, captured, true)
 	if err != nil {
 		return result, model.Fail("failed", "Cannot encode resource")
 	}
@@ -244,7 +291,7 @@ func (s *Service) ReadResourceYAML(ctx context.Context, req DetailRequest) (YAML
 	}
 	copy := object.DeepCopyObject().(workloadObject)
 	copy.SetManagedFields(nil)
-	raw, err = storageYAMLJSON(copy, captured)
+	raw, err = detailYAMLJSON(req.Resource, copy, captured, false)
 	if err != nil {
 		return result, model.Fail("failed", "Cannot encode resource")
 	}
@@ -262,6 +309,9 @@ func (s *Service) ReadResourceYAML(ctx context.Context, req DetailRequest) (YAML
 func detailObject(ctx context.Context, client kubernetes.Interface, ref ResourceRef) (workloadObject, []byte, error) {
 	if storageVersion(ref.Kind) != "" {
 		return getStorage(ctx, client, ref)
+	}
+	if availabilityVersion(ref.Kind) != "" {
+		return getAvailability(ctx, client, ref)
 	}
 	object, err := checkedObject(ctx, client, ref)
 	return object, nil, err

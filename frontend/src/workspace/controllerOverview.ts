@@ -15,6 +15,20 @@ const observation = (status: Fields, counters: string[]) =>
 export function controllerOverview(data: ResourceDetail, spec: Fields, status: Fields) {
   const kind = data.resource.kind;
   const configured = (value: unknown) => value ?? "Not configured";
+  if (kind === "ReplicationController") {
+    const observed = observation(status, ["replicas", "fullyLabeledReplicas", "readyReplicas", "availableReplicas"]);
+    const count = (key: string) => (observed ? (status[key] ?? 0) : undefined);
+    return {
+      summary: {
+        "Desired Pods": spec.replicas,
+        "Reported current": count("replicas"),
+        "Reported ready": count("readyReplicas"),
+        "Reported available": count("availableReplicas"),
+      },
+      facts: { "Fully labeled Pods": count("fullyLabeledReplicas"), "Observed generation": status.observedGeneration },
+      configuration: { Selector: configured(spec.selector), "Minimum ready seconds": configured(spec.minReadySeconds) },
+    };
+  }
   if (kind === "StatefulSet") {
     const observed = observation(status, [
       "replicas",

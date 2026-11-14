@@ -163,6 +163,22 @@ func (s *Service) ReadWorkloads(ctx context.Context, req PageRequest) (WorkloadP
 		for _, p := range list.Items {
 			result.Items = append(result.Items, podRow(req.Connection, p))
 		}
+	case "ReplicationController":
+		list, e := client.CoreV1().ReplicationControllers(req.Namespace).List(ctx, opts)
+		if e != nil {
+			return result, availabilityListError(ctx, e)
+		}
+		if len(list.Items) > 100 {
+			return result, model.Fail("capacity", "Server exceeded page size")
+		}
+		meta = list.ListMeta
+		for _, rs := range list.Items {
+			row := replicationControllerRow(req.Connection, rs)
+			if row.Resource.Namespace != req.Namespace || validResource(row.Resource) != nil {
+				return result, model.Fail("invalid", "Server returned an invalid ReplicationController identity")
+			}
+			result.Items = append(result.Items, row)
+		}
 	case "ReplicaSet":
 		list, e := client.AppsV1().ReplicaSets(req.Namespace).List(ctx, opts)
 		if e != nil {

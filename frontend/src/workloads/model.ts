@@ -30,15 +30,44 @@ import { isNetworkKind, networkKinds, type NetworkKind, type NetworkPage, type S
 import { configurationKinds, isConfigurationKind, type ConfigurationKind, type ConfigurationPage } from "../configuration/model";
 import { isStorageKind, storageKinds, type StorageKind, type StoragePage, type ResolvedStorageReference } from "../storage/model";
 import { accessControlKinds, isAccessControlKind, type AccessControlKind, type AccessControlPage } from "../access-control/model";
-export const workloadKinds = ["Pod", "Deployment", "ReplicaSet", "StatefulSet", "DaemonSet", "Job", "CronJob"] as const;
+import {
+  availabilityKinds,
+  isAvailabilityKind,
+  type AvailabilityKind,
+  type AvailabilityPage,
+  type SelectedPodPage,
+  type ControllerRevisionPage,
+} from "../availability/model";
+export const workloadKinds = [
+  "Pod",
+  "Deployment",
+  "ReplicaSet",
+  "ReplicationController",
+  "StatefulSet",
+  "DaemonSet",
+  "Job",
+  "CronJob",
+] as const;
 export type Kind = (typeof workloadKinds)[number];
 export function isWorkloadKind(kind: string): kind is Kind {
   return workloadKinds.some((item) => item === kind);
 }
-export type ResourceKind = Kind | NetworkKind | ConfigurationKind | StorageKind | AccessControlKind;
-export const resourceKinds = [...workloadKinds, ...networkKinds, ...configurationKinds, ...storageKinds, ...accessControlKinds];
+export type ResourceKind = Kind | NetworkKind | ConfigurationKind | StorageKind | AccessControlKind | AvailabilityKind;
+export const resourceKinds = [
+  ...workloadKinds,
+  ...networkKinds,
+  ...configurationKinds,
+  ...storageKinds,
+  ...accessControlKinds,
+  ...availabilityKinds,
+];
 export const isResourceKind = (kind: string): kind is ResourceKind =>
-  isWorkloadKind(kind) || isNetworkKind(kind) || isConfigurationKind(kind) || isStorageKind(kind) || isAccessControlKind(kind);
+  isWorkloadKind(kind) ||
+  isNetworkKind(kind) ||
+  isConfigurationKind(kind) ||
+  isStorageKind(kind) ||
+  isAccessControlKind(kind) ||
+  isAvailabilityKind(kind);
 export const isClusterScoped = (kind: string) =>
   kind === "IngressClass" ||
   kind === "Namespace" ||
@@ -46,7 +75,18 @@ export const isClusterScoped = (kind: string) =>
   kind === "ClusterRoleBinding" ||
   (isStorageKind(kind) && kind !== "PersistentVolumeClaim");
 export const inventoryNamespace = (kind: ResourceKind, namespace: string) => (isClusterScoped(kind) ? "" : namespace);
-export type Section = "Overview" | "YAML" | "Events" | "Pods" | "Logs" | "ReplicaSets" | "Jobs" | "EndpointSlices" | "Data";
+export type Section =
+  | "Overview"
+  | "YAML"
+  | "Events"
+  | "Pods"
+  | "Logs"
+  | "ReplicaSets"
+  | "Jobs"
+  | "EndpointSlices"
+  | "Data"
+  | "Selected Pods"
+  | "Revisions";
 export function resourceSections(kind: string): Section[] {
   if (kind === "Secret") return ["Overview"];
   const sections: Section[] = ["Overview"];
@@ -55,13 +95,24 @@ export function resourceSections(kind: string): Section[] {
   if (!isClusterScoped(kind)) sections.push("Events");
   if (kind === "Pod") sections.push("Logs");
   else if (kind === "Service") sections.push("EndpointSlices");
+  else if (kind === "PodDisruptionBudget") sections.push("Selected Pods");
   else if (isWorkloadKind(kind)) {
     sections.push(kind === "CronJob" ? "Jobs" : "Pods");
     if (kind === "Deployment") sections.push("ReplicaSets");
+    if (kind === "StatefulSet" || kind === "DaemonSet") sections.push("Revisions");
   }
   return sections;
 }
-export type Evidence = ResourceDetail | YAMLDocument | RelatedPage | RelatedReplicaSetPage | RelatedJobPage | EventPage | ServiceSlicePage;
+export type Evidence =
+  | ResourceDetail
+  | YAMLDocument
+  | RelatedPage
+  | RelatedReplicaSetPage
+  | RelatedJobPage
+  | EventPage
+  | ServiceSlicePage
+  | SelectedPodPage
+  | ControllerRevisionPage;
 export interface SectionState {
   loading: boolean;
   error: string;
@@ -69,13 +120,14 @@ export interface SectionState {
 }
 export type ReferenceEvidence = Pick<ResolvedStorageReference, "sourceVersion" | "targetVersion" | "identityEvidence"> & {
   bindingEvidence?: string;
+  association?: string;
 };
 export interface KindState {
   filter: string;
   sort: "asc" | "desc";
   scroll: number;
   history: string[];
-  page: WorkloadPage | NetworkPage | ConfigurationPage | StoragePage | AccessControlPage | null;
+  page: WorkloadPage | NetworkPage | ConfigurationPage | StoragePage | AccessControlPage | AvailabilityPage | null;
   selected: { resource: ResourceRef } | null;
   related: boolean;
   identity: string;

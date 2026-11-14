@@ -11,7 +11,9 @@
     projects configuration inventories and captures policy quantities; secret_metadata.go negotiates only partial metadata and projects
     Secret identity. configuration_references.go validates Pod fields before explicit reads. storage.go captures bounded typed storage reads
     and preserves reported quantities and field presence. access_control.go reads ServiceAccount and RBAC inventories;
-    access_control_references.go validates explicit references against the captured source before a single target capture.
-    storage_references.go verifies explicit storage links and checks both sides of binding references.
+    access_control_references.go validates explicit references against the captured source before a single target capture. availability.go
+    captures reported availability and exact revisions. availability_relationships.go and availability_references.go keep selector
+    association separate from controller ownership. storage_references.go verifies explicit storage links and checks both sides of binding
+    references.
   </p>
 </html>

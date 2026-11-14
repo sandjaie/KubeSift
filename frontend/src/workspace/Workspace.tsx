@@ -18,6 +18,8 @@ import { isStorageKind, storageLabels, type StorageRow } from "../storage/model"
 import { StorageTable } from "../storage/StorageTable";
 import { isAccessControlKind, accessControlLabels, type AccessControlRow } from "../access-control/model";
 import { AccessControlTable } from "../access-control/AccessControlTable";
+import { isAvailabilityKind, availabilityLabels, type AvailabilityRow } from "../availability/model";
+import { AvailabilityTable } from "../availability/AvailabilityTable";
 import { NetworkTable } from "../networking/NetworkTable";
 import type { WorkloadRow } from "../workloads/model";
 import { ResourceTable } from "./ResourceTable";
@@ -48,15 +50,17 @@ export function Workspace({
 }) {
   const i = c.inventory,
     kind = c.kind;
-  const label = isAccessControlKind(kind)
-    ? accessControlLabels[kind]
-    : isNetworkKind(kind)
-      ? networkLabels[kind]
-      : isConfigurationKind(kind)
-        ? configurationLabels[kind]
-        : isStorageKind(kind)
-          ? storageLabels[kind]
-          : `${kind}s`;
+  const label = isAvailabilityKind(kind)
+    ? availabilityLabels[kind]
+    : isAccessControlKind(kind)
+      ? accessControlLabels[kind]
+      : isNetworkKind(kind)
+        ? networkLabels[kind]
+        : isConfigurationKind(kind)
+          ? configurationLabels[kind]
+          : isStorageKind(kind)
+            ? storageLabels[kind]
+            : `${kind}s`;
   const stale = tab.pollFailed || visibleState(tab.view) !== "connected";
   const rows = [...(i.page?.items ?? [])]
     .filter((row) => row.resource.name.toLowerCase().includes(i.filter.toLowerCase()))
@@ -140,7 +144,14 @@ export function Workspace({
             {i.loading && <p>Loading {label}…</p>}
             {i.error && <p role="alert">{i.error}</p>}
             {rows.length ? (
-              isAccessControlKind(kind) ? (
+              isAvailabilityKind(kind) ? (
+                <AvailabilityTable
+                  rows={rows as AvailabilityRow[]}
+                  kind={kind}
+                  selected={c.selection?.resource.uid ?? null}
+                  onSelect={c.selectResource}
+                />
+              ) : isAccessControlKind(kind) ? (
                 <AccessControlTable
                   rows={rows as AccessControlRow[]}
                   kind={kind}
