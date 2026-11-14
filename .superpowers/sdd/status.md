@@ -4,7 +4,7 @@ Updated 2026-11-15. Current integration branch is `develop`.
 
 ## Resource detail refinement
 
-- YAML and Events controls, the Overview inspector, and ConfigMap Data were refined from `develop` at `0dcff62`. The [validation report](../../docs/superpowers/validation/detail-view-refinement.html) records automated and packaged checks.
+- [PR #16](https://github.com/sandjaie/KubeSift/pull/16) squash-merged into `develop` as `7b72850` on 2026-11-15 Dubai time. It refined YAML and Events controls, the Overview inspector, and ConfigMap Data. The [validation report](../../docs/superpowers/validation/detail-view-refinement.html) records automated and packaged checks and the independent review recheck.
 
 ## Phase 1D.1 · Reviewed workload scaling
 
