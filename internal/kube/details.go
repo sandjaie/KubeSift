@@ -61,6 +61,9 @@ func validResourceAddress(ref ResourceRef) error {
 	if version == "" {
 		version = availabilityVersion(ref.Kind)
 	}
+	if version == "" {
+		version = clusterAPI(ref.Kind, ref.APIVersion).apiVersion()
+	}
 	if version == "" && configurationKind(ref.Kind) {
 		version = "v1"
 	}
@@ -242,7 +245,7 @@ func capturedDetail(ref ResourceRef, object workloadObject, raw []byte) (Resourc
 }
 
 func detailYAMLJSON(ref ResourceRef, object workloadObject, captured []byte, managed bool) ([]byte, error) {
-	if availabilityVersion(ref.Kind) == "" {
+	if availabilityVersion(ref.Kind) == "" && clusterAPI(ref.Kind, ref.APIVersion).kind == "" {
 		return storageYAMLJSON(object, captured)
 	}
 	if managed {
@@ -307,6 +310,9 @@ func (s *Service) ReadResourceYAML(ctx context.Context, req DetailRequest) (YAML
 }
 
 func detailObject(ctx context.Context, client kubernetes.Interface, ref ResourceRef) (workloadObject, []byte, error) {
+	if clusterAPI(ref.Kind, ref.APIVersion).kind != "" {
+		return getClusterResource(ctx, client, ref)
+	}
 	if storageVersion(ref.Kind) != "" {
 		return getStorage(ctx, client, ref)
 	}

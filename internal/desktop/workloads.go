@@ -235,3 +235,30 @@ func (s *ExplorerService) ResolveAvailabilityReference(id string, req kube.Avail
 	defer done()
 	return s.core.kube.ResolveAvailabilityReference(ctx, req)
 }
+
+func (s *ExplorerService) ReadClusterResources(id string, req kube.PageRequest) (kube.ClusterResourcePage, error) {
+	ctx, done, err := s.beginWorkloadRead(id)
+	if err != nil {
+		return kube.ClusterResourcePage{}, err
+	}
+	defer done()
+	return s.core.kube.ReadClusterResources(ctx, req)
+}
+
+func (s *ExplorerService) ReadEventInventory(id string, req kube.PageRequest) (kube.EventInventoryPage, error) {
+	ctx, done, err := s.beginWorkloadRead(id)
+	if err != nil {
+		return kube.EventInventoryPage{}, err
+	}
+	defer done()
+	return s.core.kube.ReadEventInventory(ctx, req)
+}
+
+func (s *ExplorerService) ResolveEventTarget(id string, req kube.EventTargetRequest) (kube.ResolvedEventTarget, error) {
+	ctx, done, err := s.beginWorkloadRead(id)
+	if err != nil {
+		return kube.ResolvedEventTarget{}, err
+	}
+	defer done()
+	return s.core.kube.ResolveEventTarget(ctx, req)
+}
