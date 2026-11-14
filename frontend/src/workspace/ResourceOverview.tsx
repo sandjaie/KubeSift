@@ -4,6 +4,7 @@ Used by: Workload investigation details.
 Responsibilities: Show observed facts and expandable configuration.
 Important: Cluster strings are inert and configuration does not measure usage.
 */
+import { ResourceInspector } from "../ui/ResourceInspector";
 import type { ResourceDetail as Detail, ResourceRef } from "../workloads/model";
 import { deploymentCounts } from "../workloads/model";
 import { controllerOverview } from "./controllerOverview";
@@ -18,9 +19,7 @@ function Facts({ values }: { values: Record<string, unknown> }) {
       {Object.entries(values).map(([k, v]) => (
         <div key={k}>
           <dt>{k}</dt>
-          <dd>
-            <pre className="fact-text">{text(v)}</pre>
-          </dd>
+          <dd>{v !== null && typeof v === "object" ? <ResourceInspector value={v} /> : <pre className="fact-text">{text(v)}</pre>}</dd>
         </div>
       ))}
     </dl>
@@ -296,14 +295,8 @@ export function ResourceOverview({ data, onOpenOwner }: { data: Detail; onOpenOw
           <p>No owner references.</p>
         )}
       </details>
-      <details>
-        <summary>Labels</summary>
-        <pre>{text(meta.labels)}</pre>
-      </details>
-      <details>
-        <summary>Annotations</summary>
-        <pre>{text(meta.annotations)}</pre>
-      </details>
+      <ResourceInspector label="Labels" value={meta.labels ?? {}} />
+      <ResourceInspector label="Annotations" value={meta.annotations ?? {}} />
       <details className="muted">
         <summary>
           Captured {evidenceTime(data.fetchedAt)} · resourceVersion {data.resourceVersion || "Unknown"}

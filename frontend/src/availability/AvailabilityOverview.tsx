@@ -6,7 +6,8 @@ Important: These captures do not authorize scaling, eviction or rollback.
 */
 import type { ResourceDetail, ResourceRef } from "../workloads/model";
 import { Disclosure, Field } from "../access-control/PolicyRules";
-import { EvidencePage } from "../storage/StorageOverview";
+import { EvidencePage } from "../ui/EvidencePage";
+import { ResourceInspector } from "../ui/ResourceInspector";
 import { evidenceTime } from "../workspace/ResourceOverview";
 import { availabilityTarget, observationLabel, selectorLabel, type Reference } from "./model";
 
@@ -19,33 +20,12 @@ type Capture = {
   data?: unknown;
 };
 
-function Value({ value }: { value: unknown }) {
-  if (value == null) return "Not reported";
-  if (typeof value !== "object") return value === "" ? '""' : String(value);
-  const entries = Object.entries(value);
-  if (!entries.length) return "None captured";
-  return (
-    <Disclosure label={`Show ${entries.length} ${entries.length === 1 ? "entry" : "entries"}`}>
-      <dl className="pod-facts">
-        <EvidencePage
-          items={entries}
-          render={([key, item]) => (
-            <Field key={key} label={key}>
-              <Value value={item} />
-            </Field>
-          )}
-        />
-      </dl>
-    </Disclosure>
-  );
-}
-
 function Facts({ data, fields }: { data: Fields; fields: [string, string][] }) {
   return (
     <dl className="pod-facts">
       {fields.map(([key, label]) => (
         <Field key={key} label={label}>
-          <Value value={data[key]} />
+          <ResourceInspector value={data[key]} />
         </Field>
       ))}
     </dl>
@@ -70,7 +50,7 @@ function Metrics({ title, items }: { title: string; items?: Metric[] }) {
                 items={Object.entries(metric ?? {}).filter(([key]) => key !== "type")}
                 render={([key, value]) => (
                   <Field key={key} label={key}>
-                    <Value value={value} />
+                    <ResourceInspector value={value} />
                   </Field>
                 )}
               />
@@ -112,16 +92,10 @@ export function AvailabilityOverview({ data, onOpenReference }: { data: Resource
                 "Not reported"
               )}
             </Field>
-            <Field label="Captured owner references">
-              <Value value={owners} />
-            </Field>
-            <Field label="Metadata">
-              <Value value={body.metadata} />
-            </Field>
           </dl>
-          <Disclosure label="Historical data">
-            <Value value={body.data} />
-          </Disclosure>
+          <ResourceInspector label="Captured owner references" value={owners} />
+          <ResourceInspector label="Metadata" value={body.metadata} />
+          <ResourceInspector label="Historical data" value={body.data} />
         </>
       ) : (
         <>
@@ -172,7 +146,7 @@ export function AvailabilityOverview({ data, onOpenReference }: { data: Resource
               <dl className="pod-facts">
                 <Field label="Selector">
                   {selectorLabel(spec.selector)}
-                  {spec.selector != null && <Value value={spec.selector} />}
+                  {spec.selector != null && <ResourceInspector value={spec.selector} />}
                 </Field>
               </dl>
               <Facts

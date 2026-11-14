@@ -4,7 +4,7 @@ Used by: Installed API detail pane.
 Responsibilities: Display and copy exact text with bounded DOM and no HTML interpretation.
 Important: Unknown fields and number tokens stay in their native capture.
 */
-import { useState } from "react";
+import { CopyTextButton } from "../ui/CopyTextButton";
 import { Disclosure, Field } from "../access-control/PolicyRules";
 import { evidenceTime } from "../workspace/ResourceOverview";
 import type { GenericResourceDetail as Capture } from "./model";
@@ -24,7 +24,6 @@ export function GenericResourceDetail({
   onBack: () => void;
   loading: boolean;
 }) {
-  const [notice, setNotice] = useState("");
   const r = capture.resource;
   return (
     <div className="compact-pod-detail">
@@ -53,26 +52,25 @@ export function GenericResourceDetail({
             <Field label="Resource version">{capture.resourceVersion || "Unknown"}</Field>
           </dl>
           <Disclosure label="Captured object JSON">
+            <p className="muted yaml-note">Installed API objects can contain sensitive values. Check before sharing.</p>
             <textarea aria-label="Read-only captured JSON" className="yaml-view" readOnly spellCheck={false} value={capture.objectJSON} />
           </Disclosure>
         </div>
       ) : (
         <div className="evidence-section yaml-evidence">
-          <button
-            onClick={() =>
-              void navigator.clipboard.writeText(capture.yaml).then(
-                () => setNotice("Displayed YAML copied"),
-                () => setNotice("Copy unavailable; select text to copy"),
-              )
-            }
-          >
-            Copy displayed YAML
-          </button>
-          <span role="status">{notice}</span>
+          <div className="evidence-toolbar yaml-toolbar">
+            <CopyTextButton
+              label="Copy displayed YAML"
+              copiedLabel="Displayed YAML copied"
+              key={JSON.stringify([r.uid, capture.fetchedAt])}
+              text={capture.yaml}
+            />
+            <span className="muted">Installed API objects can contain sensitive values. Check before sharing.</span>
+          </div>
           <textarea aria-label="Read-only server YAML" className="yaml-view" readOnly spellCheck={false} wrap="off" value={capture.yaml} />
         </div>
       )}
-      <p className="muted">Captured {evidenceTime(capture.fetchedAt)}. May contain sensitive literal values.</p>
+      <p className="muted">Captured {evidenceTime(capture.fetchedAt)}</p>
     </div>
   );
 }

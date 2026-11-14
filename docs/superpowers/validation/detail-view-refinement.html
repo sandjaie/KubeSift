@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Detail view refinement validation · KubeSift</title>
+    <link rel="stylesheet" href="../../assets/planning.css" />
+    <script src="../../assets/theme.js"></script>
+  </head>
+  <body>
+    <aside class="rail">
+      <a class="skip" href="#content">Skip to content</a
+      ><a class="mark" href="../../index.html"><span class="mark-name">KubeSift</span><span class="mark-sub">Planning</span></a>
+      <h2>Index</h2>
+      <a href="../../index.html">Planning index</a>
+      <h2>Product</h2>
+      <a href="../../product/requirements.html">Requirements</a><a href="../../product/feature-matrix.html">Capabilities</a>
+      <h2>Architecture</h2>
+      <a href="../../architecture/overview.html">Overview</a><a href="../../architecture/decisions.html">Decisions</a>
+      <h2>Safeguards</h2>
+      <a href="../../security/security-model.html">Security and AI</a>
+      <h2>Delivery</h2>
+      <a href="../../roadmap/roadmap.html">Roadmap</a><a href="../../ux/workflows.html">UX workflows</a
+      ><a href="../../ux/mocks/index.html">Mockups</a>
+      <h2>Engineering</h2>
+      <a href="../../engineering/engineering.html">Playbook</a><a href="../../engineering/local-development.html">Local development</a
+      ><a href="../../engineering/toolchain.html">Toolchain</a
+      ><a href="../../engineering/kubernetes-development.html">Kubernetes references</a>
+      <h2>Superpowers</h2>
+      <a href="../../superpowers/specs/2026-11-05-kubesift-design.md">Design specification</a
+      ><a href="../../superpowers/plans/README.html">Plans</a
+      ><a href="../../superpowers/validation/index.html" aria-current="page">Validation</a
+      ><a href="../../superpowers/evidence/index.html">Evidence</a>
+    </aside>
+    <header>
+      <a href="../../index.html">KubeSift / Planning</a>
+      <h1>Detail view refinement validation</h1>
+    </header>
+    <main id="content">
+      <p>
+        Verified on 15 November 2026 in the production-mode, ad-hoc-signed arm64 macOS bundle built by
+        <code>wails3 task package</code> on macOS 27.0.1. Local reads used <code>kind-dev-local-a</code> and
+        <code>kind-dev-local-b</code> in <code>kubesift-explorer</code>. See the
+        <a href="../../ux/workflows.html#workload-refinement">detail workflows</a>.
+      </p>
+      <h2>Automated checks</h2>
+      <p>
+        <code>scripts/check.sh</code> passed source and documentation checks, Go format, tests and vet, and 81 frontend tests, ESLint and
+        TypeScript. Frontend regressions cover collapsed resource history and annotations, bounded storage disclosure, escaped inline
+        ConfigMap values, decoded binary byte counts, and deferred multiline content.
+      </p>
+      <h2>Packaged desktop observations</h2>
+      <ul>
+        <li>
+          ConfigMap YAML search found managed fields after the checkbox was enabled. Fixed and generic YAML showed temporary copy
+          confirmation. The relevant sharing notices appeared for ConfigMaps and installed API YAML. Events switched to Warnings and
+          retained the page-local ordering and capture time.
+        </li>
+        <li>
+          DaemonSet and StatefulSet controller history started closed. Expanding the named branches revealed array items, metadata and the
+          full container image reference. The inspector kept content accessible when the detail splitter narrowed from 49% to 29%. The split
+          was restored afterward.
+        </li>
+        <li>
+          The last-applied annotation opened as wrapped literal JSON. ConfigMap Data showed short text, base64, a zero-byte empty value, and
+          the literal multiline value with indentation. Pasting copied text and base64 into the key filter confirmed the expected values.
+          The temporary synthetic ConfigMap on <code>kind-dev-local-b</code> was removed and absence confirmed.
+        </li>
+      </ul>
+      <p>
+        The desktop checks used representative resources and the dark theme. The opt-in Go integration suite and native visual coverage of
+        every kind, theme and display size were outside this frontend refinement.
+      </p>
+    </main>
+  </body>
+</html>

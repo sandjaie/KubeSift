@@ -1657,3 +1657,153 @@ textarea::placeholder {
   padding: 10px 0;
   border-top: 1px solid var(--line);
 }
+
+.evidence-toolbar,
+.copy-text,
+.yaml-managed {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.evidence-toolbar,
+.copy-text {
+  flex-wrap: wrap;
+}
+.evidence-toolbar > button,
+.copy-text-button {
+  min-height: 30px;
+}
+.event-filters,
+.yaml-toolbar {
+  margin-bottom: 8px;
+}
+.event-filters button[aria-pressed="true"] {
+  background: var(--selection);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+.evidence-pagination {
+  padding: 6px 0;
+}
+.yaml-toolbar > input {
+  flex: 1 1 150px;
+  min-width: 0;
+}
+.yaml-toolbar button,
+.copy-text-button {
+  min-width: 30px;
+}
+.yaml-managed {
+  min-height: 30px;
+}
+.yaml-managed input {
+  margin: 0;
+}
+.copy-text-button {
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+}
+.copy-text-button[data-copied] {
+  color: var(--success);
+}
+.copy-text-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.yaml-note {
+  margin: 0 0 8px;
+}
+
+.resource-inspector {
+  font: 12px/1.5 var(--mono);
+  overflow-wrap: anywhere;
+}
+.resource-inspector details {
+  margin: 0;
+}
+.resource-inspector summary,
+.inspector-leaf {
+  padding-block: 3px;
+}
+.resource-inspector summary {
+  cursor: pointer;
+}
+.resource-inspector summary:hover {
+  background: var(--raised);
+}
+.inspector-count {
+  margin-inline-start: 0.35em;
+  font-family: Inter, sans-serif;
+}
+.inspector-count,
+.inspector-key {
+  color: var(--muted);
+}
+.inspector-leaf {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+.inspector-leaf:has(.inspector-key) {
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: 8px;
+}
+.inspector-key {
+  margin-inline-start: 14px;
+}
+.inspector-key,
+.inspector-key-text,
+.inspector-value {
+  white-space: pre-wrap;
+}
+.resource-inspector .inspector-text {
+  max-height: 16rem;
+  overflow: auto;
+  padding: 6px 8px;
+  background: var(--bg);
+}
+.config-map-toolbar {
+  margin-bottom: 8px;
+}
+.config-map-toolbar input {
+  flex: 1 1 140px;
+  min-width: 0;
+}
+.config-map-entries {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.config-map-entries > li {
+  padding: 6px 0 8px;
+  border-bottom: 1px solid var(--line);
+}
+.config-map-entry-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+}
+.config-map-entry-heading > code {
+  font: 600 12px var(--mono);
+}
+.config-map-entry-heading > .copy-text {
+  margin-inline-start: auto;
+  justify-content: end;
+}
+.config-map-entries details {
+  margin: 2px 0 0;
+}
+.config-map-entries .configuration-value {
+  font: 12px/1.5 var(--mono);
+  padding: 4px 6px;
+  background: var(--bg);
+}
+.resource-inspector .evidence-pagination {
+  padding-inline-start: 14px;
+  font: inherit;
+}

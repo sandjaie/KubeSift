@@ -4,7 +4,9 @@ Used by: Resource detail and Pod storage evidence.
 Responsibilities: Render explicit link targets and page nested evidence locally.
 Important: Attachments, bindings and CSI registrations do not establish usable storage.
 */
-import { useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
+import { EvidencePage } from "../ui/EvidencePage";
+import { ResourceInspector } from "../ui/ResourceInspector";
 import type { ResourceDetail, ResourceRef } from "../workloads/model";
 import { evidenceTime } from "../workspace/ResourceOverview";
 import { storageClass, storageTarget, type StorageKind } from "./model";
@@ -28,38 +30,6 @@ type Capture = Properties & {
   status?: Properties & { capacity?: Properties };
 };
 
-export function EvidencePage<T>({
-  items,
-  render,
-  wrap,
-}: {
-  items: T[];
-  render: (item: T, index: number) => ReactNode;
-  wrap?: (rows: ReactNode[]) => ReactNode;
-}) {
-  const [page, setPage] = useState(0);
-  const start = Math.min(page, Math.max(0, Math.ceil(items.length / 100) - 1)) * 100;
-  const rows = items.slice(start, start + 100).map((item, index) => render(item, start + index));
-  return (
-    <>
-      {wrap ? wrap(rows) : rows}
-      {items.length > 100 && (
-        <div className="detail-tabs">
-          <button disabled={start === 0} onClick={() => setPage(start / 100 - 1)}>
-            Previous
-          </button>
-          <span>
-            {start + 1}–{Math.min(start + 100, items.length)} of {items.length}
-          </span>
-          <button disabled={start + 100 >= items.length} onClick={() => setPage(start / 100 + 1)}>
-            Next
-          </button>
-        </div>
-      )}
-    </>
-  );
-}
-
 function Fact({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>
@@ -72,37 +42,10 @@ function Fact({ label, children }: { label: string; children: ReactNode }) {
 function Value({ value }: { value: unknown }) {
   if (value == null || value === "") return "Not reported";
   if (typeof value !== "object") return String(value);
-  return <Structured value={value} />;
-}
-
-function Structured({ value }: { value: object }) {
-  const [open, setOpen] = useState(false);
-  const entries = Object.entries(value);
-  if (!entries.length) return "None reported";
-  if (Array.isArray(value) && value.length <= 10 && value.every((item) => typeof item === "string")) return value.join(", ");
-  return (
-    <details
-      onToggle={(event) => {
-        if (event.target === event.currentTarget) setOpen(event.currentTarget.open);
-      }}
-    >
-      <summary>
-        Show {entries.length} {entries.length === 1 ? "entry" : "entries"}
-      </summary>
-      {open && (
-        <dl className="pod-facts">
-          <EvidencePage
-            items={entries}
-            render={([key, field]) => (
-              <Fact key={key} label={key}>
-                <Value value={field} />
-              </Fact>
-            )}
-          />
-        </dl>
-      )}
-    </details>
-  );
+  if (Array.isArray(value) && value.length > 0 && value.length <= 10 && value.every((item) => typeof item === "string")) {
+    return value.join(", ");
+  }
+  return <ResourceInspector value={value} empty="None reported" />;
 }
 
 const fields = (source: Properties, names: [string, string][]): [string, ReactNode][] =>

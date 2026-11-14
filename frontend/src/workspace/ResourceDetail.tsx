@@ -197,7 +197,11 @@ export function ResourceDetail({
         />
       )}
       {section === "YAML" && data && (
-        <ResourceYaml key={JSON.stringify([row.resource.uid, (data as YAMLDocument).fetchedAt])} data={data as YAMLDocument} />
+        <ResourceYaml
+          key={JSON.stringify([row.resource.uid, (data as YAMLDocument).fetchedAt])}
+          data={data as YAMLDocument}
+          containsConfigData={kind === "ConfigMap"}
+        />
       )}
       {section === "Events" && data && <ResourceEvents key={row.resource.uid} data={data as EventPage} onNext={c.nextSection} />}
       {section === "Selected Pods" && data && (

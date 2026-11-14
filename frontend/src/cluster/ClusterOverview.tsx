@@ -6,7 +6,8 @@ Important: Large evidence is disclosed as inert text with bounded rendering.
 */
 import { useState } from "react";
 import { Disclosure, Field } from "../access-control/PolicyRules";
-import { EvidencePage } from "../storage/StorageOverview";
+import { EvidencePage } from "../ui/EvidencePage";
+import { ResourceInspector } from "../ui/ResourceInspector";
 import { evidenceTime, overviewObject } from "../workspace/ResourceOverview";
 import type { ResourceDetail } from "../workloads/model";
 import type { CatalogIntent } from "./model";
@@ -28,13 +29,6 @@ function Entries({ values }: { values: RecordValue }) {
         </Field>
       ))}
     </dl>
-  );
-}
-function Evidence({ label, data }: { label: string; data: unknown }) {
-  return (
-    <Disclosure label={label}>
-      <textarea className="yaml-view" aria-label={label} readOnly spellCheck={false} value={value(data)} />
-    </Disclosure>
   );
 }
 export function ClusterOverview({
@@ -81,10 +75,10 @@ export function ClusterOverview({
           }}
         />
         <p className="muted">Capacity and allocatable are reported quantities, not current usage.</p>
-        <Evidence label="Capacity and allocatable" data={{ capacity: status.capacity, allocatable: status.allocatable }} />
-        <Evidence label="Taints" data={spec.taints} />
-        <Evidence label="Addresses" data={status.addresses} />
-        <Evidence label="Node information" data={status.nodeInfo} />
+        <ResourceInspector label="Capacity and allocatable" value={{ capacity: status.capacity, allocatable: status.allocatable }} />
+        <ResourceInspector label="Taints" value={spec.taints} />
+        <ResourceInspector label="Addresses" value={status.addresses} />
+        <ResourceInspector label="Node information" value={status.nodeInfo} />
       </>
     ) : kind === "PriorityClass" ? (
       <Entries
@@ -99,8 +93,8 @@ export function ClusterOverview({
       <>
         <Entries values={{ Handler: body.handler }} />
         <p className="muted">This configuration does not establish handler availability on a node.</p>
-        <Evidence label="Overhead" data={body.overhead} />
-        <Evidence label="Scheduling selectors and tolerations" data={body.scheduling} />
+        <ResourceInspector label="Overhead" value={body.overhead} />
+        <ResourceInspector label="Scheduling selectors and tolerations" value={body.scheduling} />
       </>
     ) : kind === "Lease" ? (
       <>
@@ -114,7 +108,7 @@ export function ClusterOverview({
           }}
         />
         <p className="muted">Lease observations do not establish current leadership, expiry or availability.</p>
-        <Evidence label="Returned coordination fields" data={spec} />
+        <ResourceInspector label="Returned coordination fields" value={spec} />
       </>
     ) : kind === "CustomResourceDefinition" ? (
       <>
@@ -126,15 +120,15 @@ export function ClusterOverview({
             "Stored versions": status.storedVersions,
           }}
         />
-        <Evidence label="Specified names" data={names} />
-        <Evidence label="Accepted names" data={status.acceptedNames} />
+        <ResourceInspector label="Specified names" value={names} />
+        <ResourceInspector label="Accepted names" value={status.acceptedNames} />
         <EvidencePage
           items={versions}
           render={(v, i) => <Entries key={i} values={{ Version: v.name, Served: v.served, Storage: v.storage }} />}
         />
-        <Evidence
+        <ResourceInspector
           label="Schema and conversion"
-          data={{ versions: versions.map((v) => ({ name: v.name, schema: v.schema })), conversion: spec.conversion }}
+          value={{ versions: versions.map((v) => ({ name: v.name, schema: v.schema })), conversion: spec.conversion }}
         />
         <label>
           Served version{" "}
@@ -173,9 +167,9 @@ export function ClusterOverview({
             "Version priority": spec.versionPriority,
           }}
         />
-        <Evidence
+        <ResourceInspector
           label="Service and TLS configuration"
-          data={{ service: spec.service, caBundle: spec.caBundle, insecureSkipTLSVerify: spec.insecureSkipTLSVerify }}
+          value={{ service: spec.service, caBundle: spec.caBundle, insecureSkipTLSVerify: spec.insecureSkipTLSVerify }}
         />
         <button disabled={!text(spec.version)} onClick={() => onBrowse({ group: text(spec.group), version: text(spec.version) })}>
           View resources

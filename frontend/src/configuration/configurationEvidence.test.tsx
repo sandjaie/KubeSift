@@ -8,7 +8,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { expect, test } from "vitest";
 import type { ResourceDetail } from "../workloads/model";
 import { ConfigurationOverview } from "./ConfigurationOverview";
-import { configMapKeys } from "./ConfigMapData";
+import { ConfigMapData, configMapKeys } from "./ConfigMapData";
 
 function detail(kind: string, object: unknown): ResourceDetail {
   return {
@@ -52,6 +52,38 @@ test("ConfigMap keys preserve literal content and count decoded bytes", () => {
     ["empty", 0, ""],
     ["text", 12, "☃\n<script>"],
   ]);
+});
+
+test("ConfigMap Data exposes inline values and direct copy while deferring long values", () => {
+  const html = renderToStaticMarkup(
+    <ConfigMapData
+      data={detail("ConfigMap", {
+        data: { literal: "<script>", multiline: "hidden-line\nnext", empty: "" },
+        binaryData: { bytes: "AP8=" },
+      })}
+    />,
+  );
+  for (const expected of [
+    "4 keys",
+    "&lt;script&gt;",
+    "AP8=",
+    "Empty value",
+    "View multiline",
+    "Copy value for multiline",
+    "Copy base64 for bytes",
+  ]) {
+    expect(html).toContain(expected);
+  }
+  expect(html).not.toContain("hidden-line");
+  expect(html).not.toContain("<script>");
+});
+
+test("ConfigMap annotations start closed and keep an embedded document out of the initial markup", () => {
+  const html = overview("ConfigMap", {
+    metadata: { annotations: { "kubectl.kubernetes.io/last-applied-configuration": '{"data":{"key":"annotation-literal"}}' } },
+  });
+  expect(html).toContain("Annotations </span>");
+  expect(html).not.toContain("annotation-literal");
 });
 
 test("Pod reference projection preserves duplicate locations and ignores plugin references", async () => {

@@ -5,7 +5,7 @@ Responsibilities: Preserve role and subject scope and offer only explicit refere
 Important: Captured RBAC configuration does not establish effective access.
 */
 import type { ResourceDetail, ResourceRef } from "../workloads/model";
-import { EvidencePage } from "../storage/StorageOverview";
+import { EvidencePage } from "../ui/EvidencePage";
 import { evidenceTime } from "../workspace/ResourceOverview";
 import { BindingSubjects } from "./BindingSubjects";
 import { Disclosure, Field, PolicyRules } from "./PolicyRules";

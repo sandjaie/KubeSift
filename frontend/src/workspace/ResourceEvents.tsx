@@ -15,14 +15,13 @@ export function ResourceEvents({ data, onNext }: { data: EventPage; onNext: (cur
   const shown = warningsOnly ? warnings : items;
   return (
     <div className="evidence-section">
-      <div className="filter-bar" aria-label="Filter events on this page">
+      <div className="evidence-toolbar event-filters" role="group" aria-label="Filter events on this page">
         <button aria-pressed={!warningsOnly} onClick={() => setWarningsOnly(false)}>
           All ({items.length})
         </button>
         <button aria-pressed={warningsOnly} onClick={() => setWarningsOnly(true)}>
           Warnings ({warnings.length})
         </button>
-        <span className="muted">This page</span>
       </div>
       {shown.length ? (
         <div className="evidence-table-wrap">
