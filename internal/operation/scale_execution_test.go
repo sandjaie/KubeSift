@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -288,5 +289,138 @@ func TestScaleDisconnectAfterDispatchLeavesUnknown(t *testing.T) {
 		}
 	case <-time.After(5 * time.Second):
 		t.Fatal("operation result missing")
+	}
+}
+
+func TestScaleRejectsChangedStatefulSetImpact(t *testing.T) {
+	const endpoint = "/apis/apps/v1/namespaces/default/statefulsets/web"
+	var changed atomic.Bool
+	var actual atomic.Int32
+	s, req := scaleServer(t, func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.Method + " " + r.URL.Path {
+		case "GET " + endpoint:
+			policy := "Retain"
+			if changed.Load() {
+				policy = "Delete"
+			}
+			fmt.Fprintf(w, `{"kind":"StatefulSet","apiVersion":"apps/v1","metadata":{"name":"web","namespace":"default","uid":"uid","resourceVersion":"7"},"spec":{"replicas":1,"persistentVolumeClaimRetentionPolicy":{"whenScaled":%q,"whenDeleted":"Retain"}}}`, policy)
+		case "GET " + endpoint + "/scale":
+			testScaleResponse(w, 1, "7")
+		case "POST /apis/authorization.k8s.io/v1/selfsubjectaccessreviews":
+			fmt.Fprint(w, `{"kind":"SelfSubjectAccessReview","apiVersion":"authorization.k8s.io/v1","status":{"allowed":true}}`)
+		case "PUT " + endpoint + "/scale":
+			if r.URL.Query().Get("dryRun") != "All" {
+				actual.Add(1)
+			}
+			testScaleResponse(w, 0, "7")
+		default:
+			t.Error("unexpected request")
+			w.WriteHeader(404)
+		}
+	})
+	req.Resource.Kind, req.ReplicasText = "StatefulSet", "0"
+	ctx := context.Background()
+	p, err := s.PrepareScale(ctx, req)
+	if err != nil || p.Impact.WhenScaled != "Retain" {
+		t.Fatalf("wrong impact %+v %v", p, err)
+	}
+	changed.Store(true)
+	result, err := s.ExecuteScale(ctx, p.Token, "web")
+	if err != nil || result.State != "stale" || actual.Load() != 0 {
+		t.Fatalf("changed policy %+v %v", result, err)
+	}
+}
+
+func TestScaleExecutionCapacity(t *testing.T) {
+	const prefix = "/apis/apps/v1/namespaces/default/deployments/"
+	arrived := make(chan string, 5)
+	release := make(chan struct{})
+	defer close(release)
+	s, req := scaleServer(t, func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if r.URL.Path == "/apis/authorization.k8s.io/v1/selfsubjectaccessreviews" && r.Method == "POST" {
+			fmt.Fprint(w, `{"kind":"SelfSubjectAccessReview","apiVersion":"authorization.k8s.io/v1","status":{"allowed":true}}`)
+			return
+		}
+		rest, ok := strings.CutPrefix(r.URL.Path, prefix)
+		if !ok {
+			w.WriteHeader(404)
+			t.Error("unexpected fixture path")
+			return
+		}
+		name, isScale := strings.CutSuffix(rest, "/scale")
+		kind, version, replicas := "Deployment", "apps/v1", 1
+		if isScale {
+			kind, version = "Scale", "autoscaling/v1"
+		}
+		if r.Method == "PUT" {
+			if !isScale {
+				w.WriteHeader(404)
+				t.Error("parent write")
+				return
+			}
+			replicas = 2
+			if r.URL.Query().Get("dryRun") == "" {
+				_, _ = io.Copy(io.Discard, r.Body)
+				arrived <- name
+				select {
+				case <-release:
+				case <-r.Context().Done():
+				}
+			}
+		}
+		fmt.Fprintf(w, `{"kind":%q,"apiVersion":%q,"metadata":{"name":%q,"namespace":"default","uid":"uid","resourceVersion":"7"},"spec":{"replicas":%d}}`, kind, version, name, replicas)
+	})
+	ctx := context.Background()
+	reviews := make([]ScalePreview, 0, 5)
+	for i := 0; i < 5; i++ {
+		req.Resource.Name = fmt.Sprintf("fixture-%d", i)
+		p, err := s.PrepareScale(ctx, req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		reviews = append(reviews, p)
+	}
+	finished := make(chan ScaleResult, 4)
+	for _, p := range reviews[:4] {
+		go func() { result, _ := s.ExecuteScale(ctx, p.Token, ""); finished <- result }()
+	}
+	for range 4 {
+		select {
+		case <-arrived:
+		case <-time.After(5 * time.Second):
+			t.Fatal("four slot limit not exercised")
+		}
+	}
+	if _, err := s.ExecuteScale(ctx, reviews[4].Token, ""); err == nil {
+		t.Fatal("fifth execution escaped cap")
+	} else {
+		checkCode(t, err, "busy")
+	}
+	if _, err := s.ExecuteScale(ctx, reviews[4].Token, ""); err == nil {
+		t.Fatal("busy token survived")
+	} else {
+		checkCode(t, err, "invalid_token")
+	}
+	retained := s.ListScaleResults()
+	if len(retained) != 4 {
+		t.Fatalf("recorded %d in-flight operations", len(retained))
+	}
+	for _, row := range retained {
+		if row.State != "executing" {
+			t.Fatal("active result was not retained")
+		}
+	}
+	s.Close()
+	for range 4 {
+		select {
+		case row := <-finished:
+			if row.State != "unknown" {
+				t.Fatalf("shutdown result %+v", row)
+			}
+		case <-time.After(5 * time.Second):
+			t.Fatal("shutdown did not finish active operation")
+		}
 	}
 }

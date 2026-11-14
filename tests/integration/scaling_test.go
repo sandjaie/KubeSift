@@ -114,23 +114,33 @@ func TestReviewedScaling(t *testing.T) {
 			wait := func(desired int32) {
 				t.Helper()
 				deadline := time.Now().Add(30 * time.Second)
+				stableVersion := ""
 				for {
 					ready := false
+					version := ""
 					if kind == "Deployment" {
 						obj, err := client.AppsV1().Deployments(ns).Get(ctx, name, metav1.GetOptions{})
 						if err != nil {
 							t.Fatal(err)
 						}
-						ready = obj.Status.ObservedGeneration == obj.Generation && obj.Status.ReadyReplicas == desired && obj.Status.Replicas == desired
+						version = obj.ResourceVersion
+						ready = obj.Status.ObservedGeneration == obj.Generation && obj.Status.AvailableReplicas == desired &&
+							obj.Status.ReadyReplicas == desired && obj.Status.Replicas == desired && obj.Status.UpdatedReplicas == desired
 					} else {
 						obj, err := client.AppsV1().StatefulSets(ns).Get(ctx, name, metav1.GetOptions{})
 						if err != nil {
 							t.Fatal(err)
 						}
-						ready = obj.Status.ObservedGeneration == obj.Generation && obj.Status.ReadyReplicas == desired && obj.Status.Replicas == desired
+						version = obj.ResourceVersion
+						ready = obj.Status.ObservedGeneration == obj.Generation && obj.Status.ReadyReplicas == desired && obj.Status.Replicas == desired &&
+							obj.Status.UpdatedReplicas == desired
 					}
+					if ready && stableVersion == version {
+						return
+					}
+					stableVersion = ""
 					if ready {
-						break
+						stableVersion = version
 					}
 					if time.Now().After(deadline) {
 						t.Fatal("fixture did not settle", kind, desired)
@@ -138,6 +148,7 @@ func TestReviewedScaling(t *testing.T) {
 					time.Sleep(300 * time.Millisecond)
 				}
 			}
+			wait(1)
 			first := get(client)
 			if first.UID == "" || first.ResourceVersion == "" || first.UID == previousUID[kind] || first.Spec.Replicas != 1 {
 				t.Fatal("unexpected fixture scale", kind)
@@ -154,7 +165,7 @@ func TestReviewedScaling(t *testing.T) {
 				}
 				show := get(client)
 				if show.Spec.Replicas != before.Spec.Replicas || show.ResourceVersion != before.ResourceVersion {
-					t.Fatal("dry-run persisted or fixture changed before confirmation", kind)
+					t.Fatalf("%s fixture changed while preparing %d: count %d → %d, version %s → %s", kind, desired, before.Spec.Replicas, show.Spec.Replicas, before.ResourceVersion, show.ResourceVersion)
 				}
 				acknowledgement := ""
 				if desired == 0 {
@@ -238,7 +249,7 @@ func testScaleTransport(t *testing.T, ctx context.Context, manager *connection.M
 		if actual {
 			writes.Add(1)
 			if mode.Load() == 1 {
-				patch := []byte(`{"metadata":{"annotations":{"kubesift.dev/scale-race":"after-inspection"}}}`)
+				patch := []byte(fmt.Sprintf(`{"metadata":{"annotations":{"kubesift.dev/scale-race":%q}}}`, model.ID()))
 				if _, err := client.AppsV1().Deployments(ns).Patch(r.Context(), name, types.MergePatchType, patch, metav1.PatchOptions{}); err != nil {
 					t.Error("cannot advance fixture version", err)
 					w.WriteHeader(500)
@@ -349,13 +360,19 @@ func testScaleTransport(t *testing.T, ctx context.Context, manager *connection.M
 func waitScaleFixture(t *testing.T, ctx context.Context, client kubernetes.Interface, ns, name string, desired int32) {
 	t.Helper()
 	deadline := time.Now().Add(30 * time.Second)
+	stableVersion := ""
 	for {
 		obj, err := client.AppsV1().Deployments(ns).Get(ctx, name, metav1.GetOptions{})
 		if err != nil {
 			t.Fatal(err)
 		}
-		if obj.Status.ObservedGeneration == obj.Generation && obj.Status.ReadyReplicas == desired && obj.Status.Replicas == desired {
+		ready := obj.Status.ObservedGeneration == obj.Generation && obj.Status.AvailableReplicas == desired && obj.Status.ReadyReplicas == desired && obj.Status.UpdatedReplicas == desired && obj.Status.Replicas == desired
+		if ready && stableVersion == obj.ResourceVersion {
 			return
+		}
+		stableVersion = ""
+		if ready {
+			stableVersion = obj.ResourceVersion
 		}
 		if time.Now().After(deadline) {
 			t.Fatal("deployment fixture did not settle")

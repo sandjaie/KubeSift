@@ -298,6 +298,11 @@ export default function App() {
                     (active.pollFailed ? "Status unavailable; displayed data may be stale." : "")}
                 </div>
               )}
+              {workloads.navigationError && !workloads.selection && (
+                <div role="alert" className="connection-problem">
+                  {workloads.navigationError}
+                </div>
+              )}
               <Workspace
                 key={state.active}
                 tab={active}

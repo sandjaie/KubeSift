@@ -15,6 +15,7 @@ import {
   initialWorkloads,
   reduceWorkloads,
   kindScope,
+  navigationSnapshot,
   relatedHistory,
   type Action,
 } from "./state";
@@ -236,22 +237,13 @@ export function useWorkloads(
   function navigationRequest<T>(read: (id: string) => Promise<T>, open: (data: T) => void) {
     cancelNavigation();
     setNavigationError("");
+    const active = current.current[tabID];
+    if (!active || active.kind !== kind || kindScope(active, kind) !== scope) return;
+    // Returning to a tab can start its overview read in the same effect flush.
+    const started = navigationSnapshot(active);
     const request = readRequest(read);
     pendingNavigation.current = request.cancel;
-    const stillCurrent = () => {
-      const active = current.current[tabID];
-      const source = active?.kinds[kind];
-      return (
-        !!active &&
-        kindScope(active, kind) === scope &&
-        active.kind === kind &&
-        source?.selected?.resource.uid === selected?.resource.uid &&
-        source?.section === section &&
-        source?.sectionCursor === inventory.sectionCursor &&
-        source?.sectionEpoch === inventory.sectionEpoch &&
-        source?.sectionRefresh === inventory.sectionRefresh
-      );
-    };
+    const stillCurrent = () => navigationSnapshot(current.current[tabID]) === started;
     void request.promise
       .then((data) => {
         if (pendingNavigation.current !== request.cancel) return;

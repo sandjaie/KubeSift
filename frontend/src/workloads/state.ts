@@ -54,6 +54,20 @@ export type Action =
   | { type: "response"; tab: string; scope: string; kind: ResourceKind; epoch: number; section?: boolean; patch: Partial<KindState> };
 export const kindScope = (tab: TabState, kind: ResourceKind) => (isClusterScoped(kind) ? tab.clusterScope : tab.scope);
 
+export function navigationSnapshot(tab: TabState | undefined) {
+  if (!tab) return "";
+  const source = tab.kinds[tab.kind];
+  return JSON.stringify([
+    kindScope(tab, tab.kind),
+    tab.kind,
+    source.selected?.resource.uid,
+    source.section,
+    source.sectionCursor,
+    source.sectionEpoch,
+    source.sectionRefresh,
+  ]);
+}
+
 export function relatedHistory(entries: NavigationEntry[], origin: NavigationEntry, target: ResourceRef) {
   return [...entries.filter(({ resource }) => resource.uid !== origin.resource.uid && resource.uid !== target.uid), origin].slice(-8);
 }

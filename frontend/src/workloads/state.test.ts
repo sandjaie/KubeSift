@@ -490,3 +490,24 @@ test("catalog routes persist per connection and stale generation actions cannot 
   expect(reduceWorkloads(replaced, { type: "catalog", tab: "A", clusterScope: "a/1", route: routeA })).toBe(replaced);
   expect(reduceWorkloads(replaced, { type: "close", tab: "B" }).B).toBeUndefined();
 });
+
+test("target navigation dispatched after a returning tab begins its read uses the live section epoch", async () => {
+  const { navigationSnapshot } = await import("./state");
+  let state = reduceWorkloads(initialWorkloads(), { type: "scope", tab: "A", scope: "a/default", clusterScope: "a" });
+  const beforeEffects = state.A;
+  state = reduceWorkloads(state, { type: "patch", tab: "A", scope: "a/default", kind: "Pod", patch: { sectionEpoch: 4 } });
+  const dispatched = navigationSnapshot(state.A);
+  expect(dispatched).not.toBe(navigationSnapshot(beforeEffects));
+  state = reduceWorkloads(state, {
+    type: "response",
+    tab: "A",
+    scope: "a/default",
+    kind: "Pod",
+    epoch: 4,
+    section: true,
+    patch: { sections: { Overview: { loading: false, error: "", data: null } } },
+  });
+  expect(navigationSnapshot(state.A)).toBe(dispatched);
+  state = reduceWorkloads(state, { type: "kind", tab: "A", kind: "Deployment" });
+  expect(navigationSnapshot(state.A)).not.toBe(dispatched);
+});

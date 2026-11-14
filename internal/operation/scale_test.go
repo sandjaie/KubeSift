@@ -239,3 +239,80 @@ func TestScaleZeroOmittedByServer(t *testing.T) {
 		t.Fatalf("zero result %+v %v", result, err)
 	}
 }
+
+func TestScalePrepareIdentity(t *testing.T) {
+	const endpoint = "/apis/apps/v1/namespaces/default/statefulsets/web"
+	for _, tc := range []struct {
+		name                      string
+		parentChange, scaleChange map[string]any
+		sourceVersion             string
+		wantCode                  string
+		defaultPolicy             bool
+	}{
+		{name: "captured policy", sourceVersion: "7"},
+		{name: "omitted policy defaults to Retain", sourceVersion: "7", defaultPolicy: true},
+		{name: "changed parent UID", parentChange: map[string]any{"uid": "replacement"}, sourceVersion: "7", wantCode: "stale_target"},
+		{name: "displayed version stale", sourceVersion: "6", wantCode: "stale_target"},
+		{name: "terminating", parentChange: map[string]any{"deletionTimestamp": "2026-11-15T00:00:00Z"}, sourceVersion: "7", wantCode: "stale_target"},
+		{name: "wrong scale UID", scaleChange: map[string]any{"uid": "replacement"}, sourceVersion: "7", wantCode: "stale_target"},
+		{name: "wrong scale version", scaleChange: map[string]any{"resourceVersion": "8"}, sourceVersion: "7", wantCode: "stale_target"},
+		{name: "wrong scale name", scaleChange: map[string]any{"name": "other"}, sourceVersion: "7", wantCode: "stale_target"},
+		{name: "wrong scale namespace", scaleChange: map[string]any{"namespace": "other"}, sourceVersion: "7", wantCode: "stale_target"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var previews atomic.Int32
+			s, req := scaleServer(t, func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				if r.Method == "GET" && (r.URL.Path == endpoint || r.URL.Path == endpoint+"/scale") {
+					metadata := map[string]any{"name": "web", "namespace": "default", "uid": "uid", "resourceVersion": "7"}
+					if r.URL.Path == endpoint {
+						for key, value := range tc.parentChange {
+							metadata[key] = value
+						}
+						spec := map[string]any{"replicas": 1}
+						if !tc.defaultPolicy {
+							spec["persistentVolumeClaimRetentionPolicy"] = map[string]string{"whenScaled": "Delete", "whenDeleted": "Retain"}
+						}
+						_ = json.NewEncoder(w).Encode(map[string]any{"kind": "StatefulSet", "apiVersion": "apps/v1", "metadata": metadata, "spec": spec})
+					} else {
+						for key, value := range tc.scaleChange {
+							metadata[key] = value
+						}
+						_ = json.NewEncoder(w).Encode(map[string]any{"kind": "Scale", "apiVersion": "autoscaling/v1", "metadata": metadata, "spec": map[string]int{"replicas": 1}})
+					}
+					return
+				}
+				if r.Method == "POST" && r.URL.Path == "/apis/authorization.k8s.io/v1/selfsubjectaccessreviews" {
+					fmt.Fprint(w, `{"kind":"SelfSubjectAccessReview","apiVersion":"authorization.k8s.io/v1","status":{"allowed":true}}`)
+					return
+				}
+				if r.Method == "PUT" && r.URL.Path == endpoint+"/scale" && r.URL.Query().Get("dryRun") == "All" {
+					previews.Add(1)
+					fmt.Fprint(w, `{"kind":"Scale","apiVersion":"autoscaling/v1","metadata":{"name":"web","namespace":"default","uid":"uid","resourceVersion":"7"},"spec":{}}`)
+					return
+				}
+				t.Errorf("unexpected request %s %s", r.Method, r.URL.Path)
+				w.WriteHeader(404)
+			})
+			req.Resource.Kind = "StatefulSet"
+			req.ReplicasText = "0"
+			req.SourceVersion = tc.sourceVersion
+			p, err := s.PrepareScale(context.Background(), req)
+			checkCode(t, err, tc.wantCode)
+			if tc.wantCode != "" {
+				if p.Token != "" || previews.Load() != 0 {
+					t.Fatal("identity failure reached dry-run")
+				}
+			} else {
+				expected := ScaleImpact{Direction: "zero", WhenScaled: "Delete", WhenDeleted: "Retain"}
+				if tc.defaultPolicy {
+					expected.WhenScaled = "Retain"
+					expected.PolicyDefault = true
+				}
+				if p.Token == "" || previews.Load() != 1 || p.Impact != expected {
+					t.Fatalf("incorrect captured impact: %+v", p)
+				}
+			}
+		})
+	}
+}

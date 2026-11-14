@@ -45,7 +45,7 @@
       <h2>Automated evidence</h2>
       <ul>
         <li>
-          <code>scripts/check.sh</code> passed source and documentation checks, Go tests/vet and 78 frontend tests, lint and typecheck.
+          <code>scripts/check.sh</code> passed source and documentation checks, Go tests/vet and 79 frontend tests, lint and typecheck.
           <code>go test -race ./internal/operation ./internal/desktop ./internal/connection</code> passed. Binding generation, production
           build and signed local package passed.
         </li>
@@ -110,7 +110,29 @@
         full Go suite. No PVCs were deleted. Desktop tests exercised Escape and navigation after execution. Native modal focus prevents
         background tab/namespace interaction while reviewing.
       </p>
-      <p>Independent review and ready-PR delivery pending.</p>
+      <h2>Independent review</h2>
+      <p>
+        Reviewer <code>scaling_pr_review</code> independently checked the complete <code>905daf9..e0b9691</code> candidate. The original
+        verdict blocked merge on two findings.
+      </p>
+      <ul>
+        <li>
+          KSF-001: Synthetic tests now independently cover parent and Scale identity failures, terminating targets, explicit and default
+          StatefulSet retention capture, and changed retention policy preventing submission. An additional test checks the four-execution
+          limit and close-after-dispatch uncertainty.
+        </li>
+        <li>
+          KSF-002: Navigation now captures the active controller’s section epoch when issuing the target read. The packaged recheck left a
+          Pod selected on A, switched to B, and opened A’s frozen Deployment target from a result. Back restored the Pod. Replacing the
+          Deployment under its original name produced a UID replacement error.
+        </li>
+      </ul>
+      <p>
+        The signed review-fix executable <code>bbc7b1a294e93cfa09bd15d5c34add8146251b37246cc3dba7ab901d6ad5dac5</code> also displayed the
+        UID rejection above an empty detail pane. Full checks, focused safety race tests and both-cluster integration passed after the
+        fixes. For repeatable real-server races, the test waits for stable fixture status and advances the annotation with a fresh value.
+      </p>
+      <p>Targeted independent recheck and ready-PR delivery pending.</p>
     </main>
   </body>
 </html>
