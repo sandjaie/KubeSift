@@ -15,7 +15,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/yaml"
 	"time"
@@ -56,10 +55,13 @@ func validResourceAddress(ref ResourceRef) error {
 	if version == "" {
 		version = storageVersion(ref.Kind)
 	}
+	if version == "" {
+		version = accessControlVersion(ref.Kind)
+	}
 	if version == "" && configurationKind(ref.Kind) {
 		version = "v1"
 	}
-	if len(validation.IsDNS1123Subdomain(ref.Name)) != 0 || len(ref.UID) > 128 || version == "" || version != ref.APIVersion {
+	if !validResourceName(ref.Kind, ref.Name) || len(ref.UID) > 128 || version == "" || version != ref.APIVersion {
 		return model.Fail("invalid", "Explicit resource identity required")
 	}
 	return nil
@@ -79,6 +81,16 @@ func getResource(ctx context.Context, client kubernetes.Interface, ref ResourceR
 	var object workloadObject
 	var err error
 	switch ref.Kind {
+	case "ServiceAccount":
+		object, err = client.CoreV1().ServiceAccounts(ref.Namespace).Get(ctx, ref.Name, metav1.GetOptions{})
+	case "Role":
+		object, err = client.RbacV1().Roles(ref.Namespace).Get(ctx, ref.Name, metav1.GetOptions{})
+	case "RoleBinding":
+		object, err = client.RbacV1().RoleBindings(ref.Namespace).Get(ctx, ref.Name, metav1.GetOptions{})
+	case "ClusterRole":
+		object, err = client.RbacV1().ClusterRoles().Get(ctx, ref.Name, metav1.GetOptions{})
+	case "ClusterRoleBinding":
+		object, err = client.RbacV1().ClusterRoleBindings().Get(ctx, ref.Name, metav1.GetOptions{})
 	case "Pod":
 		object, err = client.CoreV1().Pods(ref.Namespace).Get(ctx, ref.Name, metav1.GetOptions{})
 	case "Deployment":
@@ -117,6 +129,17 @@ func getResource(ctx context.Context, client kubernetes.Interface, ref ResourceR
 
 	if err != nil {
 		return nil, readError(ctx, err)
+	}
+	if accessControlVersion(ref.Kind) != "" {
+		expected := schema.FromAPIVersionAndKind(ref.APIVersion, ref.Kind)
+		if actual := object.GetObjectKind().GroupVersionKind(); !actual.Empty() && actual != expected {
+			return nil, model.Fail("invalid", "Server returned an unexpected access control kind or API")
+		}
+		captured := ref
+		captured.UID = string(object.GetUID())
+		if validResource(captured) != nil || object.GetName() != ref.Name || object.GetNamespace() != ref.Namespace {
+			return nil, model.Fail("invalid", "Server did not return the requested access control identity")
+		}
 	}
 	if (networkVersion(ref.Kind) != "" || configurationKind(ref.Kind)) && (object.GetName() != ref.Name || object.GetNamespace() != ref.Namespace || object.GetUID() == "") {
 		return nil, model.Fail("invalid", "Server did not return the requested resource identity")

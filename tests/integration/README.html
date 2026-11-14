@@ -53,4 +53,9 @@ done</code></pre>
     identity on A. Create the collision-checked phase-1c3d.yaml fixtures in both contexts before running; the test itself only reads. No CSI
     resources are required.
   </p>
+  <p>
+    TestAccessControlInvestigation uses the explicit A/B configurations and access-restricted.kubeconfig on A, with the synthetic
+    fixture-reader ServiceAccount identity. Apply the owned Phase 1C.3e fixture first. The test performs only inventory, detail, Events and
+    explicit reference reads.
+  </p>
 </html>

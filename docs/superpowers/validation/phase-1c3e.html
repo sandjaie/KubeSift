@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Phase 1C.3e validation · KubeSift</title>
+    <link rel="stylesheet" href="../../assets/planning.css" />
+    <script src="../../assets/theme.js"></script>
+  </head>
+  <body>
+    <header>
+      <a href="../../index.html">KubeSift / Planning</a>
+      <h1>Phase 1C.3e validation</h1>
+      <p>Read-only access control</p>
+    </header>
+    <main id="content">
+      <p>
+        Baseline <code>c41a54c</code> includes planning commit <code>c1d31ad</code> and the approved navigation placement follow-up. See the
+        <a href="../specs/2026-11-14-phase-1c3e-access-control-design.md">specification</a> and
+        <a href="../plans/2026-11-14-phase-1c3e-access-control.md">implementation plan</a>.
+      </p>
+      <h2>Automated and integration verification</h2>
+      <ul>
+        <li>Repository checks, 55 frontend tests, Go race checks, generated bindings and production build passed.</li>
+        <li>
+          All five opt-in investigations passed on explicit <code>kind-dev-local-a</code> and <code>kind-dev-local-b</code>: access control,
+          storage, configuration, networking and workload investigation.
+        </li>
+        <li>
+          The restricted fixture could list Roles and read a RoleBinding and ServiceAccount. It was denied Role GET both directly and
+          through a readable RoleBinding, plus cluster Role and binding inventories. Fixture credentials were isolated and untracked; no
+          product access-review API or trial mutation was involved.
+        </li>
+      </ul>
+      <h2>Packaged desktop verification</h2>
+      <p>
+        KubeSift 0.3.0, arm64 macOS 27.0.1. Executable SHA-256
+        <code>37f51ee04cc02cb2081752971a8866b11f759195b236692b18c0067ad0d7595a</code>.
+      </p>
+      <ul>
+        <li>
+          Pod → ServiceAccount → Back showed captured automount false and an inert image pull reference. RoleBinding → local Role,
+          aggregated ClusterRole, and cross-namespace ServiceAccount returned to the originating binding and namespace. The latter link was
+          activated with the keyboard. ClusterRoleBinding → ClusterRole → Back also passed. The built-in system:basic-user role was
+          inspected without changes.
+        </li>
+        <li>
+          Rule disclosures preserved the core API group, resource names and pods/log. ClusterRole aggregation showed two distinct selectors
+          separate from captured controller-managed rules. Cluster roles disabled the namespace chooser.
+        </li>
+        <li>
+          Role YAML copied exactly (457 characters, including final newline). The controls remained available with a keyboard-resized 32%
+          detail pane at native 200% zoom. Light and Dark appearance were exercised, then System appearance and the prior split restored.
+        </li>
+        <li>
+          ConfigMaps and Secrets appeared under Workloads. ConfigMap retained Data through the existing route; Pod → ConfigMap Data → Back
+          restored Pod Overview with Logs available. Secrets retained their kind across namespace changes and showed only metadata Overview.
+          The existing Pod Logs panel and controls opened normally.
+        </li>
+      </ul>
+      <h2>Coverage limits</h2>
+      <p>
+        Native denied-target rendering was not exercised with the restricted fixture credentials. Integration verified the actual denial
+        boundary; synthetic tests cover malformed objects and large nested rules. Earlier unrelated limits remain in the
+        <a href="phase-1c3d.html">storage report</a>.
+      </p>
+      <h2>Independent review</h2>
+      <p>Review and final head coverage pending.</p>
+    </main>
+  </body>
+</html>

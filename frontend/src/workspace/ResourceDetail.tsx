@@ -23,6 +23,9 @@ import { isNetworkKind, type ServiceSlicePage } from "../networking/model";
 import { isStorageKind } from "../storage/model";
 import { StorageOverview } from "../storage/StorageOverview";
 import { PodStorage } from "../storage/PodStorage";
+import { isAccessControlKind } from "../access-control/model";
+import { AccessControlOverview } from "../access-control/AccessControlOverview";
+import { PodIdentity } from "../access-control/PodIdentity";
 import { NetworkOverview } from "../networking/NetworkOverview";
 import { ServiceEndpointSlices } from "../networking/ServiceEndpointSlices";
 import { ResourceYaml } from "./ResourceYaml";
@@ -49,7 +52,7 @@ export function ResourceDetail({
     data = state?.data;
   const kind = row.resource.kind;
   const tabs = resourceSections(kind);
-  const link = c.inventory.storageLink;
+  const link = c.inventory.referenceEvidence;
   const capturedLink =
     link &&
     section === "Overview" &&
@@ -79,7 +82,7 @@ export function ResourceDetail({
       {link && (
         <div className="muted" title={`Source version ${link.sourceVersion}; target version ${link.targetVersion}`}>
           <p>{link.identityEvidence === "uid-verified" ? "Referenced UID verified" : "Resolved by name at open time"}</p>
-          {capturedLink && link.bindingEvidence !== "not-applicable" && (
+          {capturedLink && link.bindingEvidence && link.bindingEvidence !== "not-applicable" && (
             <p>
               {link.bindingEvidence === "references-agree" ? "Binding references agree" : "Reference only; binding unconfirmed"} · Observed
               in separate reads.
@@ -103,7 +106,9 @@ export function ResourceDetail({
       )}
       {section === "Overview" &&
         data &&
-        (isStorageKind(kind) ? (
+        (isAccessControlKind(kind) ? (
+          <AccessControlOverview data={data as Detail} onOpenReference={(target) => c.openAccessControlReference(data as Detail, target)} />
+        ) : isStorageKind(kind) ? (
           <StorageOverview data={data as Detail} onOpenReference={(target) => c.openStorageReference(data as Detail, target)} />
         ) : isNetworkKind(kind) ? (
           <NetworkOverview data={data as Detail} onOpenReference={(target) => c.openReference(data as Detail, target)} />
@@ -117,6 +122,7 @@ export function ResourceDetail({
             <ResourceOverview data={data as Detail} onOpenOwner={c.openRelated} />
             {kind === "Pod" && (
               <>
+                <PodIdentity data={data as Detail} onOpenReference={(target) => c.openAccessControlReference(data as Detail, target)} />
                 <PodStorage data={data as Detail} onOpenReference={(target) => c.openStorageReference(data as Detail, target)} />
                 <PodConfiguration data={data as Detail} onOpen={(target) => c.openConfigurationReference(data as Detail, target)} />
               </>

@@ -67,6 +67,10 @@ export function OpenPodLogs(req: kube$0.LogRequest): $CancellablePromise<model$0
   return $Call.ByID(1020417316, req);
 }
 
+export function ReadAccessControl(id: string, req: kube$0.PageRequest): $CancellablePromise<kube$0.AccessControlPage> {
+  return $Call.ByID(2491109527, id, req);
+}
+
 export function ReadConfiguration(id: string, req: kube$0.PageRequest): $CancellablePromise<kube$0.ConfigurationPage> {
   return $Call.ByID(1380409538, id, req);
 }
@@ -128,6 +132,13 @@ export function RemoveSource(id: string, confirmed: boolean): $CancellablePromis
  */
 export function ResetSources(): $CancellablePromise<void> {
   return $Call.ByID(498698343);
+}
+
+export function ResolveAccessControlReference(
+  id: string,
+  req: kube$0.AccessControlReferenceRequest,
+): $CancellablePromise<kube$0.ResolvedAccessControlReference> {
+  return $Call.ByID(3735718236, id, req);
 }
 
 export function ResolveConfigurationReference(

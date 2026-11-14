@@ -6,6 +6,7 @@ Important: Unimplemented kinds never display invented live data.
 */
 import { ResourceIcon } from "../ui/ResourceIcon";
 import { storageKinds, storageLabels } from "../storage/model";
+import { accessControlKinds, accessControlLabels } from "../access-control/model";
 export const destinations = [
   {
     group: "Workloads",
@@ -17,6 +18,8 @@ export const destinations = [
       ["DaemonSet", "DaemonSets", true],
       ["Job", "Jobs", true],
       ["CronJob", "CronJobs", true],
+      ["ConfigMap", "ConfigMaps", true],
+      ["Secret", "Secrets", true],
     ],
   },
   {
@@ -34,17 +37,15 @@ export const destinations = [
     items: [
       ["ResourceQuota", "ResourceQuotas", true],
       ["LimitRange", "LimitRanges", true],
-      ["ConfigMap", "ConfigMaps", true],
-      ["Secret", "Secrets", true],
     ],
   },
   { group: "Storage", items: storageKinds.map((kind) => [kind, storageLabels[kind], true] as const) },
+  { group: "Access control", items: accessControlKinds.map((kind) => [kind, accessControlLabels[kind], true] as const) },
   {
-    group: "Cluster & access",
+    group: "Cluster",
     items: [
       ["Namespace", "Namespaces", true],
       ["Node", "Nodes", false],
-      ["Role", "Roles & bindings", false],
     ],
   },
   {
