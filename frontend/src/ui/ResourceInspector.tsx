@@ -11,6 +11,21 @@ function scalarText(value: unknown) {
   return value == null ? "Not reported" : value === "" ? '""' : String(value);
 }
 
+function inspectedScalar(value: unknown) {
+  if (value === null) return "null";
+  if (typeof value === "string") {
+    const clean = value.trim();
+    if (
+      ["", "true", "false", "null", "{}", "[]", "Not reported"].includes(clean) ||
+      clean.startsWith('"') ||
+      Number.isFinite(Number(clean))
+    ) {
+      return JSON.stringify(value);
+    }
+  }
+  return scalarText(value);
+}
+
 function Node({ value, label, depth, empty }: { value: unknown; label?: string; depth: number; empty: string }) {
   const [open, setOpen] = useState(false);
   const entries = value != null && typeof value === "object" ? Object.entries(value) : undefined;
@@ -19,7 +34,7 @@ function Node({ value, label, depth, empty }: { value: unknown; label?: string; 
   const longText = label && typeof value === "string" && value.length > 180 ? value : undefined;
   const indent = { paddingInlineStart: Math.min(depth, 8) * 10 };
   if (!entries?.length && longText === undefined) {
-    const text = entries ? (depth ? (array ? "[]" : "{}") : empty) : scalarText(value);
+    const text = entries ? (depth ? (array ? "[]" : "{}") : empty) : inspectedScalar(value);
     return (
       <div className="inspector-leaf" style={indent}>
         {label && <span className="inspector-key">{label}</span>}

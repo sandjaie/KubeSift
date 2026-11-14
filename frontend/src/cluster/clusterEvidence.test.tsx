@@ -6,6 +6,7 @@ Important: No cluster is contacted.
 */
 import { expect, test } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
+import { ResourceInspector } from "../ui/ResourceInspector";
 import { ClusterOverview } from "./ClusterOverview";
 import type { ResourceDetail } from "../workloads/model";
 
@@ -41,4 +42,20 @@ test("CRD schema is absent until expanded", () => {
   });
   expect(view).toContain("Schema and conversion");
   expect(view).not.toContain("hidden-value");
+});
+
+test("inspector distinguishes explicit JSON scalars and missing evidence", () => {
+  const value = (captured: unknown) => {
+    const html = renderToStaticMarkup(<ResourceInspector label="Field" value={captured} />);
+    return html.match(/class="inspector-value">(.*?)<\/span>/)?.[1];
+  };
+  expect([value(null), value(undefined), value("null"), value(1), value("1"), value(true), value("true")]).toEqual([
+    "null",
+    "Not reported",
+    "&quot;null&quot;",
+    "1",
+    "&quot;1&quot;",
+    "true",
+    "&quot;true&quot;",
+  ]);
 });

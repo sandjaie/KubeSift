@@ -45,7 +45,7 @@
       </p>
       <h2>Automated checks</h2>
       <p>
-        <code>scripts/check.sh</code> passed source and documentation checks, Go format, tests and vet, and 81 frontend tests, ESLint and
+        <code>scripts/check.sh</code> passed source and documentation checks, Go format, tests and vet, and 82 frontend tests, ESLint and
         TypeScript. Frontend regressions cover collapsed resource history and annotations, bounded storage disclosure, escaped inline
         ConfigMap values, decoded binary byte counts, and deferred multiline content.
       </p>
@@ -67,6 +67,14 @@
           The temporary synthetic ConfigMap on <code>kind-dev-local-b</code> was removed and absence confirmed.
         </li>
       </ul>
+      <h2>Independent review</h2>
+      <p>
+        The whole-PR review covered <code>daae4ba13126a1a761aa88a2591b571e2af886f5</code> from the <code>develop</code> merge base
+        <code>0dcff621ab17a087742fcc129a049004eba56558</code>. The reviewer raised KSF-001 (P2) because the inspector conflated explicit
+        null with missing fields and rendered some distinct scalar types identically. The fix preserves explicit null and quotes ambiguous
+        strings. The full checks and package build passed again. In the updated bundle, the Deployment Overview showed its revision
+        annotation as the string <code>"1"</code>.
+      </p>
       <p>
         The desktop checks used representative resources and the dark theme. The opt-in Go integration suite and native visual coverage of
         every kind, theme and display size were outside this frontend refinement.
