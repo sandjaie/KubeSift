@@ -1640,3 +1640,20 @@ textarea::placeholder {
 .catalog-pages {
   padding: 12px 20px 0;
 }
+
+.scale-field {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0;
+}
+.scale-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.scale-result {
+  margin: 12px 0;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}

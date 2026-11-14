@@ -322,6 +322,47 @@ export function useWorkloads(
   }
   return {
     kind,
+    ready: !!t,
+    openScaleTarget: (resource: ResourceRef) => {
+      if (!t || !canOpen(resource, resource.namespace)) return;
+      const entry: NavigationEntry = { resource, section: "Overview", cursor: "", namespace: resource.namespace };
+      const { filter, sort, scroll, history } = inventory;
+      const entries =
+        selected && selected.resource.uid !== resource.uid
+          ? relatedHistory(
+              t.navigation,
+              {
+                resource: selected.resource,
+                section,
+                cursor: inventory.sectionCursor,
+                namespace,
+                position: { filter, sort, scroll, history },
+              },
+              resource,
+            )
+          : t.navigation;
+      navigationRequest(
+        (id) => api.ReadResource(id, { resource }),
+        (detail) => show(entry, entries, detail),
+      );
+    },
+    refreshScaleTarget: (resource: ResourceRef) => {
+      if (
+        !t ||
+        !selected ||
+        !canOpen(resource) ||
+        selected.resource.uid !== resource.uid ||
+        selected.resource.name !== resource.name ||
+        kind !== resource.kind
+      )
+        return;
+      cancelNavigation();
+      patch({
+        refresh: inventory.refresh + 1,
+        sectionRefresh: inventory.sectionRefresh + 1,
+        sections: { ...inventory.sections, Overview: undefined },
+      });
+    },
     catalogRoute: t?.catalog,
     setCatalogRoute: (seed: CatalogSeed | null) => commit({ type: "catalog", tab: tabID, clusterScope, route: seed ?? undefined }),
     restoreCatalogSource: () => {

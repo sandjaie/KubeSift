@@ -4,7 +4,9 @@ Used by: Workspace after explicit resource selection.
 Responsibilities: Keep section failures independent and render cluster fields as inert text.
 Important: Overview configuration is not measured usage and references never fetch Secret values.
 */
-import type { ReactNode } from "react";
+import { useLayoutEffect, useState, type ReactNode } from "react";
+import { ScaleDialog } from "../operations/ScaleDialog";
+import type { ScalePreview } from "../operations/api";
 import type { WorkloadController } from "../workloads/useWorkloads";
 import type {
   ResourceDetail as Detail,
@@ -44,19 +46,24 @@ export function ResourceDetail({
   controller: c,
   context,
   stale,
+  canReviewScale,
   logs,
+  onScale,
 }: {
   controller: WorkloadController;
   context: string;
   stale: boolean;
+  canReviewScale: boolean;
   logs?: ReactNode;
+  onScale: (review: ScalePreview, acknowledgement: string) => void;
 }) {
+  const [scaleReview, setScaleReview] = useState("");
   const row = c.selection;
-  if (!row) return null;
+
   const section = c.activeSection,
     state = c.sections[section],
     data = state?.data;
-  const kind = row.resource.kind;
+  const kind = row?.resource.kind ?? "";
   const tabs = resourceSections(kind);
   const link = c.inventory.referenceEvidence;
   const capturedLink =
@@ -65,6 +72,17 @@ export function ResourceDetail({
     !state?.loading &&
     !state?.error &&
     (data as Detail | undefined)?.resourceVersion === link.targetVersion;
+  const scaleSource =
+    section === "Overview" && canReviewScale && !state?.loading && !state?.error && (kind === "Deployment" || kind === "StatefulSet")
+      ? (data as Detail | undefined)
+      : undefined;
+  const scaleKey = scaleSource?.resourceVersion
+    ? JSON.stringify([scaleSource.resource, scaleSource.resourceVersion, c.inventory.refresh, c.inventory.sectionRefresh])
+    : "";
+  useLayoutEffect(() => {
+    setScaleReview("");
+  }, [scaleKey]);
+  if (!row) return null;
   return (
     <div className={section === "YAML" ? "compact-pod-detail yaml-detail" : "compact-pod-detail"}>
       {c.back && (
@@ -75,12 +93,27 @@ export function ResourceDetail({
       {c.navigationError && <p role="alert">{c.navigationError}</p>}
       <div className="pane-heading">
         <h2>{row.resource.name}</h2>
-        {section !== "Logs" && (
-          <button onClick={c.refreshSection} disabled={state?.loading}>
-            Refresh section
-          </button>
-        )}
+        <div className="scale-actions">
+          {scaleKey && (
+            <button
+              onClick={(event) => {
+                event.currentTarget.focus();
+                setScaleReview(scaleKey);
+              }}
+            >
+              Scale…
+            </button>
+          )}
+          {section !== "Logs" && (
+            <button onClick={c.refreshSection} disabled={state?.loading}>
+              Refresh section
+            </button>
+          )}
+        </div>
       </div>
+      {scaleSource && scaleKey && scaleReview === scaleKey && (
+        <ScaleDialog key={scaleKey} source={scaleSource} cluster={context} onDismiss={() => setScaleReview("")} onExecute={onScale} />
+      )}
       <p className="detail-identity">
         {context} / {isClusterScoped(kind) ? "Cluster-scoped" : row.resource.namespace} / {row.resource.kind}
       </p>

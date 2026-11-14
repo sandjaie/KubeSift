@@ -26,6 +26,8 @@ import { InvestigationPanel } from "./ai/InvestigationPanel";
 import { useLogSessions } from "./sessions/useLogSessions";
 import { PodLogs } from "./sessions/PodLogs";
 import { useWorkloads } from "./workloads/useWorkloads";
+import type { ResourceRef } from "./workloads/model";
+import { OperationResults, useScaleResults } from "./operations/OperationResults";
 import "./styles.css";
 export default function App() {
   const controller = useConnections();
@@ -105,6 +107,21 @@ export default function App() {
     page === "workspace",
     (tab, namespace) => void controller.selectNamespace(tab, namespace),
   );
+  const scaleResults = useScaleResults((result) => {
+    if (result.state === "accepted") workloads.refreshScaleTarget(result.resource);
+  });
+  const [resultsOpen, setResultsOpen] = useState(false);
+  const [openingScaleTarget, setOpeningScaleTarget] = useState<{ ref: ResourceRef; tab: string } | null>(null);
+  const scaleConnectionKey = (ref: ResourceRef["connection"]) => JSON.stringify([ref.id, ref.generation]);
+  const findScaleTab = (resource: ResourceRef) =>
+    Object.entries(state.tabs).find(
+      ([, tab]) => tab.view?.ref && scaleConnectionKey(tab.view.ref) === scaleConnectionKey(resource.connection),
+    )?.[0];
+  useEffect(() => {
+    if (!openingScaleTarget || page !== "workspace" || state.active !== openingScaleTarget.tab || !workloads.ready) return;
+    setOpeningScaleTarget(null);
+    workloads.openScaleTarget(openingScaleTarget.ref);
+  }, [openingScaleTarget, page, state.active, workloads.ready]);
   function choose(entry: CatalogEntry) {
     setPage("workspace");
     void controller.connect(entry);
@@ -163,6 +180,14 @@ export default function App() {
         />
         <button onClick={() => setPage("clusters")}>Choose cluster</button>
         <button
+          onClick={() => {
+            scaleResults.refresh();
+            setResultsOpen(true);
+          }}
+        >
+          Scale results{scaleResults.pending ? " · Running" : scaleResults.results.length ? ` (${scaleResults.results.length})` : ""}
+        </button>
+        <button
           aria-pressed={page === "settings"}
           onClick={() => (page === "settings" ? setPage(active ? "workspace" : "clusters") : settings())}
         >
@@ -178,6 +203,23 @@ export default function App() {
           {aiOpen ? "Hide AI" : "Ask AI"}
         </button>
       </header>
+      {resultsOpen && (
+        <OperationResults
+          results={scaleResults.results}
+          pending={scaleResults.pending}
+          error={scaleResults.error}
+          onClose={() => setResultsOpen(false)}
+          onRefresh={scaleResults.refresh}
+          canOpen={(ref) => !!findScaleTab(ref)}
+          onTarget={(ref) => {
+            const tab = findScaleTab(ref);
+            if (!tab) return;
+            controller.commit({ type: "focus", key: tab });
+            setPage("workspace");
+            setOpeningScaleTarget({ ref, tab });
+          }}
+        />
+      )}
       <div className="identity-bar compact-identity">
         {page === "workspace" && active ? (
           <>
@@ -261,6 +303,10 @@ export default function App() {
                 tab={active}
                 navigationOpen={!hiddenNavigation[state.active!]}
                 controller={workloads}
+                onScale={(review, acknowledgement) => {
+                  scaleResults.submit(review, acknowledgement);
+                  setResultsOpen(true);
+                }}
                 logs={
                   workloads.selection?.resource.kind === "Pod" && workloads.activeSection === "Logs" ? (
                     <PodLogs

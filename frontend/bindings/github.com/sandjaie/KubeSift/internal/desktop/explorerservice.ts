@@ -22,6 +22,9 @@ import * as kube$0 from "../kube/models.js";
 import * as model$0 from "../model/models.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
+import * as operation$0 from "../operation/models.js";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
 import * as sources$0 from "../sources/models.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
@@ -51,6 +54,10 @@ export function Disconnect(ref: model$0.ConnectionRef): $CancellablePromise<void
   return $Call.ByID(2590980822, ref);
 }
 
+export function ExecuteScale(token: string, acknowledgement: string): $CancellablePromise<operation$0.ScaleResult> {
+  return $Call.ByID(2364239635, token, acknowledgement);
+}
+
 export function GetAttempt(id: string): $CancellablePromise<explorer$0.ConnectionView> {
   return $Call.ByID(3532223857, id);
 }
@@ -59,12 +66,24 @@ export function GetConnection(ref: model$0.ConnectionRef): $CancellablePromise<e
   return $Call.ByID(194278784, ref);
 }
 
+export function GetScaleResult(operationID: string): $CancellablePromise<operation$0.ScaleResult> {
+  return $Call.ByID(2478111667, operationID);
+}
+
+export function ListScaleResults(): $CancellablePromise<operation$0.ScaleResult[] | null> {
+  return $Call.ByID(3526813900);
+}
+
 export function ListSources(): $CancellablePromise<sources$0.SourceResult[] | null> {
   return $Call.ByID(3320858230);
 }
 
 export function OpenPodLogs(req: kube$0.LogRequest): $CancellablePromise<model$0.SessionRef> {
   return $Call.ByID(1020417316, req);
+}
+
+export function PrepareScale(id: string, req: operation$0.ScaleRequest): $CancellablePromise<operation$0.ScalePreview> {
+  return $Call.ByID(841288983, id, req);
 }
 
 export function ReadAPIGroups(id: string, req: kube$0.APIGroupRequest): $CancellablePromise<kube$0.APIGroupCatalog> {
@@ -215,6 +234,10 @@ export function ReviewHelper(source: string, snapshot: string, name: string): $C
 
 export function RevokeHelper(fp: string): $CancellablePromise<void> {
   return $Call.ByID(2437089190, fp);
+}
+
+export function RevokeScale(token: string): $CancellablePromise<void> {
+  return $Call.ByID(222831752, token);
 }
 
 export function SetLabel(source: string, name: string, label: string): $CancellablePromise<void> {

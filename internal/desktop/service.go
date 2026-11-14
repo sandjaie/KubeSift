@@ -32,6 +32,7 @@ type Service struct {
 	auth        *lazyAuth
 	kube        *kube.Service
 	operations  *operation.Service
+	scale       *operation.ScaleService
 	fixtures    map[model.ConnectionRef]FixtureTarget
 	ctx         context.Context
 	cancel      context.CancelFunc
@@ -92,9 +93,9 @@ func NewService() *Service {
 	})
 	s.sessions.RequireBridgeAcknowledgements()
 	s.sessions.SetValidate(func(target model.Target) error { return s.connections.Validate(target.Connection) })
-	s.connections.SetCleanup(s.sessions.StopConnection)
 	s.kube = kube.NewService(s.connections, s.sessions)
 	s.operations = operation.NewService(s.connections, time.Now)
+	s.scale = operation.NewScaleService(s.connections, time.Now)
 	s.fixtures = map[model.ConnectionRef]FixtureTarget{}
 	return s
 }
@@ -133,6 +134,7 @@ func (s *Service) CloseConnection(ref model.ConnectionRef) error {
 }
 func (s *Service) ServiceShutdown() error {
 	s.cancel()
+	s.scale.Close()
 	s.sessions.Close()
 	s.connections.CloseAll()
 	s.mu.Lock()

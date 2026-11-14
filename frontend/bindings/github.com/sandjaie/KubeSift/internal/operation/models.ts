@@ -9,14 +9,57 @@ Important: Wails generates this glue; change Go contracts and regenerate rather 
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
+import * as kube$0 from "../kube/models.js";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
 import * as model$0 from "../model/models.js";
 
 export interface Preview {
-    "token": string;
-    "target": model$0.Target;
-    "oldValue": string;
-    "newValue": string;
-    "uid": string;
-    "resourceVersion": string;
-    "expiresAt": string;
+  token: string;
+  target: model$0.Target;
+  oldValue: string;
+  newValue: string;
+  uid: string;
+  resourceVersion: string;
+  expiresAt: string;
+}
+
+export interface ScaleImpact {
+  direction: string;
+  whenScaled: string;
+  whenDeleted: string;
+  policyDefault: boolean;
+}
+
+export interface ScalePreview {
+  cluster: string;
+  token: string;
+  resource: kube$0.ResourceRef;
+  sourceVersion: string;
+  before: number;
+  after: number;
+  expiresAt: string;
+  permission: string;
+  warnings: string[] | null;
+  impact: ScaleImpact;
+  noChange: boolean;
+}
+
+export interface ScaleRequest {
+  resource: kube$0.ResourceRef;
+  sourceVersion: string;
+  replicasText: string;
+}
+
+export interface ScaleResult {
+  cluster: string;
+  operationID: string;
+  resource: kube$0.ResourceRef;
+  before: number;
+  requested: number;
+  reported: number | null;
+  startedAt: string;
+  finishedAt: string | null;
+  state: string;
+  problem: model$0.Problem | null;
 }

@@ -23,6 +23,7 @@ import { AvailabilityTable } from "../availability/AvailabilityTable";
 import { NetworkTable } from "../networking/NetworkTable";
 import type { WorkloadRow } from "../workloads/model";
 import { ResourceTable } from "./ResourceTable";
+import type { ScalePreview } from "../operations/api";
 import { ResourceDetail } from "./ResourceDetail";
 import { ResizeHandle } from "../ui/ResizeHandle";
 import { isClusterKind, clusterLabels, type ClusterResourceRow, type EventInventoryRow } from "../cluster/model";
@@ -40,6 +41,7 @@ export function Workspace({
   onResize,
   onCommitSize,
   logs,
+  onScale,
 }: {
   tab: ConnectionTab;
   controller: WorkloadController;
@@ -51,6 +53,7 @@ export function Workspace({
   onResize: (n: number) => void;
   onCommitSize: () => void;
   logs?: ReactNode;
+  onScale: (review: ScalePreview, acknowledgement: string) => void;
 }) {
   const i = c.inventory,
     kind = c.kind;
@@ -67,7 +70,9 @@ export function Workspace({
             : isStorageKind(kind)
               ? storageLabels[kind]
               : `${kind}s`;
-  const stale = tab.pollFailed || visibleState(tab.view) !== "connected";
+  const connectionState = visibleState(tab.view);
+  const stale = tab.pollFailed || connectionState !== "connected";
+  const canReviewScale = !tab.pollFailed && (connectionState === "connected" || connectionState === "restricted");
   const rows = [...(i.page?.items ?? [])]
     .filter((row) => row.resource.name.toLowerCase().includes(i.filter.toLowerCase()))
     .sort((a, b) => (kind === "Event" ? 0 : a.resource.name.localeCompare(b.resource.name) * (i.sort === "asc" ? 1 : -1)));
@@ -242,7 +247,14 @@ export function Workspace({
             </section>
             <section className="detail-pane">
               {c.selection ? (
-                <ResourceDetail controller={c} context={tab.entry.context} stale={stale} logs={logs} />
+                <ResourceDetail
+                  controller={c}
+                  context={tab.entry.context}
+                  stale={stale}
+                  canReviewScale={canReviewScale}
+                  logs={logs}
+                  onScale={onScale}
+                />
               ) : (
                 <div className="state-message">
                   <h2>Select a {kind}</h2>
