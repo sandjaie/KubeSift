@@ -31,7 +31,7 @@ type Service struct {
 func NewService(c *connection.Manager, s *session.Manager) *Service {
 	s.SetValidate(func(t model.Target) error { return c.Validate(t.Connection) })
 	service := &Service{connections: c, sessions: s, terminals: map[string]*terminal{}, productLogs: map[string]model.SessionRef{}, discovery: map[model.ConnectionRef]*discoveryCache{}, cursorKey: model.ID()}
-	c.SetCleanup(service.closeConnection)
+	c.AddCleanup(service.closeConnection)
 	return service
 }
 

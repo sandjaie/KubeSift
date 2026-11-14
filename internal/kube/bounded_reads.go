@@ -75,9 +75,28 @@ func (s *Service) boundedReadConfig(ctx context.Context, ref model.ConnectionRef
 	if err != nil {
 		return nil, err
 	}
-	cfg = rest.CopyConfig(cfg)
-	cfg.Wrap(func(next http.RoundTripper) http.RoundTripper { return boundedTransport{next} })
-	return cfg, nil
+	return boundedConfig(cfg), nil
+}
+
+func boundedConfig(cfg *rest.Config) *rest.Config {
+	copy := rest.CopyConfig(cfg)
+	copy.Wrap(func(next http.RoundTripper) http.RoundTripper { return boundedTransport{next} })
+	return copy
+}
+
+// BoundedHTTPClient shares the guarded response limit and rejects redirects.
+func BoundedHTTPClient(cfg *rest.Config) (*http.Client, error) {
+	return boundedHTTPClient(boundedConfig(cfg))
+}
+
+func boundedHTTPClient(cfg *rest.Config) (*http.Client, error) {
+	client, err := rest.HTTPClientFor(cfg)
+	if err != nil {
+		return nil, model.Fail("invalid", "Cannot create Kubernetes transport")
+	}
+	copy := *client
+	copy.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
+	return &copy, nil
 }
 
 func (s *Service) boundedReadClient(ctx context.Context, ref model.ConnectionRef) (kubernetes.Interface, error) {
@@ -85,13 +104,11 @@ func (s *Service) boundedReadClient(ctx context.Context, ref model.ConnectionRef
 	if err != nil {
 		return nil, err
 	}
-	httpClient, err := rest.HTTPClientFor(cfg)
+	httpClient, err := boundedHTTPClient(cfg)
 	if err != nil {
-		return nil, model.Fail("invalid", "Cannot create workload transport")
+		return nil, err
 	}
-	copy := *httpClient
-	copy.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
-	client, err := kubernetes.NewForConfigAndClient(cfg, &copy)
+	client, err := kubernetes.NewForConfigAndClient(cfg, httpClient)
 	if err != nil {
 		return nil, model.Fail("invalid", "Cannot create workload reader")
 	}

@@ -1,7 +1,12 @@
 <!doctype html>
 <html lang="en">
-  <meta charset="utf-8" /><title>Prepared marker operations</title>
-  <h1>Prepared marker operations</h1>
+  <meta charset="utf-8" /><title>Reviewed operations</title>
+  <h1>Reviewed operations</h1>
+  <p>
+    ScaleService owns the product Deployment and StatefulSet flow. It compares the displayed parent and Scale, requires a server dry-run,
+    and issues a bounded review. The only real update is a minimal Scale with the original UID and version. Completion feedback remains in
+    memory and uses separate states for acceptance, rejection and uncertainty.
+  </p>
   <p>
     Framework-independent Phase 1A prepare/review/execute for ks-marker. Opaque five-minute tokens bind connection generation, namespace,
     UID, resourceVersion and marker value. At most 128 reviews and 256-byte marker values are retained. Execution consumes the token before
