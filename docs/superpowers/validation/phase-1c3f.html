@@ -78,7 +78,8 @@
         Final executable <code>9f139971fb31f4edad44c4d1c6489a634fc76fb202e4c25b0fea552ff6d0f800</code> passed the native HPA generation
         display, target link and Back retest. Full checks, race and targeted two-cluster integration passed; the latter also verified
         ControllerRevision Events and independently denied HPA Events. Nested frontend evidence above one page was not exercised in a native
-        fixture. Targeted recheck pending.
+        fixture. The same reviewer rechecked the delta through <code>794aea5</code> and confirmed all four corrections with no remaining
+        blockers.
       </p>
       <p>
         Both clusters removed the owned fixture HPA before its target or controllers, then deleted the foreground dependents and the fixture

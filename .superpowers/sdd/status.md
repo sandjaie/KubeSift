@@ -6,7 +6,7 @@ Updated 2026-11-14. Current integration branch is `develop`.
 
 - Implemented on `feature/phase-1c3f-availability` from `f38cf23`. [Specification](../../docs/superpowers/specs/2026-11-14-phase-1c3f-availability-design.md), [plan](../../docs/superpowers/plans/2026-11-14-phase-1c3f-availability.md), and [validation report](../../docs/superpowers/validation/phase-1c3f.html).
 - Both-cluster integration and packaged checks covered HPA target, PDB selector association, RC ownership, and StatefulSet/DaemonSet revisions. See the report for evidence and limitations.
-- Whole-PR review and delivery pending.
+- Independent whole-PR review and targeted corrections passed. Ready PR and merge verification are next.
 
 ## Phase 1C.3e · Read-only access control
 
