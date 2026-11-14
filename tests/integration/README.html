@@ -72,3 +72,12 @@ done</code></pre>
   fixture-reader identity for restricted reads. Delete the two owned Widgets before deleting the CRDs and verify the namespace and cluster
   fixture names are absent afterward.
 </p>
+
+<p>
+  TestReviewedScaling is opt in with <code>KUBESIFT_SCALING_INTEGRATION=1</code> and the same isolated config directory. On the two approved
+  kind contexts create the collision-checked <a href="../fixtures/explorer/phase-1d1.yaml">scaling fixtures</a>, wait for both workloads to
+  settle, and supply <code>a.kubeconfig</code>, <code>b.kubeconfig</code> plus <code>-reader</code> and <code>-writer</code> variants for
+  each. Impersonate the fixture reader and writer users from the manifest. For the writer set impersonated group
+  <code>system:unauthenticated</code> to exercise a denied permission hint with an admissible dry-run. The scoped loopback proxy changes
+  only the owned Deployment version or drops its write response. Delete the owned namespace and temporary kubeconfigs after verification.
+</p>
