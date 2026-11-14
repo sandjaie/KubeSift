@@ -6,7 +6,7 @@ Important: These fields describe recorded rules, not what a subject can do.
 */
 import { useState, type ReactNode } from "react";
 import { EvidencePage } from "../storage/StorageOverview";
-import { recognizedRule, type Aggregation, type Rule } from "./model";
+import { recognizedRule, ruleValue, type Aggregation, type Rule } from "./model";
 
 export function Disclosure({ label, children }: { label: string; children: ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -31,31 +31,31 @@ export function Field({ label, children }: { label: string; children?: ReactNode
   );
 }
 
-function Values({ items, empty = "None captured", core = false }: { items?: string[]; empty?: string; core?: boolean }) {
+function Values({ items, empty = "None captured", field }: { items?: string[]; empty?: string; field?: keyof Rule }) {
   if (!items?.length) return empty;
   return (
-    <ul>
-      <EvidencePage
-        items={items}
-        render={(value, i) => (
-          <li key={i} className="network-value">
-            {value === "*" ? "* (wildcard)" : core && value === "" ? "Core API group" : value || '""'}
-          </li>
-        )}
-      />
-    </ul>
+    <EvidencePage
+      items={items}
+      wrap={(rows) => <ul>{rows}</ul>}
+      render={(value, i) => (
+        <li key={i} className="network-value">
+          {ruleValue(value, field)}
+        </li>
+      )}
+    />
   );
 }
 
 export function PolicyRules({
-  rules = [],
+  rules: capturedRules,
   aggregationRule,
   namespaced,
 }: {
-  rules?: Rule[];
+  rules?: Rule[] | null;
   aggregationRule?: Aggregation;
   namespaced: boolean;
 }) {
+  const rules = capturedRules ?? [];
   const selectors = aggregationRule?.clusterRoleSelectors ?? [];
   return (
     <>
@@ -72,16 +72,15 @@ export function PolicyRules({
             render={(selector, i) => (
               <Disclosure key={i} label={`Selector ${i + 1}`}>
                 <h4>Match labels</h4>
-                <ul>
-                  <EvidencePage
-                    items={Object.entries(selector.matchLabels ?? {})}
-                    render={([key, value]) => (
-                      <li className="network-value" key={key}>
-                        {key} = {value === "" ? '""' : value}
-                      </li>
-                    )}
-                  />
-                </ul>
+                <EvidencePage
+                  items={Object.entries(selector.matchLabels ?? {})}
+                  wrap={(rows) => <ul>{rows}</ul>}
+                  render={([key, value]) => (
+                    <li className="network-value" key={key}>
+                      {key} = {value === "" ? '""' : value}
+                    </li>
+                  )}
+                />
                 <h4>Match expressions</h4>
                 <EvidencePage
                   items={selector.matchExpressions ?? []}
@@ -116,19 +115,19 @@ export function PolicyRules({
             {(!recognizedRule(rule) || (namespaced && !!rule.nonResourceURLs?.length)) && <p>Unrecognized rule shape</p>}
             <dl className="pod-facts">
               <Field label="Verbs">
-                <Values items={rule.verbs} />
+                <Values items={rule.verbs} field="verbs" />
               </Field>
               <Field label="API groups">
-                <Values items={rule.apiGroups} core />
+                <Values items={rule.apiGroups} field="apiGroups" />
               </Field>
               <Field label="Resources / subresources">
-                <Values items={rule.resources} />
+                <Values items={rule.resources} field="resources" />
               </Field>
               <Field label="Resource names">
                 <Values items={rule.resourceNames} empty="No name restriction in this rule" />
               </Field>
               <Field label="Non-resource URLs">
-                <Values items={rule.nonResourceURLs} />
+                <Values items={rule.nonResourceURLs} field="nonResourceURLs" />
               </Field>
             </dl>
           </Disclosure>

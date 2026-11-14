@@ -16,7 +16,7 @@ type Capture = {
   automountServiceAccountToken?: boolean;
   secrets?: { name?: string; namespace?: string; uid?: string }[];
   imagePullSecrets?: { name?: string }[];
-  rules?: Rule[];
+  rules?: Rule[] | null;
   aggregationRule?: Aggregation;
   roleRef?: RoleRef;
   subjects?: Subject[];

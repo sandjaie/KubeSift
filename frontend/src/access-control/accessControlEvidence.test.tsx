@@ -9,7 +9,7 @@ import { expect, test } from "vitest";
 import type { ResourceDetail } from "../workloads/model";
 import { AccessControlOverview } from "./AccessControlOverview";
 import { PodIdentity } from "./PodIdentity";
-import { roleTarget, subjectTarget, recognizedRule } from "./model";
+import { roleTarget, subjectTarget, recognizedRule, ruleValue } from "./model";
 
 function capture(kind: string, value: unknown): ResourceDetail {
   return {
@@ -72,4 +72,19 @@ test("Pod and ServiceAccount evidence never turn token configuration or Secret n
   const view = renderToStaticMarkup(<AccessControlOverview data={sa} onOpenReference={() => {}} />);
   expect(view).toContain("Not specified");
   expect(view).not.toContain("<button");
+});
+
+test("typed Kubernetes captures with null rule lists remain inspectable", () => {
+  for (const kind of ["Role", "ClusterRole"]) {
+    const markup = renderToStaticMarkup(<AccessControlOverview data={capture(kind, { rules: null })} onOpenReference={() => {}} />);
+    expect(markup).toContain("No rules captured");
+  }
+});
+
+test("wildcard labeling is confined to fields where Kubernetes gives it that meaning", () => {
+  expect(ruleValue("*", "verbs")).toBe("* (wildcard)");
+  expect(ruleValue("", "apiGroups")).toBe("Core API group");
+  expect(ruleValue("pods/log", "resources")).toBe("pods/log");
+  expect(ruleValue("*", "resourceNames")).toBe("*");
+  expect(ruleValue("*")).toBe("*");
 });

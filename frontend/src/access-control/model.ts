@@ -58,3 +58,9 @@ export function recognizedRule(rule: Rule) {
   if (rule.nonResourceURLs?.length) return !rule.apiGroups?.length && !rule.resources?.length && !rule.resourceNames?.length;
   return Boolean(rule.apiGroups?.length && rule.resources?.length);
 }
+
+export function ruleValue(value: string, field?: keyof Rule) {
+  if (value === "*" && field && field !== "resourceNames") return "* (wildcard)";
+  if (value === "" && field === "apiGroups") return "Core API group";
+  return value || '""';
+}

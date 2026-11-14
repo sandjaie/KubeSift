@@ -21,7 +21,7 @@
       </p>
       <h2>Automated and integration verification</h2>
       <ul>
-        <li>Repository checks, 55 frontend tests, Go race checks, generated bindings and production build passed.</li>
+        <li>Repository checks, 57 frontend tests, Go race checks, generated bindings and production build passed.</li>
         <li>
           All five opt-in investigations passed on explicit <code>kind-dev-local-a</code> and <code>kind-dev-local-b</code>: access control,
           storage, configuration, networking and workload investigation.
@@ -65,7 +65,21 @@
         <a href="phase-1c3d.html">storage report</a>.
       </p>
       <h2>Independent review</h2>
-      <p>Review and final head coverage pending.</p>
+      <p>
+        Reviewer <code>access_control_pr_review</code> inspected all 39 changed files at <code>1b0185e</code>, from base and merge base
+        <code>c41a54c</code>.
+      </p>
+      <ul>
+        <li>KSF-001 (P1): Null rules previously crashed Overview. Null and missing rule lists now show “No rules captured”.</li>
+        <li>KSF-002 (P2): Wildcard labels now apply only where RBAC defines them. Resource names and selector values remain literal.</li>
+        <li>KSF-003 (P3): Nested list paging controls now sit outside the native list markup.</li>
+      </ul>
+      <p>
+        Rebuilt executable <code>f7d84ff7f8a093c7e27a209626150fdba0f348646586b5d92103df5359c0ce68</code> showed a real empty Role and
+        separate wildcard verb and literal asterisk resource name. Final executable
+        <code>b507b21c76e5330908340b4fadd6659803a1858a733ca3c59c297e4fc850521a</code> verified native paging of 101 rule values. Repository
+        checks were rerun after all corrections. Targeted recheck pending.
+      </p>
     </main>
   </body>
 </html>
