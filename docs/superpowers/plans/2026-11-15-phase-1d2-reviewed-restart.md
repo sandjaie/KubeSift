@@ -55,11 +55,11 @@ Five risks and their owning tests:
 
 **Interfaces:** `ExecuteRestart(ctx context.Context, token, acknowledgement string) (OperationResult,error)`; `RevokeRestart(token string)`. Prepare desktop method accepts existing request ID for cancellation; Execute is native-operation-owned. List/get common results use Task 1 contract. Recreate requires exact resource name acknowledgement, checked natively. No target or new annotation input at Execute.
 
-- [ ] Test execution re-read rejects stale UID/version/eligibility, altered strategy and changed annotation; exact prepared patch/timestamp goes out once after validation. A post-GET race is handled by JSON Patch tests, never by updating the expected version.
-- [ ] Test known rejection/stale versus unknown on timeout/EOF/5xx/invalid success; JSON Patch 422 can use one diagnostic GET to verify staleness without resubmission. Valid identity/marker plus unexpected successful admission spec changes yields accepted with ResponseDiffers, not silent rollback or a claim of unchanged spec.
-- [ ] Count actual HTTP requests for 429, redirects, authentication retry paths, bridge loss and repeated token execution. There is at most one persisted PATCH, separately counted from one dry-run PATCH. Never auto-retry an ambiguous result.
-- [ ] Test pending revoke/connection close before dispatch, close after dispatch, app shutdown, native result retrieval and shared Scale/Restart race. Keep unknown truthful and never infer success from later matching annotation.
-- [ ] Wire thin bridge, generate `wails3 task bindings`, inspect diff and add typed wrappers. Run Go tests/race and frontend typecheck. Commit.
+- [x] Test execution re-read rejects stale UID/version/eligibility, altered strategy and changed annotation; exact prepared patch/timestamp goes out once after validation. A post-GET race is handled by JSON Patch tests, never by updating the expected version.
+- [x] Test known rejection/stale versus unknown on timeout/EOF/5xx/invalid success; JSON Patch 422 can use one diagnostic GET to verify staleness without resubmission. Valid identity/marker plus unexpected successful admission spec changes yields accepted with ResponseDiffers, not silent rollback or a claim of unchanged spec.
+- [x] Count actual HTTP requests for 429, redirects, authentication retry paths, bridge loss and repeated token execution. There is at most one persisted PATCH, separately counted from one dry-run PATCH. Never auto-retry an ambiguous result.
+- [x] Test pending revoke/connection close before dispatch, close after dispatch, app shutdown, native result retrieval and shared Scale/Restart race. Keep unknown truthful and never infer success from later matching annotation.
+- [x] Wire thin bridge, generate `wails3 task bindings`, inspect diff and add typed wrappers. Run Go tests/race and frontend typecheck. Commit.
 
 ## Task 4 — Restart review and mixed operation results (R01, R06)
 

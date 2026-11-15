@@ -54,6 +54,10 @@ export function Disconnect(ref: model$0.ConnectionRef): $CancellablePromise<void
   return $Call.ByID(2590980822, ref);
 }
 
+export function ExecuteRestart(token: string, acknowledgement: string): $CancellablePromise<operation$0.OperationResult> {
+  return $Call.ByID(346194450, token, acknowledgement);
+}
+
 export function ExecuteScale(token: string, acknowledgement: string): $CancellablePromise<operation$0.ScaleResult> {
   return $Call.ByID(2364239635, token, acknowledgement);
 }
@@ -66,8 +70,16 @@ export function GetConnection(ref: model$0.ConnectionRef): $CancellablePromise<e
   return $Call.ByID(194278784, ref);
 }
 
+export function GetOperationResult(id: string): $CancellablePromise<operation$0.OperationResult> {
+  return $Call.ByID(3912581600, id);
+}
+
 export function GetScaleResult(operationID: string): $CancellablePromise<operation$0.ScaleResult> {
   return $Call.ByID(2478111667, operationID);
+}
+
+export function ListOperationResults(): $CancellablePromise<operation$0.OperationResult[] | null> {
+  return $Call.ByID(4120304269);
 }
 
 export function ListScaleResults(): $CancellablePromise<operation$0.ScaleResult[] | null> {
@@ -80,6 +92,10 @@ export function ListSources(): $CancellablePromise<sources$0.SourceResult[] | nu
 
 export function OpenPodLogs(req: kube$0.LogRequest): $CancellablePromise<model$0.SessionRef> {
   return $Call.ByID(1020417316, req);
+}
+
+export function PrepareRestart(id: string, req: operation$0.RestartRequest): $CancellablePromise<operation$0.RestartPreview> {
+  return $Call.ByID(1109198430, id, req);
 }
 
 export function PrepareScale(id: string, req: operation$0.ScaleRequest): $CancellablePromise<operation$0.ScalePreview> {
@@ -234,6 +250,10 @@ export function ReviewHelper(source: string, snapshot: string, name: string): $C
 
 export function RevokeHelper(fp: string): $CancellablePromise<void> {
   return $Call.ByID(2437089190, fp);
+}
+
+export function RevokeRestart(token: string): $CancellablePromise<void> {
+  return $Call.ByID(2964379669, token);
 }
 
 export function RevokeScale(token: string): $CancellablePromise<void> {
