@@ -137,6 +137,13 @@
         automatically unhealthy; unavailable/stale health data must be identified. Alerts require evidence, not a decorative badge. Text and
         icons supplement color.
       </p>
+      <h2 id="reviewed-restart">Reviewed workload restart design</h2>
+      <p>
+        The <a href="../superpowers/specs/2026-11-15-phase-1d2-reviewed-restart-design.md">Phase 1D.2 specification</a> adds Restart beside
+        Scale in supported controller Overview actions. Strategy-aware review shows the immutable target and annotation change; unsupported
+        paused, OnDelete and partitioned cases explain their restriction. Shared Operation results distinguish Scale counts from Restart
+        timestamps without claiming rollout completion. Preserve the existing inspector, YAML, Events and ConfigMap Data refinements.
+      </p>
       <h2 id="reviewed-scaling">Reviewed workload scaling design</h2>
       <p>
         The <a href="../superpowers/specs/2026-11-14-phase-1d1-reviewed-scaling-design.md">Phase 1D.1 specification</a> defines Scale for

@@ -124,6 +124,12 @@
         native UID/version-bound single-use review and no automatic retry of ambiguous writes. Generic discovery and Secret browsing remain
         read-only. Bounded in-memory operation results are session feedback, not durable audit history.
       </p>
+      <p>
+        The <a href="../superpowers/specs/2026-11-15-phase-1d2-reviewed-restart-design.md">reviewed restart specification</a> limits restart
+        to fixed controller template annotation patches with native UID/version test conditions, mandatory dry-run and no automatic replay.
+        Scale and Restart share target locks and aggregate review/result limits. Full controller responses remain native; only bounded
+        action evidence crosses the bridge.
+      </p>
       <h2>AI availability and provider routing</h2>
       <p>
         AI investigation is available in Phase 2. Application default provider plus per-cluster overrides references profiles stored

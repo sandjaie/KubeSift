@@ -294,6 +294,22 @@
           request counts; a mocked service call is insufficient proof of no retries.
         </li>
       </ul>
+      <h2 id="restart-strategies">Restart and controller strategies</h2>
+      <ul>
+        <li>
+          <a href="https://kubernetes.io/docs/concepts/workloads/controllers/deployment/">Deployment strategy and pause</a> and
+          <a href="https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/">StatefulSet update strategies and partition</a>
+          explain why a template change does not always restart all Pods.
+        </li>
+        <li>
+          <a href="https://kubernetes.io/docs/reference/kubectl/generated/kubectl_rollout/kubectl_rollout_restart/">Rollout restart</a>
+          provides user-facing controller restart semantics; KubeSift uses its guarded API client, not shell execution.
+        </li>
+        <li>
+          The <a href="../superpowers/specs/2026-11-15-phase-1d2-reviewed-restart-design.md">restart specification</a> owns eligibility,
+          conditional JSON Patch, admission comparison and shared operation limits. Test actual API preconditions and wire dispatch counts.
+        </li>
+      </ul>
       <h2 id="discovery">Cluster resources and discovery</h2>
       <ul>
         <li>

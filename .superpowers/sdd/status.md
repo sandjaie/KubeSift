@@ -2,6 +2,12 @@
 
 Updated 2026-11-15. Current integration branch is `develop`.
 
+## Phase 1D.2 · Reviewed workload restart
+
+- Planning package prepared; implementation has not started. [Specification](../../docs/superpowers/specs/2026-11-15-phase-1d2-reviewed-restart-design.md) and [five-task plan](../../docs/superpowers/plans/2026-11-15-phase-1d2-reviewed-restart.md).
+- Conditional annotation restart for Deployment/StatefulSet/DaemonSet with strategy restrictions, mandatory dry-run, shared Scale/Restart target locks and bounded operation results. Preserve the merged resource-detail refinements.
+- Separate implementation session, existing checkout, no worktree. Agent verification and one independent whole-PR review precede ready-PR merge; no duplicate manual UAT or release authorization.
+
 ## Resource detail refinement
 
 - [PR #16](https://github.com/sandjaie/KubeSift/pull/16) squash-merged into `develop` as `7b72850` on 2026-11-15 Dubai time. It refined YAML and Events controls, the Overview inspector, and ConfigMap Data. The [validation report](../../docs/superpowers/validation/detail-view-refinement.html) records automated and packaged checks and the independent review recheck.
