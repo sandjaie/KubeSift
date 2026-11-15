@@ -4,9 +4,11 @@ Used by: Workspace after explicit resource selection.
 Responsibilities: Keep section failures independent and render cluster fields as inert text.
 Important: Overview configuration is not measured usage and references never fetch Secret values.
 */
-import { useLayoutEffect, useState, type ReactNode } from "react";
+import { useId, useLayoutEffect, useState, type ReactNode } from "react";
 import { ScaleDialog } from "../operations/ScaleDialog";
-import type { ScalePreview } from "../operations/api";
+import { RestartDialog } from "../operations/RestartDialog";
+import { restartUnavailable } from "../operations/restartState";
+import type { OperationAction } from "../operations/api";
 import type { WorkloadController } from "../workloads/useWorkloads";
 import type {
   ResourceDetail as Detail,
@@ -46,18 +48,19 @@ export function ResourceDetail({
   controller: c,
   context,
   stale,
-  canReviewScale,
+  canReviewOperation,
   logs,
-  onScale,
+  onOperation,
 }: {
   controller: WorkloadController;
   context: string;
   stale: boolean;
-  canReviewScale: boolean;
+  canReviewOperation: boolean;
   logs?: ReactNode;
-  onScale: (review: ScalePreview, acknowledgement: string) => void;
+  onOperation: (action: OperationAction, token: string, acknowledgement: string) => void;
 }) {
-  const [scaleReview, setScaleReview] = useState("");
+  const [review, setReview] = useState<{ action: OperationAction; key: string }>();
+  const restartReasonID = useId();
   const row = c.selection;
 
   const section = c.activeSection,
@@ -72,16 +75,19 @@ export function ResourceDetail({
     !state?.loading &&
     !state?.error &&
     (data as Detail | undefined)?.resourceVersion === link.targetVersion;
-  const scaleSource =
-    section === "Overview" && canReviewScale && !state?.loading && !state?.error && (kind === "Deployment" || kind === "StatefulSet")
+  const supportsScale = kind === "Deployment" || kind === "StatefulSet";
+  const supportsRestart = supportsScale || kind === "DaemonSet";
+  const source =
+    section === "Overview" && canReviewOperation && !state?.loading && !state?.error && supportsRestart
       ? (data as Detail | undefined)
       : undefined;
-  const scaleKey = scaleSource?.resourceVersion
-    ? JSON.stringify([scaleSource.resource, scaleSource.resourceVersion, c.inventory.refresh, c.inventory.sectionRefresh])
+  const sourceKey = source?.resourceVersion
+    ? JSON.stringify([source.resource, source.resourceVersion, c.inventory.refresh, c.inventory.sectionRefresh])
     : "";
+  const restartReason = source ? restartUnavailable(source) : "";
   useLayoutEffect(() => {
-    setScaleReview("");
-  }, [scaleKey]);
+    setReview(undefined);
+  }, [sourceKey]);
   if (!row) return null;
   return (
     <div className={section === "YAML" ? "compact-pod-detail yaml-detail" : "compact-pod-detail"}>
@@ -94,14 +100,26 @@ export function ResourceDetail({
       <div className="pane-heading">
         <h2>{row.resource.name}</h2>
         <div className="scale-actions">
-          {scaleKey && (
+          {supportsScale && sourceKey && (
             <button
               onClick={(event) => {
                 event.currentTarget.focus();
-                setScaleReview(scaleKey);
+                setReview({ action: "scale", key: sourceKey });
               }}
             >
               Scale…
+            </button>
+          )}
+          {source && (
+            <button
+              disabled={!!restartReason}
+              aria-describedby={restartReason ? restartReasonID : undefined}
+              onClick={(event) => {
+                event.currentTarget.focus();
+                setReview({ action: "restart", key: sourceKey });
+              }}
+            >
+              Restart…
             </button>
           )}
           {section !== "Logs" && (
@@ -111,9 +129,33 @@ export function ResourceDetail({
           )}
         </div>
       </div>
-      {scaleSource && scaleKey && scaleReview === scaleKey && (
-        <ScaleDialog key={scaleKey} source={scaleSource} cluster={context} onDismiss={() => setScaleReview("")} onExecute={onScale} />
+      {source && restartReason && (
+        <p className="muted" id={restartReasonID}>
+          {restartReason}
+        </p>
       )}
+      {source &&
+        sourceKey &&
+        review?.key === sourceKey &&
+        (review.action === "scale" ? (
+          <ScaleDialog
+            key={sourceKey}
+            source={source}
+            cluster={context}
+            onDismiss={() => setReview(undefined)}
+            onExecute={(result, ack) => onOperation("scale", result.token, ack)}
+          />
+        ) : (
+          !restartReason && (
+            <RestartDialog
+              key={sourceKey}
+              source={source}
+              cluster={context}
+              onDismiss={() => setReview(undefined)}
+              onExecute={(result, ack) => onOperation("restart", result.token, ack)}
+            />
+          )
+        ))}
       <p className="detail-identity">
         {context} / {isClusterScoped(kind) ? "Cluster-scoped" : row.resource.namespace} / {row.resource.kind}
       </p>

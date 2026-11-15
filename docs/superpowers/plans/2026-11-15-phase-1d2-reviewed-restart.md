@@ -66,11 +66,11 @@ Five risks and their owning tests:
 **Create:** `frontend/src/operations/RestartDialog.tsx`, `restartState.ts`, `restartState.test.ts`, `RestartDialog.test.tsx`.
 **Modify:** `frontend/src/operations/OperationResults.tsx`, `ScaleDialog.tsx`/existing hook only where the shared result type requires it, `api.ts`, README; `frontend/src/workspace/ResourceDetail.tsx`, `Workspace.tsx` and existing captured-target hooks.
 
-- [ ] Add Restart beside Scale in eligible Overview actions with accessible disabled reasons for unsupported strategies. Preserve PR #16 controls/inspector, existing layout and styles. No redesigned toolbar or new Sessions dock.
-- [ ] Test review fields: immutable target, strategy/count evidence, annotation previous/proposed, expiry/warnings, zero-Pod notice, Recreate typed name and no readiness/PDB guarantee. Reuse existing ReviewDialog and focus restoration.
-- [ ] Test prepare→review→execute transitions, late prepared-token revocation, source/refresh/generation invalidation, Escape and disabled double-confirm. Native modal blocks background interaction; state tests still cover programmatic navigation races. Execution survives navigation and remains visible against original target.
-- [ ] Rename shared feedback to Operation results, add action discriminator and distinct count versus timestamp content. Test mixed retained results after remount/bridge loss; fetching results or refreshing target must not call Execute. Preserve UID-safe Open target and Back, including stale-target error presentation fixed in 1D.1.
-- [ ] Run full frontend tests/lint/typecheck plus relevant Go tests. Commit UI with source descriptions and updated README.
+- [x] Add Restart beside Scale in eligible Overview actions with accessible disabled reasons for unsupported strategies. Preserve PR #16 controls/inspector, existing layout and styles. No redesigned toolbar or new Sessions dock.
+- [x] Test review fields: immutable target, strategy/count evidence, annotation previous/proposed, expiry/warnings, zero-Pod notice, Recreate typed name and no readiness/PDB guarantee. Reuse existing ReviewDialog and focus restoration.
+- [x] Test prepare→review→execute transitions, late prepared-token revocation, source/refresh/generation invalidation, Escape and disabled double-confirm. Native modal blocks background interaction; state tests still cover programmatic navigation races. Execution survives navigation and remains visible against original target.
+- [x] Rename shared feedback to Operation results, add action discriminator and distinct count versus timestamp content. Test mixed retained results after remount/bridge loss; fetching results or refreshing target must not call Execute. Preserve UID-safe Open target and Back, including stale-target error presentation fixed in 1D.1.
+- [x] Run full frontend tests/lint/typecheck plus relevant Go tests. Commit UI with source descriptions and updated README.
 
 ## Task 5 — Real-server proof, packaged verification and delivery (R01–R07)
 

@@ -14,6 +14,7 @@ export type {
   ScalePreview,
   ScaleResult,
 } from "../../bindings/github.com/sandjaie/KubeSift/internal/operation/models";
+export type OperationAction = "scale" | "restart";
 export const prepareScale = (request: ScaleRequest) => readRequest((id) => workloadAPI.PrepareScale(id, request));
 export const executeScale = workloadAPI.ExecuteScale;
 export const listScaleResults = workloadAPI.ListScaleResults;
