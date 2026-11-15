@@ -81,3 +81,14 @@ done</code></pre>
   <code>system:unauthenticated</code> to exercise a denied permission hint with an admissible dry-run. The scoped loopback proxy changes
   only the owned Deployment version or drops its write response. Delete the owned namespace and temporary kubeconfigs after verification.
 </p>
+
+<p>
+  <code>TestReviewedRestart</code> uses <code>KUBESIFT_RESTART_INTEGRATION=1</code> and the same isolated directory. On both approved kind
+  contexts, inspect node placement and create the collision-checked <a href="../fixtures/explorer/phase-1d2.json">restart fixtures</a>. Wait
+  for the three reviewed controllers and the Recreate Deployment to settle. Add <code>-restart-reader</code> and
+  <code>-restart-writer</code> kubeconfig variants for A and B using the matching users from the manifest. Impersonate
+  <code>system:unauthenticated</code> for the writer to verify an inaccessible permission hint. Run
+  <code>go test -tags=integration ./tests/integration -run '^TestReviewedRestart$' -count=1 -v</code>. The test replaces only owned
+  controllers in the dedicated namespace and checks stale UID and version preconditions independently. Delete the owned namespace and
+  temporary kubeconfigs after verification.
+</p>

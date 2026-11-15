@@ -188,3 +188,27 @@ func TestRestartTargetAndMalformedEvidence(t *testing.T) {
 		t.Fatal("oversized patch accepted")
 	}
 }
+
+func TestRestartPreviewAdvancesIdenticalMarker(t *testing.T) {
+	old := strings.Replace(templateFixture, `"sibling":"secret-fixture"`, `"sibling":"secret-fixture","kubectl.kubernetes.io/restartedAt":"`+fixtureTime+`"`, 1)
+	clock, err := time.Parse(time.RFC3339, fixtureTime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	proposed := clock.Add(time.Nanosecond).Format(time.RFC3339Nano)
+	scale, req := scaleServer(t, func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			fmt.Fprint(w, restartFixture("Deployment", "{"+old+"}", "{}"))
+		case http.MethodPost:
+			w.WriteHeader(403)
+		case http.MethodPatch:
+			fmt.Fprint(w, restartFixture("Deployment", "{"+strings.Replace(old, fixtureTime, proposed, 1)+"}", "{}"))
+		}
+	})
+	service := NewRestartService(scale.connections, scale.coordinator, func() time.Time { return clock.In(time.FixedZone("Fixture timezone", 3600)) })
+	p, err := service.PrepareRestart(context.Background(), RestartRequest{Resource: req.Resource, SourceVersion: req.SourceVersion})
+	if err != nil || p.RestartAt != proposed || !p.PreviousSet || p.PreviousValue != fixtureTime {
+		t.Fatalf("incorrect restart marker projection: %+v %v", p, err)
+	}
+}

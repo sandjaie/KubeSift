@@ -1,0 +1,533 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "Namespace",
+      "metadata": {
+        "name": "kubesift-restart-check",
+        "labels": {
+          "kubesift.dev/fixture": "phase1d2-validation"
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "restart-headless",
+        "namespace": "kubesift-restart-check"
+      },
+      "spec": {
+        "clusterIP": "None",
+        "selector": {
+          "kubesift.dev/controller": "stateful"
+        },
+        "ports": [
+          {
+            "port": 80
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "reviewed-deployment",
+        "namespace": "kubesift-restart-check"
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "reviewed-deployment"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "reviewed-deployment"
+            },
+            "annotations": {
+              "kubesift.dev/sibling": "retained"
+            }
+          },
+          "spec": {
+            "automountServiceAccountToken": false,
+            "terminationGracePeriodSeconds": 1,
+            "containers": [
+              {
+                "name": "pause",
+                "image": "registry.k8s.io/pause:3.10",
+                "imagePullPolicy": "IfNotPresent",
+                "resources": {
+                  "requests": {
+                    "cpu": "1m",
+                    "memory": "2Mi"
+                  },
+                  "limits": {
+                    "memory": "16Mi"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "replicas": 1
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "paused-deployment",
+        "namespace": "kubesift-restart-check"
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "paused-deployment"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "paused-deployment"
+            },
+            "annotations": {
+              "kubesift.dev/sibling": "retained"
+            }
+          },
+          "spec": {
+            "automountServiceAccountToken": false,
+            "terminationGracePeriodSeconds": 1,
+            "containers": [
+              {
+                "name": "pause",
+                "image": "registry.k8s.io/pause:3.10",
+                "imagePullPolicy": "IfNotPresent",
+                "resources": {
+                  "requests": {
+                    "cpu": "1m",
+                    "memory": "2Mi"
+                  },
+                  "limits": {
+                    "memory": "16Mi"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "replicas": 1,
+        "paused": true
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "recreate-deployment",
+        "namespace": "kubesift-restart-check"
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "recreate-deployment"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "recreate-deployment"
+            },
+            "annotations": {
+              "kubesift.dev/sibling": "retained"
+            }
+          },
+          "spec": {
+            "automountServiceAccountToken": false,
+            "terminationGracePeriodSeconds": 1,
+            "containers": [
+              {
+                "name": "pause",
+                "image": "registry.k8s.io/pause:3.10",
+                "imagePullPolicy": "IfNotPresent",
+                "resources": {
+                  "requests": {
+                    "cpu": "1m",
+                    "memory": "2Mi"
+                  },
+                  "limits": {
+                    "memory": "16Mi"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "replicas": 1,
+        "strategy": {
+          "type": "Recreate"
+        }
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "StatefulSet",
+      "metadata": {
+        "name": "reviewed-statefulset",
+        "namespace": "kubesift-restart-check"
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "reviewed-statefulset"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "reviewed-statefulset",
+              "kubesift.dev/controller": "stateful"
+            },
+            "annotations": {
+              "kubesift.dev/sibling": "retained"
+            }
+          },
+          "spec": {
+            "automountServiceAccountToken": false,
+            "terminationGracePeriodSeconds": 1,
+            "containers": [
+              {
+                "name": "pause",
+                "image": "registry.k8s.io/pause:3.10",
+                "imagePullPolicy": "IfNotPresent",
+                "resources": {
+                  "requests": {
+                    "cpu": "1m",
+                    "memory": "2Mi"
+                  },
+                  "limits": {
+                    "memory": "16Mi"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "replicas": 1,
+        "serviceName": "restart-headless"
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "StatefulSet",
+      "metadata": {
+        "name": "ondelete-statefulset",
+        "namespace": "kubesift-restart-check"
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "ondelete-statefulset"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "ondelete-statefulset",
+              "kubesift.dev/controller": "stateful"
+            },
+            "annotations": {
+              "kubesift.dev/sibling": "retained"
+            }
+          },
+          "spec": {
+            "automountServiceAccountToken": false,
+            "terminationGracePeriodSeconds": 1,
+            "containers": [
+              {
+                "name": "pause",
+                "image": "registry.k8s.io/pause:3.10",
+                "imagePullPolicy": "IfNotPresent",
+                "resources": {
+                  "requests": {
+                    "cpu": "1m",
+                    "memory": "2Mi"
+                  },
+                  "limits": {
+                    "memory": "16Mi"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "replicas": 1,
+        "serviceName": "restart-headless",
+        "updateStrategy": {
+          "type": "OnDelete"
+        }
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "StatefulSet",
+      "metadata": {
+        "name": "partition-statefulset",
+        "namespace": "kubesift-restart-check"
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "partition-statefulset"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "partition-statefulset",
+              "kubesift.dev/controller": "stateful"
+            },
+            "annotations": {
+              "kubesift.dev/sibling": "retained"
+            }
+          },
+          "spec": {
+            "automountServiceAccountToken": false,
+            "terminationGracePeriodSeconds": 1,
+            "containers": [
+              {
+                "name": "pause",
+                "image": "registry.k8s.io/pause:3.10",
+                "imagePullPolicy": "IfNotPresent",
+                "resources": {
+                  "requests": {
+                    "cpu": "1m",
+                    "memory": "2Mi"
+                  },
+                  "limits": {
+                    "memory": "16Mi"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "replicas": 1,
+        "serviceName": "restart-headless",
+        "updateStrategy": {
+          "type": "RollingUpdate",
+          "rollingUpdate": {
+            "partition": 1
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "DaemonSet",
+      "metadata": {
+        "name": "reviewed-daemonset",
+        "namespace": "kubesift-restart-check"
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "reviewed-daemonset"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "reviewed-daemonset"
+            },
+            "annotations": {
+              "kubesift.dev/sibling": "retained"
+            }
+          },
+          "spec": {
+            "automountServiceAccountToken": false,
+            "terminationGracePeriodSeconds": 1,
+            "containers": [
+              {
+                "name": "pause",
+                "image": "registry.k8s.io/pause:3.10",
+                "imagePullPolicy": "IfNotPresent",
+                "resources": {
+                  "requests": {
+                    "cpu": "1m",
+                    "memory": "2Mi"
+                  },
+                  "limits": {
+                    "memory": "16Mi"
+                  }
+                }
+              }
+            ],
+            "affinity": {
+              "nodeAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                  "nodeSelectorTerms": [
+                    {
+                      "matchExpressions": [
+                        {
+                          "key": "kubernetes.io/hostname",
+                          "operator": "In",
+                          "values": ["dev-local-a-control-plane", "dev-local-b-control-plane"]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "DaemonSet",
+      "metadata": {
+        "name": "ondelete-daemonset",
+        "namespace": "kubesift-restart-check"
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "ondelete-daemonset"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "ondelete-daemonset"
+            },
+            "annotations": {
+              "kubesift.dev/sibling": "retained"
+            }
+          },
+          "spec": {
+            "automountServiceAccountToken": false,
+            "terminationGracePeriodSeconds": 1,
+            "containers": [
+              {
+                "name": "pause",
+                "image": "registry.k8s.io/pause:3.10",
+                "imagePullPolicy": "IfNotPresent",
+                "resources": {
+                  "requests": {
+                    "cpu": "1m",
+                    "memory": "2Mi"
+                  },
+                  "limits": {
+                    "memory": "16Mi"
+                  }
+                }
+              }
+            ],
+            "affinity": {
+              "nodeAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                  "nodeSelectorTerms": [
+                    {
+                      "matchExpressions": [
+                        {
+                          "key": "kubernetes.io/hostname",
+                          "operator": "In",
+                          "values": ["dev-local-a-control-plane", "dev-local-b-control-plane"]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "updateStrategy": {
+          "type": "OnDelete"
+        }
+      }
+    },
+    {
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "kind": "Role",
+      "metadata": {
+        "name": "restart-reader",
+        "namespace": "kubesift-restart-check"
+      },
+      "rules": [
+        {
+          "apiGroups": ["apps"],
+          "resources": ["deployments", "statefulsets", "daemonsets"],
+          "verbs": ["get", "list"]
+        }
+      ]
+    },
+    {
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "kind": "RoleBinding",
+      "metadata": {
+        "name": "restart-reader",
+        "namespace": "kubesift-restart-check"
+      },
+      "roleRef": {
+        "apiGroup": "rbac.authorization.k8s.io",
+        "kind": "Role",
+        "name": "restart-reader"
+      },
+      "subjects": [
+        {
+          "kind": "User",
+          "name": "kubesift-phase1d2-reader",
+          "apiGroup": "rbac.authorization.k8s.io"
+        }
+      ]
+    },
+    {
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "kind": "Role",
+      "metadata": {
+        "name": "restart-writer",
+        "namespace": "kubesift-restart-check"
+      },
+      "rules": [
+        {
+          "apiGroups": ["apps"],
+          "resources": ["deployments", "statefulsets", "daemonsets"],
+          "verbs": ["get", "list"]
+        },
+        {
+          "apiGroups": ["apps"],
+          "resources": ["deployments", "statefulsets", "daemonsets"],
+          "resourceNames": ["reviewed-deployment", "reviewed-statefulset", "reviewed-daemonset"],
+          "verbs": ["patch"]
+        }
+      ]
+    },
+    {
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "kind": "RoleBinding",
+      "metadata": {
+        "name": "restart-writer",
+        "namespace": "kubesift-restart-check"
+      },
+      "roleRef": {
+        "apiGroup": "rbac.authorization.k8s.io",
+        "kind": "Role",
+        "name": "restart-writer"
+      },
+      "subjects": [
+        {
+          "kind": "User",
+          "name": "kubesift-phase1d2-writer",
+          "apiGroup": "rbac.authorization.k8s.io"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Phase 1D.2 reviewed restart validation · KubeSift</title>
+    <link rel="stylesheet" href="../../assets/planning.css" />
+    <script src="../../assets/theme.js"></script>
+  </head>
+  <body>
+    <aside class="rail">
+      <a class="skip" href="#content">Skip to content</a
+      ><a class="mark" href="../../index.html"><span class="mark-name">KubeSift</span><span class="mark-sub">Planning</span></a>
+      <h2>Index</h2>
+      <a href="../../index.html">Planning index</a>
+      <h2>Product</h2>
+      <a href="../../product/requirements.html">Requirements</a><a href="../../product/feature-matrix.html">Capabilities</a>
+      <h2>Architecture</h2>
+      <a href="../../architecture/overview.html">Overview</a><a href="../../architecture/decisions.html">Decisions</a>
+      <h2>Safeguards</h2>
+      <a href="../../security/security-model.html">Security and AI</a>
+      <h2>Delivery</h2>
+      <a href="../../roadmap/roadmap.html">Roadmap</a><a href="../../ux/workflows.html">UX workflows</a
+      ><a href="../../ux/mocks/index.html">Mockups</a>
+      <h2>Engineering</h2>
+      <a href="../../engineering/engineering.html">Playbook</a><a href="../../engineering/local-development.html">Local development</a
+      ><a href="../../engineering/toolchain.html">Toolchain</a
+      ><a href="../../engineering/kubernetes-development.html">Kubernetes references</a>
+      <h2>Superpowers</h2>
+      <a href="../../superpowers/specs/2026-11-05-kubesift-design.md">Design specification</a
+      ><a href="../../superpowers/plans/README.html">Plans</a
+      ><a href="../../superpowers/validation/index.html" aria-current="page">Validation</a
+      ><a href="../../superpowers/evidence/index.html">Evidence</a>
+    </aside>
+    <header>
+      <a href="../../index.html">KubeSift / Planning</a>
+      <h1>Phase 1D.2 reviewed restart validation</h1>
+    </header>
+    <main id="content">
+      <p>
+        Verified on 15 November 2026 from <code>f7edda7</code> on the existing <code>feature/phase-1d2-reviewed-restart</code> checkout. See
+        the <a href="../specs/2026-11-15-phase-1d2-reviewed-restart-design.md">restart specification</a> and
+        <a href="../plans/2026-11-15-phase-1d2-reviewed-restart.md">implementation plan</a>.
+      </p>
+      <h2>Automated and live API evidence</h2>
+      <ul>
+        <li>Repository checks, operation and connection race checks, Wails bindings generation and production package build passed.</li>
+        <li>
+          Synthetic loopback tests counted mandatory dry-run and at most one real PATCH. They covered exact patch replay bytes, both
+          identity tests, late version conflicts, 422 diagnostics, 429, 401, redirect, EOF, 5xx, invalid success and changed admission spec.
+          The shared coordinator tests covered cross-action token rejection, one active action per target, aggregate capacities, duplicate
+          confirmation, expiry, revocation and retained result lookup.
+        </li>
+        <li>
+          <code>TestReviewedRestart</code> passed on <code>kind-dev-local-a</code> and <code>kind-dev-local-b</code>. Deployment,
+          StatefulSet and DaemonSet dry-run left the source version and marker unchanged, and confirmation preserved sibling annotations.
+          Accepted patches led to new controller-owned ready Pod UIDs in the local fixtures. Recreate required exact name acknowledgement.
+          Paused, OnDelete and partitioned fixtures remained unchanged. Both clusters rejected independent stale version and replaced UID
+          patches on all three kinds. Controlled credentials verified explicit denial and successful dry-run with an unavailable hint.
+        </li>
+        <li>
+          <code>TestReviewedScaling</code> and <code>TestWorkloadInvestigation</code> passed on both contexts. The read suite first reported
+          the missing retained CronJob Job fixture and passed after the documented owned Job was provisioned. The historical marker
+          integration uses other contexts and was skipped. Its unit coverage ran with the Go suite.
+        </li>
+      </ul>
+      <h2>Packaged desktop evidence</h2>
+      <ul>
+        <li>
+          The arm64 production bundle on macOS 27.0.1 confirmed Deployment and StatefulSet restart on A and DaemonSet restart on B. The
+          modal showed the captured target, server dry-run, rollout impact and previous and proposed annotation. The Recreate action stayed
+          disabled until the exact Deployment name was entered. Paused, OnDelete and nonzero partition cases displayed disabled reasons.
+        </li>
+        <li>
+          An external change to the owned Deployment after review produced a stale result. Open target read the current capture, and a fresh
+          review confirmed successfully. The mixed results panel preserved a Scale count and restart timestamps alongside the stale row.
+          Opening the DaemonSet target and using Back restored the prior Deployment.
+        </li>
+        <li>
+          Escape restored trigger focus. Keyboard navigation reached the review action. The review worked with the default System appearance
+          and Light, a 29% detail split and native window zoom. Appearance and detail sizing were restored. The ControllerRevision
+          inspector, ConfigMap Data, YAML toolbar and page-scoped Events controls remained available.
+        </li>
+      </ul>
+      <p>
+        Native desktop verification exercised the stale outcome. Permission rejection, lost responses and changed admission behavior were
+        verified with live API or controlled transport tests.
+      </p>
+      <p>
+        Cleanup removed the owned restart and scaling namespaces, the temporarily retained Jobs and their Pods in both contexts, and the
+        isolated kubeconfigs used for integration.
+      </p>
+    </main>
+  </body>
+</html>
