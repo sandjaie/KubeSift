@@ -2,6 +2,12 @@
 
 Updated 2026-11-15. Current integration branch is `develop`.
 
+## Phase 1D.3 · Reviewed workload deletion
+
+- Planning package prepared; implementation has not started. [Specification](../../docs/superpowers/specs/2026-11-15-phase-1d3-reviewed-deletion-design.md) and [five-task plan](../../docs/superpowers/plans/2026-11-15-phase-1d3-reviewed-deletion.md).
+- Eight fixed workload kinds, background deletion with server grace defaults, native UID/version preconditions, typed confirmation and operation-bound removal observations. No force/finalizer/storage deletion; unsafe StatefulSet retention policy is blocked.
+- Separate implementation session in the existing checkout, no worktree. Agent verification and one independent whole-PR review precede ready-PR merge. No duplicate manual UAT or release authorization.
+
 ## Phase 1D.2 · Reviewed workload restart
 
 - [PR #17](https://github.com/sandjaie/KubeSift/pull/17) squash-merged into `develop` as `74dea68` on 2026-11-15 Dubai time. Implemented in the existing checkout from `f7edda7`. Repository checks, two-context restart, scale and workload-read integration, packaged desktop verification and independent review passed. [Specification](../../docs/superpowers/specs/2026-11-15-phase-1d2-reviewed-restart-design.md) and [five-task plan](../../docs/superpowers/plans/2026-11-15-phase-1d2-reviewed-restart.md).

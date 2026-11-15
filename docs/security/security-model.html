@@ -130,6 +130,12 @@
         Scale and Restart share target locks and aggregate review/result limits. Full controller responses remain native; only bounded
         action evidence crosses the bridge.
       </p>
+      <p>
+        The <a href="../superpowers/specs/2026-11-15-phase-1d3-reviewed-deletion-design.md">reviewed deletion specification</a> restricts
+        deletion to eight fixed workload kinds with server dry-run, UID/version preconditions and typed confirmation. Force, unsafe store
+        deletion, finalizer removal, generic resource deletion and unsafe StatefulSet retention overrides are excluded. Scale, Restart and
+        Delete share native locks and aggregate limits; an uncertain response is never automatically retried.
+      </p>
       <h2>AI availability and provider routing</h2>
       <p>
         AI investigation is available in Phase 2. Application default provider plus per-cluster overrides references profiles stored

@@ -310,6 +310,22 @@
           conditional JSON Patch, admission comparison and shared operation limits. Test actual API preconditions and wire dispatch counts.
         </li>
       </ul>
+      <h2 id="deletion-semantics">Deletion and removal evidence</h2>
+      <ul>
+        <li>
+          <a href="https://kubernetes.io/docs/reference/kubernetes-api/definitions/delete-options-v1-meta/">DeleteOptions</a>: UID/version
+          preconditions, dry-run, grace and propagation; do not enable unsafe deletion options.
+        </li>
+        <li>
+          <a href="https://kubernetes.io/docs/concepts/architecture/garbage-collection/">Garbage collection</a> and
+          <a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/finalizers/">finalizers</a>: acceptance, parent absence
+          and dependent removal are distinct observations.
+        </li>
+        <li>
+          The <a href="../superpowers/specs/2026-11-15-phase-1d3-reviewed-deletion-design.md">deletion specification</a> owns eligible
+          workloads, fixed options, impact evidence and safe object-specific NotFound handling.
+        </li>
+      </ul>
       <h2 id="discovery">Cluster resources and discovery</h2>
       <ul>
         <li>

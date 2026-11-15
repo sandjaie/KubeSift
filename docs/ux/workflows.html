@@ -137,6 +137,13 @@
         automatically unhealthy; unavailable/stale health data must be identified. Alerts require evidence, not a decorative badge. Text and
         icons supplement color.
       </p>
+      <h2 id="reviewed-deletion">Reviewed workload deletion design</h2>
+      <p>
+        The <a href="../superpowers/specs/2026-11-15-phase-1d3-reviewed-deletion-design.md">Phase 1D.3 specification</a> adds destructive
+        workload deletion review with exact typed-name confirmation, owner/cascade/finalizer evidence and fixed Background/server-grace
+        behavior. Operation results distinguish accepted requests from removal observations. Check target never retries deletion or
+        automatically opens a same-name replacement; unavailable API evidence is not absence.
+      </p>
       <h2 id="reviewed-restart">Reviewed workload restart design</h2>
       <p>
         The <a href="../superpowers/specs/2026-11-15-phase-1d2-reviewed-restart-design.md">Phase 1D.2 specification</a> adds Restart beside
