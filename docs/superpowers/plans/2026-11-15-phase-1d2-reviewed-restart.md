@@ -83,7 +83,7 @@ Five risks and their owning tests:
 - [x] Run documented full Go tests/vet, focused race tests, frontend tests/lint/typecheck, bindings consistency, build/package, restart+scaling and affected read integration on both approved contexts. Historical marker integration uses other contexts: retain its documented limitation, run unit coverage and do not silently use unapproved contexts.
 - [x] Use desktop computer-use on the final package for all three kinds, review/Escape, confirmation, Recreate typed acknowledgement, stale/denied state, mixed scale/restart results, target Open/Back and two contexts; keyboard, narrow split, both appearances and zoom. Recheck PR #16 Overview/YAML/Events/ConfigMap Data. Record actual gaps in one validation report, no duplicate manual UAT.
 - [x] Clean only task-owned resources/credentials and verify both-context cleanup. Update plan/checkpoint/report and documentation links/formatting; detailed logs remain ignored. Roadmap owns scope only.
-- [ ] Request one fresh independent whole-PR review with `.agents/skills/kubesift-code-review/SKILL.md`, full base/head/spec and safety evidence. Resolve findings, targeted rechecks and required native rebuild/retests. Push feature branch, create ready PR and merge into develop when required gates pass under standing authorization. No release or next-phase work.
+- [x] Request one fresh independent whole-PR review with `.agents/skills/kubesift-code-review/SKILL.md`, full base/head/spec and safety evidence. Resolve findings, targeted rechecks and required native rebuild/retests. Push feature branch, create ready PR and merge into develop when required gates pass under standing authorization. No release or next-phase work.
 
 ## Plan self-review
 
