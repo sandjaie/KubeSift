@@ -33,12 +33,20 @@ func NewScaleService(connections *connection.Manager, coordinator *Coordinator) 
 }
 
 func scaleTarget(ref kube.ResourceRef) (string, string) {
+	if ref.Kind != "Deployment" && ref.Kind != "StatefulSet" {
+		return "", ""
+	}
+	return workloadTarget(ref)
+}
+func workloadTarget(ref kube.ResourceRef) (string, string) {
 	plural := ""
 	switch ref.Kind {
 	case "Deployment":
 		plural = "deployments"
 	case "StatefulSet":
 		plural = "statefulsets"
+	case "DaemonSet":
+		plural = "daemonsets"
 	}
 	if plural == "" || ref.APIVersion != "apps/v1" || len(validation.IsDNS1123Label(ref.Namespace)) != 0 ||
 		len(validation.IsDNS1123Subdomain(ref.Name)) != 0 || ref.UID == "" || len(ref.UID) > 128 {
@@ -131,8 +139,8 @@ func (c operationClient) inspect(ctx context.Context, path string, ref kube.Reso
 	}
 	return scale.Spec.desired(), impact, nil
 }
-func permissionOf(ctx context.Context, c operationClient, ref kube.ResourceRef, plural string) string {
-	attrs := &auth.ResourceAttributes{Namespace: ref.Namespace, Name: ref.Name, Group: "apps", Version: "v1", Resource: plural, Subresource: "scale", Verb: "update"}
+func permissionOf(ctx context.Context, c operationClient, ref kube.ResourceRef, plural, verb, subresource string) string {
+	attrs := &auth.ResourceAttributes{Namespace: ref.Namespace, Name: ref.Name, Group: "apps", Version: "v1", Resource: plural, Subresource: subresource, Verb: verb}
 	input := auth.SelfSubjectAccessReview{TypeMeta: metav1.TypeMeta{Kind: "SelfSubjectAccessReview", APIVersion: "authorization.k8s.io/v1"}, Spec: auth.SelfSubjectAccessReviewSpec{ResourceAttributes: attrs}}
 	var review auth.SelfSubjectAccessReview
 	_, err := c.call(ctx, http.MethodPost, "/apis/authorization.k8s.io/v1/selfsubjectaccessreviews", false, input, &review)
@@ -193,7 +201,7 @@ func (s *ScaleService) PrepareScale(ctx context.Context, req ScaleRequest) (Scal
 		return p, nil
 	}
 	p.Impact.Direction = scaleDirection(before, after)
-	p.Permission = permissionOf(ctx, client, req.Resource, plural)
+	p.Permission = permissionOf(ctx, client, req.Resource, plural, "update", "scale")
 	if p.Permission == "denied" {
 		return ScalePreview{}, model.Fail("forbidden", "Kubernetes reports that scaling this workload is denied")
 	}
