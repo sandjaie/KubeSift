@@ -14,6 +14,19 @@ import * as kube$0 from "../kube/models.js";
 // @ts-ignore: Unused imports
 import * as model$0 from "../model/models.js";
 
+export interface OperationResult {
+  action: string;
+  cluster: string;
+  operationID: string;
+  resource: kube$0.ResourceRef;
+  startedAt: string;
+  finishedAt: string | null;
+  state: string;
+  problem: model$0.Problem | null;
+  scale: ScaleResultData | null;
+  restart: RestartResultData | null;
+}
+
 export interface Preview {
   token: string;
   target: model$0.Target;
@@ -22,6 +35,48 @@ export interface Preview {
   uid: string;
   resourceVersion: string;
   expiresAt: string;
+}
+
+export interface RestartImpact {
+  strategy: string;
+  strategyDefault: boolean;
+  desired: number | null;
+  desiredDefault: boolean;
+  current: number | null;
+  ready: number | null;
+  maxSurge: string;
+  maxSurgeDefault: boolean;
+  maxUnavailable: string;
+  maxUnavailableDefault: boolean;
+  partition: number | null;
+  partitionDefault: boolean;
+  recreate: boolean;
+  zeroPods: boolean;
+}
+
+export interface RestartPreview {
+  token: string;
+  cluster: string;
+  resource: kube$0.ResourceRef;
+  sourceVersion: string;
+  expiresAt: string;
+  permission: string;
+  warnings: string[] | null;
+  restartAt: string;
+  previousValue: string;
+  previousSet: boolean;
+  previousTruncated: boolean;
+  impact: RestartImpact;
+}
+
+export interface RestartRequest {
+  resource: kube$0.ResourceRef;
+  sourceVersion: string;
+}
+
+export interface RestartResultData {
+  requestedAt: string;
+  responseDiffers: boolean;
 }
 
 export interface ScaleImpact {
@@ -62,4 +117,10 @@ export interface ScaleResult {
   finishedAt: string | null;
   state: string;
   problem: model$0.Problem | null;
+}
+
+export interface ScaleResultData {
+  before: number;
+  requested: number;
+  reported: number | null;
 }

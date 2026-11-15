@@ -27,7 +27,7 @@ import { useLogSessions } from "./sessions/useLogSessions";
 import { PodLogs } from "./sessions/PodLogs";
 import { useWorkloads } from "./workloads/useWorkloads";
 import type { ResourceRef } from "./workloads/model";
-import { OperationResults, useScaleResults } from "./operations/OperationResults";
+import { OperationResults, useOperationResults } from "./operations/OperationResults";
 import "./styles.css";
 export default function App() {
   const controller = useConnections();
@@ -107,21 +107,21 @@ export default function App() {
     page === "workspace",
     (tab, namespace) => void controller.selectNamespace(tab, namespace),
   );
-  const scaleResults = useScaleResults((result) => {
-    if (result.state === "accepted") workloads.refreshScaleTarget(result.resource);
+  const operationResults = useOperationResults((result) => {
+    if (result.state === "accepted") workloads.refreshOperationTarget(result.resource);
   });
   const [resultsOpen, setResultsOpen] = useState(false);
-  const [openingScaleTarget, setOpeningScaleTarget] = useState<{ ref: ResourceRef; tab: string } | null>(null);
-  const scaleConnectionKey = (ref: ResourceRef["connection"]) => JSON.stringify([ref.id, ref.generation]);
-  const findScaleTab = (resource: ResourceRef) =>
+  const [openingOperationTarget, setOpeningOperationTarget] = useState<{ ref: ResourceRef; tab: string } | null>(null);
+  const operationConnectionKey = (ref: ResourceRef["connection"]) => JSON.stringify([ref.id, ref.generation]);
+  const findOperationTab = (resource: ResourceRef) =>
     Object.entries(state.tabs).find(
-      ([, tab]) => tab.view?.ref && scaleConnectionKey(tab.view.ref) === scaleConnectionKey(resource.connection),
+      ([, tab]) => tab.view?.ref && operationConnectionKey(tab.view.ref) === operationConnectionKey(resource.connection),
     )?.[0];
   useEffect(() => {
-    if (!openingScaleTarget || page !== "workspace" || state.active !== openingScaleTarget.tab || !workloads.ready) return;
-    setOpeningScaleTarget(null);
-    workloads.openScaleTarget(openingScaleTarget.ref);
-  }, [openingScaleTarget, page, state.active, workloads.ready]);
+    if (!openingOperationTarget || page !== "workspace" || state.active !== openingOperationTarget.tab || !workloads.ready) return;
+    setOpeningOperationTarget(null);
+    workloads.openOperationTarget(openingOperationTarget.ref);
+  }, [openingOperationTarget, page, state.active, workloads.ready]);
   function choose(entry: CatalogEntry) {
     setPage("workspace");
     void controller.connect(entry);
@@ -181,11 +181,12 @@ export default function App() {
         <button onClick={() => setPage("clusters")}>Choose cluster</button>
         <button
           onClick={() => {
-            scaleResults.refresh();
+            operationResults.refresh();
             setResultsOpen(true);
           }}
         >
-          Scale results{scaleResults.pending ? " · Running" : scaleResults.results.length ? ` (${scaleResults.results.length})` : ""}
+          Operation results
+          {operationResults.pending ? " · Running" : operationResults.results.length ? ` (${operationResults.results.length})` : ""}
         </button>
         <button
           aria-pressed={page === "settings"}
@@ -205,18 +206,18 @@ export default function App() {
       </header>
       {resultsOpen && (
         <OperationResults
-          results={scaleResults.results}
-          pending={scaleResults.pending}
-          error={scaleResults.error}
+          results={operationResults.results}
+          pending={operationResults.pending}
+          error={operationResults.error}
           onClose={() => setResultsOpen(false)}
-          onRefresh={scaleResults.refresh}
-          canOpen={(ref) => !!findScaleTab(ref)}
+          onRefresh={operationResults.refresh}
+          canOpen={(ref) => !!findOperationTab(ref)}
           onTarget={(ref) => {
-            const tab = findScaleTab(ref);
+            const tab = findOperationTab(ref);
             if (!tab) return;
             controller.commit({ type: "focus", key: tab });
             setPage("workspace");
-            setOpeningScaleTarget({ ref, tab });
+            setOpeningOperationTarget({ ref, tab });
           }}
         />
       )}
@@ -308,8 +309,8 @@ export default function App() {
                 tab={active}
                 navigationOpen={!hiddenNavigation[state.active!]}
                 controller={workloads}
-                onScale={(review, acknowledgement) => {
-                  scaleResults.submit(review, acknowledgement);
+                onOperation={(action, token, acknowledgement) => {
+                  operationResults.submit(action, token, acknowledgement);
                   setResultsOpen(true);
                 }}
                 logs={

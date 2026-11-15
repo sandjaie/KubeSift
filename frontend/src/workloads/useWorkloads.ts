@@ -315,7 +315,7 @@ export function useWorkloads(
   return {
     kind,
     ready: !!t,
-    openScaleTarget: (resource: ResourceRef) => {
+    openOperationTarget: (resource: ResourceRef) => {
       if (!t || !canOpen(resource, resource.namespace)) return;
       const entry: NavigationEntry = { resource, section: "Overview", cursor: "", namespace: resource.namespace };
       const { filter, sort, scroll, history } = inventory;
@@ -338,7 +338,7 @@ export function useWorkloads(
         (detail) => show(entry, entries, detail),
       );
     },
-    refreshScaleTarget: (resource: ResourceRef) => {
+    refreshOperationTarget: (resource: ResourceRef) => {
       if (
         !t ||
         !selected ||

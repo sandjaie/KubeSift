@@ -33,6 +33,8 @@ type Service struct {
 	kube        *kube.Service
 	operations  *operation.Service
 	scale       *operation.ScaleService
+	coordinator *operation.Coordinator
+	restart     *operation.RestartService
 	fixtures    map[model.ConnectionRef]FixtureTarget
 	ctx         context.Context
 	cancel      context.CancelFunc
@@ -95,7 +97,9 @@ func NewService() *Service {
 	s.sessions.SetValidate(func(target model.Target) error { return s.connections.Validate(target.Connection) })
 	s.kube = kube.NewService(s.connections, s.sessions)
 	s.operations = operation.NewService(s.connections, time.Now)
-	s.scale = operation.NewScaleService(s.connections, time.Now)
+	s.coordinator = operation.NewCoordinator(s.connections, time.Now)
+	s.scale = operation.NewScaleService(s.connections, s.coordinator)
+	s.restart = operation.NewRestartService(s.connections, s.coordinator, time.Now)
 	s.fixtures = map[model.ConnectionRef]FixtureTarget{}
 	return s
 }
@@ -134,7 +138,7 @@ func (s *Service) CloseConnection(ref model.ConnectionRef) error {
 }
 func (s *Service) ServiceShutdown() error {
 	s.cancel()
-	s.scale.Close()
+	s.coordinator.Close()
 	s.sessions.Close()
 	s.connections.CloseAll()
 	s.mu.Lock()

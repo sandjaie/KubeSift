@@ -23,7 +23,7 @@ import { AvailabilityTable } from "../availability/AvailabilityTable";
 import { NetworkTable } from "../networking/NetworkTable";
 import type { WorkloadRow } from "../workloads/model";
 import { ResourceTable } from "./ResourceTable";
-import type { ScalePreview } from "../operations/api";
+import type { OperationAction } from "../operations/api";
 import { ResourceDetail } from "./ResourceDetail";
 import { ResizeHandle } from "../ui/ResizeHandle";
 import { isClusterKind, clusterLabels, type ClusterResourceRow, type EventInventoryRow } from "../cluster/model";
@@ -41,7 +41,7 @@ export function Workspace({
   onResize,
   onCommitSize,
   logs,
-  onScale,
+  onOperation,
 }: {
   tab: ConnectionTab;
   controller: WorkloadController;
@@ -53,7 +53,7 @@ export function Workspace({
   onResize: (n: number) => void;
   onCommitSize: () => void;
   logs?: ReactNode;
-  onScale: (review: ScalePreview, acknowledgement: string) => void;
+  onOperation: (action: OperationAction, token: string, acknowledgement: string) => void;
 }) {
   const i = c.inventory,
     kind = c.kind;
@@ -72,7 +72,7 @@ export function Workspace({
               : `${kind}s`;
   const connectionState = visibleState(tab.view);
   const stale = tab.pollFailed || connectionState !== "connected";
-  const canReviewScale = !tab.pollFailed && (connectionState === "connected" || connectionState === "restricted");
+  const canReviewOperation = !tab.pollFailed && (connectionState === "connected" || connectionState === "restricted");
   const rows = [...(i.page?.items ?? [])]
     .filter((row) => row.resource.name.toLowerCase().includes(i.filter.toLowerCase()))
     .sort((a, b) => (kind === "Event" ? 0 : a.resource.name.localeCompare(b.resource.name) * (i.sort === "asc" ? 1 : -1)));
@@ -251,9 +251,9 @@ export function Workspace({
                   controller={c}
                   context={tab.entry.context}
                   stale={stale}
-                  canReviewScale={canReviewScale}
+                  canReviewOperation={canReviewOperation}
                   logs={logs}
-                  onScale={onScale}
+                  onOperation={onOperation}
                 />
               ) : (
                 <div className="state-message">

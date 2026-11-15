@@ -8,7 +8,7 @@ import { test, expect } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { ScaleImpact } from "./ScaleDialog";
 import { OperationResults } from "./OperationResults";
-import type { ScalePreview, ScaleResult } from "./api";
+import type { OperationResult, ScalePreview } from "./api";
 
 const resource = {
   kind: "StatefulSet",
@@ -37,10 +37,19 @@ test("StatefulSet scale-down names the retention policy and does not promise ava
     expect(text).toContain(phrase);
 });
 test("result feedback labels uncertain outcomes and preserves requested and reported counts", () => {
-  const baseline = { cluster: "local", resource, before: 1, requested: 2, startedAt: "", finishedAt: null, problem: null };
-  const results: ScaleResult[] = [
-    { ...baseline, operationID: "1", reported: null, state: "unknown" },
-    { ...baseline, operationID: "2", reported: 3, state: "accepted" },
+  const baseline = { cluster: "local", resource, startedAt: "", finishedAt: null, problem: null };
+  const counts = { before: 1, requested: 2 };
+  const results: OperationResult[] = [
+    { ...baseline, action: "scale", operationID: "1", scale: { ...counts, reported: null }, restart: null, state: "unknown" },
+    { ...baseline, action: "scale", operationID: "2", scale: { ...counts, reported: 3 }, restart: null, state: "accepted" },
+    {
+      ...baseline,
+      action: "restart",
+      operationID: "3",
+      scale: null,
+      restart: { requestedAt: "2026-11-15T00:00:00Z", responseDiffers: true },
+      state: "accepted",
+    },
   ];
   const text = renderToStaticMarkup(
     <OperationResults
@@ -59,6 +68,9 @@ test("result feedback labels uncertain outcomes and preserves requested and repo
     "Requested: 2. API reported: 3.",
     "Accepted by Kubernetes",
     "Pod readiness",
+    "Restart · Accepted by Kubernetes",
+    "2026-11-15T00:00:00Z",
+    "server response differs from the reviewed spec",
   ])
     expect(text).toContain(phrase);
 });

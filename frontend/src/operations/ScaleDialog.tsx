@@ -10,7 +10,8 @@ import { Modal } from "../ui/ReviewDialog";
 import type { ResourceDetail } from "../workloads/model";
 import { overviewObject } from "../workspace/ResourceOverview";
 import { prepareScale, revokeScale, type ScalePreview } from "./api";
-import { canConfirmScale, scaleReviewOwner, validReplicaText } from "./scaleState";
+import { canConfirmScale, validReplicaText } from "./scaleState";
+import { reviewOwner } from "./reviewState";
 
 export function ScaleImpact({ review }: { review: ScalePreview }) {
   return (
@@ -58,7 +59,7 @@ export function ScaleDialog({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [expired, setExpired] = useState(false);
-  const [owner] = useState(() => scaleReviewOwner(revokeScale));
+  const [owner] = useState(() => reviewOwner(revokeScale));
   const { abandon } = owner;
   useLayoutEffect(() => abandon, [abandon]);
   useEffect(() => {

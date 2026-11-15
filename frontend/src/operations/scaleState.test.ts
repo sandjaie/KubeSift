@@ -21,9 +21,9 @@ test("confirm requires a live review for the current draft and exact acknowledge
 });
 
 test("departing cancels an active preparation and revokes a late token", async () => {
-  const { scaleReviewOwner } = await import("./scaleState");
+  const { reviewOwner } = await import("./reviewState");
   const revoked: string[] = [];
-  const owner = scaleReviewOwner((token) => revoked.push(token));
+  const owner = reviewOwner((token) => revoked.push(token));
   let resolve!: (review: { token: string }) => void;
   let cancelled = 0;
   const visible: string[] = [];
@@ -48,9 +48,9 @@ test("departing cancels an active preparation and revokes a late token", async (
 });
 
 test("a claimed token cannot be submitted twice or revoked on dialog unmount", async () => {
-  const { scaleReviewOwner } = await import("./scaleState");
+  const { reviewOwner } = await import("./reviewState");
   const revoked: string[] = [];
-  const owner = scaleReviewOwner((token) => revoked.push(token));
+  const owner = reviewOwner((token) => revoked.push(token));
   owner.prepare(
     { promise: Promise.resolve({ token: "reviewed" }), cancel: () => {} },
     () => {},

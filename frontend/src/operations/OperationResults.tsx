@@ -1,5 +1,5 @@
 /*
-Purpose: Present scale feedback across workload and cluster navigation.
+Purpose: Present reviewed operation feedback across workload and cluster navigation.
 Used by: The app header and result dialog.
 Responsibilities: Recover native results and distinguish acceptance, rejection, staleness and uncertainty.
 Important: Refreshing results or targets never calls Execute.
@@ -8,10 +8,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { message } from "../connections/api";
 import { Modal } from "../ui/ReviewDialog";
 import type { ResourceRef } from "../workloads/model";
-import { executeScale, listScaleResults, type ScalePreview, type ScaleResult } from "./api";
+import { executeRestart, executeScale, listOperationResults, type OperationAction, type OperationResult } from "./api";
 
-export function useScaleResults(onResult: (result: ScaleResult) => void) {
-  const [results, setResults] = useState<ScaleResult[]>([]);
+export function useOperationResults(onResult: (result: Pick<OperationResult, "resource" | "state">) => void) {
+  const [results, setResults] = useState<OperationResult[]>([]);
   const [pending, setPending] = useState(0);
   const [error, setError] = useState("");
   const query = useRef(0);
@@ -19,12 +19,12 @@ export function useScaleResults(onResult: (result: ScaleResult) => void) {
   onFinish.current = onResult;
   const refresh = useCallback(() => {
     const request = ++query.current;
-    void listScaleResults().then(
+    void listOperationResults().then(
       (rows) => {
         if (request === query.current) setResults(rows ?? []);
       },
       () => {
-        if (request === query.current) setError("Scale results could not be read. Refresh results to check again.");
+        if (request === query.current) setError("Operation results could not be read. Refresh results to check again.");
       },
     );
   }, []);
@@ -35,14 +35,15 @@ export function useScaleResults(onResult: (result: ScaleResult) => void) {
     const timer = window.setInterval(refresh, 1000);
     return () => window.clearInterval(timer);
   }, [refresh, tracking]);
-  const submit = (review: ScalePreview, acknowledgement: string) => {
+  const submit = (action: OperationAction, token: string, acknowledgement: string) => {
     setError("");
     setPending((count) => count + 1);
-    void executeScale(review.token, acknowledgement)
+    const execute = action === "restart" ? executeRestart : executeScale;
+    void execute(token, acknowledgement)
       .then(
         (result) => onFinish.current(result),
         (failure) => {
-          setError(message(failure) + " Check Scale results for a recorded outcome.");
+          setError(message(failure) + " Check Operation results for a recorded outcome.");
         },
       )
       .finally(() => {
@@ -70,7 +71,7 @@ export function OperationResults({
   onTarget,
   canOpen,
 }: {
-  results: ScaleResult[];
+  results: OperationResult[];
   pending: number;
   error: string;
   onClose: () => void;
@@ -79,26 +80,41 @@ export function OperationResults({
   canOpen: (ref: ResourceRef) => boolean;
 }) {
   return (
-    <Modal title="Scale results" onCancel={onClose}>
+    <Modal title="Operation results" onCancel={onClose}>
       <button onClick={onRefresh}>Refresh results</button>
       {pending > 0 && (
         <p role="status">
-          {pending} scale submission{pending === 1 ? "" : "s"} pending.
+          {pending} operation submission{pending === 1 ? "" : "s"} pending.
         </p>
       )}
       {error && <p role="alert">{error}</p>}
-      {!results.length && !pending && <p>No scale results in this app session.</p>}
+      {!results.length && !pending && <p>No operation results in this app session.</p>}
       {results.map((row) => (
         <section key={row.operationID} className="scale-result">
-          <h3>{outcomes[row.state] ?? row.state}</h3>
+          <h3>
+            {row.action === "restart" ? "Restart" : "Scale"} · {outcomes[row.state] ?? row.state}
+          </h3>
           <p className="frozen-target">
             {row.cluster} / {row.resource.namespace} / {row.resource.kind} / {row.resource.name}
           </p>
-          <p>
-            Desired replicas before review: {row.before}. Requested: {row.requested}.
-            {row.reported != null && ` API reported: ${row.reported}.`}
-          </p>
-          {row.state === "accepted" && <p>Pod readiness and whether the count persists are separate from API acceptance.</p>}
+          {row.scale && (
+            <>
+              <p>
+                Desired replicas before review: {row.scale.before}. Requested: {row.scale.requested}.
+                {row.scale.reported != null && ` API reported: ${row.scale.reported}.`}
+              </p>
+              {row.state === "accepted" && <p>Pod readiness and whether the count persists are separate from API acceptance.</p>}
+            </>
+          )}
+          {row.restart && (
+            <>
+              <p>
+                Requested annotation <code>{row.restart.requestedAt}</code>
+              </p>
+              {row.restart.responseDiffers && <p className="warning">The server response differs from the reviewed spec.</p>}
+              {row.state === "accepted" && <p>Kubernetes accepted the template patch. Pod replacement and readiness are separate.</p>}
+            </>
+          )}
           {row.problem?.message && <p>{row.problem.message}</p>}
           <time dateTime={row.finishedAt ?? row.startedAt}>{new Date(row.finishedAt ?? row.startedAt).toLocaleTimeString()}</time>{" "}
           <button

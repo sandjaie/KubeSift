@@ -10,150 +10,28 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"time"
 
 	"github.com/sandjaie/KubeSift/internal/model"
 )
 
-type scaleRecord struct {
-	token  string
-	result ScaleResult
-}
-
-func (s *ScaleService) prune(now time.Time) {
-	for token, p := range s.pending {
-		if !now.Before(p.ExpiresAt) {
-			delete(s.pending, token)
-		}
+func scaleResult(result OperationResult) ScaleResult {
+	if result.Scale == nil {
+		return ScaleResult{}
 	}
-	for token, id := range s.byToken {
-		result := s.results[id].result
-		if result.FinishedAt != nil && !now.Before(result.FinishedAt.Add(10*time.Minute)) {
-			delete(s.byToken, token)
-		}
-	}
-	// Preserve active records and only drop the earliest completed operation.
-	if len(s.results)-len(s.active) <= 100 {
-		return
-	}
-	var oldest string
-	for _, id := range s.order {
-		result := s.results[id].result
-		if result.FinishedAt != nil && (oldest == "" || result.FinishedAt.Before(*s.results[oldest].result.FinishedAt)) {
-			oldest = id
-		}
-	}
-	if oldest == "" {
-		return
-	}
-	delete(s.byToken, s.results[oldest].token)
-	delete(s.results, oldest)
-	for i, id := range s.order {
-		if id == oldest {
-			s.order = append(s.order[:i], s.order[i+1:]...)
-			break
-		}
-	}
-}
-
-func (s *ScaleService) scheduleExpiry(now time.Time) {
-	if s.expiry != nil {
-		s.expiry.Stop()
-		s.expiry = nil
-	}
-	if s.ctx.Err() != nil {
-		return
-	}
-	var earliest time.Time
-	consider := func(expiry time.Time) {
-		if earliest.IsZero() || expiry.Before(earliest) {
-			earliest = expiry
-		}
-	}
-	for _, p := range s.pending {
-		consider(p.ExpiresAt)
-	}
-	for _, id := range s.byToken {
-		if finished := s.results[id].result.FinishedAt; finished != nil {
-			consider(finished.Add(10 * time.Minute))
-		}
-	}
-	if earliest.IsZero() {
-		return
-	}
-	s.expiry = time.AfterFunc(earliest.Sub(now), func() {
-		s.mu.Lock()
-		defer s.mu.Unlock()
-		now := s.now()
-		s.prune(now)
-		s.scheduleExpiry(now)
-	})
-}
-
-func copyScaleResult(result ScaleResult) ScaleResult {
-	if result.Problem != nil {
-		p := *result.Problem
-		result.Problem = &p
-	}
-	if result.Reported != nil {
-		value := *result.Reported
-		result.Reported = &value
-	}
-	if result.FinishedAt != nil {
-		value := *result.FinishedAt
-		result.FinishedAt = &value
-	}
-	return result
+	return ScaleResult{Cluster: result.Cluster, OperationID: result.OperationID, Resource: result.Resource, Before: result.Scale.Before,
+		Requested: result.Scale.Requested, Reported: result.Scale.Reported, StartedAt: result.StartedAt, FinishedAt: result.FinishedAt,
+		State: result.State, Problem: result.Problem}
 }
 
 func (s *ScaleService) ExecuteScale(_ context.Context, token, acknowledgement string) (ScaleResult, error) {
-	s.mu.Lock()
-	review, ok := s.pending[token]
-	delete(s.pending, token)
-	now := s.now()
-	s.prune(now)
-	if id := s.byToken[token]; id != "" {
-		existing := copyScaleResult(s.results[id].result)
-		s.mu.Unlock()
-		return existing, nil
+	review, result, err := s.coordinator.begin("scale", token, acknowledgement)
+	if review == nil {
+		return scaleResult(result), err
 	}
-	var err error
-	switch {
-	case !ok:
-		err = model.Fail("invalid_token", "Scale review is unavailable. Prepare a new review.")
-	case !now.Before(review.ExpiresAt):
-		err = model.Fail("expired", "Scale review expired. Prepare a new review.")
-	case review.After == 0 && acknowledgement != review.Resource.Name:
-		err = model.Fail("acknowledgement", "The workload name did not match. Prepare a new review.")
-	case s.ctx.Err() != nil:
-		err = model.Fail("cancelled", "Scaling service is closed")
-	case len(s.active) >= 4 || s.active[review.Resource]:
-		err = model.Fail("busy", "A scale is already in progress or the execution limit was reached")
-	}
-	if err != nil {
-		s.mu.Unlock()
-		return ScaleResult{}, err
-	}
-	result := ScaleResult{Cluster: review.Cluster, OperationID: model.ID(), Resource: review.Resource, Before: review.Before, Requested: review.After, StartedAt: now, State: "executing"}
-	s.active[review.Resource] = true
-	s.byToken[token] = result.OperationID
-	s.results[result.OperationID] = &scaleRecord{token: token, result: result}
-	s.order = append(s.order, result.OperationID)
-	s.mu.Unlock()
-
-	// Execution belongs to this operation after consumption, independent of the initiating view.
-	ctx, cancel := context.WithTimeout(s.ctx, scaleDeadline)
+	ctx, cancel := context.WithTimeout(s.coordinator.ctx, operationDeadline)
 	defer cancel()
-	result.State, result.Reported, result.Problem = s.runScale(ctx, review)
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	finished := s.now()
-	result.FinishedAt = &finished
-	s.results[result.OperationID].result = result
-	delete(s.active, review.Resource)
-	s.prune(finished)
-	s.scheduleExpiry(finished)
-	return copyScaleResult(result), nil
+	result.State, result.Scale.Reported, result.Problem = s.runScale(ctx, review.payload.(ScalePreview))
+	return scaleResult(s.coordinator.finish(result)), nil
 }
 
 func (s *ScaleService) runScale(ctx context.Context, review ScalePreview) (string, *int32, *model.Problem) {
@@ -161,7 +39,7 @@ func (s *ScaleService) runScale(ctx context.Context, review ScalePreview) (strin
 	stale := &model.Problem{Code: "stale_target", Message: "Workload changed. Refresh and prepare a new review."}
 	ref := review.Resource
 	path, _ := scaleTarget(ref)
-	client, err := s.client(ref.Connection)
+	client, err := newOperationClient(s.connections, ref.Connection)
 	if err != nil {
 		return "cancelled-before-send", nil, cancelled
 	}
@@ -189,7 +67,7 @@ func (s *ScaleService) runScale(ctx context.Context, review ScalePreview) (strin
 		count := response.Spec.desired()
 		return "accepted", &count, nil
 	}
-	var status scaleHTTPStatus
+	var status operationHTTPStatus
 	if errors.As(err, &status) {
 		switch status {
 		case 404, 409, 410:
@@ -205,45 +83,21 @@ func (s *ScaleService) runScale(ctx context.Context, review ScalePreview) (strin
 	return "unknown", nil, &model.Problem{Code: "uncertain", Message: "The scale outcome is unknown. Refresh the target to inspect its current state."}
 }
 
-func (s *ScaleService) RevokeScale(token string) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	delete(s.pending, token)
-}
+func (s *ScaleService) RevokeScale(token string) { s.coordinator.revoke("scale", token) }
 func (s *ScaleService) GetScaleResult(id string) (ScaleResult, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if result := s.results[id]; result != nil {
-		return copyScaleResult(result.result), nil
+	result, err := s.coordinator.GetOperationResult(id)
+	if err != nil || result.Scale == nil {
+		return ScaleResult{}, model.Fail("not_found", "Scale result is unavailable")
 	}
-	return ScaleResult{}, model.Fail("not_found", "Scale result is unavailable")
+	return scaleResult(result), nil
 }
 func (s *ScaleService) ListScaleResults() []ScaleResult {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.prune(s.now())
-	results := make([]ScaleResult, 0, len(s.order))
-	for i := len(s.order) - 1; i >= 0; i-- {
-		results = append(results, copyScaleResult(s.results[s.order[i]].result))
+	results := []ScaleResult{}
+	for _, result := range s.coordinator.ListOperationResults() {
+		if result.Scale != nil {
+			results = append(results, scaleResult(result))
+		}
 	}
 	return results
 }
-func (s *ScaleService) CloseConnection(ref model.ConnectionRef) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	for token, review := range s.pending {
-		if review.Resource.Connection == ref {
-			delete(s.pending, token)
-		}
-	}
-}
-func (s *ScaleService) Close() {
-	s.stop()
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if s.expiry != nil {
-		s.expiry.Stop()
-		s.expiry = nil
-	}
-	clear(s.pending)
-}
+func (s *ScaleService) Close() { s.coordinator.Close() }

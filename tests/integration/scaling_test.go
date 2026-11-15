@@ -52,36 +52,7 @@ func TestReviewedScaling(t *testing.T) {
 	service := operation.NewScaleService(manager, nil)
 	defer service.Close()
 	open := func(suffix, variant string) (model.ConnectionRef, kubernetes.Interface) {
-		t.Helper()
-		target := "kind-dev-local-" + suffix
-		snapshot, err := config.Load([]string{filepath.Join(dir, suffix+variant+".kubeconfig")})
-		if err != nil {
-			t.Fatal(err)
-		}
-		if entries := snapshot.Contexts(); len(entries) != 1 || entries[0].Name != target {
-			t.Fatal("unapproved context")
-		}
-		resolved, err := snapshot.Resolve(target)
-		if err != nil {
-			t.Fatal(err)
-		}
-		endpoint, err := url.Parse(resolved.RESTConfig().Host)
-		if err != nil || endpoint.Scheme != "https" || endpoint.User != nil {
-			t.Fatal("invalid endpoint")
-		}
-		ip := net.ParseIP(endpoint.Hostname())
-		if endpoint.Hostname() != "localhost" && (ip == nil || !ip.IsLoopback()) {
-			t.Fatal("external endpoint rejected")
-		}
-		ref, err := manager.Open(ctx, resolved)
-		if err != nil {
-			t.Fatal(err)
-		}
-		client, err := manager.Client(ref)
-		if err != nil {
-			t.Fatal(err)
-		}
-		return ref, client
+		return openLocalOperationFixture(t, ctx, manager, dir, suffix, variant)
 	}
 	const ns = "kubesift-scaling-check"
 	previousUID := map[string]types.UID{}
@@ -379,4 +350,38 @@ func waitScaleFixture(t *testing.T, ctx context.Context, client kubernetes.Inter
 		}
 		time.Sleep(300 * time.Millisecond)
 	}
+}
+
+func openLocalOperationFixture(t *testing.T, ctx context.Context, manager *connection.Manager, dir, suffix, variant string) (model.ConnectionRef, kubernetes.Interface) {
+	t.Helper()
+	target := "kind-dev-local-" + suffix
+	snapshot, err := config.Load([]string{filepath.Join(dir, suffix+variant+".kubeconfig")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if entries := snapshot.Contexts(); len(entries) != 1 || entries[0].Name != target {
+		t.Fatal("unapproved context")
+	}
+	resolved, err := snapshot.Resolve(target)
+	if err != nil {
+		t.Fatal(err)
+	}
+	endpoint, err := url.Parse(resolved.RESTConfig().Host)
+	if err != nil || endpoint.Scheme != "https" || endpoint.User != nil {
+		t.Fatal("invalid endpoint")
+	}
+	ip := net.ParseIP(endpoint.Hostname())
+	if endpoint.Hostname() != "localhost" && (ip == nil || !ip.IsLoopback()) {
+		t.Fatal("external endpoint rejected")
+	}
+	ref, err := manager.Open(ctx, resolved)
+	if err != nil {
+		t.Fatal(err)
+	}
+	client, err := manager.Client(ref)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return ref, client
+
 }
