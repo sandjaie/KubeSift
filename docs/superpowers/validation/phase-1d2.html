@@ -110,6 +110,11 @@
         contexts in explicit Dark appearance. The previous System appearance was restored.
       </p>
       <p>
+        The same reviewer rechecked <code>0a42da5597005b2df01315ff4c287159049825cb</code> against the original candidate. Both findings were
+        closed with no remaining blockers. The recheck covered HTTP classification and dispatch counts, mounted review invalidation,
+        read-only mixed-result recovery, and the rebuilt package and live API evidence.
+      </p>
+      <p>
         Cleanup removed the owned restart and scaling namespaces, the temporarily retained Jobs and their Pods in both contexts, and the
         isolated kubeconfigs used for integration.
       </p>

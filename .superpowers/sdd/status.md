@@ -4,7 +4,7 @@ Updated 2026-11-15. Current integration branch is `develop`.
 
 ## Phase 1D.2 · Reviewed workload restart
 
-- Implemented on `feature/phase-1d2-reviewed-restart` from `f7edda7`. Repository checks, two-context restart, scale and workload-read integration, and packaged desktop verification passed. Independent review and delivery are pending. [Specification](../../docs/superpowers/specs/2026-11-15-phase-1d2-reviewed-restart-design.md) and [five-task plan](../../docs/superpowers/plans/2026-11-15-phase-1d2-reviewed-restart.md).
+- Implemented on `feature/phase-1d2-reviewed-restart` from `f7edda7`. Repository checks, two-context restart, scale and workload-read integration, and packaged desktop verification passed. Independent review and targeted recheck passed. Delivery is pending. [Specification](../../docs/superpowers/specs/2026-11-15-phase-1d2-reviewed-restart-design.md) and [five-task plan](../../docs/superpowers/plans/2026-11-15-phase-1d2-reviewed-restart.md).
 - Conditional annotation restart for Deployment/StatefulSet/DaemonSet with strategy restrictions, mandatory dry-run, shared Scale/Restart target locks and bounded operation results. Preserve the merged resource-detail refinements.
 - The [validation report](../../docs/superpowers/validation/phase-1d2.html) records verified journeys, limitations and fixture cleanup.
 
