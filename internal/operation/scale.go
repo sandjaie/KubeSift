@@ -7,55 +7,29 @@ Important: A permission hint is advisory and only the original live version is u
 package operation
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
-	"io"
 	"net/http"
-	"net/url"
 	"strconv"
-	"strings"
-	"sync"
-	"time"
-	"unicode"
 
 	"github.com/sandjaie/KubeSift/internal/connection"
 	"github.com/sandjaie/KubeSift/internal/kube"
 	"github.com/sandjaie/KubeSift/internal/model"
 	auth "k8s.io/api/authorization/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	utilnet "k8s.io/apimachinery/pkg/util/net"
 	"k8s.io/apimachinery/pkg/util/validation"
 )
 
-const reviewTTL = 5 * time.Minute
-const scaleDeadline = 30 * time.Second
-
 type ScaleService struct {
-	mu          sync.Mutex
 	connections *connection.Manager
-	now         func() time.Time
-	ctx         context.Context
-	stop        context.CancelFunc
-	prepares    chan struct{}
-	pending     map[string]ScalePreview
-	results     map[string]*scaleRecord
-	byToken     map[string]string
-	active      map[kube.ResourceRef]bool
-	order       []string
-	expiry      *time.Timer
+	coordinator *Coordinator
 }
 
-func NewScaleService(connections *connection.Manager, now func() time.Time) *ScaleService {
-	if now == nil {
-		now = time.Now
+func NewScaleService(connections *connection.Manager, coordinator *Coordinator) *ScaleService {
+	if coordinator == nil {
+		coordinator = NewCoordinator(connections, nil)
 	}
-	ctx, stop := context.WithCancel(context.Background())
-	s := &ScaleService{connections: connections, now: now, ctx: ctx, stop: stop, prepares: make(chan struct{}, 16),
-		pending: map[string]ScalePreview{}, results: map[string]*scaleRecord{}, byToken: map[string]string{}, active: map[kube.ResourceRef]bool{}}
-	connections.AddCleanup(s.CloseConnection)
-	return s
+	return &ScaleService{connections: connections, coordinator: coordinator}
 }
 
 func scaleTarget(ref kube.ResourceRef) (string, string) {
@@ -122,98 +96,7 @@ func (p scalePayload) matches(ref kube.ResourceRef, version string) bool {
 		p.Metadata.Version != "" && len(p.Metadata.Version) <= 128 && (version == "" || p.Metadata.Version == version)
 }
 
-type scaleClient struct {
-	client *http.Client
-	base   *url.URL
-}
-
-func (s *ScaleService) client(ref model.ConnectionRef) (scaleClient, error) {
-	cfg, err := s.connections.RESTConfig(ref)
-	if err != nil {
-		return scaleClient{}, err
-	}
-	base, err := url.Parse(cfg.Host)
-	if err != nil || base.Host == "" || (base.Scheme != "http" && base.Scheme != "https") {
-		return scaleClient{}, model.Fail("invalid", "Invalid Kubernetes API endpoint")
-	}
-	client, err := kube.BoundedHTTPClient(cfg)
-	return scaleClient{client, base}, err
-}
-
-type scaleHTTPStatus int
-
-func (e scaleHTTPStatus) Error() string { return http.StatusText(int(e)) }
-func (c scaleClient) call(ctx context.Context, method, path string, dry bool, input, out any) ([]string, error) {
-	addr := *c.base
-	addr.Path = strings.TrimRight(addr.Path, "/") + path
-	addr.RawPath, addr.RawQuery, addr.Fragment = "", "", ""
-	if dry {
-		addr.RawQuery = "dryRun=All"
-	}
-	var body io.Reader
-	if input != nil {
-		raw, err := json.Marshal(input)
-		if err != nil {
-			return nil, model.Fail("invalid", "Cannot encode scaling request")
-		}
-		// Keep the body non-replayable even if the underlying HTTP transport tries a retry.
-		body = io.NopCloser(bytes.NewReader(raw))
-	}
-	req, err := http.NewRequestWithContext(ctx, method, addr.String(), body)
-	if err != nil {
-		return nil, model.Fail("invalid", "Cannot build scaling request")
-	}
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("User-Agent", "KubeSift")
-	if input != nil {
-		req.Header.Set("Content-Type", "application/json")
-	}
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, scaleHTTPStatus(resp.StatusCode)
-	}
-	raw, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	if json.Unmarshal(raw, out) != nil {
-		return nil, model.Fail("invalid_response", "Kubernetes returned invalid scaling data")
-	}
-	if !dry {
-		return nil, nil
-	}
-	return scaleWarnings(resp.Header.Values("Warning")), nil
-}
-
-func scaleWarnings(headers []string) []string {
-	warnings := []string{}
-	budget := 8192
-	for _, header := range headers {
-		if len(header) > budget {
-			break
-		}
-		budget -= len(header)
-		values, _ := utilnet.ParseWarningHeaders([]string{header})
-		for _, value := range values {
-			text := strings.TrimSpace(strings.Map(func(r rune) rune {
-				if !unicode.IsPrint(r) {
-					return ' '
-				}
-				return r
-			}, value.Text))
-			if text != "" && len(warnings) < 32 {
-				warnings = append(warnings, text)
-			}
-		}
-	}
-	return warnings
-}
-
-func (c scaleClient) inspect(ctx context.Context, path string, ref kube.ResourceRef, version string) (int32, ScaleImpact, error) {
+func (c operationClient) inspect(ctx context.Context, path string, ref kube.ResourceRef, version string) (int32, ScaleImpact, error) {
 	var parent, scale scalePayload
 	stale := model.Fail("stale_target", "Workload changed or is terminating. Refresh and review again.")
 	if _, err := c.call(ctx, http.MethodGet, path, false, nil, &parent); err != nil {
@@ -248,7 +131,7 @@ func (c scaleClient) inspect(ctx context.Context, path string, ref kube.Resource
 	}
 	return scale.Spec.desired(), impact, nil
 }
-func permissionOf(ctx context.Context, c scaleClient, ref kube.ResourceRef, plural string) string {
+func permissionOf(ctx context.Context, c operationClient, ref kube.ResourceRef, plural string) string {
 	attrs := &auth.ResourceAttributes{Namespace: ref.Namespace, Name: ref.Name, Group: "apps", Version: "v1", Resource: plural, Subresource: "scale", Verb: "update"}
 	input := auth.SelfSubjectAccessReview{TypeMeta: metav1.TypeMeta{Kind: "SelfSubjectAccessReview", APIVersion: "authorization.k8s.io/v1"}, Spec: auth.SelfSubjectAccessReviewSpec{ResourceAttributes: attrs}}
 	var review auth.SelfSubjectAccessReview
@@ -284,19 +167,12 @@ func (s *ScaleService) PrepareScale(ctx context.Context, req ScaleRequest) (Scal
 	if err != nil {
 		return ScalePreview{}, err
 	}
-	select {
-	case s.prepares <- struct{}{}:
-		defer func() { <-s.prepares }()
-	default:
-		return ScalePreview{}, model.Fail("busy", "Too many scale preparations")
+	ctx, release, err := s.coordinator.prepare(ctx)
+	if err != nil {
+		return ScalePreview{}, err
 	}
-	ctx, cancel := context.WithTimeout(ctx, scaleDeadline)
-	stop := context.AfterFunc(s.ctx, cancel)
-	defer func() { stop(); cancel() }()
-	if s.ctx.Err() != nil || ctx.Err() != nil {
-		return ScalePreview{}, model.Fail("cancelled", "Scale review cancelled")
-	}
-	client, err := s.client(req.Resource.Connection)
+	defer release()
+	client, err := newOperationClient(s.connections, req.Resource.Connection)
 	if err != nil {
 		return ScalePreview{}, scaleReadProblem(err)
 	}
@@ -329,24 +205,15 @@ func (s *ScaleService) PrepareScale(ctx context.Context, req ScaleRequest) (Scal
 	if !matchingScale(dry, req.Resource) || dry.Spec.desired() != after {
 		return ScalePreview{}, model.Fail("invalid_response", "Dry-run did not preserve the selected identity and replica count")
 	}
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if ctx.Err() != nil || s.ctx.Err() != nil {
-		return ScalePreview{}, model.Fail("cancelled", "Scale review cancelled")
+	result := OperationResult{Action: "scale", Resource: p.Resource, Cluster: p.Cluster, Scale: &ScaleResultData{Before: p.Before, Requested: p.After}}
+	pending := pendingReview{result: result, payload: p}
+	if p.After == 0 {
+		pending.acknowledgement = p.Resource.Name
 	}
-	if err := s.connections.Validate(req.Resource.Connection); err != nil {
+	p.Token, p.ExpiresAt, err = s.coordinator.save(ctx, pending)
+	if err != nil {
 		return ScalePreview{}, err
 	}
-	now := s.now()
-	s.prune(now)
-	if len(s.pending) >= 128 {
-		return ScalePreview{}, model.Fail("busy", "Too many pending scale reviews")
-	}
-	p.Token, p.ExpiresAt = model.ID(), now.Add(reviewTTL)
-	saved := p
-	saved.Warnings = append([]string{}, p.Warnings...)
-	s.pending[p.Token] = saved
-	s.scheduleExpiry(now)
 	return p, nil
 }
 
@@ -364,7 +231,7 @@ func scaleReadProblem(err error) *model.Problem {
 	if errors.As(err, &problem) {
 		return problem
 	}
-	var code scaleHTTPStatus
+	var code operationHTTPStatus
 	if errors.As(err, &code) {
 		switch code {
 		case 401, 403:
@@ -379,7 +246,7 @@ func scaleReadProblem(err error) *model.Problem {
 	return &model.Problem{Code: "unavailable", Message: "Cannot read scaling data from Kubernetes"}
 }
 func scaleDryProblem(err error) *model.Problem {
-	var code scaleHTTPStatus
+	var code operationHTTPStatus
 	if errors.As(err, &code) {
 		switch code {
 		case 401, 403:

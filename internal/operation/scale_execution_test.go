@@ -215,7 +215,7 @@ func TestScaleReviewExpiryAndResultsRetention(t *testing.T) {
 	})
 	var seconds atomic.Int64
 	start := time.Now()
-	s.now = func() time.Time { return start.Add(time.Duration(seconds.Load()) * time.Second) }
+	s.coordinator.now = func() time.Time { return start.Add(time.Duration(seconds.Load()) * time.Second) }
 	ctx := context.Background()
 	expired, err := s.PrepareScale(ctx, req)
 	if err != nil {
