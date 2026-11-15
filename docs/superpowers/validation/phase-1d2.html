@@ -86,6 +86,29 @@
         Native desktop verification exercised the stale outcome. Permission rejection, lost responses and changed admission behavior were
         verified with live API or controlled transport tests.
       </p>
+      <h2>Independent review and regression checks</h2>
+      <p>
+        The independent reviewer <code>restart_pr_review</code> reviewed <code>86f81e63c3d12b36a52c288d760a9c3be3a59b74</code> from the
+        <code>develop</code> merge base <code>f7edda706013ebf132a08ba4e520aaef33e9fd8b</code> and reported two blockers.
+      </p>
+      <ul>
+        <li>
+          KSF-001 (P2) was fixed. Explicit HTTP 412 now returns Rejected. Request timeout and a success response over the read limit return
+          Unknown. Counting tests confirmed one persisted dispatch attempt in each case and no replay on duplicate confirmation. Source
+          inspection confirmed that the guarded credential transport returns its first response and Go cannot rewind the patch body.
+        </li>
+        <li>
+          KSF-002 (P2) was addressed with mounted frontend verification using the actual resource detail, restart dialog and results hook
+          against a synthetic bridge. Programmatic refresh revoked a prepared token. Changing generation, resource and namespace, or detail
+          section canceled preparation and revoked its late token. A lost execution response, view remount and manual refresh recovered
+          retained Scale and Unknown Restart rows with exactly one Execute call.
+        </li>
+      </ul>
+      <p>
+        After the fix the full repository suite passed again with 86 frontend tests, and the race tests and restart integration passed on
+        both approved contexts. The rebuilt ad-hoc-signed package confirmed Deployment, StatefulSet and DaemonSet restart across both
+        contexts in explicit Dark appearance. The previous System appearance was restored.
+      </p>
       <p>
         Cleanup removed the owned restart and scaling namespaces, the temporarily retained Jobs and their Pods in both contexts, and the
         isolated kubeconfigs used for integration.

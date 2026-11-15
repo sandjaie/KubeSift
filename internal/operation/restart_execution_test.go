@@ -27,6 +27,7 @@ func TestRestartExecution(t *testing.T) {
 		{"accepted", "accepted", 1, 2, false}, {"changed-admission", "accepted", 1, 2, true},
 		{"stale-before", "stale", 0, 2, false}, {"changed-marker-before", "stale", 0, 2, false}, {"stale-422", "stale", 1, 3, false},
 		{"rejected-422", "rejected", 1, 3, false}, {"rate-limit", "rejected", 1, 2, false}, {"unauthorized", "rejected", 1, 2, false},
+		{"precondition-rejection", "rejected", 1, 2, false}, {"request-timeout", "unknown", 1, 2, false}, {"oversize", "unknown", 1, 2, false},
 		{"redirect", "unknown", 1, 2, false}, {"ambiguous-500", "unknown", 1, 2, false}, {"malformed", "unknown", 1, 2, false}, {"lost", "unknown", 1, 2, false},
 	} {
 		t.Run(tc.mode, func(t *testing.T) {
@@ -75,12 +76,18 @@ func TestRestartExecution(t *testing.T) {
 						w.WriteHeader(429)
 					case "unauthorized":
 						w.WriteHeader(401)
+					case "precondition-rejection":
+						w.WriteHeader(http.StatusPreconditionFailed)
+					case "request-timeout":
+						w.WriteHeader(http.StatusRequestTimeout)
 					case "redirect":
 						http.Redirect(w, r, "/must-not-follow", http.StatusTemporaryRedirect)
 					case "ambiguous-500":
 						w.WriteHeader(500)
 					case "malformed":
 						fmt.Fprint(w, original)
+					case "oversize":
+						fmt.Fprint(w, `{"oversized":"`, strings.Repeat("x", 16<<20), `"}`)
 					case "lost":
 						conn, _, err := w.(http.Hijacker).Hijack()
 						if err != nil {

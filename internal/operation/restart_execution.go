@@ -10,6 +10,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"net/http"
 
 	"github.com/sandjaie/KubeSift/internal/model"
 )
@@ -84,7 +85,9 @@ func (s *RestartService) runRestart(ctx context.Context, result OperationResult,
 				return "stale", false, stale
 			}
 			return "rejected", false, rejected
-		case 400, 401, 403, 405, 406, 413, 415, 429:
+		}
+		// Timeout or client disconnect responses may describe an upstream wait, not a decision.
+		if status >= 400 && status < 500 && status != http.StatusRequestTimeout && status != 499 {
 			return "rejected", false, rejected
 		}
 	}
