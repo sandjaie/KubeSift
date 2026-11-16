@@ -34,14 +34,18 @@ type OperationResult struct {
 	Delete      *DeleteResultData   `json:"delete"`
 	Rollback    *RollbackResultData `json:"rollback,omitempty"`
 	Edit        *kube.EditTarget    `json:"edit,omitempty"`
+	Create      *CreateResultData   `json:"create,omitempty"`
 }
 
 // operationKey shares locks across API versions of the same canonical resource.
 func operationKey(result OperationResult) kube.ResourceRef {
 	key := result.Resource
-	if result.Edit != nil {
+	key.UID = ""
+	if result.Create != nil {
+		key.APIVersion, key.Kind = result.Create.Target.Group, result.Create.Target.Resource
+	} else if result.Edit != nil {
 		key.APIVersion, key.Kind = result.Edit.Group, result.Edit.Resource
-	} else if _, plural := deleteTarget(key); plural != "" {
+	} else if _, plural := deleteTarget(result.Resource); plural != "" {
 		group, _, grouped := strings.Cut(key.APIVersion, "/")
 		if !grouped {
 			group = ""
@@ -49,6 +53,11 @@ func operationKey(result OperationResult) kube.ResourceRef {
 		key.APIVersion, key.Kind = group, plural
 	}
 	return key
+}
+
+type CreateResultData struct {
+	Target          kube.ManifestAddress `json:"target"`
+	ResourceVersion string               `json:"resourceVersion"`
 }
 
 type ScaleResultData struct {
@@ -248,6 +257,10 @@ func copyOperationResult(result OperationResult) OperationResult {
 	if result.Edit != nil {
 		value := *result.Edit
 		result.Edit = &value
+	}
+	if result.Create != nil {
+		value := *result.Create
+		result.Create = &value
 	}
 	return result
 }

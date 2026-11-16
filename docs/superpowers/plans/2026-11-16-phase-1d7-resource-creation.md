@@ -38,9 +38,9 @@ Existing checkout `/Users/sandjaieravi/dev/KubeSift`, no worktree. Start from cu
 
 **Contract:** `ManifestAddress { Connection model.ConnectionRef; Group,Version,Resource,Kind,Namespace,Name string }`; `ResolveManifestTarget(ctx, connection, apiVersion,kind,resource,namespace,name,verb) (ManifestAddress,error)` is native-only, uses advertised group/version, validates path/scope and verb, and never follows caller URLs. Resource may initially be absent; ambiguity requires explicit choice. Restrict operation verb argument internally to create or get/patch as needed by later apply, not arbitrary bridge input.
 
-- [ ] Add tests for namespaced/cluster scope, unknown/duplicate Kind routes, absent API, explicit version, namespace mismatch and wrong scope. No plural guessing, subresources or automatic API/namespace installs. Create route requires advertised create, not get/list or a local resource allowlist.
-- [ ] Change shared execution lock to connection/generation/group/resource/namespace/name, excluding API version and UID, while preserving each action's independent UID/version checks. Test new unnamed-UID create versus existing edit/delete/scale/restart/rollback on same address, including cross-version and generic aliases.
-- [ ] Preserve aggregate capacity/expiry/result cleanup and wrong-action token protections; no second coordinator. Run `go test ./internal/kube ./internal/operation` and focused race tests. Commit.
+- [x] Add tests for namespaced/cluster scope, unknown/duplicate Kind routes, absent API, explicit version, namespace mismatch and wrong scope. No plural guessing, subresources or automatic API/namespace installs. Create route requires advertised create, not get/list or a local resource allowlist.
+- [x] Change shared execution lock to connection/generation/group/resource/namespace/name, excluding API version and UID, while preserving each action's independent UID/version checks. Test new unnamed-UID create versus existing edit/delete/scale/restart/rollback on same address, including cross-version and generic aliases.
+- [x] Preserve aggregate capacity/expiry/result cleanup and wrong-action token protections; no second coordinator. Run `go test ./internal/kube ./internal/operation` and focused race tests. Commit.
 
 ## Task 2 — Named manifest drafts and server preview
 

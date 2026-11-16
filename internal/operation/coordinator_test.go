@@ -140,3 +140,38 @@ func TestCoordinatorCompletedTokenExpiresWithoutEvictingResult(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestCreateSharesCanonicalAddressWithExistingActions(t *testing.T) {
+	c := NewCoordinator(nil, nil)
+	defer c.Close()
+	ctx := context.Background()
+	ref := kube.ResourceRef{Connection: model.ConnectionRef{ID: "cluster", Generation: 1}, APIVersion: "apps/v1", Kind: "Deployment", Namespace: "team", Name: "demo", UID: "old"}
+	address := kube.ManifestAddress{Connection: ref.Connection, Group: "apps", Version: "v2", Resource: "deployments", Kind: "Deployment", Namespace: "team", Name: "demo"}
+	save := func(result OperationResult) string {
+		token, _, err := c.save(ctx, pendingReview{result: result})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return token
+	}
+	token := save(OperationResult{Action: "create", Resource: address.Ref(), Create: &CreateResultData{Target: address}})
+	_, running, err := c.begin("create", token, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, action := range []string{"scale", "restart", "delete", "rollback", "edit"} {
+		existing := OperationResult{Action: action, Resource: ref}
+		if action == "edit" {
+			existing.Resource.APIVersion = "apps/v3"
+			existing.Edit = &kube.EditTarget{Group: "apps", Version: "v3", Resource: "deployments"}
+		}
+		_, _, err := c.begin(action, save(existing), "")
+		checkCode(t, err, "busy")
+	}
+	running.Resource.UID = "new"
+	c.finish(running)
+	token = save(OperationResult{Action: "scale", Resource: ref})
+	if _, _, err := c.begin("scale", token, ""); err != nil {
+		t.Fatal("lock not released after result acquired UID", err)
+	}
+}
