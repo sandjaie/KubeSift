@@ -46,7 +46,7 @@
       <ul>
         <li>
           Repository checks, targeted Go race checks, binding regeneration, production packaging and strict signature verification passed.
-          The frontend suite ran 91 tests.
+          The final frontend suite ran 96 tests.
         </li>
         <li>
           Synthetic HTTP and race tests exercised exact typed-name confirmation, fixed options, shared action locks and limits, bounded
@@ -92,12 +92,38 @@
         </li>
       </ul>
       <p>
-        Native walkthroughs exercised Pod and Deployment. The other six routes were checked through the API-server suite. Programmatic
-        invalidation is covered by the shared review ownership and captured navigation tests. The package was not checked on other operating
-        systems.
+        Native walkthroughs exercised Pod and Deployment. The other six routes were checked through the API-server suite. The test-only DOM
+        environment exercised programmatic invalidation independently of the packaged walkthroughs. Other operating systems remain
+        unverified.
       </p>
       <h2>Independent review</h2>
-      <p>Pending review of the committed candidate.</p>
+      <p>
+        The independent reviewer <code>deletion_pr_review</code> reviewed candidate
+        <code>44f57f207028287c1cf95d227bf4e1113226e3e6</code> against <code>develop</code> at base and merge base
+        <code>163848f7f636972649d60c195b2834212e2f9c98</code>. The reviewer reported two blocking findings and one mounted test coverage
+        gap.
+      </p>
+      <ul>
+        <li>
+          KSF-001 (P2) was fixed. The inspector holds the submitted identity during inventory refresh. Direct and recovered acceptance use
+          the same result handler. A new selection discards the previous capture. Mounted tests exercise both response orders, explicit
+          replacement selection and recovery after a lost bridge reply.
+        </li>
+        <li>
+          KSF-002 (P2) was fixed. A StatefulSet with missing or null spec now fails before dry-run and before real dispatch. A valid spec
+          with an omitted retention policy still uses the Kubernetes default.
+        </li>
+        <li>
+          A focused mounted suite uses a pinned test-only DOM dependency. It verifies cancellation of pending preparation and revocation of
+          late tokens when refresh, version, UID, namespace, tab or connection generation changes.
+        </li>
+      </ul>
+      <p>
+        The same reviewer rechecked the fixes and affected callers through <code>98d4bc3ab804325705ef3dce160b8014a45da22c</code> and found
+        no remaining blockers. The full repository checks, race suite, two-context deletion integration and production packaging passed
+        after the fixes. The rebuilt package on B again confirmed deletion, observed absence, retained the original inspector and returned
+        to inventory. Both contexts were checked for fixture cleanup.
+      </p>
     </main>
   </body>
 </html>

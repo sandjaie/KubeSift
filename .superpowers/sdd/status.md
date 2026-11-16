@@ -6,7 +6,7 @@ Updated 2026-11-16. Current integration branch is `develop`.
 
 - Implemented on `feature/phase-1d3-reviewed-deletion` from `163848f` in the existing checkout. [Specification](../../docs/superpowers/specs/2026-11-15-phase-1d3-reviewed-deletion-design.md), [plan](../../docs/superpowers/plans/2026-11-15-phase-1d3-reviewed-deletion.md) and [validation](../../docs/superpowers/validation/phase-1d3.html).
 - Both approved kind contexts passed deletion, late UID/version races, and scale, restart and workload-read regressions. Packaged desktop checks covered exact-name review, the three result types, stale and denied cases, and original identity retention after a same-name replacement.
-- Independent review and integration into `develop` are pending.
+- Independent whole-PR review and targeted recheck passed. Integration into `develop` is pending.
 
 ## Phase 1D.2 · Reviewed workload restart
 
