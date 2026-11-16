@@ -118,6 +118,10 @@ export function OpenEdit(id: string, target: kube$0.EditTarget): $CancellablePro
   return $Call.ByID(3101400936, id, target);
 }
 
+export function OpenForward(id: string, req: kube$0.ForwardRequest): $CancellablePromise<kube$0.InteractiveEntry> {
+  return $Call.ByID(834662529, id, req);
+}
+
 export function OpenPodLogs(req: kube$0.LogRequest): $CancellablePromise<model$0.SessionRef> {
   return $Call.ByID(1020417316, req);
 }
@@ -176,6 +180,10 @@ export function ReadControllerRevisions(id: string, req: kube$0.RelatedRequest):
 
 export function ReadEventInventory(id: string, req: kube$0.PageRequest): $CancellablePromise<kube$0.EventInventoryPage> {
   return $Call.ByID(3259958076, id, req);
+}
+
+export function ReadForwardCandidates(id: string, req: kube$0.ForwardCandidateRequest): $CancellablePromise<kube$0.ForwardCandidatePage> {
+  return $Call.ByID(2812296163, id, req);
 }
 
 export function ReadGenericDetail(id: string, req: kube$0.GenericDetailRequest): $CancellablePromise<kube$0.GenericResourceDetail> {

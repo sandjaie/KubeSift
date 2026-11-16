@@ -188,6 +188,33 @@ export interface EventTargetRequest {
   sourceVersion: string;
 }
 
+export interface ForwardCandidate {
+  pod: ResourceRef;
+  podVersion: string;
+  remotePort: number;
+}
+
+export interface ForwardCandidatePage {
+  items: ForwardCandidate[] | null;
+  page: PageInfo;
+  complete: boolean;
+}
+
+export interface ForwardCandidateRequest {
+  service: ResourceRef;
+  serviceVersion: string;
+  portName: string;
+  port: number;
+  cursor: string;
+}
+
+export interface ForwardRequest {
+  target: PodSessionTarget;
+  localPort: number;
+  remotePort: number;
+  service: ServiceForwardSelection | null;
+}
+
 export interface ForwardResult {
   session: model$0.SessionRef;
   localPort: number;

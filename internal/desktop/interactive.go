@@ -27,3 +27,21 @@ func (s *ExplorerService) OpenTerminal(id string, req kube.TerminalRequest) (kub
 	defer done()
 	return s.core.kube.OpenTerminal(ctx, req)
 }
+
+func (s *ExplorerService) OpenForward(id string, req kube.ForwardRequest) (kube.InteractiveEntry, error) {
+	ctx, done, err := s.beginWorkloadRead(id)
+	if err != nil {
+		return kube.InteractiveEntry{}, err
+	}
+	defer done()
+	return s.core.kube.OpenForward(ctx, req)
+}
+
+func (s *ExplorerService) ReadForwardCandidates(id string, req kube.ForwardCandidateRequest) (kube.ForwardCandidatePage, error) {
+	ctx, done, err := s.beginWorkloadRead(id)
+	if err != nil {
+		return kube.ForwardCandidatePage{}, err
+	}
+	defer done()
+	return s.core.kube.ReadForwardCandidates(ctx, req)
+}
