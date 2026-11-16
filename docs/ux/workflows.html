@@ -137,14 +137,13 @@
         automatically unhealthy; unavailable/stale health data must be identified. Alerts require evidence, not a decorative badge. Text and
         icons supplement color.
       </p>
-      <h2 id="reviewed-yaml-editing">Reviewed YAML editing design</h2>
+      <h2 id="reviewed-yaml-editing">YAML editing design</h2>
       <p>
-        The <a href="../superpowers/specs/2026-11-16-phase-1d4-reviewed-yaml-editing-design.md">1D.4 specification</a> extends the current
-        YAML section with Edit, Review changes, server preview and confirmation, preserving approved layout, tokens and navigation. One
-        bounded in-memory draft retains its original target; unsaved navigation and conflicts require explicit resolution. Secret bodies
-        require an explicit reveal/edit action and their review masks values until separately revealed. These are proposed interaction
-        additions for design review, not evidence of implemented controls; existing visual references continue to own the surrounding
-        appearance.
+        The <a href="../superpowers/specs/2026-11-16-phase-1d4-reviewed-yaml-editing-design.md">1D.4 specification</a> adds a common Edit
+        YAML, diff/dry-run review and Confirm flow to existing resource views. Preserve approved layout and interaction conventions. Secrets
+        use the same flow: Edit or Reveal YAML loads authorized content directly, without extra approval or repeated reveal steps.
+        Kubernetes determines permissions and valid changes. Explain unsaved changes, conflicts and server errors without adding a wizard or
+        resource-specific typed confirmations. These controls remain a design until implementation is verified.
       </p>
       <h2 id="reviewed-deletion">Reviewed workload deletion</h2>
       <p>

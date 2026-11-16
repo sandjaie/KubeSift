@@ -137,15 +137,13 @@
         deletion, finalizer removal, generic resource deletion and unsafe StatefulSet retention overrides are excluded. Scale, Restart and
         Delete share native locks and aggregate limits; an uncertain response is never automatically retried.
       </p>
-      <h2 id="reviewed-yaml-editing">Reviewed YAML editing design</h2>
+      <h2 id="reviewed-yaml-editing">YAML editing design</h2>
       <p>
-        The <a href="../superpowers/specs/2026-11-16-phase-1d4-reviewed-yaml-editing-design.md">1D.4 design</a> extends reviewed operations
-        to discovered existing resource types using native route resolution, UID/version-conditional JSON Patch, server dry-run and
-        single-use confirmation. Ordinary browsing does not authorize a write or fetch Secret bodies. Explicit Secret reveal/edit is a
-        separate local, memory-only flow with masked review by default and safe error handling. Drafts, diffs and payloads never enter
-        operation history, diagnostics or AI context. Creation, server-side apply and subresource editing remain separate. The specification
-        defines protected fields and additional confirmation for privilege, cluster scope and lifecycle-impact changes; server authorization
-        remains authoritative.
+        The <a href="../superpowers/specs/2026-11-16-phase-1d4-reviewed-yaml-editing-design.md">1D.4 design</a> uses the user's existing
+        cluster permissions for editing built-in and discovered resources, including Secrets. Kubernetes RBAC and API validation are
+        authoritative; KubeSift adds no resource allowlist or extra permission approvals. The shared flow is Edit, diff/dry-run review and
+        ordinary confirmation, with UID/version conditions to prevent accidental overwrites. Secret Edit or Reveal YAML explicitly loads
+        authorized content without repeated reveal gates. Payloads remain memory-only and never enter diagnostics, history or AI context.
       </p>
       <h2>AI availability and provider routing</h2>
       <p>
