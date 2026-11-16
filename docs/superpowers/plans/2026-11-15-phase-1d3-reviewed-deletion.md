@@ -83,7 +83,7 @@ Five risks drive tests:
 - [x] Run full Go tests/vet, targeted race, frontend tests/lint/typecheck, generated binding consistency, build/package and deletion+scale+restart+affected read integration on approved contexts. Keep historical marker integration limitation; do not use unapproved contexts.
 - [x] Desktop computer-use on final package: standalone Pod and controller review/cancel/confirm, typed-name mismatch, stale/denied target, finalizer state, Check target, same-name replacement handling, mixed results, Back and both contexts. Verify keyboard/focus, appearances, narrow split and prior detail refinements. State which other kinds are integration-only observations. No duplicate user UAT checklist.
 - [x] Clean task-owned fixtures/dependents/credentials and verify both-context cleanup. Record outcomes/limitations in one report, update checked tasks/checkpoint, keep roadmap scope-only. Run documentation checks and formatting; detailed logs remain ignored.
-- [ ] Request one fresh independent whole-PR review using `.agents/skills/kubesift-code-review/SKILL.md` with base/head/spec and safety evidence. Resolve findings and targeted rechecks/rebuilds. Push feature branch, open ready PR and merge into develop after required gates under standing authorization. No release or next-phase implementation.
+- [x] Request one fresh independent whole-PR review using `.agents/skills/kubesift-code-review/SKILL.md` with base/head/spec and safety evidence. Resolve findings and targeted rechecks/rebuilds. Push feature branch, open ready PR and merge into develop after required gates under standing authorization. No release or next-phase implementation.
 
 ## Plan self-review
 

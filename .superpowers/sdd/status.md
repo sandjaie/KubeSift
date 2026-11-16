@@ -4,9 +4,9 @@ Updated 2026-11-16. Current integration branch is `develop`.
 
 ## Phase 1D.3 · Reviewed workload deletion
 
-- Implemented on `feature/phase-1d3-reviewed-deletion` from `163848f` in the existing checkout. [Specification](../../docs/superpowers/specs/2026-11-15-phase-1d3-reviewed-deletion-design.md), [plan](../../docs/superpowers/plans/2026-11-15-phase-1d3-reviewed-deletion.md) and [validation](../../docs/superpowers/validation/phase-1d3.html).
+- [PR #18](https://github.com/sandjaie/KubeSift/pull/18) squash-merged into `develop` as `cc28d2e` on 2026-11-16 Dubai time. Implemented from `163848f` in the existing checkout. [Specification](../../docs/superpowers/specs/2026-11-15-phase-1d3-reviewed-deletion-design.md), [plan](../../docs/superpowers/plans/2026-11-15-phase-1d3-reviewed-deletion.md) and [validation](../../docs/superpowers/validation/phase-1d3.html).
 - Both approved kind contexts passed deletion, late UID/version races, and scale, restart and workload-read regressions. Packaged desktop checks covered exact-name review, the three result types, stale and denied cases, and original identity retention after a same-name replacement.
-- Independent whole-PR review and targeted recheck passed. Integration into `develop` is pending.
+- Independent whole-PR review and targeted rechecks passed. Both approved contexts were checked after fixture and credential cleanup.
 
 ## Phase 1D.2 · Reviewed workload restart
 
