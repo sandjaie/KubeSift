@@ -8,7 +8,7 @@ Planning only; implementation occurs in separate sessions. Owners: [roadmap](../
 
 Complete this in two increments, each with its own implementation PR and verification:
 
-- **1D.7 — Named resource creation.** One YAML object, discovered route/scope, server dry-run, ordinary review/confirm, one POST that cannot overwrite an existing object.
+- **1D.7 — Named resource creation and bindings layout.** First normalize generated project bindings to `frontend/bindings/internal`, then deliver one YAML object, discovered route/scope, server dry-run, ordinary review/confirm, one POST that cannot overwrite an existing object.
 - **1D.8 — Server-side apply and closure.** Explicit SSA of one existing resource, field ownership and conflicts, optional deliberate takeover in the same review, conditional submission, plus a consolidated Phase 1D exit audit.
 
 Creation and apply are distinct actions, not a silent upsert. Existing Edit YAML stays conditional JSON Patch; it must not silently become SSA. This split lets the first increment ship independently and makes create-versus-update intent visible.
@@ -24,6 +24,16 @@ Use the existing editor, diff/review modal, draft retention, operation coordinat
 Parse natively with the current lossless YAML parser, one object, unique string keys, exact unknown fields/numbers, no aliases/custom tags/templates/external references. Reject YAML streams, arrays and wrapper Lists with a clear single-resource message. Bound documents, prepared payloads and serialized review output to the existing 2 MiB limit; do not truncate reviews. Server response cap remains 16 MiB, warnings 8 KiB and requests 30 seconds. Reuse aggregate draft/review/result/concurrency limits; do not double budgets per action.
 
 Drafts and values remain memory-only, never in settings/logs/retained results/AI. Explicitly opened Secret content is visible in editor/review and copy is user-initiated. Reuse native stringData→data normalization with stringData precedence; use standard base64 data on the wire for creation and SSA, because stringData is not a durable SSA field. No masked placeholders in submitted objects. Closing/discarding clears application references, not a promise of physical memory zeroization. Sanitized detailed server feedback may be displayed transiently in this editor, not persisted in operation history.
+
+## Included maintenance — Generated bindings layout
+
+The user explicitly requested that KubeSift-owned TypeScript bindings live at `frontend/bindings/internal/...`, removing the filesystem prefix `github.com/sandjaie/KubeSift/`. Include this as the first task of 1D.7; 1D.8 uses the normalized layout. This changes generated artifact paths and imports, not Go module/package names, public backend contracts, generated runtime binding IDs or application behavior.
+
+The pinned Wails CLI exposes an output directory flag but no package-prefix-remapping flag. Its output mirrors Go import paths, and generated framework event declarations refer back into KubeSift model files. Use one deterministic generation pipeline: generate to an owned temporary staging directory, normalize only this repository's module-prefix paths, rebase relative module references throughout the generated tree, add existing source descriptions, validate the resulting tree, then publish it to frontend/bindings. Keep framework/third-party namespaces and the top-level events entry point distinct; do not flatten all packages into one internal directory. Reject output collisions or unresolved imports, and preserve existing output if generation/normalization fails.
+
+Use the existing TypeScript parser/compiler dependency to identify actual module specifiers (imports, side-effect imports, re-exports and import-type expressions), including .d.ts and .js-suffixed references. Do not globally replace strings: Go binding identifiers, runtime calls, comments and unrelated literal values are not path aliases. Rewrite references by resolving their old source/target file locations and calculating relative paths after relocation. Update handwritten imports and test mocks to the new public path, remove the obsolete KubeSift-prefixed generated tree, and keep generation as the sole source of those files.
+
+`wails3 task bindings`, npm bindings and all build/package dependencies must use this same pipeline. Verify two successive regenerations are identical, no old project-prefix import remains, source descriptions still pass, frontend typecheck/tests/lint/build succeed and packaged calls plus a generated session event work. Do not move folders manually after every build or change go.mod to influence frontend layout. This maintenance is delivered with 1D.7 and included in its whole-PR review, not an extra review gate.
 
 ## Native route and lock contract
 

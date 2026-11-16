@@ -5,7 +5,7 @@ Updated 2026-11-16. Current integration branch is `develop`.
 ## Phase 1D completion · Next: 1D.7 resource creation
 
 - Completion planning package prepared; neither remaining increment is implemented. [Shared specification](../../docs/superpowers/specs/2026-11-16-phase-1d-completion-design.md), [1D.7 creation plan](../../docs/superpowers/plans/2026-11-16-phase-1d7-resource-creation.md) and [1D.8 SSA/closure plan](../../docs/superpowers/plans/2026-11-16-phase-1d8-server-side-apply.md).
-- Implement 1D.7 first, merge and verify, then implement 1D.8 in a separate session. Preserve the approved 1D.4 Kubernetes-permission model and existing UI. Existing checkout, no worktree.
+- Implement 1D.7 first, including the user-requested generated binding path normalization to `frontend/bindings/internal`, merge and verify, then implement 1D.8 in a separate session. Preserve the approved 1D.4 Kubernetes-permission model and existing UI. Existing checkout, no worktree.
 - Phase 1D is not yet complete: creation, server-side apply and the consolidated exit audit remain. The closure report must resolve committed acceptance blockers before marking complete. Local-machine terminals, bulk manifests and release work are outside the specified scope.
 
 ## Phase 1D.6 · Interactive sessions

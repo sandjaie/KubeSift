@@ -10,7 +10,7 @@
 
 ## Prerequisites and review focus
 
-Use `/Users/sandjaieravi/dev/KubeSift`, no worktree; preserve unrelated edits. Verify merged 1D.7 and actual source first, adapt helper paths without changing contracts, then branch `feature/phase-1d8-server-side-apply`. Follow AGENTS.md, Kubernetes skill, current toolchain/Git workflow and approved 1D.4 permission simplicity. Kubernetes decides permissions; no kind allowlist or repeated Secret approval.
+Use `/Users/sandjaieravi/dev/KubeSift`, no worktree; preserve unrelated edits. Verify merged 1D.7, its normalized frontend/bindings/internal layout and actual source first, adapt helper paths without changing contracts, then branch `feature/phase-1d8-server-side-apply`. Follow AGENTS.md, Kubernetes skill, current toolchain/Git workflow and approved 1D.4 permission simplicity. Kubernetes decides permissions; no kind allowlist or repeated Secret approval.
 
 1. SSA recreates a deleted target or updates a replacement: Task 1 real protocol proof, Task 3 race tests.
 2. Apply claims every live field or omission deletes unseen owned values: Tasks 2/4 identity-only draft and server diff/ownership tests.
@@ -44,7 +44,7 @@ Use `/Users/sandjaieravi/dev/KubeSift`, no worktree; preserve unrelated edits. V
 ## Task 3 — Conditional single-dispatch apply and bridge
 
 **Create:** `internal/operation/apply_execution.go`, execution tests, `internal/desktop/apply.go` and tests.
-**Modify:** coordinator union/lifecycle, operation HTTP helper, frontend API, generated bindings by generator only.
+**Modify:** coordinator union/lifecycle, operation HTTP helper, frontend API, generated bindings through the canonical normalized generation task only. Do not restore old project-prefix import paths.
 
 **Contracts:** `ExecuteApply(token string) (OperationResult,error)`, `RevokeApply(token string)`. Add action apply payload with manager/force-used and canonical existing target identity only. No desired document/values/managedFields in retained results. Execute cannot accept a new target, force choice or body.
 
