@@ -398,6 +398,30 @@ export interface ResourceRef {
   uid: string;
 }
 
+export interface RolloutHistoryPage {
+  items: RolloutRevision[] | null;
+  sourceVersion: string;
+  currentRevision: string;
+  updateRevision: string;
+  page: PageInfo;
+  complete: boolean;
+  problem: model$0.Problem | null;
+}
+
+export interface RolloutHistoryRequest {
+  resource: ResourceRef;
+  cursor: string;
+}
+
+export interface RolloutRevision {
+  resource: ResourceRef;
+  resourceVersion: string;
+  revision: string;
+  createdAt: string | null;
+  images: string[] | null;
+  changeCause: string;
+}
+
 export interface SelectedPodPage {
   sourceVersion: string;
   selectorJSON: string;

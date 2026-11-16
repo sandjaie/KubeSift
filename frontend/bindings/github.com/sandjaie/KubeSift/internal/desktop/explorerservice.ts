@@ -206,6 +206,10 @@ export function ReadResourceYAML(id: string, req: kube$0.DetailRequest): $Cancel
   return $Call.ByID(1865491731, id, req);
 }
 
+export function ReadRolloutHistory(id: string, req: kube$0.RolloutHistoryRequest): $CancellablePromise<kube$0.RolloutHistoryPage> {
+  return $Call.ByID(60729703, id, req);
+}
+
 export function ReadServiceEndpointSlices(id: string, req: kube$0.RelatedRequest): $CancellablePromise<kube$0.ServiceSlicePage> {
   return $Call.ByID(414000693, id, req);
 }

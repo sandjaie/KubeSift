@@ -59,11 +59,11 @@ Results add action `rollback` and safe source name/UID/revision identifiers; nev
 
 **Interfaces:** Produces ReadRolloutHistory and the DTOs above; consumes existing checked parent reads, owner-reference comparison and pagination.
 
-- [ ] Add one `TestRolloutHistory` table: owned Deployment ReplicaSet with valid revision, same-label wrong-owner exclusion, StatefulSet/DaemonSet ControllerRevision, exact large/duplicate revision values, Forbidden and partial continuation. Assert UID-based ownership, preserved source version and no invented global newest/current claim.
-- [ ] Run `go test ./internal/kube -run TestRolloutHistory -count=1`; confirm new cases fail before implementation.
-- [ ] Implement typed parent and history reads using explicit targets and 100-item pages. Reuse existing eight-page maximum scan per request and cursor scope binding. Preserve remaining cursor/partial status instead of scanning the whole namespace. Sort returned rows by exact integer revision, tie-break by source UID; duplicate numbers remain separate rows. Invalid Deployment revision annotations cannot become selectable rollback history.
-- [ ] Populate evidence from the captured source only; no per-row Secret or image-registry requests. Preserve current/update references for StatefulSet; do not infer DaemonSet/Deployment health from maximum revision. Keep existing ControllerRevision detail navigation working.
-- [ ] Run `go test ./internal/kube ./internal/desktop`, then `wails3 task bindings`; expect pass and inspect generated diff. Commit `feat: expose owned workload rollout history`.
+- [x] Add one `TestRolloutHistory` table: owned Deployment ReplicaSet with valid revision, same-label wrong-owner exclusion, StatefulSet/DaemonSet ControllerRevision, exact large/duplicate revision values, Forbidden and partial continuation. Assert UID-based ownership, preserved source version and no invented global newest/current claim.
+- [x] Run `go test ./internal/kube -run TestRolloutHistory -count=1`; confirm new cases fail before implementation.
+- [x] Implement typed parent and history reads using explicit targets and 100-item pages. Reuse existing eight-page maximum scan per request and cursor scope binding. Preserve remaining cursor/partial status instead of scanning the whole namespace. Sort returned rows by exact integer revision, tie-break by source UID; duplicate numbers remain separate rows. Invalid Deployment revision annotations cannot become selectable rollback history.
+- [x] Populate evidence from the captured source only; no per-row Secret or image-registry requests. Preserve current/update references for StatefulSet; do not infer DaemonSet/Deployment health from maximum revision. Keep existing ControllerRevision detail navigation working.
+- [x] Run `go test ./internal/kube ./internal/desktop`, then `wails3 task bindings`; expect pass and inspect generated diff. Commit `feat: expose owned workload rollout history`.
 
 ## Task 2: Decode historical templates and build a narrow patch
 
