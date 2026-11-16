@@ -93,7 +93,7 @@ type Coordinator struct {
 	stop        context.CancelFunc
 	prepares    chan struct{}
 	pending     map[string]pendingReview
-	captures    map[string]editCapture
+	captures    map[string]operationDraft
 	results     map[string]*operationRecord
 	byToken     map[string]string
 	active      map[kube.ResourceRef]bool
@@ -107,7 +107,7 @@ func NewCoordinator(connections *connection.Manager, now func() time.Time) *Coor
 	}
 	ctx, stop := context.WithCancel(context.Background())
 	c := &Coordinator{connections: connections, now: now, ctx: ctx, stop: stop, prepares: make(chan struct{}, 16),
-		pending: map[string]pendingReview{}, captures: map[string]editCapture{}, results: map[string]*operationRecord{}, byToken: map[string]string{}, active: map[kube.ResourceRef]bool{}}
+		pending: map[string]pendingReview{}, captures: map[string]operationDraft{}, results: map[string]*operationRecord{}, byToken: map[string]string{}, active: map[kube.ResourceRef]bool{}}
 	if connections != nil {
 		connections.AddCleanup(c.CloseConnection)
 	}
@@ -144,8 +144,8 @@ func (s *Coordinator) save(ctx context.Context, review pendingReview) (string, t
 	now := s.now()
 	s.prune(now)
 	if review.draftID != "" {
-		if draft, ok := s.captures[review.draftID]; !ok || draft.revision != review.revision {
-			return "", time.Time{}, model.Fail("expired", "Edit capture changed or expired")
+		if draft, ok := s.captures[review.draftID]; !ok || draft.action != review.result.Action || draft.revision != review.revision {
+			return "", time.Time{}, model.Fail("expired", "The editor capture changed or expired")
 		}
 	}
 	if len(s.pending)+len(s.captures) >= 128 {
@@ -194,7 +194,11 @@ func (s *Coordinator) begin(action, token, acknowledgement string) (*pendingRevi
 		return nil, OperationResult{}, err
 	}
 	if review.draftID != "" {
-		s.dropEdit(review.draftID)
+		if action == "create" {
+			s.revokeDraft(review.draftID)
+		} else {
+			s.dropDraft(review.draftID)
+		}
 	}
 	result := review.result
 	result.OperationID, result.StartedAt, result.State = model.ID(), now, "executing"
@@ -288,7 +292,7 @@ func (s *Coordinator) ListOperationResults() []OperationResult {
 func (s *Coordinator) prune(now time.Time) {
 	for id, draft := range s.captures {
 		if !now.Before(draft.expires) {
-			s.dropEdit(id)
+			s.dropDraft(id)
 		}
 	}
 	for token, p := range s.pending {
@@ -367,8 +371,8 @@ func (s *Coordinator) CloseConnection(ref model.ConnectionRef) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	for id, draft := range s.captures {
-		if draft.baseline.Target.Connection == ref {
-			s.dropEdit(id)
+		if draft.connection == ref {
+			s.dropDraft(id)
 		}
 	}
 	for token, review := range s.pending {
@@ -387,4 +391,60 @@ func (s *Coordinator) Close() {
 	}
 	clear(s.pending)
 	clear(s.captures)
+}
+
+func (s *Coordinator) storeDraft(ctx context.Context, id string, draft operationDraft) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if ctx.Err() != nil || s.ctx.Err() != nil {
+		return model.Fail("cancelled", "Opening the editor was cancelled")
+	}
+	if err := s.connections.Validate(draft.connection); err != nil {
+		return err
+	}
+	now := s.now()
+	s.prune(now)
+	if len(s.pending)+len(s.captures) >= 128 {
+		return model.Fail("busy", "Too many pending operations and editor captures")
+	}
+	draft.expires = now.Add(reviewTTL)
+	s.captures[id] = draft
+	s.scheduleExpiry(now)
+	return nil
+}
+
+func (s *Coordinator) closeDraft(action, id string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.captures[id].action == action {
+		s.dropDraft(id)
+		s.scheduleExpiry(s.now())
+	}
+}
+
+func (s *Coordinator) dropDraft(id string) {
+	delete(s.captures, id)
+	s.revokeDraft(id)
+}
+
+func (s *Coordinator) revokeDraft(id string) {
+	for token, review := range s.pending {
+		if review.draftID == id {
+			delete(s.pending, token)
+		}
+	}
+}
+
+func (s *Coordinator) reviseDraft(action, id string) (operationDraft, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.prune(s.now())
+	draft, ok := s.captures[id]
+	if !ok || draft.action != action {
+		return operationDraft{}, model.Fail("expired", "The editor capture expired. Reopen the editor and review again")
+	}
+	draft.revision++
+	s.captures[id] = draft
+	s.revokeDraft(id)
+	return draft, nil
 }

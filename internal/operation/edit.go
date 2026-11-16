@@ -25,11 +25,13 @@ type EditService struct {
 	coordinator *Coordinator
 }
 
-type editCapture struct {
-	baseline kube.EditCapture
-	cluster  string
-	expires  time.Time
-	revision uint64
+type operationDraft struct {
+	action     string
+	connection model.ConnectionRef
+	baseline   kube.EditCapture
+	cluster    string
+	expires    time.Time
+	revision   uint64
 }
 
 func NewEditService(connections *connection.Manager, reader *kube.Service, coordinator *Coordinator) *EditService {
@@ -63,48 +65,13 @@ func (s *EditService) OpenEdit(ctx context.Context, target kube.EditTarget) (Edi
 	if err != nil || len(encoded) > editLimit {
 		return EditDraft{}, model.Fail("capacity", "Editor content exceeds the 2 MiB limit")
 	}
-	c := s.coordinator
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if ctx.Err() != nil || c.ctx.Err() != nil {
-		return EditDraft{}, model.Fail("cancelled", "Opening the editor was cancelled")
-	}
-	if err := s.connections.Validate(target.Connection); err != nil {
+	if err := s.coordinator.storeDraft(ctx, draft.ID, operationDraft{action: "edit", connection: target.Connection, baseline: baseline, cluster: cluster}); err != nil {
 		return EditDraft{}, err
 	}
-	now := c.now()
-	c.prune(now)
-	if len(c.pending)+len(c.captures) >= 128 {
-		return EditDraft{}, model.Fail("busy", "Too many pending operations and editor captures")
-	}
-	c.captures[draft.ID] = editCapture{baseline: baseline, cluster: cluster, expires: now.Add(reviewTTL)}
-	c.scheduleExpiry(now)
 	return draft, nil
 }
 
-func (s *EditService) CloseEdit(id string) {
-	c := s.coordinator
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	c.dropEdit(id)
-	c.scheduleExpiry(c.now())
-}
-
-func (s *Coordinator) dropEdit(id string) {
-	if _, exists := s.captures[id]; !exists {
-		return
-	}
-	delete(s.captures, id)
-	s.revokeEditDraft(id)
-}
-
-func (s *Coordinator) revokeEditDraft(id string) {
-	for token, review := range s.pending {
-		if review.draftID == id {
-			delete(s.pending, token)
-		}
-	}
-}
+func (s *EditService) CloseEdit(id string) { s.coordinator.closeDraft("edit", id) }
 
 var serverEditMetadata = []string{"creationTimestamp", "deletionTimestamp", "deletionGracePeriodSeconds", "generation", "managedFields", "selfLink"}
 
@@ -146,17 +113,9 @@ func (s *EditService) PrepareEdit(ctx context.Context, req EditRequest) (EditPre
 		return EditPreview{}, err
 	}
 	defer release()
-	c.mu.Lock()
-	c.prune(c.now())
-	draft, ok := c.captures[req.DraftID]
-	if ok {
-		draft.revision++
-		c.captures[req.DraftID] = draft
-		c.revokeEditDraft(req.DraftID)
-	}
-	c.mu.Unlock()
-	if !ok {
-		return EditPreview{}, model.Fail("expired", "The editor capture expired. Refresh and review again")
+	draft, err := c.reviseDraft("edit", req.DraftID)
+	if err != nil {
+		return EditPreview{}, err
 	}
 	patch, err := buildEditPatch(draft.baseline, req.YAML)
 	if err != nil {

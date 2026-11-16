@@ -36,4 +36,8 @@
     RollbackService verifies retained ReplicaSet or ControllerRevision ownership and reads the captured workload. It dry-runs a conditional
     replacement of only the Pod template. Confirm verifies the source and parent again, then sends the same reviewed patch once.
   </p>
+  <p>
+    Create prepares one named YAML resource through exact API discovery and a mandatory strict dry-run POST. The editor shows the normalized
+    proposal and server preview. Only the proposed bytes are retained with the review.
+  </p>
 </html>

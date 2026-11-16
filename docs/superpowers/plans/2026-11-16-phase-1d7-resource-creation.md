@@ -49,11 +49,11 @@ Existing checkout `/Users/sandjaieravi/dev/KubeSift`, no worktree. Start from cu
 
 **Contracts:** `OpenCreate(ctx, connection, namespace) (CreateDraft,error)` returns an opaque ID/frozen connection plus selected namespace; no network create. `PrepareCreate(ctx, CreateRequest{DraftID,YAML,Namespace,Resource}) (CreatePreview,error)` returns Token, ExpiresAt, canonical Target, ProposedYAML, ServerYAML and Warnings. `CloseCreate(id)` clears sensitive draft/capture/pending review references. Namespace/resource selection changes the draft revision and invalidates prior tokens. Bounds/TTL use existing coordinator, not separate maps without shared capacity.
 
-- [ ] Reuse exact parser and stringData normalization. Test named single object, duplicate keys, tags/aliases, large integers, unknown fields and 2 MiB bounds. Reject generateName and spec-listed server fields/status with clear feedback; do not silently strip user configuration or block RBAC/storage/Secret kinds.
-- [ ] Resolve namespace explicitly: absent manifest namespace may use selected namespace shown in normalized YAML; disagreement must be reconciled before preparation. Cluster scope rejects namespace. Keep immutable connection and draft revision through late responses.
-- [ ] Add dry-run POST to collection with fixed fieldManager kubesift-create, fieldValidation Strict and dryRun All. No GET existence precondition or kind-based confirmation. Unknown permission hint cannot veto actual permitted POST; actual Forbidden/AlreadyExists/validation/API limitation stays clear.
-- [ ] Test admitted/defaulted preview diff, response identity mismatch and transient Secret feedback. Never submit simulated UID/version/default allocations as the actual body. Review serialized output must fit 2 MiB as a whole; no truncated successful review.
-- [ ] Run focused Go tests/vet and commit.
+- [x] Reuse exact parser and stringData normalization. Test named single object, duplicate keys, tags/aliases, large integers, unknown fields and 2 MiB bounds. Reject generateName and spec-listed server fields/status with clear feedback; do not silently strip user configuration or block RBAC/storage/Secret kinds.
+- [x] Resolve namespace explicitly: absent manifest namespace may use selected namespace shown in normalized YAML; disagreement must be reconciled before preparation. Cluster scope rejects namespace. Keep immutable connection and draft revision through late responses.
+- [x] Add dry-run POST to collection with fixed fieldManager kubesift-create, fieldValidation Strict and dryRun All. No GET existence precondition or kind-based confirmation. Unknown permission hint cannot veto actual permitted POST; actual Forbidden/AlreadyExists/validation/API limitation stays clear.
+- [x] Test admitted/defaulted preview diff, response identity mismatch and transient Secret feedback. Never submit simulated UID/version/default allocations as the actual body. Review serialized output must fit 2 MiB as a whole; no truncated successful review.
+- [x] Run focused Go tests/vet and commit.
 
 ## Task 3 — Conditional create outcome and desktop bridge
 
