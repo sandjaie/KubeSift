@@ -74,12 +74,30 @@ func (c operationClient) patch(ctx context.Context, path string, dry bool, patch
 }
 
 func (c operationClient) send(ctx context.Context, method, path string, dry bool, raw []byte, contentType string, out any, notFound *operationStatus) ([]string, error) {
+	return c.sendRequest(ctx, method, path, dry, raw, contentType, out, notFound, nil)
+}
+
+type editFeedback struct {
+	immutable         bool
+	dryRunUnsupported bool
+}
+
+func (c operationClient) editPatch(ctx context.Context, path string, dry bool, patch []byte, out *json.RawMessage, feedback *editFeedback) ([]string, error) {
+	return c.sendRequest(ctx, http.MethodPatch, path, dry, patch, "application/json-patch+json", out, nil, feedback)
+}
+
+func (c operationClient) sendRequest(ctx context.Context, method, path string, dry bool, raw []byte, contentType string, out any, notFound *operationStatus, edit *editFeedback) ([]string, error) {
 	addr := *c.base
 	addr.Path = strings.TrimRight(addr.Path, "/") + path
 	addr.RawPath, addr.RawQuery, addr.Fragment = "", "", ""
+	query := url.Values{}
 	if dry {
-		addr.RawQuery = "dryRun=All"
+		query.Set("dryRun", "All")
 	}
+	if edit != nil {
+		query.Set("fieldValidation", "Strict")
+	}
+	addr.RawQuery = query.Encode()
 	var body io.Reader
 	if raw != nil {
 		// Keep the body non-replayable even if the HTTP transport attempts a retry.
@@ -106,6 +124,23 @@ func (c operationClient) send(ctx context.Context, method, path string, dry bool
 			var status operationStatus
 			if err == nil && json.Unmarshal(response, &status) == nil {
 				*notFound = status
+			}
+		}
+		if edit != nil && (resp.StatusCode == http.StatusUnprocessableEntity || resp.StatusCode == http.StatusBadRequest) {
+			var status struct {
+				Message string
+				Details struct {
+					Causes []struct{ Message string }
+				}
+			}
+			raw, err := io.ReadAll(io.LimitReader(resp.Body, 8<<10))
+			if err == nil && json.Unmarshal(raw, &status) == nil {
+				message := strings.ToLower(status.Message)
+				edit.immutable = strings.Contains(message, "immutable")
+				edit.dryRunUnsupported = strings.Contains(message, "dry run") || strings.Contains(message, "dry-run") || strings.Contains(message, "dryrun")
+				for _, cause := range status.Details.Causes {
+					edit.immutable = edit.immutable || strings.Contains(strings.ToLower(cause.Message), "immutable")
+				}
 			}
 		}
 		return nil, operationHTTPStatus(resp.StatusCode)

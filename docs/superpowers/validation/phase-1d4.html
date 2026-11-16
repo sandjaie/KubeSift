@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Phase 1D.4 YAML editing validation · KubeSift</title>
+    <link rel="stylesheet" href="../../assets/planning.css" />
+    <script src="../../assets/theme.js"></script>
+  </head>
+  <body>
+    <aside class="rail">
+      <a class="skip" href="#content">Skip to content</a
+      ><a class="mark" href="../../index.html"><span class="mark-name">KubeSift</span><span class="mark-sub">Planning</span></a>
+      <h2>Index</h2>
+      <a href="../../index.html">Planning index</a>
+      <h2>Product</h2>
+      <a href="../../product/requirements.html">Requirements</a><a href="../../product/feature-matrix.html">Capabilities</a>
+      <h2>Architecture</h2>
+      <a href="../../architecture/overview.html">Overview</a><a href="../../architecture/decisions.html">Decisions</a>
+      <h2>Safeguards</h2>
+      <a href="../../security/security-model.html">Security and AI</a>
+      <h2>Delivery</h2>
+      <a href="../../roadmap/roadmap.html">Roadmap</a><a href="../../ux/workflows.html">UX workflows</a
+      ><a href="../../ux/mocks/index.html">Mockups</a>
+      <h2>Engineering</h2>
+      <a href="../../engineering/engineering.html">Playbook</a><a href="../../engineering/local-development.html">Local development</a
+      ><a href="../../engineering/toolchain.html">Toolchain</a
+      ><a href="../../engineering/kubernetes-development.html">Kubernetes references</a>
+      <h2>Superpowers</h2>
+      <a href="../../superpowers/specs/2026-11-05-kubesift-design.md">Design specification</a
+      ><a href="../../superpowers/plans/README.html">Plans</a
+      ><a href="../../superpowers/validation/index.html" aria-current="page">Validation</a
+      ><a href="../../superpowers/evidence/index.html">Evidence</a>
+    </aside>
+    <header>
+      <a href="../../index.html">KubeSift / Planning</a>
+      <h1>Phase 1D.4 YAML editing validation</h1>
+    </header>
+    <main id="content">
+      <p>
+        Verified on 16 November 2026 from develop <code>f3819d7</code>. See the
+        <a href="../specs/2026-11-16-phase-1d4-reviewed-yaml-editing-design.md">approved specification</a> and
+        <a href="../plans/2026-11-16-phase-1d4-yaml-editing.md">implementation plan</a>.
+      </p>
+      <h2>Automated verification</h2>
+      <p>
+        Repository checks passed, including Go tests and vet and 101 frontend tests. The native operation race suite, Wails bindings,
+        production frontend build, macOS bundle and strict signature verification passed.
+      </p>
+      <p>
+        Synthetic tests checked advertised routes and authorization errors, exact numeric values, server-owned field omission, Secret
+        stringData precedence, strict dry-run and conditional request bytes. They verified that concurrent operations share the same target
+        lock and that repeated confirmation and ambiguous transport outcomes generate no second write. The editor state test exercised
+        cancellation, revocation of a late preview and confirmation of the original target only.
+      </p>
+      <h2>Approved local API servers</h2>
+      <p>
+        The opt-in YAML editing test passed on <code>kind-dev-local-a</code> and <code>kind-dev-local-b</code>. Each run exercised
+        Deployment, ConfigMap, Secret, Service, an installed Widget and the disposable Namespace used to hold the fixture objects. The suite
+        verified allowed saves, dry-run isolation, denied Patch for a get-only identity, immutable ConfigMap rejection, and a stale
+        Namespace edit after an external change. It verified writes by reading the actual resources.
+      </p>
+      <h2>Packaged macOS verification</h2>
+      <ul>
+        <li>
+          On the arm64 bundle for macOS 26.7.1, opened a context A ConfigMap, changed its YAML, and saw the unsaved discard warning. Kept
+          the draft while connecting to B, resumed it on A, reviewed the actual line diff and dry-run, confirmed, and saw the updated value
+          in the existing YAML viewer.
+        </li>
+        <li>
+          Opened a context A Secret through Reveal YAML, switched directly to editing and saved a stringData change through the same review.
+          Reopening displayed the new base64 value. Closing the editor removed the revealed content from the view.
+        </li>
+        <li>
+          The context B get-only fixture could open the ConfigMap and received Kubernetes Forbidden during review. On A, a version change
+          after dry-run made confirmation stale. Server reads verified the stored ConfigMap and Secret values and that the denied and stale
+          changes did not persist.
+        </li>
+        <li>
+          Observed the YAML editor within the existing split layout in both Dark and Light and restored Dark. Used TypeScript and API tests
+          for routing coverage beyond the two native examples. Removed the test-owned namespaces and temporary kubeconfigs and checked
+          cleanup on both approved contexts.
+        </li>
+      </ul>
+      <p>
+        The app keeps one unsaved editor across cluster tabs. Synthetic tests cover ambiguous writes. This run did not exercise OpenShift,
+        other operating systems, or an external Kubernetes context.
+      </p>
+      <h2>Independent review</h2>
+      <p>
+        Reviewer <code>yaml_pr_review</code> reviewed the complete candidate at
+        <code>57fb2f384291030fbdcf340a910cc6c54c83680f</code> against <code>develop</code> at base and merge base
+        <code>f3819d7529cb41d8346f36fee560aaca375a861a</code>. Five P2 findings blocked that candidate.
+      </p>
+      <ul>
+        <li>
+          KSF-001 fixed. Opening a different target requires explicit discard of the prior editor. The prompt keeps its contents hidden.
+        </li>
+        <li>
+          KSF-002 fixed. A retained generic view refreshes the matching accepted edit after discovery and the captured target are available.
+        </li>
+        <li>KSF-003 fixed. Large reviews show the changed span with old and new lines before confirmation.</li>
+        <li>KSF-004 fixed. Refresh clears discarded text and its draft ID before requesting another capture.</li>
+        <li>KSF-005 fixed. Exact JSON numbers outside the float64 range keep their type alongside identically spelled quoted strings.</li>
+      </ul>
+      <p>
+        The same reviewer cleared the fix delta through <code>cf3c067552e310054cff525f0802730ed0da3399</code>. The final full check, race
+        suite, two-context integration and signed package passed. Mounted tests covered the replacement prompt, failed refresh and delayed
+        generic refresh. The final package kept the paused Secret hidden during replacement and showed, confirmed and refreshed a change to
+        the 40 KiB ConfigMap. Server reads verified the ConfigMap edit and that discarded Secret text did not save.
+      </p>
+    </main>
+  </body>
+</html>

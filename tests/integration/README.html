@@ -100,3 +100,9 @@ done</code></pre>
   UID races, and actual background cleanup of representative dependents. The Deployment and CronJob descendants use the fixture image
   already available in local kind. StatefulSet fixtures use no claim templates.
 </p>
+
+<p>
+  Enable <code>TestYAMLEditing</code> with <code>KUBESIFT_EDIT_INTEGRATION=1</code> and the same isolated A/B kubeconfig directory. Run
+  <code>go test -tags=integration ./tests/integration -run '^TestYAMLEditing$' -count=1 -v</code>. The test uses the installed explorer
+  Widget API and creates its own disposable namespace and objects in each approved context. Cleanup removes those namespaces by UID.
+</p>

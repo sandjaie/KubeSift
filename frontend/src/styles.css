@@ -1807,3 +1807,13 @@ textarea::placeholder {
   padding-inline-start: 14px;
   font: inherit;
 }
+
+.edit-source {
+  width: 100%;
+  min-height: 16rem;
+  max-height: 55vh;
+}
+.edit-diff {
+  max-height: 38vh;
+  overflow: auto;
+}

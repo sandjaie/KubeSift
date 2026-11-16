@@ -109,7 +109,7 @@ export type Section =
   | "Selected Pods"
   | "Revisions";
 export function resourceSections(kind: string): Section[] {
-  if (kind === "Secret") return ["Overview"];
+  if (kind === "Secret") return ["Overview", "YAML"];
   const sections: Section[] = ["Overview"];
   if (kind === "ConfigMap") sections.push("Data");
   sections.push("YAML");

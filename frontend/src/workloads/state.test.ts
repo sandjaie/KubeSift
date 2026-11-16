@@ -209,15 +209,16 @@ test("selecting the current related row preserves an in-flight Overview when cle
   expect(state.A.kinds.Service).toMatchObject({ related: false, sectionEpoch: 1, sections: { Overview: { loading: true } } });
 });
 
-test("configuration tabs enforce metadata-only Secret scope and reset ConfigMap Data", async () => {
+test("configuration tabs keep Secret YAML empty before explicit access and reset ConfigMap Data", async () => {
   const { resourceSections } = await import("./model");
-  expect(resourceSections("Secret")).toEqual(["Overview"]);
+  expect(resourceSections("Secret")).toEqual(["Overview", "YAML"]);
   expect(resourceSections("Namespace")).toEqual(["Overview", "YAML"]);
   expect(resourceSections("ConfigMap")).toEqual(["Overview", "Data", "YAML", "Events"]);
   for (const kind of ["ResourceQuota", "LimitRange"] as const) expect(resourceSections(kind)).toEqual(["Overview", "YAML", "Events"]);
   let state = reduceWorkloads(initialWorkloads(), { type: "scope", tab: "A", scope: "a/ns", clusterScope: "a" });
   state = reduceWorkloads(state, { type: "kind", tab: "A", kind: "Secret" });
-  expect(reduceWorkloads(state, { type: "section", tab: "A", section: "YAML", epoch: 1 })).toBe(state);
+  state = reduceWorkloads(state, { type: "section", tab: "A", section: "YAML", epoch: 1 });
+  expect(state.A.kinds.Secret).toMatchObject({ section: "YAML", sections: {} });
   state = reduceWorkloads(state, { type: "patch", tab: "A", scope: "a", kind: "Namespace", patch: { filter: "namespace" } });
   state = reduceWorkloads(state, { type: "kind", tab: "A", kind: "ConfigMap" });
   state = reduceWorkloads(state, { type: "section", tab: "A", section: "Data", epoch: 2 });
@@ -383,7 +384,7 @@ test("access control keeps scope and the validated capture through explicit cros
       ?.items.slice(-2)
       .map(([kind]) => kind),
   ).toEqual(["ConfigMap", "Secret"]);
-  expect(resourceSections("Secret")).toEqual(["Overview"]);
+  expect(resourceSections("Secret")).toEqual(["Overview", "YAML"]);
   const connection = { id: "a", generation: 1 };
   const binding = {
     connection,
@@ -451,7 +452,7 @@ test("availability destinations expose only their explicit investigation tabs", 
   expect(resourceSections("ControllerRevision")).toEqual(["Overview", "YAML", "Events"]);
   expect(resourceSections("ReplicationController")).toEqual(["Overview", "YAML", "Events", "Pods"]);
   for (const kind of ["StatefulSet", "DaemonSet"]) expect(resourceSections(kind)).toContain("Revisions");
-  expect(resourceSections("Secret")).toEqual(["Overview"]);
+  expect(resourceSections("Secret")).toEqual(["Overview", "YAML"]);
 });
 
 test("Back retains an availability association only with its validated capture", () => {

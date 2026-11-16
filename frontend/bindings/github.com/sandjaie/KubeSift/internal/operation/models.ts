@@ -68,6 +68,29 @@ export interface DeleteResultData {
   gracePolicy: string;
 }
 
+export interface EditDraft {
+  id: string;
+  target: kube$0.EditTarget;
+  resourceVersion: string;
+  cluster: string;
+  yaml: string;
+}
+
+export interface EditPreview {
+  token: string;
+  expiresAt: string;
+  target: kube$0.EditTarget;
+  beforeYAML: string;
+  proposedYAML: string;
+  serverYAML: string;
+  warnings: string[] | null;
+}
+
+export interface EditRequest {
+  draftID: string;
+  yaml: string;
+}
+
 export interface OperationResult {
   action: string;
   cluster: string;
@@ -80,6 +103,7 @@ export interface OperationResult {
   scale: ScaleResultData | null;
   restart: RestartResultData | null;
   delete: DeleteResultData | null;
+  edit?: kube$0.EditTarget | null;
 }
 
 export interface Preview {

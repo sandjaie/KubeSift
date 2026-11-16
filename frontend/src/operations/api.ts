@@ -5,8 +5,17 @@ Responsibilities: Supply preparation cancellation without owning execution.
 Important: Confirm passes only a token and acknowledgement.
 */
 import { readRequest, workloadAPI } from "../workloads/api";
-import type { DeleteRequest, RestartRequest, ScaleRequest } from "../../bindings/github.com/sandjaie/KubeSift/internal/operation/models";
+import type {
+  DeleteRequest,
+  EditRequest,
+  RestartRequest,
+  ScaleRequest,
+} from "../../bindings/github.com/sandjaie/KubeSift/internal/operation/models";
+import type { EditTarget } from "../../bindings/github.com/sandjaie/KubeSift/internal/kube/models";
+export type { EditTarget };
 export type {
+  EditDraft,
+  EditPreview,
   DeleteObservation,
   DeletePreview,
   OperationResult,
@@ -16,7 +25,7 @@ export type {
   ScalePreview,
   ScaleResult,
 } from "../../bindings/github.com/sandjaie/KubeSift/internal/operation/models";
-export type OperationAction = "scale" | "restart" | "delete";
+export type OperationAction = "scale" | "restart" | "delete" | "edit";
 export const prepareScale = (request: ScaleRequest) => readRequest((id) => workloadAPI.PrepareScale(id, request));
 export const executeScale = workloadAPI.ExecuteScale;
 export const listScaleResults = workloadAPI.ListScaleResults;
@@ -38,3 +47,13 @@ export const revokeDelete = (token: string) => {
   if (token) void workloadAPI.RevokeDelete(token).catch(() => {});
 };
 export const checkDeleteTarget = (operationID: string) => readRequest((id) => workloadAPI.CheckDeleteTarget(id, operationID));
+
+export const openEdit = (target: EditTarget) => readRequest((id) => workloadAPI.OpenEdit(id, target));
+export const prepareEdit = (request: EditRequest) => readRequest((id) => workloadAPI.PrepareEdit(id, request));
+export const executeEdit = workloadAPI.ExecuteEdit;
+export const revokeEdit = (token: string) => {
+  if (token) void workloadAPI.RevokeEdit(token).catch(() => {});
+};
+export const closeEdit = (id: string) => {
+  if (id) void workloadAPI.CloseEdit(id).catch(() => {});
+};

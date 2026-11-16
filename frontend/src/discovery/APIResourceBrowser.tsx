@@ -11,6 +11,8 @@ import { readRequest, workloadAPI as api } from "../workloads/api";
 import { isResourceKind } from "../workloads/model";
 import { ResourceSplit } from "../workspace/ResourceSplit";
 import { GenericResourceTable } from "./GenericResourceTable";
+import type { EditTarget, OperationResult } from "../operations/api";
+import { savedEditAfterCapture } from "../operations/editState";
 import { GenericResourceDetail } from "./GenericResourceDetail";
 import {
   visibleGenericRoute,
@@ -49,6 +51,8 @@ export function APIResourceBrowser({
   onRoute,
   onBack,
   onDedicated,
+  onEdit,
+  operationResults,
   widthPercent,
   heightPercent,
   onResize,
@@ -59,6 +63,8 @@ export function APIResourceBrowser({
   route?: CatalogSeed;
   onRoute: (route: CatalogSeed | null) => void;
   onBack: () => void;
+  onEdit: (target: EditTarget) => void;
+  operationResults: OperationResult[];
   onDedicated: (kind: import("../workloads/model").ResourceKind) => void;
   widthPercent: number;
   heightPercent: number;
@@ -135,6 +141,13 @@ export function APIResourceBrowser({
       (error) => setDetail({ key, error: message(error) }),
     );
   }
+  const refreshedEdit = useRef("");
+  const matchingEdit = !detail.loading && capture && savedEditAfterCapture(operationResults, capture.resource, capture.fetchedAt);
+  useEffect(() => {
+    if (!matchingEdit || !capture || refreshedEdit.current === matchingEdit) return;
+    refreshedEdit.current = matchingEdit;
+    open(capture.resource);
+  }, [matchingEdit]);
   return (
     <ResourceSplit widthPercent={widthPercent} heightPercent={heightPercent} onResize={onResize} onCommit={onCommit}>
       <section className="list-pane api-browser">
@@ -339,6 +352,8 @@ export function APIResourceBrowser({
             loading={detail.key === key && !!detail.loading}
             onSection={(section) => patch({ section })}
             onRefresh={() => open(capture.resource)}
+            onEdit={() => onEdit(capture.resource)}
+            canPatch={!!liveDescriptor?.patch}
             onBack={() => {
               clearDetail();
               patch({ capture: undefined, section: "Overview" });

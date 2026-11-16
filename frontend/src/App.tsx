@@ -27,6 +27,9 @@ import { useLogSessions } from "./sessions/useLogSessions";
 import { PodLogs } from "./sessions/PodLogs";
 import { useWorkloads } from "./workloads/useWorkloads";
 import type { ResourceRef } from "./workloads/model";
+import { requestEditor, type EditorSession } from "./operations/editState";
+import { EditDialog } from "./operations/EditDialog";
+import { closeEdit } from "./operations/api";
 import { OperationResults, useOperationResults } from "./operations/OperationResults";
 import "./styles.css";
 export default function App() {
@@ -107,9 +110,22 @@ export default function App() {
     page === "workspace",
     (tab, namespace) => void controller.selectNamespace(tab, namespace),
   );
+  const [editor, setEditor] = useState<EditorSession>();
+  const origin = editor && state.tabs[editor.tab];
+  const originConnection =
+    origin?.view?.state === "connected" || origin?.view?.state === "restricted" ? (origin.view.ref ?? undefined) : undefined;
   const operationResults = useOperationResults((result) => {
-    if (result.state === "accepted") workloads.refreshOperationTarget(result.resource, result.action === "delete");
+    if (result.state !== "accepted") return;
+    workloads.refreshOperationTarget(result.resource, result.action === "delete");
   });
+  function resumeEditor() {
+    if (!editor) return;
+    if (state.tabs[editor.tab]) {
+      controller.commit({ type: "focus", key: editor.tab });
+      setPage("workspace");
+    }
+    setEditor({ ...editor, suspended: false });
+  }
   const [resultsOpen, setResultsOpen] = useState(false);
   const [openingOperationTarget, setOpeningOperationTarget] = useState<{ ref: ResourceRef; tab: string } | null>(null);
   const operationConnectionKey = (ref: ResourceRef["connection"]) => JSON.stringify([ref.id, ref.generation]);
@@ -128,6 +144,13 @@ export default function App() {
   }
   const [closeTarget, setCloseTarget] = useState<{ key: string; count: number } | null>(null);
   function close(key: string) {
+    if (editor?.tab === key) {
+      setEditor({ ...editor, suspended: false, closing: true });
+      return;
+    }
+    closeTab(key);
+  }
+  function closeTab(key: string) {
     const count = logs.sessions.filter((s) => s.tab === key).length;
     if (count) {
       setCloseTarget({ key, count });
@@ -179,6 +202,9 @@ export default function App() {
           onClose={close}
         />
         <button onClick={() => setPage("clusters")}>Choose cluster</button>
+        {editor && (editor.suspended || editor.tab !== state.active || page !== "workspace") && (
+          <button onClick={resumeEditor}>Resume YAML edit</button>
+        )}
         <button
           onClick={() => {
             operationResults.refresh();
@@ -204,6 +230,29 @@ export default function App() {
           {aiOpen ? "Hide AI" : "Ask AI"}
         </button>
       </header>
+      {editor && (
+        <EditDialog
+          key={JSON.stringify([editor.tab, editor.target])}
+          target={editor.target}
+          context={origin?.entry.context ?? "Original connection"}
+          connection={originConnection}
+          suspended={!editor.replacement && !editor.closing && (editor.suspended || editor.tab !== state.active || page !== "workspace")}
+          reveal={editor.reveal}
+          closing={editor.closing || !!editor.replacement}
+          replacing={!!editor.replacement}
+          onSuspend={() => setEditor({ ...editor, suspended: true })}
+          onCancelClose={() => setEditor({ ...editor, closing: false, replacement: undefined })}
+          onClose={() => {
+            setEditor(editor.replacement ? requestEditor(undefined, editor.replacement) : undefined);
+            if (editor.closing) closeTab(editor.tab);
+          }}
+          onConfirm={(token, draftID) => {
+            void operationResults.submit("edit", token, "").finally(() => closeEdit(draftID));
+            setEditor(undefined);
+            setResultsOpen(true);
+          }}
+        />
+      )}
       {resultsOpen && (
         <OperationResults
           results={operationResults.results}
@@ -309,6 +358,11 @@ export default function App() {
                 tab={active}
                 navigationOpen={!hiddenNavigation[state.active!]}
                 controller={workloads}
+                operationResults={operationResults.results}
+                onEdit={(target, reveal = false) => {
+                  const tab = state.active;
+                  if (tab) setEditor((current) => requestEditor(current, { tab, target, reveal }));
+                }}
                 onOperation={(action, token, acknowledgement) => {
                   const releaseDeletion = action === "delete" ? workloads.holdDeletionSelection() : undefined;
                   operationResults.submit(action, token, acknowledgement, releaseDeletion);
