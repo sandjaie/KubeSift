@@ -27,8 +27,9 @@ import { useLogSessions } from "./sessions/useLogSessions";
 import { PodLogs } from "./sessions/PodLogs";
 import { useWorkloads } from "./workloads/useWorkloads";
 import type { ResourceRef } from "./workloads/model";
+import { requestEditor, type EditorSession } from "./operations/editState";
 import { EditDialog } from "./operations/EditDialog";
-import { closeEdit, type EditTarget } from "./operations/api";
+import { closeEdit } from "./operations/api";
 import { OperationResults, useOperationResults } from "./operations/OperationResults";
 import "./styles.css";
 export default function App() {
@@ -109,15 +110,13 @@ export default function App() {
     page === "workspace",
     (tab, namespace) => void controller.selectNamespace(tab, namespace),
   );
-  const [editor, setEditor] = useState<{ tab: string; target: EditTarget; suspended: boolean; reveal: boolean; closing: boolean }>();
-  const [acceptedEdit, setAcceptedEdit] = useState<EditTarget>();
+  const [editor, setEditor] = useState<EditorSession>();
   const origin = editor && state.tabs[editor.tab];
   const originConnection =
     origin?.view?.state === "connected" || origin?.view?.state === "restricted" ? (origin.view.ref ?? undefined) : undefined;
   const operationResults = useOperationResults((result) => {
     if (result.state !== "accepted") return;
     workloads.refreshOperationTarget(result.resource, result.action === "delete");
-    if (result.edit) setAcceptedEdit(result.edit);
   });
   function resumeEditor() {
     if (!editor) return;
@@ -233,16 +232,18 @@ export default function App() {
       </header>
       {editor && (
         <EditDialog
+          key={JSON.stringify([editor.tab, editor.target])}
           target={editor.target}
           context={origin?.entry.context ?? "Original connection"}
           connection={originConnection}
-          suspended={!editor.closing && (editor.suspended || editor.tab !== state.active || page !== "workspace")}
+          suspended={!editor.replacement && !editor.closing && (editor.suspended || editor.tab !== state.active || page !== "workspace")}
           reveal={editor.reveal}
-          closing={editor.closing}
+          closing={editor.closing || !!editor.replacement}
+          replacing={!!editor.replacement}
           onSuspend={() => setEditor({ ...editor, suspended: true })}
-          onCancelClose={() => setEditor({ ...editor, closing: false })}
+          onCancelClose={() => setEditor({ ...editor, closing: false, replacement: undefined })}
           onClose={() => {
-            setEditor(undefined);
+            setEditor(editor.replacement ? requestEditor(undefined, editor.replacement) : undefined);
             if (editor.closing) closeTab(editor.tab);
           }}
           onConfirm={(token, draftID) => {
@@ -357,10 +358,10 @@ export default function App() {
                 tab={active}
                 navigationOpen={!hiddenNavigation[state.active!]}
                 controller={workloads}
-                acceptedEdit={acceptedEdit}
+                operationResults={operationResults.results}
                 onEdit={(target, reveal = false) => {
-                  if (editor) resumeEditor();
-                  else if (state.active) setEditor({ tab: state.active, target, reveal, suspended: false, closing: false });
+                  const tab = state.active;
+                  if (tab) setEditor((current) => requestEditor(current, { tab, target, reveal }));
                 }}
                 onOperation={(action, token, acknowledgement) => {
                   const releaseDeletion = action === "delete" ? workloads.holdDeletionSelection() : undefined;

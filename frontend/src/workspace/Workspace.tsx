@@ -23,7 +23,7 @@ import { AvailabilityTable } from "../availability/AvailabilityTable";
 import { NetworkTable } from "../networking/NetworkTable";
 import type { WorkloadRow } from "../workloads/model";
 import { ResourceTable } from "./ResourceTable";
-import type { EditTarget, OperationAction } from "../operations/api";
+import type { EditTarget, OperationAction, OperationResult } from "../operations/api";
 import { ResourceDetail } from "./ResourceDetail";
 import { ResizeHandle } from "../ui/ResizeHandle";
 import { isClusterKind, clusterLabels, type ClusterResourceRow, type EventInventoryRow } from "../cluster/model";
@@ -43,7 +43,7 @@ export function Workspace({
   logs,
   onOperation,
   onEdit,
-  acceptedEdit,
+  operationResults,
 }: {
   tab: ConnectionTab;
   controller: WorkloadController;
@@ -56,7 +56,7 @@ export function Workspace({
   onCommitSize: () => void;
   logs?: ReactNode;
   onEdit: (target: EditTarget, reveal?: boolean) => void;
-  acceptedEdit?: EditTarget;
+  operationResults: OperationResult[];
   onOperation: (action: OperationAction, token: string, acknowledgement: string) => void;
 }) {
   const i = c.inventory,
@@ -114,7 +114,7 @@ export function Workspace({
               onBack={c.restoreCatalogSource}
               onDedicated={c.selectKind}
               onEdit={onEdit}
-              acceptedEdit={acceptedEdit}
+              operationResults={operationResults}
               widthPercent={detailWidthPercent}
               heightPercent={detailHeightPercent}
               onResize={onDetailResize}

@@ -11,8 +11,8 @@ import { readRequest, workloadAPI as api } from "../workloads/api";
 import { isResourceKind } from "../workloads/model";
 import { ResourceSplit } from "../workspace/ResourceSplit";
 import { GenericResourceTable } from "./GenericResourceTable";
-import type { EditTarget } from "../operations/api";
-import { sameEditTarget } from "../operations/editState";
+import type { EditTarget, OperationResult } from "../operations/api";
+import { savedEditAfterCapture } from "../operations/editState";
 import { GenericResourceDetail } from "./GenericResourceDetail";
 import {
   visibleGenericRoute,
@@ -52,7 +52,7 @@ export function APIResourceBrowser({
   onBack,
   onDedicated,
   onEdit,
-  acceptedEdit,
+  operationResults,
   widthPercent,
   heightPercent,
   onResize,
@@ -64,7 +64,7 @@ export function APIResourceBrowser({
   onRoute: (route: CatalogSeed | null) => void;
   onBack: () => void;
   onEdit: (target: EditTarget) => void;
-  acceptedEdit?: EditTarget;
+  operationResults: OperationResult[];
   onDedicated: (kind: import("../workloads/model").ResourceKind) => void;
   widthPercent: number;
   heightPercent: number;
@@ -141,9 +141,13 @@ export function APIResourceBrowser({
       (error) => setDetail({ key, error: message(error) }),
     );
   }
+  const refreshedEdit = useRef("");
+  const matchingEdit = !detail.loading && capture && savedEditAfterCapture(operationResults, capture.resource, capture.fetchedAt);
   useEffect(() => {
-    if (acceptedEdit && capture && sameEditTarget(acceptedEdit, capture.resource)) open(capture.resource);
-  }, [acceptedEdit]);
+    if (!matchingEdit || !capture || refreshedEdit.current === matchingEdit) return;
+    refreshedEdit.current = matchingEdit;
+    open(capture.resource);
+  }, [matchingEdit]);
   return (
     <ResourceSplit widthPercent={widthPercent} heightPercent={heightPercent} onResize={onResize} onCommit={onCommit}>
       <section className="list-pane api-browser">

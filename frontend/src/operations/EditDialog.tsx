@@ -14,23 +14,10 @@ import { canConfirmEdit, editDiff, sameEditConnection } from "./editState";
 import { reviewOwner } from "./reviewState";
 
 function Diff({ before, after }: { before: string; after: string }) {
-  const diff = editDiff(before, after);
-  return diff !== null ? (
+  return (
     <pre className="yaml-view edit-diff" tabIndex={0}>
-      {diff}
+      {editDiff(before, after)}
     </pre>
-  ) : (
-    <details>
-      <summary>Compare original and proposed YAML</summary>
-      <label>
-        Original YAML
-        <textarea className="yaml-view" readOnly value={before} wrap="off" />
-      </label>
-      <label>
-        Proposed YAML
-        <textarea className="yaml-view" readOnly value={after} wrap="off" />
-      </label>
-    </details>
   );
 }
 
@@ -41,6 +28,7 @@ export function EditDialog({
   suspended,
   reveal,
   closing,
+  replacing,
   onSuspend,
   onCancelClose,
   onClose,
@@ -52,6 +40,7 @@ export function EditDialog({
   suspended: boolean;
   reveal: boolean;
   closing: boolean;
+  replacing?: boolean;
   onSuspend: () => void;
   onCancelClose: () => void;
   onClose: () => void;
@@ -137,6 +126,8 @@ export function EditDialog({
     resetReview();
     setDiscard(undefined);
     setLoading(true);
+    setDraft(undefined);
+    setText("");
     setRequestTarget({ target: { ...target, connection } });
   }
   function review() {
@@ -182,7 +173,7 @@ export function EditDialog({
       )}
       {confirmingDiscard ? (
         <>
-          <p>{dirty ? "Discard unsaved YAML changes?" : "Close this YAML editor?"}</p>
+          <p>{dirty ? "Discard unsaved YAML changes?" : replacing ? "Open the requested resource?" : "Close this YAML editor?"}</p>
           <div className="scale-actions">
             <button
               onClick={() => {
@@ -193,7 +184,7 @@ export function EditDialog({
               Keep editing
             </button>
             <button className="danger" onClick={discard === "refresh" && !closing ? refresh : onClose}>
-              {dirty ? "Discard changes" : "Close editor"}
+              {dirty ? "Discard changes" : replacing ? "Open resource" : "Close editor"}
             </button>
           </div>
         </>

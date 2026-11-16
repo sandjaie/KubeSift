@@ -63,3 +63,23 @@ func TestBuildEditPatch(t *testing.T) {
 		})
 	}
 }
+
+func TestEditRoundTripsNumbersOutsideFloatRange(t *testing.T) {
+	raw := json.RawMessage(`{"apiVersion":"example.test/v1","kind":"Widget","metadata":{"name":"sample","uid":"uid","resourceVersion":"7"},"spec":{"big":1e400,"text":"1e400","marker":"before"}}`)
+	capture := kube.EditCapture{Target: kube.EditTarget{Group: "example.test", Version: "v1", Resource: "widgets", UID: "uid"}, ResourceVersion: "7", ObjectJSON: raw}
+	object, err := editProjection(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	editor, err := renderEdit(object)
+	if err != nil {
+		t.Fatal(err)
+	}
+	patch, err := buildEditPatch(capture, strings.ReplaceAll(editor, `"before"`, `"after"`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(patch.body), "/spec/big") || strings.Contains(string(patch.body), "/spec/text") {
+		t.Fatalf("unrelated change altered numeric or string values: %s", patch.body)
+	}
+}

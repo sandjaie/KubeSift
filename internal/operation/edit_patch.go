@@ -54,6 +54,7 @@ func parseEditYAML(input string) (map[string]any, error) {
 	return object, nil
 }
 
+var jsonEditNumber = regexp.MustCompile(`^-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][+-]?[0-9]+)?$`)
 var decimalInteger = regexp.MustCompile(`^[+-]?[0-9]+$`)
 var pointerEscape = strings.NewReplacer("~", "~0", "/", "~1")
 
@@ -97,7 +98,13 @@ func editYAMLValue(node *yaml.Node, depth int) (any, error) {
 		return value, nil
 	case yaml.ScalarNode:
 		switch node.Tag {
-		case "!!str", "!!timestamp":
+		case "!!str":
+			// The YAML resolver falls back to string when a plain JSON number overflows float64.
+			if node.Style == 0 && jsonEditNumber.MatchString(node.Value) {
+				return json.Number(node.Value), nil
+			}
+			return node.Value, nil
+		case "!!timestamp":
 			return node.Value, nil
 		case "!!null":
 			if slices.Contains([]string{"", "~", "null", "Null", "NULL"}, node.Value) {
@@ -118,6 +125,9 @@ func editYAMLValue(node *yaml.Node, depth int) (any, error) {
 }
 
 func exactEditNumber(node *yaml.Node) (json.Number, error) {
+	if jsonEditNumber.MatchString(node.Value) {
+		return json.Number(node.Value), nil
+	}
 	value := strings.ReplaceAll(node.Value, "_", "")
 	if node.Tag == "!!int" || decimalInteger.MatchString(value) {
 		base := 10
