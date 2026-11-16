@@ -74,6 +74,10 @@ export function ExecuteRestart(token: string, acknowledgement: string): $Cancell
   return $Call.ByID(346194450, token, acknowledgement);
 }
 
+export function ExecuteRollback(token: string): $CancellablePromise<operation$0.OperationResult> {
+  return $Call.ByID(733583663, token);
+}
+
 export function ExecuteScale(token: string, acknowledgement: string): $CancellablePromise<operation$0.ScaleResult> {
   return $Call.ByID(2364239635, token, acknowledgement);
 }
@@ -124,6 +128,10 @@ export function PrepareEdit(id: string, req: operation$0.EditRequest): $Cancella
 
 export function PrepareRestart(id: string, req: operation$0.RestartRequest): $CancellablePromise<operation$0.RestartPreview> {
   return $Call.ByID(1109198430, id, req);
+}
+
+export function PrepareRollback(id: string, req: operation$0.RollbackRequest): $CancellablePromise<operation$0.RollbackPreview> {
+  return $Call.ByID(1469834899, id, req);
 }
 
 export function PrepareScale(id: string, req: operation$0.ScaleRequest): $CancellablePromise<operation$0.ScalePreview> {
@@ -294,6 +302,10 @@ export function RevokeHelper(fp: string): $CancellablePromise<void> {
 
 export function RevokeRestart(token: string): $CancellablePromise<void> {
   return $Call.ByID(2964379669, token);
+}
+
+export function RevokeRollback(token: string): $CancellablePromise<void> {
+  return $Call.ByID(2971485738, token);
 }
 
 export function RevokeScale(token: string): $CancellablePromise<void> {

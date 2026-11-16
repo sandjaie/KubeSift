@@ -1,6 +1,6 @@
 /*
 Purpose: Coordinate confirmed workload operations across action types.
-Used by: Scale, restart and delete services.
+Used by: Native reviewed resource operations.
 Responsibilities: Bind tokens, share target locks and retain bounded session results.
 Important: Wrong-action tokens are never consumed or revealed.
 */
@@ -21,18 +21,19 @@ const reviewTTL = 5 * time.Minute
 const operationDeadline = 30 * time.Second
 
 type OperationResult struct {
-	Action      string             `json:"action"`
-	Cluster     string             `json:"cluster"`
-	OperationID string             `json:"operationID"`
-	Resource    kube.ResourceRef   `json:"resource"`
-	StartedAt   time.Time          `json:"startedAt"`
-	FinishedAt  *time.Time         `json:"finishedAt"`
-	State       string             `json:"state"`
-	Problem     *model.Problem     `json:"problem"`
-	Scale       *ScaleResultData   `json:"scale"`
-	Restart     *RestartResultData `json:"restart"`
-	Delete      *DeleteResultData  `json:"delete"`
-	Edit        *kube.EditTarget   `json:"edit,omitempty"`
+	Action      string              `json:"action"`
+	Cluster     string              `json:"cluster"`
+	OperationID string              `json:"operationID"`
+	Resource    kube.ResourceRef    `json:"resource"`
+	StartedAt   time.Time           `json:"startedAt"`
+	FinishedAt  *time.Time          `json:"finishedAt"`
+	State       string              `json:"state"`
+	Problem     *model.Problem      `json:"problem"`
+	Scale       *ScaleResultData    `json:"scale"`
+	Restart     *RestartResultData  `json:"restart"`
+	Delete      *DeleteResultData   `json:"delete"`
+	Rollback    *RollbackResultData `json:"rollback,omitempty"`
+	Edit        *kube.EditTarget    `json:"edit,omitempty"`
 }
 
 // operationKey shares locks across API versions of the same canonical resource.
@@ -239,6 +240,10 @@ func copyOperationResult(result OperationResult) OperationResult {
 	if result.Delete != nil {
 		value := *result.Delete
 		result.Delete = &value
+	}
+	if result.Rollback != nil {
+		value := *result.Rollback
+		result.Rollback = &value
 	}
 	if result.Edit != nil {
 		value := *result.Edit
