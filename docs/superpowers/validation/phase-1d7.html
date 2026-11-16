@@ -49,7 +49,7 @@
           relative module references, generated runtime IDs, and collision and unresolved-reference errors. The obsolete tree was absent.
         </li>
         <li>
-          <code>scripts/check.sh</code> passed, including Go tests and vet, 109 frontend tests, lint, typecheck, and documentation checks.
+          <code>scripts/check.sh</code> passed, including Go tests and vet, 111 frontend tests, lint, typecheck, and documentation checks.
           Focused Go race checks covered native routing, shared operation locks, draft review, and single dispatch. The transport tests
           exercised conflicts, malformed and oversized success, authorization failures, redirects, throttling, and uncertain responses.
         </li>
@@ -66,7 +66,7 @@
       </ul>
       <h2>Packaged desktop evidence</h2>
       <p>
-        <code>wails3 task package</code> built the arm64 macOS application on macOS 27.0.1. The verified executable SHA-256 was
+        <code>wails3 task package</code> built the arm64 macOS application on macOS 27.0.1. The initial creation-flow executable SHA-256 was
         <code>0dd26680766d79dca8b5dc192c9f967833be52e17e5efeeac636cdf6eb9b55b3</code>.
       </p>
       <ul>
@@ -99,6 +99,33 @@
         whole-sidebar toggle and a cluster-tab switch, and expanding Networking restored Services to navigation. Creation still opened from
         inventory and returned focus to its trigger on Escape. The sidebar build executable SHA-256 was
         <code>16407d20927315c631e58ff0b0257b8e42613a17060bb4f6dc12edc59043c58c</code>.
+      </p>
+      <h2>Independent review and recheck</h2>
+      <p>
+        Reviewer <code>/root/creation_pr_review</code> reviewed the complete <code>51e4cca21020fe6679a0823d2df87188b531aeda</code> candidate
+        against <code>develop</code>, with base and merge base <code>b8bb628b22b7f5baa5d6b03c7ff6a70ddd34ea42</code>. The initial verdict
+        identified two merge blockers. The reviewer rechecked the fix commits <code>d5be542</code> and <code>81d70db</code>
+        and cleared both findings.
+      </p>
+      <ul>
+        <li>
+          KSF-001 (P2), <code>frontend/src/App.tsx</code>. Resuming a draft during submission could let a late acceptance discard newer
+          text. The submitting draft stays suspended until its outcome arrives. Delayed-response tests verify acceptance clears the
+          submitted draft and an uncertain result restores access to its unchanged text.
+        </li>
+        <li>
+          KSF-002 (P2), <code>frontend/src/workloads/useWorkloads.ts</code> and <code>internal/kube/discovery.go</code>. The inventory
+          descriptor blocked detail reads for some accepted resources. A bounded result read now checks the exact API address and actual
+          UID, including readable routes without List. It preserves explicit proxy and connection-endpoint exclusions and routes Secrets
+          through their metadata-only view. Synthetic tests cover a replaced UID and excluded routes. Both approved kind contexts passed
+          <code>autoscaling/v1</code> HPA creation and read-back, and create-only read denial remained separate from acceptance.
+        </li>
+      </ul>
+      <p>
+        Repository checks, focused race tests, regeneration through the package task, and the two-context creation integration passed after
+        the fixes. The final package verified sidebar collapse and exact-version HPA review, acceptance, Open resource, and detail refresh
+        on kind-dev-local-b. Its executable SHA-256 was
+        <code>b737f546dc7199a0cca6f34f303fcacb403921ff701c52227505e07569c13f86</code>.
       </p>
       <h2>Fixture cleanup</h2>
       <p>
