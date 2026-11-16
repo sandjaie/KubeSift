@@ -36,7 +36,7 @@ import {
   type AvailabilityKind,
   type AvailabilityPage,
   type SelectedPodPage,
-  type ControllerRevisionPage,
+  type RolloutHistoryPage,
 } from "../availability/model";
 import {
   clusterKinds,
@@ -120,7 +120,7 @@ export function resourceSections(kind: string): Section[] {
   else if (isWorkloadKind(kind)) {
     sections.push(kind === "CronJob" ? "Jobs" : "Pods");
     if (kind === "Deployment") sections.push("ReplicaSets");
-    if (kind === "StatefulSet" || kind === "DaemonSet") sections.push("Revisions");
+    if (kind === "Deployment" || kind === "StatefulSet" || kind === "DaemonSet") sections.push("Revisions");
   }
   return sections;
 }
@@ -133,7 +133,7 @@ export type Evidence =
   | EventPage
   | ServiceSlicePage
   | SelectedPodPage
-  | ControllerRevisionPage;
+  | RolloutHistoryPage;
 export interface SectionState {
   loading: boolean;
   error: string;

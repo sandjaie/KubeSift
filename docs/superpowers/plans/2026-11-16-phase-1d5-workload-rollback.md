@@ -97,12 +97,12 @@ Results add action `rollback` and safe source name/UID/revision identifiers; nev
 
 **Interfaces:** API adapter exposes readRolloutHistory/prepareRollback/executeRollback/revokeRollback using generated bindings. RollbackDialog receives RollbackRequest and close/refresh callbacks; Confirm sends only the preview token. Workload state retains the captured parent and source identities per tab.
 
-- [ ] Add one focused `rollbackState.test.ts` group: selecting revision A then B while preparation is pending ignores late A, changing tab cannot retarget Confirm, refresh invalidates changed selection, and rejected/no-op preparation cannot enable Confirm. Cover a strategy notice and accepted-result wording without a new per-component suite.
-- [ ] Run `npm test --workspace frontend -- src/operations/rollbackState.test.ts`; confirm new cases fail.
-- [ ] Extend the existing Revisions table for Deployment and unify the two existing controller views on the common DTO. Keep source inspection links, explicit row selection, page-local sort/partial indicators and original parent context. No automatic previous/latest shortcut. Link source detail back to its captured owner when available rather than offering standalone source rollback.
-- [ ] Add Roll back for the selected row. Reuse current modal/diff patterns for one before/proposed view, expandable server changes, dry-run state, strategy notice, Cancel and ordinary Confirm. No editable historical YAML, typed name or visual redesign. No-op/empty/Forbidden states explain what happened without blanking other details.
-- [ ] Show existing OperationResults for rollback with source identifiers. Refresh/Check workload reads the original target and existing status evidence; no new polling framework. Revoke tokens on stale selection, close or target changes. Keep namespace/cluster and keyboard/focus behavior intact.
-- [ ] Run targeted Vitest, `npm run lint`, `npm run typecheck`; expect pass. Commit `feat: add workload revision rollback controls`.
+- [x] Add one focused `rollbackState.test.ts` group: selecting revision A then B while preparation is pending ignores late A, changing tab cannot retarget Confirm, refresh invalidates changed selection, and rejected/no-op preparation cannot enable Confirm. Cover a strategy notice and accepted-result wording without a new per-component suite.
+- [x] Run `npm test --workspace frontend -- src/operations/rollbackState.test.ts`; confirm new cases fail.
+- [x] Extend the existing Revisions table for Deployment and unify the two existing controller views on the common DTO. Keep source inspection links, explicit row selection, page-local sort/partial indicators and original parent context. No automatic previous/latest shortcut. Link source detail back to its captured owner when available rather than offering standalone source rollback.
+- [x] Add Roll back for the selected row. Reuse current modal/diff patterns for one before/proposed view, expandable server changes, dry-run state, strategy notice, Cancel and ordinary Confirm. No editable historical YAML, typed name or visual redesign. No-op/empty/Forbidden states explain what happened without blanking other details.
+- [x] Show existing OperationResults for rollback with source identifiers. Refresh/Check workload reads the original target and existing status evidence; no new polling framework. Revoke tokens on stale selection, close or target changes. Keep namespace/cluster and keyboard/focus behavior intact.
+- [x] Run targeted Vitest, `npm run lint`, `npm run typecheck`; expect pass. Commit `feat: add workload revision rollback controls`.
 
 ## Task 5: Focused local verification and delivery
 

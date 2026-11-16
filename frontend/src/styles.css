@@ -1556,6 +1556,11 @@ textarea::placeholder {
 .evidence-table td {
   overflow-wrap: anywhere;
 }
+.revision-choice {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
 .evidence-table td details {
   margin: 0;
 }

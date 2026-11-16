@@ -32,7 +32,7 @@ import { PodStorage } from "../storage/PodStorage";
 import { isAccessControlKind } from "../access-control/model";
 import { AccessControlOverview } from "../access-control/AccessControlOverview";
 import { PodIdentity } from "../access-control/PodIdentity";
-import { isAvailabilityKind, type SelectedPodPage, type ControllerRevisionPage } from "../availability/model";
+import { isAvailabilityKind, type SelectedPodPage, type RolloutHistoryPage } from "../availability/model";
 import { AvailabilityOverview } from "../availability/AvailabilityOverview";
 import { SelectedPods } from "../availability/SelectedPods";
 import { ControllerRevisions } from "../availability/ControllerRevisions";
@@ -303,11 +303,25 @@ export function ResourceDetail({
           onSelect={(target) => c.openAvailabilityReference(data as SelectedPodPage, target)}
         />
       )}
-      {section === "Revisions" && data && (
+      {section === "Revisions" && data && !state?.loading && !state?.error && (
         <ControllerRevisions
-          data={data as ControllerRevisionPage}
+          key={JSON.stringify([
+            row.resource,
+            canReviewOperation,
+            c.inventory.sectionEpoch,
+            c.inventory.refresh,
+            c.inventory.sectionRefresh,
+            c.inventory.sectionCursor,
+          ])}
+          data={data as RolloutHistoryPage}
+          resource={row.resource}
+          context={context}
+          canReview={canReviewOperation}
           onNext={c.nextSection}
-          onSelect={(target) => c.openAvailabilityReference(data as ControllerRevisionPage, target)}
+          onInspect={(target) =>
+            target.kind === "ReplicaSet" ? c.openRelated(target) : c.openAvailabilityReference(data as RolloutHistoryPage, target)
+          }
+          onConfirm={(token) => onOperation("rollback", token, "")}
         />
       )}
       {section === "Pods" && data && (

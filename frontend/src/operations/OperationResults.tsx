@@ -13,6 +13,7 @@ import {
   executeDelete,
   executeEdit,
   executeRestart,
+  executeRollback,
   executeScale,
   listOperationResults,
   type DeleteObservation,
@@ -20,19 +21,27 @@ import {
   type OperationResult,
 } from "./api";
 
-const submissions = { delete: executeDelete, edit: executeEdit, restart: executeRestart, scale: executeScale };
-const actionLabel: Record<string, string> = { delete: "Delete", edit: "Edit YAML", restart: "Restart", scale: "Scale" };
+import { rollbackAcceptedText } from "./rollbackState";
+
+const submissions = { delete: executeDelete, edit: executeEdit, restart: executeRestart, rollback: executeRollback, scale: executeScale };
+const actionLabel: Record<string, string> = {
+  delete: "Delete",
+  edit: "Edit YAML",
+  restart: "Restart",
+  rollback: "Roll back",
+  scale: "Scale",
+};
 
 export function useOperationResults(onResult: (result: Pick<OperationResult, "resource" | "state" | "action" | "edit">) => void) {
   const [results, setResults] = useState<OperationResult[]>([]);
   const [pending, setPending] = useState(0);
   const [error, setError] = useState("");
   const query = useRef(0);
-  const acceptedEditsAndDeletions = useRef(new Set<string>());
+  const acceptedMutations = useRef(new Set<string>());
   const onFinish = useRef(onResult);
   onFinish.current = onResult;
   const reportAcceptedMutation = useCallback((result: OperationResult) => {
-    const seen = acceptedEditsAndDeletions.current;
+    const seen = acceptedMutations.current;
     if (result.state !== "accepted" || seen.has(result.operationID)) return;
     seen.add(result.operationID);
     if (seen.size > 128) {
@@ -48,7 +57,7 @@ export function useOperationResults(onResult: (result: Pick<OperationResult, "re
         if (request !== query.current) return;
         const next = rows ?? [];
         for (const row of next) {
-          if (row.action === "delete" || row.action === "edit") reportAcceptedMutation(row);
+          if (row.action === "delete" || row.action === "edit" || row.action === "rollback") reportAcceptedMutation(row);
         }
         setResults(next);
       },
@@ -71,7 +80,7 @@ export function useOperationResults(onResult: (result: Pick<OperationResult, "re
     return execute(token, acknowledgement)
       .then(
         (result) => {
-          if ((action === "delete" || action === "edit") && "action" in result) reportAcceptedMutation(result);
+          if ((action === "delete" || action === "edit" || action === "rollback") && "action" in result) reportAcceptedMutation(result);
           else onFinish.current({ ...result, action });
           releaseDeletion?.(false);
         },
@@ -149,6 +158,14 @@ export function OperationResults({
               {row.state === "accepted" && <p>Kubernetes accepted the template patch. Pod replacement and readiness are separate.</p>}
             </>
           )}
+          {row.rollback && (
+            <>
+              <p>
+                Revision {row.rollback.revision} · {row.rollback.sourceName}
+              </p>
+              {row.state === "accepted" && <p>{rollbackAcceptedText}</p>}
+            </>
+          )}
           {row.delete && (
             <>
               <p>
@@ -169,7 +186,7 @@ export function OperationResults({
                 onClose();
               }}
             >
-              Open target / refresh
+              {row.rollback ? "Check workload" : "Open target / refresh"}
             </button>
           )}
         </section>

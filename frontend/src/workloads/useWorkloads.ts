@@ -193,7 +193,7 @@ export function useWorkloads(
       if (section === "ReplicaSets") return api.ReadRelatedReplicaSets(id, { resource, cursor: inventory.sectionCursor });
       if (section === "Jobs") return api.ReadRelatedJobs(id, { resource, cursor: inventory.sectionCursor });
       if (section === "Selected Pods") return api.ReadPDBSelectedPods(id, { resource, cursor: inventory.sectionCursor });
-      if (section === "Revisions") return api.ReadControllerRevisions(id, { resource, cursor: inventory.sectionCursor });
+      if (section === "Revisions") return api.ReadRolloutHistory(id, { resource, cursor: inventory.sectionCursor });
       if (section === "Pods") return api.ReadRelatedPods(id, { resource, cursor: inventory.sectionCursor });
       return api.ReadResource(id, { resource, includeConfigMapData: section === "Data" });
     });

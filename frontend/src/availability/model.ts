@@ -9,7 +9,8 @@ export type {
   AvailabilityRow,
   AvailabilityPage,
   SelectedPodPage,
-  ControllerRevisionPage,
+  RolloutHistoryPage,
+  RolloutRevision,
 } from "../../bindings/github.com/sandjaie/KubeSift/internal/kube/models";
 
 export const availabilityLabels = {
