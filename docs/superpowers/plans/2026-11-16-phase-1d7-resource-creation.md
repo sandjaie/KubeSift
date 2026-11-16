@@ -87,7 +87,9 @@ Existing checkout `/Users/sandjaieravi/dev/KubeSift`, no worktree. Start from cu
 - [x] Run meaningful full repository checks, focused coordinator/parser/transport race tests, creation integration plus affected editing/operations/session regressions, bindings/build/package. Do not duplicate every kind suite or use unapproved marker contexts.
 - [x] Packaged desktop computer-use: create/review/cancel/confirm, namespace target, Secret, denied/AlreadyExists and accepted-with-get-denied, Open resource/Back and both contexts. Verify current appearances/focus/narrow layout and a real generated service call plus a session-event subscription after the bindings relocation. Record actual limits, no duplicate manual UAT.
 - [x] Clean task-owned objects before CRDs/namespaces and temporary credentials; verify both contexts. Update validation/checkpoint/checked tasks and docs links; progress never goes in roadmap.
-- [ ] One fresh independent whole-PR review using repository skill, fixes and targeted rechecks; ready PR and authorized merge into develop when gates pass. Stop here. 1D.8 remains a separate implementation session; do not claim Phase 1D complete or release.
+- [x] One fresh independent whole-PR review using repository skill, fixes and targeted rechecks; ready PR and authorized merge into develop when gates pass. Stop here. 1D.8 remains a separate implementation session; do not claim Phase 1D complete or release.
+
+[PR #22](https://github.com/sandjaie/KubeSift/pull/22) merged into `develop` as `fea4175`. The [validation report](../validation/phase-1d7.html) records the review and verification evidence.
 
 ## Self-review
 

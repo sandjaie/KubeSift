@@ -2,12 +2,11 @@
 
 Updated 2026-11-16. Current integration branch is `develop`.
 
-## Phase 1D completion · Next: 1D.7 resource creation
+## Phase 1D.7 · Reviewed resource creation
 
-- Phase 1D.7 implementation is on `feature/phase-1d7-resource-creation` from `b8bb628`. Bindings normalization passed consecutive regeneration and frontend checks. Native discovery and shared canonical address locks passed Go and race checks. Named draft parsing, Secret normalization and strict dry-run checks passed. The native Create bridge, single-dispatch outcomes and read-only name inspection passed their automated checks. The mounted Create editor and mixed results passed frontend tests, lint and typecheck. [Shared specification](../../docs/superpowers/specs/2026-11-16-phase-1d-completion-design.md), [1D.7 creation plan](../../docs/superpowers/plans/2026-11-16-phase-1d7-resource-creation.md) and [1D.8 SSA/closure plan](../../docs/superpowers/plans/2026-11-16-phase-1d8-server-side-apply.md).
-- The full repository checks, both approved kind integrations, and packaged macOS verification passed. Task-owned fixtures and temporary sources were removed. The [validation report](../../docs/superpowers/validation/phase-1d7.html) records evidence and limits. Independent whole-PR review and targeted rechecks cleared both findings. The verified candidate is ready for its pull request.
-- Implement 1D.7 first, including the user-requested generated binding path normalization to `frontend/bindings/internal`, merge and verify, then implement 1D.8 in a separate session. Preserve the approved 1D.4 Kubernetes-permission model and existing UI. Existing checkout, no worktree.
-- Phase 1D is not yet complete: creation, server-side apply and the consolidated exit audit remain. The closure report must resolve committed acceptance blockers before marking complete. Local-machine terminals, bulk manifests and release work are outside the specified scope.
+- [PR #22](https://github.com/sandjaie/KubeSift/pull/22) squash-merged into `develop` as `fea4175` on 2026-11-16 Dubai time. Implemented from `b8bb628` in the existing checkout. The [shared specification](../../docs/superpowers/specs/2026-11-16-phase-1d-completion-design.md), [1D.7 plan](../../docs/superpowers/plans/2026-11-16-phase-1d7-resource-creation.md) and [validation report](../../docs/superpowers/validation/phase-1d7.html) cover binding regeneration, reviewed named creation and collapsible sidebar groups.
+- Repository and race checks, both approved kind contexts, packaged macOS verification, fixture cleanup and the independent whole-PR review and rechecks passed.
+- Phase 1D.8 server-side apply and the consolidated exit audit remain for a separate session under the [1D.8 plan](../../docs/superpowers/plans/2026-11-16-phase-1d8-server-side-apply.md).
 
 ## Phase 1D.6 · Interactive sessions
 
