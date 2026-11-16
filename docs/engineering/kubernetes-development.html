@@ -326,6 +326,22 @@
           workloads, fixed options, impact evidence and safe object-specific NotFound handling.
         </li>
       </ul>
+      <h2 id="creation-apply">Creation and server-side field ownership</h2>
+      <ul>
+        <li>
+          <a href="https://kubernetes.io/docs/reference/using-api/server-side-apply/">Server-side apply</a>: field managers, omission/shared
+          ownership, schema-driven lists and explicit conflict takeover.
+        </li>
+        <li>
+          <a href="https://kubernetes.io/docs/reference/using-api/api-concepts/">API concepts</a>: create, dry-run, validation and
+          conditional writes. Prove existing-object SSA does not recreate a deleted target on real test servers.
+        </li>
+        <li>
+          The <a href="../superpowers/specs/2026-11-16-phase-1d-completion-design.md">completion specification</a> owns distinct
+          Create/Edit/Apply intent, native route binding, field managers and closure evidence. Server authorization remains final; no local
+          resource permission matrix.
+        </li>
+      </ul>
       <h2 id="discovery">Cluster resources and discovery</h2>
       <ul>
         <li>

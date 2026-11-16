@@ -162,6 +162,14 @@
         Kubernetes determines permissions and valid changes. Explain unsaved changes, conflicts and server errors without adding a wizard or
         resource-specific typed confirmations. Keep draft leaves the editor in memory while users navigate to another cluster tab.
       </p>
+      <h2 id="manifest-workflows">Create and apply manifest workflows</h2>
+      <p>
+        The <a href="../superpowers/specs/2026-11-16-phase-1d-completion-design.md">Phase 1D completion specification</a> keeps Create
+        resource, Edit YAML and Apply configuration distinct. Creation starts from inventory with an explicit target; apply starts from
+        existing-resource YAML with an identity-only desired configuration. Reuse the current editor and single review/confirmation flow,
+        including Secrets. Show server defaults and field-ownership changes; ownership takeover is explicit in the same review, never
+        automatic. No resource-kind approval gates or UI redesign.
+      </p>
       <h2 id="reviewed-deletion">Reviewed workload deletion</h2>
       <p>
         The <a href="../superpowers/specs/2026-11-15-phase-1d3-reviewed-deletion-design.md">Phase 1D.3 specification</a> defines destructive

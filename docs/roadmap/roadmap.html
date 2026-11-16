@@ -509,14 +509,22 @@
             OpenShift-specific rollback stay with their respective later workflows.
           </li>
           <li>
-            <strong>Later operation increments.</strong> Specify separate manifest creation/server-side apply workflows with their own
-            ownership, conflict and impact semantics.
-          </li>
-          <li>
             <strong>1D.6 — Interactive sessions.</strong> Pod-container terminals and Pod/Service TCP forwarding in the existing Sessions
             dock, fixed targets, stop/close cleanup and no automatic reconnection. Laptop terminals remain separately scoped. See the
             <a href="../superpowers/specs/2026-11-16-phase-1d6-interactive-sessions-design.md">specification</a> and
             <a href="../superpowers/plans/2026-11-16-phase-1d6-interactive-sessions.md">implementation plan</a>.
+          </li>
+          <li>
+            <strong>1D.7 — Named resource creation.</strong> One YAML object, advertised route/scope, server dry-run and ordinary
+            confirmation; named POST cannot overwrite an existing object. See the
+            <a href="../superpowers/specs/2026-11-16-phase-1d-completion-design.md">completion specification</a> and
+            <a href="../superpowers/plans/2026-11-16-phase-1d7-resource-creation.md">creation plan</a>.
+          </li>
+          <li>
+            <strong>1D.8 — Server-side apply and closure.</strong> Apply desired fields to an existing resource with explicit
+            ownership/conflict review, conditional identity/version protection and deliberate takeover when selected. Audit all Phase 1D
+            exit evidence before completion. See the
+            <a href="../superpowers/plans/2026-11-16-phase-1d8-server-side-apply.md">apply and closure plan</a>.
           </li>
         </ol>
         <p>
@@ -524,8 +532,11 @@
           command selection and session restore policy. Decide bulk actions explicitly; they are not implied by single-resource actions.
         </p>
         <p>
-          <strong>Exit:</strong> representative local edits/restarts/scales/deletes and rollback work; stale UID/version and permission
-          denial fail safely; streams and forwards stop cleanly; session ownership survives navigation and is resolved on tab/app close.
+          <strong>Exit:</strong> representative named creation, existing-resource server-side apply, edits, restarts, scales, deletes and
+          rollback work; stale UID/version, name collisions, ownership conflicts and permission denial fail safely. Streams and forwards
+          stop cleanly; session ownership survives navigation and is resolved on tab/app close. A consolidated evidence audit has no
+          unresolved committed acceptance blocker. Single-object workflows define this scope; bulk manifests, generated-name creation,
+          local-machine terminals and release readiness are separate.
         </p>
         <p>
           <strong>Artifacts:</strong> operation matrix with permissions and review requirements, approved spec/plan, targeted safety checks

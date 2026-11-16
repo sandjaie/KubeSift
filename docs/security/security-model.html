@@ -160,6 +160,13 @@
         ordinary confirmation, with UID/version conditions to prevent accidental overwrites. Secret Edit or Reveal YAML explicitly loads
         authorized content without repeated reveal gates. Payloads remain memory-only and never enter diagnostics, history or AI context.
       </p>
+      <p>
+        The <a href="../superpowers/specs/2026-11-16-phase-1d-completion-design.md">creation/apply specification</a> extends the approved
+        YAML permission model to advertised built-in and installed APIs. Create uses an explicit-name POST; existing-object apply binds
+        UID/version and fixed field manager, with ownership takeover only when deliberately reviewed. The same address lock spans all
+        operations. Drafts, Secret values and ownership details remain memory-only; retained results contain no manifests. An uncertain
+        write is never replayed automatically.
+      </p>
       <h2>AI availability and provider routing</h2>
       <p>
         AI investigation is available in Phase 2. Application default provider plus per-cluster overrides references profiles stored

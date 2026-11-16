@@ -43,8 +43,9 @@
       <p>
         Read-only configuration: <a href="../superpowers/specs/2026-11-14-phase-1c3c-configuration-design.md">Phase 1C.3c</a> covers
         Namespaces, ResourceQuotas, LimitRanges, ConfigMaps and Secret identity metadata, with explicit Pod configuration links. See the
-        <a href="../superpowers/validation/phase-1c3c.html">validation report</a>. Secret value reveal/YAML and broader configuration
-        workflows remain deferred; do not count metadata-only browsing as complete Secret inspection.
+        <a href="../superpowers/validation/phase-1c3c.html">validation report</a>. Default Secret browsing remains metadata-only;
+        <a href="../superpowers/validation/phase-1d4.html">Phase 1D.4</a> adds explicit authorized Secret reveal/edit using the common YAML
+        workflow.
       </p>
       <div class="table-scroll">
         <table>
@@ -87,6 +88,15 @@
               Correct container/target; bounded streams; explicit stop and cleanup.
               <a href="../superpowers/validation/phase-1d6.html">Interactive sessions</a> cover Pod-container terminals and fixed loopback
               TCP forwards for Pods and Services.
+            </td>
+          </tr>
+          <tr>
+            <td>Named manifest creation and server-side apply</td>
+            <td>Required for Phase 1D closure</td>
+            <td>
+              <a href="../superpowers/specs/2026-11-16-phase-1d-completion-design.md">Specified single-object workflows</a>: no overwrite on
+              create, explicit SSA field ownership and conflicts, server dry-run and immutable target review. Completion evidence belongs in
+              phase validation reports and the checkpoint.
             </td>
           </tr>
           <tr>

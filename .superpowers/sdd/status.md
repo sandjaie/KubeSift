@@ -2,6 +2,12 @@
 
 Updated 2026-11-16. Current integration branch is `develop`.
 
+## Phase 1D completion · Next: 1D.7 resource creation
+
+- Completion planning package prepared; neither remaining increment is implemented. [Shared specification](../../docs/superpowers/specs/2026-11-16-phase-1d-completion-design.md), [1D.7 creation plan](../../docs/superpowers/plans/2026-11-16-phase-1d7-resource-creation.md) and [1D.8 SSA/closure plan](../../docs/superpowers/plans/2026-11-16-phase-1d8-server-side-apply.md).
+- Implement 1D.7 first, merge and verify, then implement 1D.8 in a separate session. Preserve the approved 1D.4 Kubernetes-permission model and existing UI. Existing checkout, no worktree.
+- Phase 1D is not yet complete: creation, server-side apply and the consolidated exit audit remain. The closure report must resolve committed acceptance blockers before marking complete. Local-machine terminals, bulk manifests and release work are outside the specified scope.
+
 ## Phase 1D.6 · Interactive sessions
 
 - Implemented in the existing checkout from `355ff0f` on `feature/phase-1d6-interactive-sessions`. The [specification](../../docs/superpowers/specs/2026-11-16-phase-1d6-interactive-sessions-design.md), [plan](../../docs/superpowers/plans/2026-11-16-phase-1d6-interactive-sessions.md) and [validation report](../../docs/superpowers/validation/phase-1d6.html) cover Pod-container terminals and fixed Pod/Service loopback TCP forwards.
