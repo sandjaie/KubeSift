@@ -54,6 +54,10 @@ export function CloseEdit(draftID: string): $CancellablePromise<void> {
   return $Call.ByID(3778343236, draftID);
 }
 
+export function CloseInteractive(ref: model$0.SessionRef): $CancellablePromise<void> {
+  return $Call.ByID(2562446556, ref);
+}
+
 export function ClosePodLogs(ref: model$0.SessionRef): $CancellablePromise<void> {
   return $Call.ByID(1080239256, ref);
 }
@@ -116,6 +120,10 @@ export function OpenEdit(id: string, target: kube$0.EditTarget): $CancellablePro
 
 export function OpenPodLogs(req: kube$0.LogRequest): $CancellablePromise<model$0.SessionRef> {
   return $Call.ByID(1020417316, req);
+}
+
+export function OpenTerminal(id: string, req: kube$0.TerminalRequest): $CancellablePromise<kube$0.InteractiveEntry> {
+  return $Call.ByID(1368815228, id, req);
 }
 
 export function PrepareDelete(id: string, req: operation$0.DeleteRequest): $CancellablePromise<operation$0.DeletePreview> {
@@ -326,6 +334,10 @@ export function SetWorkloadNamespace(ref: model$0.ConnectionRef, $namespace: str
 
 export function StartConnection(req: explorer$0.ConnectRequest): $CancellablePromise<explorer$0.Attempt> {
   return $Call.ByID(3853708072, req);
+}
+
+export function StopInteractive(ref: model$0.SessionRef): $CancellablePromise<void> {
+  return $Call.ByID(2434231096, ref);
 }
 
 export function TrustedHelpers(): $CancellablePromise<trust$0.Entry[] | null> {

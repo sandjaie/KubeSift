@@ -237,6 +237,17 @@ export interface GenericResourceRow {
   createdAt: string | null;
 }
 
+export interface InteractiveEntry {
+  session: model$0.SessionRef;
+  kind: string;
+  target: PodSessionTarget;
+  service: ServiceForwardSelection | null;
+  localPort: number;
+  remotePort: number;
+  state: string;
+  problem: model$0.Problem | null;
+}
+
 export interface JobSummary {
   status: string;
   active: number | null;
@@ -281,6 +292,11 @@ export interface PageRequest {
   kind: string;
   namespace: string;
   cursor: string;
+}
+
+export interface PodSessionTarget {
+  resource: ResourceRef;
+  container: string;
 }
 
 export interface PodSummary {
@@ -431,6 +447,13 @@ export interface SelectedPodPage {
   problem: model$0.Problem | null;
 }
 
+export interface ServiceForwardSelection {
+  resource: ResourceRef;
+  resourceVersion: string;
+  portName: string;
+  port: number;
+}
+
 export interface ServiceSlicePage {
   sourceVersion: string;
   items: ServiceSliceRow[] | null;
@@ -459,6 +482,11 @@ export interface StorageRow {
   resource: ResourceRef;
   createdAt: string | null;
   objectJSON: string;
+}
+
+export interface TerminalRequest {
+  target: PodSessionTarget;
+  command: string[] | null;
 }
 
 export interface WorkloadPage {

@@ -73,10 +73,10 @@ Desktop Open calls take a requestID through the existing cancellable request ada
 
 **Interfaces:** Implements OpenTerminal; existing input/resize methods remain SessionRef-addressed. Preserve compatible legacy Exec wrapper with `/bin/sh` default for validation.
 
-- [ ] Add representative terminal cases: explicit argument vector reaches the transport unchanged, unavailable container/Forbidden is reported, bounded input rejects overflow, resize targets the session, cancellation unblocks reader/writer. Run targeted native tests before implementation and confirm failure.
-- [ ] Extract a shared exec helper accepting command vector and owned session context. Use current pinned remotecommand transport without automatic command fallback/replay. Bound argument count/bytes, reject NUL and empty executable; perform no local shell execution. Send running/ended/failed state so UI does not equate pending with connected.
-- [ ] Keep existing input queue and size coalescing, pending activation and cleanup. Post-start checks must not create a second exec. Successful shell exit is ended; nonzero/error is described without credential output. A lost stream is not retried.
-- [ ] Run `go test ./internal/kube ./internal/session ./internal/desktop`; expect pass; regenerate bindings as needed. Commit `feat: expose product Pod container terminals`.
+- [x] Add representative terminal cases: explicit argument vector reaches the transport unchanged, unavailable container/Forbidden is reported, bounded input rejects overflow, resize targets the session, cancellation unblocks reader/writer. Run targeted native tests before implementation and confirm failure.
+- [x] Extract a shared exec helper accepting command vector and owned session context. Use current pinned remotecommand transport without automatic command fallback/replay. Bound argument count/bytes, reject NUL and empty executable; perform no local shell execution. Send running/ended/failed state so UI does not equate pending with connected.
+- [x] Keep existing input queue and size coalescing, pending activation and cleanup. Post-start checks must not create a second exec. Successful shell exit is ended; nonzero/error is described without credential output. A lost stream is not retried.
+- [x] Run `go test ./internal/kube ./internal/session ./internal/desktop`; expect pass; regenerate bindings as needed. Commit `feat: expose product Pod container terminals`.
 
 ## Task 3: Pod and Service forwarding
 
