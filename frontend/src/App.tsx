@@ -48,6 +48,7 @@ export default function App() {
   const { state } = controller;
   const [page, setPage] = useState<"clusters" | "workspace" | "settings">("clusters");
   const [aiOpen, setAiOpen] = useState(false);
+  const [collapsedResourceGroups, setCollapsedResourceGroups] = useState<string[]>([]);
   const [hiddenNavigation, setHiddenNavigation] = useState<Record<string, boolean>>({});
   const aiButton = useRef<HTMLButtonElement>(null);
   const [palette, setPalette] = useState(false);
@@ -455,6 +456,12 @@ export default function App() {
                 key={state.active}
                 tab={active}
                 navigationOpen={!hiddenNavigation[state.active!]}
+                collapsedResourceGroups={collapsedResourceGroups}
+                onToggleResourceGroup={(group) =>
+                  setCollapsedResourceGroups((current) =>
+                    current.includes(group) ? current.filter((item) => item !== group) : [...current, group],
+                  )
+                }
                 controller={workloads}
                 operationResults={operationResults.results}
                 onInteractive={(kind, data) => {

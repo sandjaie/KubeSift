@@ -35,6 +35,8 @@ export function Workspace({
   controller: c,
   navigationWidth,
   navigationOpen,
+  collapsedResourceGroups,
+  onToggleResourceGroup,
   detailWidthPercent,
   detailHeightPercent,
   onDetailResize,
@@ -51,6 +53,8 @@ export function Workspace({
   controller: WorkloadController;
   navigationWidth: number;
   navigationOpen: boolean;
+  collapsedResourceGroups: readonly string[];
+  onToggleResourceGroup: (group: string) => void;
   detailWidthPercent: number;
   detailHeightPercent: number;
   onDetailResize: (axis: "x" | "y", value: number) => void;
@@ -92,6 +96,8 @@ export function Workspace({
             <div className="navigation-host">
               <ResourceNavigation
                 kind={kind}
+                collapsedGroups={collapsedResourceGroups}
+                onToggleGroup={onToggleResourceGroup}
                 onSelect={(k) => {
                   if (isResourceKind(k)) c.selectKind(k);
                 }}
