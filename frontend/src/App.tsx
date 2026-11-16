@@ -25,8 +25,13 @@ import { ResourceIcon } from "./ui/ResourceIcon";
 import { InvestigationPanel } from "./ai/InvestigationPanel";
 import { useLogSessions } from "./sessions/useLogSessions";
 import { PodLogs } from "./sessions/PodLogs";
+import { InteractiveSessions } from "./sessions/InteractiveSessions";
+import { forwardStart, terminalStart, useInteractiveSessions } from "./sessions/useInteractiveSessions";
+import { sameConnection } from "./sessions/interactiveState";
+import { TerminalStart } from "./sessions/TerminalStart";
+import { ForwardStart } from "./sessions/ForwardStart";
 import { useWorkloads } from "./workloads/useWorkloads";
-import type { ResourceRef } from "./workloads/model";
+import type { ResourceDetail, ResourceRef } from "./workloads/model";
 import { requestEditor, type EditorSession } from "./operations/editState";
 import { EditDialog } from "./operations/EditDialog";
 import { closeEdit } from "./operations/api";
@@ -35,6 +40,10 @@ import "./styles.css";
 export default function App() {
   const controller = useConnections();
   const logs = useLogSessions();
+  const interactive = useInteractiveSessions();
+  const [dockOpen, setDockOpen] = useState(false);
+  const [dockSession, setDockSession] = useState("");
+  const [startSession, setStartSession] = useState<{ kind: "terminal" | "forward"; data: ResourceDetail; tab: string; cluster: string }>();
   const { state } = controller;
   const [page, setPage] = useState<"clusters" | "workspace" | "settings">("clusters");
   const [aiOpen, setAiOpen] = useState(false);
@@ -142,7 +151,7 @@ export default function App() {
     setPage("workspace");
     void controller.connect(entry);
   }
-  const [closeTarget, setCloseTarget] = useState<{ key: string; count: number } | null>(null);
+  const [closeTarget, setCloseTarget] = useState<{ key: string; entries: string[] } | null>(null);
   function close(key: string) {
     if (editor?.tab === key) {
       setEditor({ ...editor, suspended: false, closing: true });
@@ -150,17 +159,41 @@ export default function App() {
     }
     closeTab(key);
   }
-  function closeTab(key: string) {
-    const count = logs.sessions.filter((s) => s.tab === key).length;
-    if (count) {
-      setCloseTarget({ key, count });
-      return;
-    }
-    void logs.store.closeTab(key).then(() => {
-      workloads.close(key);
-      void controller.cancel(key);
-    });
+  function completeTabClose(key: string) {
+    void Promise.all([logs.store.closeTab(key), interactive.store.closeTab(key)])
+      .then(() => {
+        workloads.close(key);
+        return controller.cancel(key);
+      })
+      .catch(() => setStartupError("Could not close the tab’s sessions. Retry cleanup."));
   }
+  function closeTab(key: string) {
+    const sessions = interactive.entries.filter((entry) => entry.tab === key);
+    const labels = [
+      ...logs.sessions.filter((entry) => entry.tab === key).map((entry) => `Logs · ${entry.request.resource.name} · ${entry.status}`),
+      ...sessions.map((entry) => `${entry.kind === "terminal" ? "Terminal" : "Forward"} · ${entry.target.resource.name} · ${entry.state}`),
+    ];
+    const pending = interactive.store.countTab(key) - sessions.length;
+    if (pending > 0) labels.push(`${pending} session start${pending === 1 ? "" : "s"} in progress`);
+    if (labels.length) setCloseTarget({ key, entries: labels });
+    else completeTabClose(key);
+  }
+  useEffect(() => {
+    interactive.store.syncConnections((tab, ref) => {
+      const view = state.tabs[tab]?.view;
+      return (view?.state === "connected" || view?.state === "restricted") && sameConnection(ref, view.ref);
+    });
+  }, [interactive.store, state.tabs]);
+  const sessionOrigin = startSession && state.tabs[startSession.tab]?.view;
+  const canStartSession =
+    startSession &&
+    page === "workspace" &&
+    state.active === startSession.tab &&
+    (sessionOrigin?.state === "connected" || sessionOrigin?.state === "restricted") &&
+    sameConnection(startSession.data.resource.connection, sessionOrigin.ref);
+  useEffect(() => {
+    if (startSession && !canStartSession) setStartSession(undefined);
+  }, [startSession, canStartSession]);
   useEffect(() => {
     for (const session of logs.sessions) {
       const ref = state.tabs[session.tab]?.view?.ref;
@@ -316,6 +349,43 @@ export default function App() {
         )}
         {startupError && <span role="alert">{startupError}</span>}
       </div>
+      {startSession &&
+        canStartSession &&
+        (startSession.kind === "terminal" ? (
+          <TerminalStart
+            data={startSession.data}
+            cluster={startSession.cluster}
+            onClose={() => setStartSession(undefined)}
+            onStart={async (request, signal) => {
+              const entry = await interactive.store.open(
+                startSession.tab,
+                startSession.cluster,
+                request.target.resource,
+                terminalStart(request),
+                signal,
+              );
+              setDockSession(entry.session.id);
+              setDockOpen(true);
+            }}
+          />
+        ) : (
+          <ForwardStart
+            data={startSession.data}
+            cluster={startSession.cluster}
+            onClose={() => setStartSession(undefined)}
+            onStart={async (request, signal) => {
+              const entry = await interactive.store.open(
+                startSession.tab,
+                startSession.cluster,
+                request.target.resource,
+                forwardStart(request),
+                signal,
+              );
+              setDockSession(entry.session.id);
+              setDockOpen(true);
+            }}
+          />
+        ))}
       <div className="main-columns">
         <div className="page-body">
           {page === "settings" ? (
@@ -359,6 +429,9 @@ export default function App() {
                 navigationOpen={!hiddenNavigation[state.active!]}
                 controller={workloads}
                 operationResults={operationResults.results}
+                onInteractive={(kind, data) => {
+                  if (state.active) setStartSession({ kind, data, tab: state.active, cluster: active.entry.context });
+                }}
                 onEdit={(target, reveal = false) => {
                   const tab = state.active;
                   if (tab) setEditor((current) => requestEditor(current, { tab, target, reveal }));
@@ -416,23 +489,31 @@ export default function App() {
           />
         </div>
       </div>
+      <InteractiveSessions
+        controller={interactive}
+        logs={logs}
+        expanded={dockOpen}
+        selected={dockSession}
+        height={preferences.dockHeight}
+        onResize={(height) => resize("dockHeight", height)}
+        onCommit={commitSize}
+        onToggle={() => setDockOpen((value) => !value)}
+        onSelect={setDockSession}
+      />
       {closeTarget && (
         <Modal title="Close cluster tab?" onCancel={() => setCloseTarget(null)}>
-          <p>
-            Close {state.tabs[closeTarget.key]?.entry.context} and its {closeTarget.count} retained log sessions?
-          </p>
+          <p>Close {state.tabs[closeTarget.key]?.entry.context} and these sessions?</p>
+          <ul>
+            {closeTarget.entries.map((entry, index) => (
+              <li key={index}>{entry}</li>
+            ))}
+          </ul>
           <button
             className="primary"
             onClick={() => {
               const key = closeTarget.key;
               setCloseTarget(null);
-              void logs.store
-                .closeTab(key)
-                .then(() => {
-                  workloads.close(key);
-                  void controller.cancel(key);
-                })
-                .catch(() => setStartupError("Could not close log sessions; retry closure."));
+              completeTabClose(key);
             }}
           >
             Close tab and sessions

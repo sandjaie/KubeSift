@@ -114,3 +114,10 @@ done</code></pre>
   verifies dry-run, stale version rejection, template acceptance and preservation of non-template settings, then removes its namespace by
   UID. It uses zero replicas or a node selector that matches no fixture nodes; Pod convergence is not tested.
 </p>
+
+<p>
+  Enable <code>TestInteractiveSessions</code> with <code>KUBESIFT_INTERACTIVE_INTEGRATION=1</code> and the isolated A/B kubeconfig
+  directory. Run <code>go test -tags=integration ./tests/integration -run '^TestInteractiveSessions$' -count=1 -v</code>. It creates the
+  <a href="../fixtures/explorer/phase-1d6.yaml">interactive fixture Pods and Service</a> in unique labeled namespaces and removes them by
+  UID. It verifies actual exec input/resize, fixed Pod/Service TCP responses, occupied local ports and listener cleanup.
+</p>

@@ -62,10 +62,10 @@ Desktop Open calls take a requestID through the existing cancellable request ada
 
 **Interfaces:** Produces target validation, product reservation/state lifecycle and Stop/Close; later tasks plug transports into this owner.
 
-- [ ] Add `TestInteractiveOwnership`: replacement UID rejected, eight retained entries reject ninth, stopped remains retained, Close frees slot, generation mismatch and cancel-before-activation clean up. Run `go test ./internal/kube -run TestInteractiveOwnership -count=1` and confirm new assertions fail.
-- [ ] Implement reservation under existing kube.Service synchronization, using the established product log lifecycle as a pattern without combining independent caps. Validate explicit Pod identity/container from a fresh read; pass a transport target only after validation.
-- [ ] Add cancellable pre-start/post-start and 15-second active Pod UID checks. A failed check stops work with a safe reason; no claim of atomic name-addressed exec/forward identity. Reuse connection cleanup fanout so adding this owner never replaces logs/terminals cleanup.
-- [ ] Implement pending cancellation and idempotent Stop/Close/connection shutdown, including retained-entry cleanup. Return bounded metadata only. Run `go test ./internal/kube ./internal/session`; expect pass. Commit `feat: own UID-bound interactive sessions`.
+- [x] Add `TestInteractiveOwnership`: replacement UID rejected, eight retained entries reject ninth, stopped remains retained, Close frees slot, generation mismatch and cancel-before-activation clean up. Run `go test ./internal/kube -run TestInteractiveOwnership -count=1` and confirm new assertions fail.
+- [x] Implement reservation under existing kube.Service synchronization, using the established product log lifecycle as a pattern without combining independent caps. Validate explicit Pod identity/container from a fresh read; pass a transport target only after validation.
+- [x] Add cancellable pre-start/post-start and 15-second active Pod UID checks. A failed check stops work with a safe reason; no claim of atomic name-addressed exec/forward identity. Reuse connection cleanup fanout so adding this owner never replaces logs/terminals cleanup.
+- [x] Implement pending cancellation and idempotent Stop/Close/connection shutdown, including retained-entry cleanup. Return bounded metadata only. Run `go test ./internal/kube ./internal/session`; expect pass. Commit `feat: own UID-bound interactive sessions`.
 
 ## Task 2: Product Pod terminal transport
 
@@ -73,10 +73,10 @@ Desktop Open calls take a requestID through the existing cancellable request ada
 
 **Interfaces:** Implements OpenTerminal; existing input/resize methods remain SessionRef-addressed. Preserve compatible legacy Exec wrapper with `/bin/sh` default for validation.
 
-- [ ] Add representative terminal cases: explicit argument vector reaches the transport unchanged, unavailable container/Forbidden is reported, bounded input rejects overflow, resize targets the session, cancellation unblocks reader/writer. Run targeted native tests before implementation and confirm failure.
-- [ ] Extract a shared exec helper accepting command vector and owned session context. Use current pinned remotecommand transport without automatic command fallback/replay. Bound argument count/bytes, reject NUL and empty executable; perform no local shell execution. Send running/ended/failed state so UI does not equate pending with connected.
-- [ ] Keep existing input queue and size coalescing, pending activation and cleanup. Post-start checks must not create a second exec. Successful shell exit is ended; nonzero/error is described without credential output. A lost stream is not retried.
-- [ ] Run `go test ./internal/kube ./internal/session ./internal/desktop`; expect pass; regenerate bindings as needed. Commit `feat: expose product Pod container terminals`.
+- [x] Add representative terminal cases: explicit argument vector reaches the transport unchanged, unavailable container/Forbidden is reported, bounded input rejects overflow, resize targets the session, cancellation unblocks reader/writer. Run targeted native tests before implementation and confirm failure.
+- [x] Extract a shared exec helper accepting command vector and owned session context. Use current pinned remotecommand transport without automatic command fallback/replay. Bound argument count/bytes, reject NUL and empty executable; perform no local shell execution. Send running/ended/failed state so UI does not equate pending with connected.
+- [x] Keep existing input queue and size coalescing, pending activation and cleanup. Post-start checks must not create a second exec. Successful shell exit is ended; nonzero/error is described without credential output. A lost stream is not retried.
+- [x] Run `go test ./internal/kube ./internal/session ./internal/desktop`; expect pass; regenerate bindings as needed. Commit `feat: expose product Pod container terminals`.
 
 ## Task 3: Pod and Service forwarding
 
@@ -84,10 +84,10 @@ Desktop Open calls take a requestID through the existing cancellable request ada
 
 **Interfaces:** Implements ReadForwardCandidates and OpenForward. Native resolution binds one Service mapping to one selected Pod; UI cannot supply an unchecked arbitrary endpoint.
 
-- [ ] Add `TestServiceForward`: numeric/omitted/named targetPort, conflicting named port, UDP, selectorless/ExternalName, partial candidate page, changed Service version and same-name replacement Pod. Add one transport case for occupied local port and cancellation-before-ready. Run targeted tests and confirm failure.
-- [ ] Resolve Service and selector in its namespace using bounded 100-item Pod pages. Include only running candidates with a valid mapping; do not infer readiness or healthy Service routing. Bind cursors to Service identity/version and selected port. Named port matching must use TCP declarations and reject conflicting numeric resolutions.
-- [ ] Revalidate Service version/selector/port and selected Pod at OpenForward. Direct Pod forwarding permits any valid numeric remote TCP port. Refactor forward transport to StartPending, then emit ready with actual allocated port. Use existing 20-second startup timeout, loopback listener and explicit conflict reporting; cancellation/error always closes listener/transport. Legacy synchronous Forward can wrap readiness if validation still needs it.
-- [ ] Expose candidate read cancellation and product Open/Stop/Close in bridge; inspect generated DTOs after `wails3 task bindings`. Run `go test ./internal/kube ./internal/session ./internal/desktop` and `go test -race ./internal/kube ./internal/session`; expect pass. Commit `feat: add owned Pod and Service port forwarding`.
+- [x] Add `TestServiceForward`: numeric/omitted/named targetPort, conflicting named port, UDP, selectorless/ExternalName, partial candidate page, changed Service version and same-name replacement Pod. Add one transport case for occupied local port and cancellation-before-ready. Run targeted tests and confirm failure.
+- [x] Resolve Service and selector in its namespace using bounded 100-item Pod pages. Include only running candidates with a valid mapping; do not infer readiness or healthy Service routing. Bind cursors to Service identity/version and selected port. Named port matching must use TCP declarations and reject conflicting numeric resolutions.
+- [x] Revalidate Service version/selector/port and selected Pod at OpenForward. Direct Pod forwarding permits any valid numeric remote TCP port. Refactor forward transport to StartPending, then emit ready with actual allocated port. Use existing 20-second startup timeout, loopback listener and explicit conflict reporting; cancellation/error always closes listener/transport. Legacy synchronous Forward can wrap readiness if validation still needs it.
+- [x] Expose candidate read cancellation and product Open/Stop/Close in bridge; inspect generated DTOs after `wails3 task bindings`. Run `go test ./internal/kube ./internal/session ./internal/desktop` and `go test -race ./internal/kube ./internal/session`; expect pass. Commit `feat: add owned Pod and Service port forwarding`.
 
 ## Task 4: Current UI and persistent Sessions integration
 
@@ -95,11 +95,11 @@ Desktop Open calls take a requestID through the existing cancellable request ada
 
 **Interfaces:** App owns `useInteractiveSessions()` exposing entries, openTerminal/openForward/stop/close and closeConnection. Start forms use generated request types. One xterm instance per terminal entry; one metadata listener in owner, terminal data listener acknowledges only its own frames.
 
-- [ ] Add one fake-bridge lifecycle scenario: pending Start → tab/theme switch → late ready → Stop/Close; assert one activation, same target, no duplicate reader, late cancelled Open closed and entry limits respected. Include ended state and stale generation. Run `npm test --workspace frontend -- src/sessions/interactiveState.test.ts`; confirm new cases fail.
-- [ ] Add Terminal and Port forward actions where applicable. Terminal form has container, executable default `/bin/sh`, optional JSON argument array and Open. Forward form has Pod/Service mapping, local auto/manual port and Start. Multiple/incomplete Service candidates require explicit Pod selection; one complete candidate may default. Show native errors without a permission wizard.
-- [ ] Reuse xterm while removing product dependence on validation callbacks and hardcoded theme. Keep instances mounted across Settings, dock collapse, tabs and theme changes; apply theme/fit in place. Preserve user copy/paste and disabled escape-driven links/clipboard. Continue parse acknowledgements offscreen; do not route input to a hidden previously focused terminal after focus changes.
-- [ ] Add type/target/state labels and Stop/Close to the current dock alongside logs. Show allocated address only on ready and explicit Copy address. Stop retains bounded terminal output; Close disposes it. Tab-close confirms all affected session types once; disconnect stops work and labels entries, app exit cleans up. No automatic reconnect, browser launch or command replay. Shortcuts must not steal terminal/input keystrokes.
-- [ ] Run targeted Vitest, `npm run lint`, `npm run typecheck`; expect pass. Commit `feat: integrate terminals and forwards into Sessions`.
+- [x] Add one fake-bridge lifecycle scenario: pending Start → tab/theme switch → late ready → Stop/Close; assert one activation, same target, no duplicate reader, late cancelled Open closed and entry limits respected. Include ended state and stale generation. Run `npm test --workspace frontend -- src/sessions/interactiveState.test.ts`; confirm new cases fail.
+- [x] Add Terminal and Port forward actions where applicable. Terminal form has container, executable default `/bin/sh`, optional JSON argument array and Open. Forward form has Pod/Service mapping, local auto/manual port and Start. Multiple/incomplete Service candidates require explicit Pod selection; one complete candidate may default. Show native errors without a permission wizard.
+- [x] Reuse xterm while removing product dependence on validation callbacks and hardcoded theme. Keep instances mounted across Settings, dock collapse, tabs and theme changes; apply theme/fit in place. Preserve user copy/paste and disabled escape-driven links/clipboard. Continue parse acknowledgements offscreen; do not route input to a hidden previously focused terminal after focus changes.
+- [x] Add type/target/state labels and Stop/Close to the current dock alongside logs. Show allocated address only on ready and explicit Copy address. Stop retains bounded terminal output; Close disposes it. Tab-close confirms all affected session types once; disconnect stops work and labels entries, app exit cleans up. No automatic reconnect, browser launch or command replay. Shortcuts must not steal terminal/input keystrokes.
+- [x] Run targeted Vitest, `npm run lint`, `npm run typecheck`; expect pass. Commit `feat: integrate terminals and forwards into Sessions`.
 
 ## Task 5: Local validation and delivery
 
@@ -107,11 +107,11 @@ Desktop Open calls take a requestID through the existing cancellable request ada
 
 **Interfaces:** One opt-in `TestInteractiveSessions` group uses existing isolated config/context guards from tests/integration/README.html, only kind-dev-local-a/b. Reuse Phase 1A shell/TCP fixtures where possible.
 
-- [ ] Inspect fixtures; add only missing Service named-port and multi-container examples in owned namespaces. Document exact opt-in environment/command. No extra clusters, shared system changes or debug-container injection.
-- [ ] Run a bounded two-context walkthrough: actual terminal input/output/resize, Pod and Service forward requests, allocated endpoint request/response, conflict and Stop/Close. Verify ports cannot be connected after cleanup and native session counts return to baseline. Cover UID/start races with fakes rather than a large live matrix. Restore owned fixtures.
-- [ ] Run `wails3 task bindings`, `npm run build`, `scripts/check.sh`, `wails3 task package`; expect success. Inspect generated diffs, source headers and scoped formatting. Repeat short pressure/cleanup checks only for changed transport risks, not all historical 1A benchmarks.
-- [ ] Verify packaged UI input/resize/paste, Service backend choice, actual forwarding, missing shell/error, Settings/theme/tab/dock persistence, tab-close cancellation and app-exit listener release. Briefly background/restore to record actual WebKit behavior; do not claim lossless terminal capture or untested cloud compatibility.
-- [ ] Record actual results/limits in one technical report, link the validation index, update portable status and verified plan checkboxes. Keep execution logs ignored and payloads out of public evidence. Commit `test: validate interactive sessions and cleanup`.
+- [x] Inspect fixtures; add only missing Service named-port and multi-container examples in owned namespaces. Document exact opt-in environment/command. No extra clusters, shared system changes or debug-container injection.
+- [x] Run a bounded two-context walkthrough: actual terminal input/output/resize, Pod and Service forward requests, allocated endpoint request/response, conflict and Stop/Close. Verify ports cannot be connected after cleanup and native session counts return to baseline. Cover UID/start races with fakes rather than a large live matrix. Restore owned fixtures.
+- [x] Run `wails3 task bindings`, `npm run build`, `scripts/check.sh`, `wails3 task package`; expect success. Inspect generated diffs, source headers and scoped formatting. Repeat short pressure/cleanup checks only for changed transport risks, not all historical 1A benchmarks.
+- [x] Verify packaged UI input/resize/paste, Service backend choice, actual forwarding, missing shell/error, Settings/theme/tab/dock persistence, tab-close cancellation and app-exit listener release. Briefly background/restore to record actual WebKit behavior; do not claim lossless terminal capture or untested cloud compatibility.
+- [x] Record actual results/limits in one technical report, link the validation index, update portable status and verified plan checkboxes. Keep execution logs ignored and payloads out of public evidence. Commit `test: validate interactive sessions and cleanup`.
 - [ ] Obtain one independent whole-PR review, fix blocking findings and rerun affected checks. Push feature branch and open a ready PR, then complete the authorized merge into develop under current Git workflow. Report final checks/PR/merge and any genuine blockers. No release or next increment.
 
 ## Self-review and handoff

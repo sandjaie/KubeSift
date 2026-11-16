@@ -21,7 +21,7 @@ import { AccessControlTable } from "../access-control/AccessControlTable";
 import { isAvailabilityKind, availabilityLabels, type AvailabilityRow } from "../availability/model";
 import { AvailabilityTable } from "../availability/AvailabilityTable";
 import { NetworkTable } from "../networking/NetworkTable";
-import type { WorkloadRow } from "../workloads/model";
+import type { ResourceDetail as CapturedDetail, WorkloadRow } from "../workloads/model";
 import { ResourceTable } from "./ResourceTable";
 import type { EditTarget, OperationAction, OperationResult } from "../operations/api";
 import { ResourceDetail } from "./ResourceDetail";
@@ -43,6 +43,7 @@ export function Workspace({
   logs,
   onOperation,
   onEdit,
+  onInteractive,
   operationResults,
 }: {
   tab: ConnectionTab;
@@ -56,6 +57,7 @@ export function Workspace({
   onCommitSize: () => void;
   logs?: ReactNode;
   onEdit: (target: EditTarget, reveal?: boolean) => void;
+  onInteractive?: (kind: "terminal" | "forward", data: CapturedDetail) => void;
   operationResults: OperationResult[];
   onOperation: (action: OperationAction, token: string, acknowledgement: string) => void;
 }) {
@@ -261,6 +263,7 @@ export function Workspace({
                   logs={logs}
                   onOperation={onOperation}
                   onEdit={onEdit}
+                  onInteractive={onInteractive}
                 />
               ) : (
                 <div className="state-message">

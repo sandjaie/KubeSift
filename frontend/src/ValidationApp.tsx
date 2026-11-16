@@ -22,6 +22,7 @@ import {
   type Target,
 } from "./bridge";
 import { podSelection, reduceEvent, type SessionView, type TabState, type WorkspaceState } from "./state";
+import { terminalReady, terminalParsed } from "./validation";
 import "./validation.css";
 import { runProfile } from "./profile";
 const Terminal = lazy(() => import("./Terminal"));
@@ -605,7 +606,12 @@ export default function ValidationApp() {
               )}
               {session.kind === "terminal" && (
                 <Suspense fallback={<p>Loading terminal…</p>}>
-                  <Terminal session={session.ref} label={session.label ?? session.ref.id} />
+                  <Terminal
+                    session={session.ref}
+                    label={session.label ?? session.ref.id}
+                    onLegacyReady={terminalReady}
+                    onParsed={terminalParsed}
+                  />
                 </Suspense>
               )}
             </article>

@@ -7,10 +7,17 @@ Important: Terminal bytes must wait or fail explicitly; they must never be silen
 package session
 
 import (
+	"context"
+
 	"github.com/sandjaie/KubeSift/internal/model"
 )
 
 func (w *Writer) Send(kind string, data []byte) error {
+	return w.SendContext(w.entry.ctx, kind, data)
+}
+
+// SendContext also honors transport cancellation while waiting for bridge space.
+func (w *Writer) SendContext(ctx context.Context, kind string, data []byte) error {
 	switch kind {
 	case "snapshot", "update", "data", "truncated", "state", "error":
 	default:
@@ -27,17 +34,17 @@ func (w *Writer) Send(kind string, data []byte) error {
 		if size > 64<<10 {
 			size = 64 << 10
 		}
-		if err := w.send(kind, data[:size]); err != nil {
+		if err := w.send(ctx, kind, data[:size]); err != nil {
 			return err
 		}
 		data = data[size:]
 	}
 	return nil
 }
-func (w *Writer) send(kind string, data []byte) error {
+func (w *Writer) send(ctx context.Context, kind string, data []byte) error {
 	e := w.entry
 	for {
-		if e.ctx.Err() != nil {
+		if e.ctx.Err() != nil || ctx.Err() != nil {
 			return model.Fail("cancelled", "Session cancelled")
 		}
 		e.mu.Lock()
@@ -80,6 +87,8 @@ func (w *Writer) send(kind string, data []byte) error {
 		e.mu.Unlock()
 		select {
 		case <-space:
+		case <-ctx.Done():
+			return model.Fail("cancelled", "Session cancelled")
 		case <-e.ctx.Done():
 			return model.Fail("cancelled", "Session cancelled")
 		}

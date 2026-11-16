@@ -137,13 +137,13 @@
         automatically unhealthy; unavailable/stale health data must be identified. Alerts require evidence, not a decorative badge. Text and
         icons supplement color.
       </p>
-      <h2 id="interactive-sessions">Interactive sessions design</h2>
+      <h2 id="interactive-sessions">Interactive sessions</h2>
       <p>
         The <a href="../superpowers/specs/2026-11-16-phase-1d6-interactive-sessions-design.md">1D.6 specification</a> adds terminal and
         forwarding start controls to existing Pod/Service views and reuses the current Sessions dock. Keep original
         cluster/namespace/container or backend Pod visible. Settings, themes and navigation preserve sessions; Stop and Close release native
         work, and tab-close confirms active sessions once. Service forwards show the selected backend Pod and allocated loopback address. No
-        new dashboard or approval wizard is introduced.
+        new dashboard or approval wizard is introduced. See the <a href="../superpowers/validation/phase-1d6.html">validation report</a>.
       </p>
       <h2 id="workload-rollback">Workload history and rollback</h2>
       <p>
@@ -279,14 +279,16 @@
         selected. Destructive actions still require confirmation.
       </p>
       <p>
-        Resource detail offers Overview, Events, Logs, YAML and Terminal where applicable. In Phase 2, Evidence links captured sources to
-        the investigation. Full resource identity remains available even when table cells truncate. Log failures may use a red vertical
-        gutter alongside the relevant line, with textual severity. Previous-container logs do not enable follow.
+        Resource detail offers Overview, Events, Logs and YAML where applicable, with Terminal and Port forward actions in Overview. In
+        Phase 2, Evidence links captured sources to the investigation. Full resource identity remains available even when table cells
+        truncate. Log failures may use a red vertical gutter alongside the relevant line, with textual severity. Previous-container logs do
+        not enable follow.
       </p>
       <h2>Log lifetime</h2>
       <p>
         Phase 1C.2 logs belong to the visible Pod Logs tab. Leaving it stops collection and releases history; returning loads fresh output.
-        These logs have no bottom Sessions dock. Future terminals and port forwards require their own approved persistent-session workflow.
+        Active logs can appear in Sessions while their detail remains visible. Terminals and forwards stay in Sessions until stopped or
+        closed.
       </p>
       <h2>Global AI panel · Phase 2</h2>
       <p>

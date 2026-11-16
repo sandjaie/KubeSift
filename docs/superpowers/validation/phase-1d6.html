@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Phase 1D.6 interactive sessions validation · KubeSift</title>
+    <link rel="stylesheet" href="../../assets/planning.css" />
+    <script src="../../assets/theme.js"></script>
+  </head>
+  <body>
+    <aside class="rail">
+      <a class="skip" href="#content">Skip to content</a
+      ><a class="mark" href="../../index.html"><span class="mark-name">KubeSift</span><span class="mark-sub">Planning</span></a>
+      <h2>Index</h2>
+      <a href="../../index.html">Planning index</a>
+      <h2>Product</h2>
+      <a href="../../product/requirements.html">Requirements</a><a href="../../product/feature-matrix.html">Capabilities</a>
+      <h2>Architecture</h2>
+      <a href="../../architecture/overview.html">Overview</a><a href="../../architecture/decisions.html">Decisions</a>
+      <h2>Safeguards</h2>
+      <a href="../../security/security-model.html">Security and AI</a>
+      <h2>Delivery</h2>
+      <a href="../../roadmap/roadmap.html">Roadmap</a><a href="../../ux/workflows.html">UX workflows</a
+      ><a href="../../ux/mocks/index.html">Mockups</a>
+      <h2>Engineering</h2>
+      <a href="../../engineering/engineering.html">Playbook</a><a href="../../engineering/local-development.html">Local development</a
+      ><a href="../../engineering/toolchain.html">Toolchain</a
+      ><a href="../../engineering/kubernetes-development.html">Kubernetes references</a>
+      <h2>Superpowers</h2>
+      <a href="../../superpowers/specs/2026-11-05-kubesift-design.md">Design specification</a
+      ><a href="../../superpowers/plans/README.html">Plans</a
+      ><a href="../../superpowers/validation/index.html" aria-current="page">Validation</a
+      ><a href="../../superpowers/evidence/index.html">Evidence</a>
+    </aside>
+    <header>
+      <a href="../../index.html">KubeSift / Planning</a>
+      <h1>Phase 1D.6 interactive sessions validation</h1>
+    </header>
+    <main id="content">
+      <p>
+        Tested on 16 November 2026 from develop <code>355ff0f</code>. See the
+        <a href="../specs/2026-11-16-phase-1d6-interactive-sessions-design.md">specification</a> and
+        <a href="../plans/2026-11-16-phase-1d6-interactive-sessions.md">plan</a>.
+      </p>
+      <h2>Automated checks</h2>
+      <p>
+        Source and documentation checks, Go tests and vet, TypeScript typechecking, lint and 104 frontend tests passed via
+        <code>scripts/check.sh</code>. Native kube/session race checks, Wails bindings, the production frontend bundle, macOS package and
+        strict signature verification passed.
+      </p>
+      <p>
+        Synthetic tests checked Pod UID replacement, exact exec arguments, forbidden exec, input backpressure, resize, Stop before
+        activation, the eight-entry cap, stale generation, Service selection, named and numeric TCP ports, partial candidate paging and
+        occupied local ports. The frontend case verified registration before activation, stale and late events, idempotent activation, and
+        release of cancelled or closed entries. A regression reproduced a stalled SPDY upgrade that would not stop while waiting for HTTP
+        headers. The corrected upgrade uses the cancellable HTTP transport and carries the socket into the pinned client-go SPDY exec or
+        forward protocol without retry.
+      </p>
+      <h2>Approved kind contexts</h2>
+      <p>
+        On <code>kind-dev-local-a</code> and <code>kind-dev-local-b</code>, both Kubernetes v1.37.0, ran
+        <code
+          >KUBESIFT_INTERACTIVE_INTEGRATION=1 go test -tags=integration ./tests/integration -run '^TestInteractiveSessions$' -count=1
+          -v</code
+        >
+        with isolated A/B kubeconfigs. Each context passed terminal input, remote TTY resize to 31 rows by 97 columns, normal exit, missing
+        executable, direct Pod and named-port Service TCP requests, conflict detection and listener release. Session counts and pending
+        bytes returned to zero. The fixture namespaces were deleted by UID.
+      </p>
+      <h2>Packaged macOS verification</h2>
+      <ul>
+        <li>
+          On arm64 macOS 26.7.1, opened the A multicontainer Pod's selected shell and the B Pod's sole running container. Paste and Return
+          produced distinct Pod names. Resizing the dock changed the remote TTY from 8 to 11 rows. Both terminals retained their output
+          through cluster tabs, Settings, dock collapse and Light/Dark. A short background command's output appeared after restoring the app
+          from Finder.
+        </li>
+        <li>
+          The B Pod forward returned the selected Pod's fixture response. The A Service showed two selectable TCP backends with different
+          resolved ports. After explicit selection, the allocated loopback endpoint returned only that Pod's fixture response. The dock
+          showed the Service, fixed Pod, actual local address, and Copy address. The occupied port and missing executable each produced a
+          specific failure without a fallback.
+        </li>
+        <li>
+          One confirmation listed B's terminal and forward. Closing the tab released B's listener while A's still worked. Stop retained A's
+          terminal entry and Close removed it. Quitting with the A forward active released its listener. The original Dark appearance and
+          dock height were restored, and the UID-guarded fixtures and temporary kubeconfigs were removed.
+        </li>
+      </ul>
+      <p>
+        After correcting cancellation during the HTTP upgrade, rebuilt and signed the bundle. A fresh terminal accepted input and reported
+        its own Pod name, and a fresh Service forward returned the selected named-port backend. Quitting released the new listener. Both
+        retest namespaces and their kubeconfigs were removed.
+      </p>
+      <p>
+        Kubernetes stream endpoints address Pods by name. The UID checks before, after and during setup reduce the race, but no atomic UID
+        precondition is available. Closing a local exec transport does not guarantee every remote child exits. The short background
+        walkthrough does not establish sustained WebKit throughput or a lossless transcript. No other platform, Kubernetes provider or
+        context was exercised.
+      </p>
+      <h2>Independent review</h2>
+      <p>
+        Reviewer <code>interactive_pr_review</code> reviewed the complete candidate
+        <code>71d0c5d78e52193569486ff455e78be3ebef3d9f</code> against <code>develop</code> at base and merge base
+        <code>355ff0f0939a84edc2bd5631ec93a78b4da108fa</code>. KSF-001 (P2) blocked the original candidate: an implicitly selected log entry
+        could lack its summary and controls. The fix derives the panel from the effective dock selection.
+      </p>
+      <p>
+        The same reviewer cleared the targeted changes at <code>f2a2ed1d6c405e0e39d1c27c9c8ac0f3943a96d3</code> after repeating the
+        synthetic render for both the first log and the fallback after an interactive session closes. Full checks and signature verification
+        passed again. In the packaged app on A, the logs-only fallback showed its summary. The first log required the existing Refresh
+        control after connection setup. Closing a selected terminal next to a running log selected the log and showed working Stop and Close
+        controls. The retest fixture and kubeconfig were removed.
+      </p>
+    </main>
+  </body>
+</html>

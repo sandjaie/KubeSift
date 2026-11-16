@@ -56,6 +56,7 @@ export function ResourceDetail({
   logs,
   onOperation,
   onEdit,
+  onInteractive,
 }: {
   controller: WorkloadController;
   context: string;
@@ -63,6 +64,7 @@ export function ResourceDetail({
   canReviewOperation: boolean;
   logs?: ReactNode;
   onEdit?: (target: EditTarget, reveal?: boolean) => void;
+  onInteractive?: (kind: "terminal" | "forward", data: Detail) => void;
   onOperation: (action: OperationAction, token: string, acknowledgement: string) => void;
 }) {
   const [review, setReview] = useState<{ action: OperationAction; key: string }>();
@@ -92,6 +94,10 @@ export function ResourceDetail({
   const sourceKey = source?.resourceVersion
     ? JSON.stringify([source.resource, source.resourceVersion, c.inventory.refresh, c.inventory.sectionRefresh])
     : "";
+  const interactiveCapture =
+    section === "Overview" && canReviewOperation && !state?.loading && !state?.error && (kind === "Pod" || kind === "Service")
+      ? (data as Detail | undefined)
+      : undefined;
   const restartReason = source && supportsRestart ? restartUnavailable(source) : "";
   const deleteReason = source ? deleteUnavailable(source) : "";
   useLayoutEffect(() => {
@@ -144,6 +150,12 @@ export function ResourceDetail({
             >
               Delete…
             </button>
+          )}
+          {onInteractive && interactiveCapture && (
+            <>
+              {kind === "Pod" && <button onClick={() => onInteractive("terminal", interactiveCapture)}>Terminal…</button>}
+              <button onClick={() => onInteractive("forward", interactiveCapture)}>Port forward…</button>
+            </>
           )}
           {section !== "Logs" && (
             <button onClick={c.refreshSection} disabled={state?.loading}>
