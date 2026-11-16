@@ -2,12 +2,13 @@
 Purpose: Bind reviewed workload UI calls to the typed native service.
 Used by: The operation dialogs and session results.
 Responsibilities: Supply preparation cancellation without owning execution.
-Important: Confirm passes only a token and acknowledgement.
+Important: Confirm forwards only the token and any acknowledgement required by that action.
 */
 import { readRequest, workloadAPI } from "../workloads/api";
 import type {
   DeleteRequest,
   EditRequest,
+  RollbackRequest,
   RestartRequest,
   ScaleRequest,
 } from "../../bindings/github.com/sandjaie/KubeSift/internal/operation/models";
@@ -19,13 +20,15 @@ export type {
   DeleteObservation,
   DeletePreview,
   OperationResult,
+  RollbackPreview,
+  RollbackRequest,
   RestartRequest,
   RestartPreview,
   ScaleRequest,
   ScalePreview,
   ScaleResult,
 } from "../../bindings/github.com/sandjaie/KubeSift/internal/operation/models";
-export type OperationAction = "scale" | "restart" | "delete" | "edit";
+export type OperationAction = "scale" | "restart" | "delete" | "edit" | "rollback";
 export const prepareScale = (request: ScaleRequest) => readRequest((id) => workloadAPI.PrepareScale(id, request));
 export const executeScale = workloadAPI.ExecuteScale;
 export const listScaleResults = workloadAPI.ListScaleResults;
@@ -56,4 +59,10 @@ export const revokeEdit = (token: string) => {
 };
 export const closeEdit = (id: string) => {
   if (id) void workloadAPI.CloseEdit(id).catch(() => {});
+};
+
+export const prepareRollback = (request: RollbackRequest) => readRequest((id) => workloadAPI.PrepareRollback(id, request));
+export const executeRollback = workloadAPI.ExecuteRollback;
+export const revokeRollback = (token: string) => {
+  if (token) void workloadAPI.RevokeRollback(token).catch(() => {});
 };

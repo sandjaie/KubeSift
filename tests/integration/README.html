@@ -106,3 +106,11 @@ done</code></pre>
   <code>go test -tags=integration ./tests/integration -run '^TestYAMLEditing$' -count=1 -v</code>. The test uses the installed explorer
   Widget API and creates its own disposable namespace and objects in each approved context. Cleanup removes those namespaces by UID.
 </p>
+
+<p>
+  Enable <code>TestWorkloadRollback</code> with <code>KUBESIFT_ROLLBACK_INTEGRATION=1</code> and the isolated A/B kubeconfig directory. Run
+  <code>go test -tags=integration ./tests/integration -run '^TestWorkloadRollback$' -count=1 -v</code>. Each approved context gets a unique
+  <code>kubesift.dev/fixture=phase1d5-validation</code> namespace. The test waits for real retained history for the three controllers,
+  verifies dry-run, stale version rejection, template acceptance and preservation of non-template settings, then removes its namespace by
+  UID. It uses zero replicas or a node selector that matches no fixture nodes; Pod convergence is not tested.
+</p>

@@ -103,6 +103,7 @@ export interface OperationResult {
   scale: ScaleResultData | null;
   restart: RestartResultData | null;
   delete: DeleteResultData | null;
+  rollback?: RollbackResultData | null;
   edit?: kube$0.EditTarget | null;
 }
 
@@ -156,6 +157,32 @@ export interface RestartRequest {
 export interface RestartResultData {
   requestedAt: string;
   responseDiffers: boolean;
+}
+
+export interface RollbackPreview {
+  token: string;
+  expiresAt: string;
+  request: RollbackRequest;
+  cluster: string;
+  beforeYAML: string;
+  proposedYAML: string;
+  serverYAML: string;
+  notices: string[] | null;
+  warnings: string[] | null;
+}
+
+export interface RollbackRequest {
+  resource: kube$0.ResourceRef;
+  resourceVersion: string;
+  source: kube$0.ResourceRef;
+  sourceVersion: string;
+  revision: string;
+}
+
+export interface RollbackResultData {
+  sourceName: string;
+  sourceUID: string;
+  revision: string;
 }
 
 export interface ScaleImpact {
