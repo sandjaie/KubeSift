@@ -73,11 +73,11 @@ Native baseline ownership is per edit ID, not a global current context. Keep at 
 
 **Interfaces:** `buildEditPatch(capture kube.EditCapture, editedYAML string) (editPatch, error)` where internal `editPatch` holds exact patch bytes and normalized proposed JSON. It consumes task 1 baseline; task 3 submits those exact bytes.
 
-- [ ] Add one table-driven `TestBuildEditPatch`: additions/removals, escaped annotation keys, array order, integer above JavaScript safe precision, untouched unknown field, omitted server fields, invalid/duplicate YAML, no-op, and Secret stringData precedence. Assert the patch begins with UID/version tests and changes only intended fields. No generic Secret placeholders are generated or submitted.
-- [ ] Run `go test ./internal/operation -run TestBuildEditPatch -count=1`; confirm failure before implementation.
-- [ ] Parse one bounded mapping using the pinned YAML node API, rejecting duplicate keys, custom tags and aliases rather than expanding them. Bound depth to 64 and input/output to 2 MiB. Preserve scalar/number precision through exact JSON; reject malformed scalar types with a useful editing error.
-- [ ] Compare normalized editable content against the baseline. Keep route/identity fixed and server-owned fields untouched; reject attempts to change fixed identity. Use deterministic JSON Patch with correct pointer escaping and whole-array replacement. Finalizers, owners, Secret values and other ordinary fields get no local policy veto. Normalize core/v1 Secret stringData into base64 data before diffing; ordinary custom resources named similarly receive no Secret transformation.
-- [ ] Run targeted test and `go test ./internal/operation`; expect pass. Commit `feat: generate conditional YAML edit patches`.
+- [x] Add one table-driven `TestBuildEditPatch`: additions/removals, escaped annotation keys, array order, integer above JavaScript safe precision, untouched unknown field, omitted server fields, invalid/duplicate YAML, no-op, and Secret stringData precedence. Assert the patch begins with UID/version tests and changes only intended fields. No generic Secret placeholders are generated or submitted.
+- [x] Run `go test ./internal/operation -run TestBuildEditPatch -count=1`; confirm failure before implementation.
+- [x] Parse one bounded mapping using the pinned YAML node API, rejecting duplicate keys, custom tags and aliases rather than expanding them. Bound depth to 64 and input/output to 2 MiB. Preserve scalar/number precision through exact JSON; reject malformed scalar types with a useful editing error.
+- [x] Compare normalized editable content against the baseline. Keep route/identity fixed and server-owned fields untouched; reject attempts to change fixed identity. Use deterministic JSON Patch with correct pointer escaping and whole-array replacement. Finalizers, owners, Secret values and other ordinary fields get no local policy veto. Normalize core/v1 Secret stringData into base64 data before diffing; ordinary custom resources named similarly receive no Secret transformation.
+- [x] Run targeted test and `go test ./internal/operation`; expect pass. Commit `feat: generate conditional YAML edit patches`.
 
 ## Task 3: Dry-run, confirmation and single-dispatch execution
 
