@@ -71,11 +71,11 @@ Results add action `rollback` and safe source name/UID/revision identifiers; nev
 
 **Interfaces:** `rollbackTemplate(parent kube.ResourceRef, sourceJSON json.RawMessage) (json.RawMessage, error)` extracts normalized PodTemplateSpec; `rollbackPatch(parentJSON, templateJSON json.RawMessage) ([]byte, error)` produces UID/version tests plus replacement of `/spec/template`. Task 3 owns all identity/source reads before calling these helpers.
 
-- [ ] Add `TestRollbackTemplate` table with all three source formats, removal of Deployment `pod-template-hash` only, preservation of other template metadata, malformed revision rejection, no-op and unchanged replicas/strategy/claim settings. Assert exact numbers and only template changes in the patch.
-- [ ] Run `go test ./internal/operation -run TestRollbackTemplate -count=1`; confirm failure first.
-- [ ] Inspect controller-produced revision encoding and Kubernetes rollback source matching the pinned dependency version. Document that version in the test fixture comment. Extract the known StatefulSet/DaemonSet `data.spec.template` representation, consuming recognized strategic-merge directives such as template-level `$patch: replace` without putting directives in the Pod template. Reject unrecognized/incomplete representations; never apply arbitrary source patches to the entire live parent. Preserve unknown ordinary template fields through lossless decoding.
-- [ ] For Deployment extract ReplicaSet spec.template and remove only its controller-generated hash label. Compare with the live template and return a safe no-changes result when equal. Build the conditional patch with native UID/version and whole template replacement. Render before/proposed templates with existing bounded YAML helpers.
-- [ ] Run `go test ./internal/operation`; expect pass. Commit `feat: derive conditional workload rollback patches`.
+- [x] Add `TestRollbackTemplate` table with all three source formats, removal of Deployment `pod-template-hash` only, preservation of other template metadata, malformed revision rejection, no-op and unchanged replicas/strategy/claim settings. Assert exact numbers and only template changes in the patch.
+- [x] Run `go test ./internal/operation -run TestRollbackTemplate -count=1`; confirm failure first.
+- [x] Inspect controller-produced revision encoding and Kubernetes rollback source matching the pinned dependency version. Document that version in the test fixture comment. Extract the known StatefulSet/DaemonSet `data.spec.template` representation, consuming recognized strategic-merge directives such as template-level `$patch: replace` without putting directives in the Pod template. Reject unrecognized/incomplete representations; never apply arbitrary source patches to the entire live parent. Preserve unknown ordinary template fields through lossless decoding.
+- [x] For Deployment extract ReplicaSet spec.template and remove only its controller-generated hash label. Compare with the live template and return a safe no-changes result when equal. Build the conditional patch with native UID/version and whole template replacement. Render before/proposed templates with existing bounded YAML helpers.
+- [x] Run `go test ./internal/operation`; expect pass. Commit `feat: derive conditional workload rollback patches`.
 
 ## Task 3: Review, dry-run and single-dispatch rollback
 
