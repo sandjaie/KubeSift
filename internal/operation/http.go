@@ -1,6 +1,6 @@
 /*
 Purpose: Send bounded guarded requests for reviewed workload operations.
-Used by: Native scale and restart preparation and execution.
+Used by: Native workload operation preparation, execution and readback.
 Responsibilities: Preserve non-replayable bodies, allowlisted media types and sanitized warnings.
 Important: Raw error bodies never cross the operation boundary.
 */
@@ -42,6 +42,20 @@ func newOperationClient(connections *connection.Manager, ref model.ConnectionRef
 
 type operationHTTPStatus int
 
+type operationStatus struct {
+	APIVersion string
+	Kind       string
+	Status     string
+	Reason     string
+	Code       int
+	Details    *struct {
+		Group *string
+		Kind  *string
+		Name  *string
+		UID   *string
+	}
+}
+
 func (e operationHTTPStatus) Error() string { return http.StatusText(int(e)) }
 func (c operationClient) call(ctx context.Context, method, path string, dry bool, input, out any) ([]string, error) {
 	var raw []byte
@@ -52,14 +66,14 @@ func (c operationClient) call(ctx context.Context, method, path string, dry bool
 			return nil, model.Fail("invalid", "Cannot encode operation request")
 		}
 	}
-	return c.send(ctx, method, path, dry, raw, "application/json", out)
+	return c.send(ctx, method, path, dry, raw, "application/json", out, nil)
 }
 
 func (c operationClient) patch(ctx context.Context, path string, dry bool, patch []byte, out any) ([]string, error) {
-	return c.send(ctx, http.MethodPatch, path, dry, patch, "application/json-patch+json", out)
+	return c.send(ctx, http.MethodPatch, path, dry, patch, "application/json-patch+json", out, nil)
 }
 
-func (c operationClient) send(ctx context.Context, method, path string, dry bool, raw []byte, contentType string, out any) ([]string, error) {
+func (c operationClient) send(ctx context.Context, method, path string, dry bool, raw []byte, contentType string, out any, notFound *operationStatus) ([]string, error) {
 	addr := *c.base
 	addr.Path = strings.TrimRight(addr.Path, "/") + path
 	addr.RawPath, addr.RawQuery, addr.Fragment = "", "", ""
@@ -85,7 +99,15 @@ func (c operationClient) send(ctx context.Context, method, path string, dry bool
 		return nil, err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 ||
+		(method == http.MethodDelete && resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusAccepted) {
+		if notFound != nil && resp.StatusCode == http.StatusNotFound {
+			response, err := io.ReadAll(resp.Body)
+			var status operationStatus
+			if err == nil && json.Unmarshal(response, &status) == nil {
+				*notFound = status
+			}
+		}
 		return nil, operationHTTPStatus(resp.StatusCode)
 	}
 	response, err := io.ReadAll(resp.Body)
@@ -95,7 +117,7 @@ func (c operationClient) send(ctx context.Context, method, path string, dry bool
 	if json.Unmarshal(response, out) != nil {
 		return nil, model.Fail("invalid_response", "Kubernetes returned invalid operation data")
 	}
-	if !dry {
+	if !dry && method != http.MethodDelete {
 		return nil, nil
 	}
 	return operationWarnings(resp.Header.Values("Warning")), nil

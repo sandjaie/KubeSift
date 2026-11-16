@@ -108,7 +108,7 @@ export default function App() {
     (tab, namespace) => void controller.selectNamespace(tab, namespace),
   );
   const operationResults = useOperationResults((result) => {
-    if (result.state === "accepted") workloads.refreshOperationTarget(result.resource);
+    if (result.state === "accepted") workloads.refreshOperationTarget(result.resource, result.action === "delete");
   });
   const [resultsOpen, setResultsOpen] = useState(false);
   const [openingOperationTarget, setOpeningOperationTarget] = useState<{ ref: ResourceRef; tab: string } | null>(null);

@@ -5,7 +5,7 @@ Responsibilities: Exercise A/B selection, generation invalidation and bounded pa
 Important: No native bridge or cluster is used.
 */
 import { expect, test } from "vitest";
-import { initialWorkloads, reduceWorkloads, emptyKind, canAutoRefresh } from "./state";
+import { initialWorkloads, reduceWorkloads, emptyKind, canAutoRefresh, inventorySelection } from "./state";
 
 test("A/B kinds retain selection, reject delayed responses and bound cursor history", () => {
   let state = initialWorkloads();
@@ -510,4 +510,23 @@ test("target navigation dispatched after a returning tab begins its read uses th
   expect(navigationSnapshot(state.A)).toBe(dispatched);
   state = reduceWorkloads(state, { type: "kind", tab: "A", kind: "Deployment" });
   expect(navigationSnapshot(state.A)).not.toBe(dispatched);
+});
+
+test("inventory refresh keeps the original deletion detail until Back or explicit selection", () => {
+  const tab = "A",
+    scope = "a/1/ns",
+    kind = "Pod" as const;
+  const original = {
+    resource: { connection: { id: "a", generation: 1 }, apiVersion: "v1", kind, namespace: "ns", name: "pod", uid: "original" },
+  };
+  const replacement = { resource: { ...original.resource, uid: "replacement" } };
+  let state = reduceWorkloads(initialWorkloads(), { type: "scope", tab, scope });
+  state = reduceWorkloads(state, { type: "select", tab, row: original, epoch: 1 });
+  state = reduceWorkloads(state, { type: "patch", tab, scope, kind, patch: { retainedAfterDeletion: true } });
+  expect(inventorySelection(state.A.kinds.Pod, [])).toBe(original);
+  expect(inventorySelection(state.A.kinds.Pod, [replacement])).toBe(original);
+  state = reduceWorkloads(state, { type: "select", tab, row: null, epoch: 2 });
+  expect(inventorySelection(state.A.kinds.Pod, [replacement])).toBeNull();
+  state = reduceWorkloads(state, { type: "select", tab, row: replacement, epoch: 3 });
+  expect(inventorySelection(state.A.kinds.Pod, [replacement])).toBe(replacement);
 });

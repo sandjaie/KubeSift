@@ -6,6 +6,8 @@ Important: Overview configuration is not measured usage and references never fet
 */
 import { useId, useLayoutEffect, useState, type ReactNode } from "react";
 import { ScaleDialog } from "../operations/ScaleDialog";
+import { DeleteDialog } from "../operations/DeleteDialog";
+import { deleteUnavailable } from "../operations/deleteState";
 import { RestartDialog } from "../operations/RestartDialog";
 import { restartUnavailable } from "../operations/restartState";
 import type { OperationAction } from "../operations/api";
@@ -18,7 +20,7 @@ import type {
   RelatedReplicaSetPage,
   RelatedJobPage,
 } from "../workloads/model";
-import { isClusterScoped, resourceSections } from "../workloads/model";
+import { isClusterScoped, isWorkloadKind, resourceSections } from "../workloads/model";
 import { isConfigurationKind } from "../configuration/model";
 import { ConfigurationOverview } from "../configuration/ConfigurationOverview";
 import { ConfigMapData } from "../configuration/ConfigMapData";
@@ -61,7 +63,9 @@ export function ResourceDetail({
 }) {
   const [review, setReview] = useState<{ action: OperationAction; key: string }>();
   const restartReasonID = useId();
+  const deleteReasonID = useId();
   const row = c.selection;
+  const deletionAccepted = c.inventory.retainedAfterDeletion;
 
   const section = c.activeSection,
     state = c.sections[section],
@@ -78,19 +82,21 @@ export function ResourceDetail({
   const supportsScale = kind === "Deployment" || kind === "StatefulSet";
   const supportsRestart = supportsScale || kind === "DaemonSet";
   const source =
-    section === "Overview" && canReviewOperation && !state?.loading && !state?.error && supportsRestart
+    section === "Overview" && canReviewOperation && !state?.loading && !state?.error && isWorkloadKind(kind)
       ? (data as Detail | undefined)
       : undefined;
   const sourceKey = source?.resourceVersion
     ? JSON.stringify([source.resource, source.resourceVersion, c.inventory.refresh, c.inventory.sectionRefresh])
     : "";
-  const restartReason = source ? restartUnavailable(source) : "";
+  const restartReason = source && supportsRestart ? restartUnavailable(source) : "";
+  const deleteReason = source ? deleteUnavailable(source) : "";
   useLayoutEffect(() => {
     setReview(undefined);
   }, [sourceKey]);
   if (!row) return null;
   return (
     <div className={section === "YAML" ? "compact-pod-detail yaml-detail" : "compact-pod-detail"}>
+      {deletionAccepted && <button onClick={c.backToInventory}>← Back to inventory</button>}
       {c.back && (
         <button onClick={c.backToResource}>
           ← Back to {c.back.resource.kind} {c.back.resource.name}
@@ -110,7 +116,7 @@ export function ResourceDetail({
               Scale…
             </button>
           )}
-          {source && (
+          {source && supportsRestart && (
             <button
               disabled={!!restartReason}
               aria-describedby={restartReason ? restartReasonID : undefined}
@@ -122,6 +128,19 @@ export function ResourceDetail({
               Restart…
             </button>
           )}
+          {source && (
+            <button
+              className="danger"
+              disabled={!!deleteReason || deletionAccepted}
+              aria-describedby={deleteReason ? deleteReasonID : undefined}
+              onClick={(event) => {
+                event.currentTarget.focus();
+                setReview({ action: "delete", key: sourceKey });
+              }}
+            >
+              Delete…
+            </button>
+          )}
           {section !== "Logs" && (
             <button onClick={c.refreshSection} disabled={state?.loading}>
               Refresh section
@@ -129,6 +148,12 @@ export function ResourceDetail({
           )}
         </div>
       </div>
+      {deletionAccepted && <p role="status">Kubernetes accepted deletion. Removal may still be in progress.</p>}
+      {source && deleteReason && (
+        <p className="muted" id={deleteReasonID}>
+          {deleteReason}
+        </p>
+      )}
       {source && restartReason && (
         <p className="muted" id={restartReasonID}>
           {restartReason}
@@ -145,6 +170,17 @@ export function ResourceDetail({
             onDismiss={() => setReview(undefined)}
             onExecute={(result, ack) => onOperation("scale", result.token, ack)}
           />
+        ) : review.action === "delete" ? (
+          !deleteReason &&
+          !deletionAccepted && (
+            <DeleteDialog
+              key={sourceKey}
+              source={source}
+              cluster={context}
+              onDismiss={() => setReview(undefined)}
+              onExecute={(result, ack) => onOperation("delete", result.token, ack)}
+            />
+          )
         ) : (
           !restartReason && (
             <RestartDialog

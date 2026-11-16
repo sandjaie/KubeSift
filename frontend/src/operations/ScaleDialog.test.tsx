@@ -37,7 +37,7 @@ test("StatefulSet scale-down names the retention policy and does not promise ava
     expect(text).toContain(phrase);
 });
 test("result feedback labels uncertain outcomes and preserves requested and reported counts", () => {
-  const baseline = { cluster: "local", resource, startedAt: "", finishedAt: null, problem: null };
+  const baseline = { cluster: "local", resource, startedAt: "", finishedAt: null, problem: null, delete: null };
   const counts = { before: 1, requested: 2 };
   const results: OperationResult[] = [
     { ...baseline, action: "scale", operationID: "1", scale: { ...counts, reported: null }, restart: null, state: "unknown" },

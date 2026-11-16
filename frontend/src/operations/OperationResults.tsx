@@ -4,24 +4,47 @@ Used by: The app header and result dialog.
 Responsibilities: Recover native results and distinguish acceptance, rejection, staleness and uncertainty.
 Important: Refreshing results or targets never calls Execute.
 */
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { message } from "../connections/api";
 import { Modal } from "../ui/ReviewDialog";
 import type { ResourceRef } from "../workloads/model";
-import { executeRestart, executeScale, listOperationResults, type OperationAction, type OperationResult } from "./api";
+import {
+  checkDeleteTarget,
+  executeDelete,
+  executeRestart,
+  executeScale,
+  listOperationResults,
+  type DeleteObservation,
+  type OperationAction,
+  type OperationResult,
+} from "./api";
 
-export function useOperationResults(onResult: (result: Pick<OperationResult, "resource" | "state">) => void) {
+const submissions = { delete: executeDelete, restart: executeRestart, scale: executeScale };
+const actionLabel: Record<string, string> = { delete: "Delete", restart: "Restart", scale: "Scale" };
+
+export function useOperationResults(onResult: (result: Pick<OperationResult, "resource" | "state" | "action">) => void) {
   const [results, setResults] = useState<OperationResult[]>([]);
   const [pending, setPending] = useState(0);
   const [error, setError] = useState("");
   const query = useRef(0);
+  const acceptedDeletions = useRef(new Set<string>());
   const onFinish = useRef(onResult);
   onFinish.current = onResult;
   const refresh = useCallback(() => {
     const request = ++query.current;
     void listOperationResults().then(
       (rows) => {
-        if (request === query.current) setResults(rows ?? []);
+        if (request !== query.current) return;
+        const next = rows ?? [];
+        const accepted = new Set<string>();
+        for (const row of next) {
+          if (row.action === "delete" && row.state === "accepted") {
+            accepted.add(row.operationID);
+            if (!acceptedDeletions.current.has(row.operationID)) onFinish.current(row);
+          }
+        }
+        acceptedDeletions.current = accepted;
+        setResults(next);
       },
       () => {
         if (request === query.current) setError("Operation results could not be read. Refresh results to check again.");
@@ -38,10 +61,12 @@ export function useOperationResults(onResult: (result: Pick<OperationResult, "re
   const submit = (action: OperationAction, token: string, acknowledgement: string) => {
     setError("");
     setPending((count) => count + 1);
-    const execute = action === "restart" ? executeRestart : executeScale;
+    const execute = submissions[action];
     void execute(token, acknowledgement)
       .then(
-        (result) => onFinish.current(result),
+        (result) => {
+          if (action !== "delete") onFinish.current({ ...result, action });
+        },
         (failure) => {
           setError(message(failure) + " Check Operation results for a recorded outcome.");
         },
@@ -92,7 +117,7 @@ export function OperationResults({
       {results.map((row) => (
         <section key={row.operationID} className="scale-result">
           <h3>
-            {row.action === "restart" ? "Restart" : "Scale"} · {outcomes[row.state] ?? row.state}
+            {actionLabel[row.action] ?? row.action} · {outcomes[row.state] ?? row.state}
           </h3>
           <p className="frozen-target">
             {row.cluster} / {row.resource.namespace} / {row.resource.kind} / {row.resource.name}
@@ -115,19 +140,90 @@ export function OperationResults({
               {row.state === "accepted" && <p>Kubernetes accepted the template patch. Pod replacement and readiness are separate.</p>}
             </>
           )}
+          {row.delete && (
+            <>
+              <p>
+                {row.delete.propagation} propagation · {row.delete.gracePolicy} grace
+              </p>
+              {row.state === "accepted" && <p>Kubernetes accepted deletion. The workload and its dependents may still be present.</p>}
+            </>
+          )}
           {row.problem?.message && <p>{row.problem.message}</p>}
           <time dateTime={row.finishedAt ?? row.startedAt}>{new Date(row.finishedAt ?? row.startedAt).toLocaleTimeString()}</time>{" "}
-          <button
-            disabled={!canOpen(row.resource)}
-            onClick={() => {
-              onTarget(row.resource);
-              onClose();
-            }}
-          >
-            Open target / refresh
-          </button>
+          {row.delete ? (
+            row.finishedAt && <DeleteTargetCheck operationID={row.operationID} canCheck={canOpen(row.resource)} />
+          ) : (
+            <button
+              disabled={!canOpen(row.resource)}
+              onClick={() => {
+                onTarget(row.resource);
+                onClose();
+              }}
+            >
+              Open target / refresh
+            </button>
+          )}
         </section>
       ))}
     </Modal>
+  );
+}
+
+const observationText: Record<string, string> = {
+  present: "The original workload is present.",
+  terminating: "The original workload is terminating.",
+  absent: "The original workload is absent. Dependents may still be present.",
+  replaced: "An object with a different UID now uses this name.",
+  unavailable: "Target status is unavailable.",
+};
+
+function DeleteTargetCheck({ operationID, canCheck }: { operationID: string; canCheck: boolean }) {
+  const [observation, setObservation] = useState<DeleteObservation>();
+  const [error, setError] = useState("");
+  const [checking, setChecking] = useState(false);
+  const active = useRef<ReturnType<typeof checkDeleteTarget> | null>(null);
+  useLayoutEffect(
+    () => () => {
+      const request = active.current;
+      active.current = null;
+      request?.cancel();
+    },
+    [],
+  );
+  function check() {
+    if (active.current || !canCheck) return;
+    const request = checkDeleteTarget(operationID);
+    active.current = request;
+    setChecking(true);
+    setError("");
+    void request.promise.then(
+      (value) => {
+        if (active.current !== request) return;
+        active.current = null;
+        setChecking(false);
+        setObservation(value);
+      },
+      (failure) => {
+        if (active.current !== request) return;
+        active.current = null;
+        setChecking(false);
+        setError(message(failure));
+      },
+    );
+  }
+  return (
+    <>
+      <button onClick={check} disabled={checking || !canCheck}>
+        Check target
+      </button>
+      {checking && <p role="status">Checking the original target…</p>}
+      {error && <p role="alert">{error}</p>}
+      {observation && (
+        <p role="status">
+          {observationText[observation.state]}{" "}
+          <time dateTime={observation.checkedAt}>{new Date(observation.checkedAt).toLocaleTimeString()}</time>
+        </p>
+      )}
+    </>
   );
 }

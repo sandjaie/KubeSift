@@ -246,6 +246,11 @@ func capturedDetail(ref ResourceRef, object workloadObject, raw []byte) (Resourc
 		}
 	}
 	result := ResourceDetail{Resource: ref, ResourceVersion: object.GetResourceVersion(), FetchedAt: time.Now().UTC(), ObjectJSON: string(raw)}
+	if ref.Kind == "Pod" {
+		if _, mirror := object.GetAnnotations()["kubernetes.io/config.mirror"]; mirror {
+			result.DeleteBlocked = "Mirror Pods are managed by the node and cannot be deleted here."
+		}
+	}
 	if job, ok := object.(*batch.Job); ok {
 		result.Job = summarizeJob(job)
 	}

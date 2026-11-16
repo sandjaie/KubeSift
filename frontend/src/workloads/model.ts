@@ -160,6 +160,7 @@ export interface KindState {
     | null;
   selected: { resource: ResourceRef } | null;
   related: boolean;
+  retainedAfterDeletion: boolean;
   identity: string;
   referenceEvidence?: ReferenceEvidence;
   section: Section;

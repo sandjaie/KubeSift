@@ -10,6 +10,7 @@ import { message } from "../connections/api";
 import { readRequest, workloadAPI as api } from "./api";
 import {
   canAutoRefresh,
+  inventorySelection,
   captureReferenceEvidence,
   emptyKind,
   initialWorkloads,
@@ -119,10 +120,9 @@ export function useWorkloads(
     void request.promise
       .then((page) => {
         if (!active) return;
-        const old = current.current[tabID]?.kinds[kind].selected;
-        const selected = current.current[tabID]?.kinds[kind].related
-          ? (old ?? null)
-          : (page.items?.find((row) => row.resource.uid === old?.resource.uid) ?? null);
+        const currentKind = current.current[tabID]?.kinds[kind];
+        const old = currentKind?.selected;
+        const selected = inventorySelection(currentKind, page.items);
         commit({
           type: "response",
           tab: tabID,
@@ -338,7 +338,7 @@ export function useWorkloads(
         (detail) => show(entry, entries, detail),
       );
     },
-    refreshOperationTarget: (resource: ResourceRef) => {
+    refreshOperationTarget: (resource: ResourceRef, deletion = false) => {
       if (
         !t ||
         !selected ||
@@ -352,7 +352,16 @@ export function useWorkloads(
       patch({
         refresh: inventory.refresh + 1,
         sectionRefresh: inventory.sectionRefresh + 1,
-        sections: { ...inventory.sections, Overview: undefined },
+        ...(deletion
+          ? {
+              section: "Overview",
+              sectionCursor: "",
+              sectionEpoch: ++serial.current,
+              sections: {},
+              referenceEvidence: undefined,
+              retainedAfterDeletion: true,
+            }
+          : { sections: { ...inventory.sections, Overview: undefined } }),
       });
     },
     catalogRoute: t?.catalog,
@@ -424,6 +433,11 @@ export function useWorkloads(
     navigationError,
     patch,
     selectResource,
+    backToInventory: () => {
+      cancelNavigation();
+      setNavigationError("");
+      commit({ type: "select", tab: tabID, row: null, epoch: ++serial.current });
+    },
     selectKind: (kind: ResourceKind) => {
       cancelNavigation();
       setNavigationError("");

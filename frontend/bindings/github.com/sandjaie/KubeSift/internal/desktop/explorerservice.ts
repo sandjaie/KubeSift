@@ -46,12 +46,20 @@ export function CancelWorkloadRead(id: string): $CancellablePromise<void> {
   return $Call.ByID(601396887, id);
 }
 
+export function CheckDeleteTarget(id: string, operationID: string): $CancellablePromise<operation$0.DeleteObservation> {
+  return $Call.ByID(1495043394, id, operationID);
+}
+
 export function ClosePodLogs(ref: model$0.SessionRef): $CancellablePromise<void> {
   return $Call.ByID(1080239256, ref);
 }
 
 export function Disconnect(ref: model$0.ConnectionRef): $CancellablePromise<void> {
   return $Call.ByID(2590980822, ref);
+}
+
+export function ExecuteDelete(token: string, acknowledgement: string): $CancellablePromise<operation$0.OperationResult> {
+  return $Call.ByID(3028420200, token, acknowledgement);
 }
 
 export function ExecuteRestart(token: string, acknowledgement: string): $CancellablePromise<operation$0.OperationResult> {
@@ -92,6 +100,10 @@ export function ListSources(): $CancellablePromise<sources$0.SourceResult[] | nu
 
 export function OpenPodLogs(req: kube$0.LogRequest): $CancellablePromise<model$0.SessionRef> {
   return $Call.ByID(1020417316, req);
+}
+
+export function PrepareDelete(id: string, req: operation$0.DeleteRequest): $CancellablePromise<operation$0.DeletePreview> {
+  return $Call.ByID(3368803172, id, req);
 }
 
 export function PrepareRestart(id: string, req: operation$0.RestartRequest): $CancellablePromise<operation$0.RestartPreview> {
@@ -246,6 +258,10 @@ export function ResolveStorageReference(
 
 export function ReviewHelper(source: string, snapshot: string, name: string): $CancellablePromise<trust$0.PreviewRecord> {
   return $Call.ByID(2230528976, source, snapshot, name);
+}
+
+export function RevokeDelete(token: string): $CancellablePromise<void> {
+  return $Call.ByID(4287448365, token);
 }
 
 export function RevokeHelper(fp: string): $CancellablePromise<void> {
