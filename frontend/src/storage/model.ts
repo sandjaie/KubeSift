@@ -5,7 +5,7 @@ Responsibilities: Project explicit references and container volume associations.
 Important: Only an explicit PVC claimName creates a Pod storage link.
 */
 import type { ResourceDetail, ResourceRef } from "../workloads/model";
-export type { StoragePage, StorageRow, ResolvedStorageReference } from "../../bindings/github.com/sandjaie/KubeSift/internal/kube/models";
+export type { StoragePage, StorageRow, ResolvedStorageReference } from "../../bindings/internal/kube/models";
 
 export const storageLabels = {
   PersistentVolumeClaim: "Volume claims",

@@ -6,15 +6,20 @@ Important: Confirm forwards only the token and any acknowledgement required by t
 */
 import { readRequest, workloadAPI } from "../workloads/api";
 import type {
+  CreateRequest,
   DeleteRequest,
   EditRequest,
   RollbackRequest,
   RestartRequest,
   ScaleRequest,
-} from "../../bindings/github.com/sandjaie/KubeSift/internal/operation/models";
-import type { EditTarget } from "../../bindings/github.com/sandjaie/KubeSift/internal/kube/models";
-export type { EditTarget };
+} from "../../bindings/internal/operation/models";
+import type { ConnectionRef } from "../bridge";
+import type { EditTarget, ManifestAddress } from "../../bindings/internal/kube/models";
+export type { EditTarget, ManifestAddress } from "../../bindings/internal/kube/models";
 export type {
+  CreateDraft,
+  CreateObservation,
+  CreatePreview,
   EditDraft,
   EditPreview,
   DeleteObservation,
@@ -27,8 +32,10 @@ export type {
   ScaleRequest,
   ScalePreview,
   ScaleResult,
-} from "../../bindings/github.com/sandjaie/KubeSift/internal/operation/models";
-export type OperationAction = "scale" | "restart" | "delete" | "edit" | "rollback";
+} from "../../bindings/internal/operation/models";
+export type CreatedResourceOpening = { target: ManifestAddress; operationID: string };
+
+export type OperationAction = "scale" | "restart" | "delete" | "edit" | "rollback" | "create";
 export const prepareScale = (request: ScaleRequest) => readRequest((id) => workloadAPI.PrepareScale(id, request));
 export const executeScale = workloadAPI.ExecuteScale;
 export const listScaleResults = workloadAPI.ListScaleResults;
@@ -66,3 +73,15 @@ export const executeRollback = workloadAPI.ExecuteRollback;
 export const revokeRollback = (token: string) => {
   if (token) void workloadAPI.RevokeRollback(token).catch(() => {});
 };
+
+export const openCreate = (connection: ConnectionRef, namespace: string) =>
+  readRequest((id) => workloadAPI.OpenCreate(id, connection, namespace));
+export const prepareCreate = (request: CreateRequest) => readRequest((id) => workloadAPI.PrepareCreate(id, request));
+export const executeCreate = workloadAPI.ExecuteCreate;
+export const revokeCreate = (token: string) => {
+  if (token) void workloadAPI.RevokeCreate(token).catch(() => {});
+};
+export const closeCreate = (id: string) => {
+  if (id) void workloadAPI.CloseCreate(id).catch(() => {});
+};
+export const inspectCreateName = (operationID: string) => readRequest((id) => workloadAPI.InspectCreateName(id, operationID));

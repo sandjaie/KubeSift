@@ -10,21 +10,33 @@ import { Modal } from "../ui/ReviewDialog";
 import { isResourceKind, type ResourceRef } from "../workloads/model";
 import {
   checkDeleteTarget,
+  executeCreate,
+  inspectCreateName,
   executeDelete,
   executeEdit,
   executeRestart,
   executeRollback,
   executeScale,
   listOperationResults,
+  type CreateObservation,
   type DeleteObservation,
+  type CreatedResourceOpening,
   type OperationAction,
   type OperationResult,
 } from "./api";
 
 import { rollbackAcceptedText } from "./rollbackState";
 
-const submissions = { delete: executeDelete, edit: executeEdit, restart: executeRestart, rollback: executeRollback, scale: executeScale };
+const submissions = {
+  create: executeCreate,
+  delete: executeDelete,
+  edit: executeEdit,
+  restart: executeRestart,
+  rollback: executeRollback,
+  scale: executeScale,
+};
 const actionLabel: Record<string, string> = {
+  create: "Create resource",
   delete: "Delete",
   edit: "Edit YAML",
   restart: "Restart",
@@ -83,6 +95,7 @@ export function useOperationResults(onResult: (result: Pick<OperationResult, "re
           if ((action === "delete" || action === "edit" || action === "rollback") && "action" in result) reportAcceptedMutation(result);
           else onFinish.current({ ...result, action });
           releaseDeletion?.(false);
+          return result;
         },
         (failure) => {
           releaseDeletion?.(true);
@@ -119,7 +132,7 @@ export function OperationResults({
   error: string;
   onClose: () => void;
   onRefresh: () => void;
-  onTarget: (ref: ResourceRef) => void;
+  onTarget: (ref: ResourceRef, created?: CreatedResourceOpening) => void;
   canOpen: (ref: ResourceRef) => boolean;
 }) {
   return (
@@ -138,7 +151,7 @@ export function OperationResults({
             {actionLabel[row.action] ?? row.action} · {outcomes[row.state] ?? row.state}
           </h3>
           <p className="frozen-target">
-            {row.cluster} / {row.resource.namespace} / {row.resource.kind} / {row.resource.name}
+            {row.cluster} / {row.resource.namespace || "Cluster scope"} / {row.resource.kind} / {row.resource.name}
           </p>
           {row.scale && (
             <>
@@ -174,19 +187,23 @@ export function OperationResults({
               {row.state === "accepted" && <p>Kubernetes accepted deletion. The workload and its dependents may still be present.</p>}
             </>
           )}
+          {row.create && row.state === "accepted" && <p>Kubernetes created this resource. Opening it requires read permission.</p>}
           {row.problem?.message && <p>{row.problem.message}</p>}
           <time dateTime={row.finishedAt ?? row.startedAt}>{new Date(row.finishedAt ?? row.startedAt).toLocaleTimeString()}</time>{" "}
           {row.delete ? (
-            row.finishedAt && <DeleteTargetCheck operationID={row.operationID} canCheck={canOpen(row.resource)} />
+            row.finishedAt && <TargetCheck operationID={row.operationID} canCheck={canOpen(row.resource)} />
+          ) : row.create && row.state !== "accepted" ? (
+            row.finishedAt &&
+            row.state === "unknown" && <TargetCheck create operationID={row.operationID} canCheck={canOpen(row.resource)} />
           ) : (
             <button
-              disabled={!canOpen(row.resource) || (!!row.edit && !isResourceKind(row.resource.kind))}
+              disabled={!canOpen(row.resource) || (!!row.edit && !isResourceKind(row.resource.kind)) || (!!row.create && !row.resource.uid)}
               onClick={() => {
-                onTarget(row.resource);
+                onTarget(row.resource, row.create ? { target: row.create.target, operationID: row.operationID } : undefined);
                 onClose();
               }}
             >
-              {row.rollback ? "Check workload" : "Open target / refresh"}
+              {row.create ? "Open resource" : row.rollback ? "Check workload" : "Open target / refresh"}
             </button>
           )}
         </section>
@@ -203,11 +220,17 @@ const observationText: Record<string, string> = {
   unavailable: "Target status is unavailable.",
 };
 
-function DeleteTargetCheck({ operationID, canCheck }: { operationID: string; canCheck: boolean }) {
-  const [observation, setObservation] = useState<DeleteObservation>();
+const createObservationText: Record<string, string> = {
+  present: "An object currently uses this name. Its presence does not establish what this create request did.",
+  absent: "No object currently uses this name. The create outcome remains unknown.",
+  unavailable: "The name could not be inspected. The create outcome remains unknown.",
+};
+
+function TargetCheck({ operationID, canCheck, create = false }: { operationID: string; canCheck: boolean; create?: boolean }) {
+  const [observation, setObservation] = useState<DeleteObservation | CreateObservation>();
   const [error, setError] = useState("");
   const [checking, setChecking] = useState(false);
-  const active = useRef<ReturnType<typeof checkDeleteTarget> | null>(null);
+  const active = useRef<{ cancel: () => void } | null>(null);
   useLayoutEffect(
     () => () => {
       const request = active.current;
@@ -218,7 +241,7 @@ function DeleteTargetCheck({ operationID, canCheck }: { operationID: string; can
   );
   function check() {
     if (active.current || !canCheck) return;
-    const request = checkDeleteTarget(operationID);
+    const request = create ? inspectCreateName(operationID) : checkDeleteTarget(operationID);
     active.current = request;
     setChecking(true);
     setError("");
@@ -240,13 +263,13 @@ function DeleteTargetCheck({ operationID, canCheck }: { operationID: string; can
   return (
     <>
       <button onClick={check} disabled={checking || !canCheck}>
-        Check target
+        {create ? "Inspect name" : "Check target"}
       </button>
       {checking && <p role="status">Checking the original target…</p>}
       {error && <p role="alert">{error}</p>}
       {observation && (
         <p role="status">
-          {observationText[observation.state]}{" "}
+          {(create ? createObservationText : observationText)[observation.state]}{" "}
           <time dateTime={observation.checkedAt}>{new Date(observation.checkedAt).toLocaleTimeString()}</time>
         </p>
       )}

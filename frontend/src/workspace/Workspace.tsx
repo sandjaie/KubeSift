@@ -35,6 +35,8 @@ export function Workspace({
   controller: c,
   navigationWidth,
   navigationOpen,
+  collapsedResourceGroups,
+  onToggleResourceGroup,
   detailWidthPercent,
   detailHeightPercent,
   onDetailResize,
@@ -43,6 +45,7 @@ export function Workspace({
   logs,
   onOperation,
   onEdit,
+  onCreate,
   onInteractive,
   operationResults,
 }: {
@@ -50,13 +53,16 @@ export function Workspace({
   controller: WorkloadController;
   navigationWidth: number;
   navigationOpen: boolean;
+  collapsedResourceGroups: readonly string[];
+  onToggleResourceGroup: (group: string) => void;
   detailWidthPercent: number;
   detailHeightPercent: number;
   onDetailResize: (axis: "x" | "y", value: number) => void;
   onResize: (n: number) => void;
   onCommitSize: () => void;
   logs?: ReactNode;
-  onEdit: (target: EditTarget, reveal?: boolean) => void;
+  onCreate?: () => void;
+  onEdit?: (target: EditTarget, reveal?: boolean) => void;
   onInteractive?: (kind: "terminal" | "forward", data: CapturedDetail) => void;
   operationResults: OperationResult[];
   onOperation: (action: OperationAction, token: string, acknowledgement: string) => void;
@@ -90,6 +96,8 @@ export function Workspace({
             <div className="navigation-host">
               <ResourceNavigation
                 kind={kind}
+                collapsedGroups={collapsedResourceGroups}
+                onToggleGroup={onToggleResourceGroup}
                 onSelect={(k) => {
                   if (isResourceKind(k)) c.selectKind(k);
                 }}
@@ -116,6 +124,7 @@ export function Workspace({
               onBack={c.restoreCatalogSource}
               onDedicated={c.selectKind}
               onEdit={onEdit}
+              onCreate={canReviewOperation ? onCreate : undefined}
               operationResults={operationResults}
               widthPercent={detailWidthPercent}
               heightPercent={detailHeightPercent}
@@ -143,6 +152,15 @@ export function Workspace({
                 {(kind === "Event" || kind === "Lease") && <span className="muted">Namespace: {tab.namespace}</span>}
                 {kind === "Secret" && <span className="muted">Metadata only</span>}
                 <span className="muted">{rows.length} shown</span>
+                <button
+                  disabled={!canReviewOperation || !onCreate}
+                  onClick={(event) => {
+                    event.currentTarget.focus();
+                    onCreate?.();
+                  }}
+                >
+                  Create resource…
+                </button>
                 <button disabled={!tab.view?.ref || i.loading} onClick={c.refresh}>
                   ↻ Refresh
                 </button>

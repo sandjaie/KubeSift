@@ -9,7 +9,7 @@ import { message } from "../connections/api";
 import { Modal } from "../ui/ReviewDialog";
 import { overviewObject, object, list } from "../workspace/ResourceOverview";
 import type { ResourceDetail } from "../workloads/model";
-import type { TerminalRequest } from "../../bindings/github.com/sandjaie/KubeSift/internal/kube/models";
+import type { TerminalRequest } from "../../bindings/internal/kube/models";
 
 export function TerminalStart({
   data,

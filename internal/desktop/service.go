@@ -37,6 +37,7 @@ type Service struct {
 	restart     *operation.RestartService
 	deletion    *operation.DeleteService
 	editing     *operation.EditService
+	creation    *operation.CreateService
 	rollback    *operation.RollbackService
 	fixtures    map[model.ConnectionRef]FixtureTarget
 	ctx         context.Context
@@ -105,6 +106,7 @@ func NewService() *Service {
 	s.restart = operation.NewRestartService(s.connections, s.coordinator, time.Now)
 	s.deletion = operation.NewDeleteService(s.connections, s.coordinator, time.Now)
 	s.editing = operation.NewEditService(s.connections, s.kube, s.coordinator)
+	s.creation = operation.NewCreateService(s.connections, s.kube, s.coordinator)
 	s.rollback = operation.NewRollbackService(s.connections, s.coordinator)
 	s.fixtures = map[model.ConnectionRef]FixtureTarget{}
 	return s

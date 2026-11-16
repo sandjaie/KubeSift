@@ -121,3 +121,10 @@ done</code></pre>
   <a href="../fixtures/explorer/phase-1d6.yaml">interactive fixture Pods and Service</a> in unique labeled namespaces and removes them by
   UID. It verifies actual exec input/resize, fixed Pod/Service TCP responses, occupied local ports and listener cleanup.
 </p>
+
+<p>
+  Enable <code>TestYAMLCreation</code> with <code>KUBESIFT_CREATE_INTEGRATION=1</code> and the isolated A/B kubeconfig directory. Run
+  <code>go test -tags=integration ./tests/integration -run '^TestYAMLCreation$' -count=1 -v</code>. It provisions one isolated namespace and
+  disposable custom API per approved context. It covers dry-run non-persistence, namespaced and cluster-scoped creation, Secret stringData,
+  late name collisions, create-only access, and denied dry-run. Cleanup uses fixture identities.
+</p>

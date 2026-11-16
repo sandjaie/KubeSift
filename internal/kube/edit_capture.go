@@ -55,42 +55,20 @@ func (t EditTarget) ReadVersion(raw []byte) (string, error) {
 func (s *Service) CaptureEdit(ctx context.Context, target EditTarget) (EditCapture, error) {
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
-	if (target.Group != "" && !validGroup(target.Group)) || !validVersion(target.Version) ||
-		(target.Resource != "" && !validVersion(target.Resource)) || !discoveryKind.MatchString(target.Kind) ||
-		!genericName(target.Name) || target.UID == "" || len(target.UID) > 128 {
+	address := ManifestAddress{target.Connection, target.Group, target.Version, target.Resource, target.Kind, target.Namespace, target.Name}
+	if !address.valid() || target.UID == "" || len(target.UID) > 128 {
 		return EditCapture{}, model.Fail("invalid", "Select an existing resource with a canonical API identity")
 	}
 	client, err := s.boundedReadClient(ctx, target.Connection)
 	if err != nil {
 		return EditCapture{}, err
 	}
-	raw, err := fixedRead(client, apiVersionPath(target.Group, target.Version)).Do(ctx).Raw()
-	if err != nil {
-		return EditCapture{}, readError(ctx, err)
-	}
-	catalog, err := projectDiscovery(raw, versionKey{target.Group, target.Version})
+	address, err = resolveManifestRoute(ctx, client, address, "patch")
 	if err != nil {
 		return EditCapture{}, err
 	}
-	var match *APIResourceDescriptor
-	for _, entry := range catalog.Resources {
-		if entry.Kind != target.Kind || (target.Resource != "" && entry.Resource != target.Resource) {
-			continue
-		}
-		if match != nil {
-			return EditCapture{}, model.Fail("unsupported", "Kubernetes advertised more than one route for this kind")
-		}
-		match = &entry
-	}
-	if match == nil || !match.Get || !match.Patch {
-		return EditCapture{}, model.Fail("unsupported", "This API does not advertise both Get and Patch for the selected resource")
-	}
-	api := match.api()
-	if err := genericAddress(api, target.Namespace); err != nil {
-		return EditCapture{}, err
-	}
-	target.Resource = api.plural
-	raw, err = api.read(client, target.Namespace, target.Name).Do(ctx).Raw()
+	target.Resource = address.Resource
+	raw, err := address.api().read(client, target.Namespace, target.Name).Do(ctx).Raw()
 	if err != nil {
 		return EditCapture{}, readError(ctx, err)
 	}

@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Phase 1D.7 resource creation validation · KubeSift</title>
+    <link rel="stylesheet" href="../../assets/planning.css" />
+    <script src="../../assets/theme.js"></script>
+  </head>
+  <body>
+    <aside class="rail">
+      <a class="skip" href="#content">Skip to content</a
+      ><a class="mark" href="../../index.html"><span class="mark-name">KubeSift</span><span class="mark-sub">Planning</span></a>
+      <h2>Index</h2>
+      <a href="../../index.html">Planning index</a>
+      <h2>Product</h2>
+      <a href="../../product/requirements.html">Requirements</a><a href="../../product/feature-matrix.html">Capabilities</a>
+      <h2>Architecture</h2>
+      <a href="../../architecture/overview.html">Overview</a><a href="../../architecture/decisions.html">Decisions</a>
+      <h2>Safeguards</h2>
+      <a href="../../security/security-model.html">Security and AI</a>
+      <h2>Delivery</h2>
+      <a href="../../roadmap/roadmap.html">Roadmap</a><a href="../../ux/workflows.html">UX workflows</a
+      ><a href="../../ux/mocks/index.html">Mockups</a>
+      <h2>Engineering</h2>
+      <a href="../../engineering/engineering.html">Playbook</a><a href="../../engineering/local-development.html">Local development</a
+      ><a href="../../engineering/toolchain.html">Toolchain</a
+      ><a href="../../engineering/kubernetes-development.html">Kubernetes references</a>
+      <h2>Superpowers</h2>
+      <a href="../../superpowers/specs/2026-11-05-kubesift-design.md">Design specification</a
+      ><a href="../../superpowers/plans/README.html">Plans</a
+      ><a href="../../superpowers/validation/index.html" aria-current="page">Validation</a
+      ><a href="../../superpowers/evidence/index.html">Evidence</a>
+    </aside>
+    <header>
+      <a href="../../index.html">KubeSift / Planning</a>
+      <h1>Phase 1D.7 resource creation validation</h1>
+    </header>
+    <main id="content">
+      <p>
+        Verified on 16 November 2026 in the existing <code>feature/phase-1d7-resource-creation</code> checkout from <code>b8bb628</code>.
+        See the <a href="../specs/2026-11-16-phase-1d-completion-design.md">approved specification</a> and
+        <a href="../plans/2026-11-16-phase-1d7-resource-creation.md">implementation plan</a>.
+      </p>
+      <h2>Automated and API verification</h2>
+      <ul>
+        <li>
+          Consecutive <code>wails3 task bindings</code> runs produced identical generated file hashes. Node tests covered relocation and
+          relative module references, generated runtime IDs, and collision and unresolved-reference errors. The obsolete tree was absent.
+        </li>
+        <li>
+          <code>scripts/check.sh</code> passed, including Go tests and vet, 111 frontend tests, lint, typecheck, and documentation checks.
+          Focused Go race checks covered native routing, shared operation locks, draft review, and single dispatch. The transport tests
+          exercised conflicts, malformed and oversized success, authorization failures, redirects, throttling, and uncertain responses.
+        </li>
+        <li>
+          <code>TestYAMLCreation</code> passed on <code>kind-dev-local-a</code> and <code>kind-dev-local-b</code>. ConfigMap, Deployment,
+          Secret stringData, PriorityClass, and a disposable installed custom API exercised non-persistent dry-run and real UID/version
+          results. An independent same-name creation between review and execution preserved the original UID, version, and content.
+          Create-only credentials succeeded despite read denial. Denied credentials could not prepare a review.
+        </li>
+        <li>
+          YAML editing, reviewed deletion, workload rollback, interactive sessions, reviewed scaling, and reviewed restart integration
+          passed on both approved contexts. The historical marker integration uses different contexts and was outside this run.
+        </li>
+      </ul>
+      <h2>Packaged desktop evidence</h2>
+      <p>
+        <code>wails3 task package</code> built the arm64 macOS application on macOS 27.0.1. The initial creation-flow executable SHA-256 was
+        <code>0dd26680766d79dca8b5dc192c9f967833be52e17e5efeeac636cdf6eb9b55b3</code>.
+      </p>
+      <ul>
+        <li>
+          On kind-dev-local-a, the inventory Create action worked with no selected resource, Cancel received initial focus, and Escape
+          restored trigger focus. A mismatched namespace blocked review. Correcting it enabled review and confirmation. Open resource
+          reached the accepted ConfigMap by its actual identity. Ordinary Secret confirmation opened the metadata-only detail, and Back
+          returned to the ConfigMap. A name taken between review and confirmation was rejected. Resuming preserved the draft, and discard
+          cleared it.
+        </li>
+        <li>
+          On kind-dev-local-b, a cluster-scoped PriorityClass passed review and opened while retaining the prior namespace selection. Light
+          and Dark appearances and a narrower detail split were exercised. A denied dry-run never offered Confirm. A create-only ConfigMap
+          stayed accepted after Open resource returned a separate read denial.
+        </li>
+        <li>
+          The packaged app dispatched desktop service calls via the relocated bindings. Live Pod log follow delivered synthetic heartbeat
+          output through the generated session event subscription. Stop reached stopped and closing the session cleared the dock. Temporary
+          desktop sources were removed and the appearance preference restored.
+        </li>
+        <li>
+          Automated tests covered uncertain-dispatch and inspection behavior. The packaged run used actual API acceptance, rejection, and
+          read-denial paths.
+        </li>
+      </ul>
+      <h2>Resource sidebar disclosure</h2>
+      <p>
+        The user-requested follow-up adds one disclosure button per resource group. The groups start expanded. The mounted regression covers
+        independent visibility and preserved selection. In the rebuilt macOS package, collapsed Workloads and Storage persisted across the
+        whole-sidebar toggle and a cluster-tab switch, and expanding Networking restored Services to navigation. Creation still opened from
+        inventory and returned focus to its trigger on Escape. The sidebar build executable SHA-256 was
+        <code>16407d20927315c631e58ff0b0257b8e42613a17060bb4f6dc12edc59043c58c</code>.
+      </p>
+      <h2>Independent review and recheck</h2>
+      <p>
+        Reviewer <code>/root/creation_pr_review</code> reviewed the complete <code>51e4cca21020fe6679a0823d2df87188b531aeda</code> candidate
+        against <code>develop</code>, with base and merge base <code>b8bb628b22b7f5baa5d6b03c7ff6a70ddd34ea42</code>. The initial verdict
+        identified two merge blockers. The reviewer rechecked the fix commits <code>d5be542</code> and <code>81d70db</code>
+        and cleared both findings.
+      </p>
+      <ul>
+        <li>
+          KSF-001 (P2), <code>frontend/src/App.tsx</code>. Resuming a draft during submission could let a late acceptance discard newer
+          text. The submitting draft stays suspended until its outcome arrives. Delayed-response tests verify acceptance clears the
+          submitted draft and an uncertain result restores access to its unchanged text.
+        </li>
+        <li>
+          KSF-002 (P2), <code>frontend/src/workloads/useWorkloads.ts</code> and <code>internal/kube/discovery.go</code>. The inventory
+          descriptor blocked detail reads for some accepted resources. A bounded result read now checks the exact API address and actual
+          UID, including readable routes without List. It preserves explicit proxy and connection-endpoint exclusions and routes Secrets
+          through their metadata-only view. Synthetic tests cover a replaced UID and excluded routes. Both approved kind contexts passed
+          <code>autoscaling/v1</code> HPA creation and read-back, and create-only read denial remained separate from acceptance.
+        </li>
+      </ul>
+      <p>
+        Repository checks, focused race tests, regeneration through the package task, and the two-context creation integration passed after
+        the fixes. The final package verified sidebar collapse and exact-version HPA review, acceptance, Open resource, and detail refresh
+        on kind-dev-local-b. Its executable SHA-256 was
+        <code>b737f546dc7199a0cca6f34f303fcacb403921ff701c52227505e07569c13f86</code>.
+      </p>
+      <h2>Fixture cleanup</h2>
+      <p>
+        Verified removal of task-owned objects, namespaces, role bindings, temporary kubeconfigs, and the disposable API on both contexts.
+        The baseline explorer Widget API remained installed.
+      </p>
+    </main>
+  </body>
+</html>

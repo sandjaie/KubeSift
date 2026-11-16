@@ -59,7 +59,8 @@
       <p>
         Use distinct resource icons in left navigation rather than repeated diamonds. Keep text labels and visible selected/focus states.
         Decorative icons are hidden from assistive technology; collapsed entries have tooltips and accessible names. Unexplained dots must
-        not stand for unavailable resource types.
+        not stand for unavailable resource types. Use each section heading to expand or collapse its destinations. Sections start open and
+        retain their state as you switch cluster tabs or hide the sidebar during the current session.
       </p>
       <h3 id="compact-workspace">Compact workspace controls</h3>
       <p>
@@ -169,6 +170,11 @@
         existing-resource YAML with an identity-only desired configuration. Reuse the current editor and single review/confirmation flow,
         including Secrets. Show server defaults and field-ownership changes; ownership takeover is explicit in the same review, never
         automatic. No resource-kind approval gates or UI redesign.
+      </p>
+      <p>
+        Create review shows the proposed YAML and the server dry-run response. Open resource uses the accepted identity. An uncertain result
+        offers an explicit name check without resubmitting the request. See the
+        <a href="../superpowers/validation/phase-1d7.html">verified Create workflows</a>.
       </p>
       <h2 id="reviewed-deletion">Reviewed workload deletion</h2>
       <p>

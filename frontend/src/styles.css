@@ -304,11 +304,29 @@ summary:focus-visible {
   background: var(--panel);
 }
 .resource-nav h3 {
+  margin: 10px 0 2px;
+}
+.resource-nav h3 button {
   text-transform: uppercase;
   letter-spacing: 1.3px;
   font-size: 10px;
+  font-weight: 700;
   color: var(--muted);
-  margin: 20px 12px 8px;
+}
+.resource-nav h3 button[data-current] {
+  color: var(--accent-ink);
+}
+.nav-chevron {
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-right: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  transform: rotate(-45deg);
+  margin-inline: 3px 2px;
+}
+.resource-nav [aria-expanded="true"] > .nav-chevron {
+  transform: rotate(45deg);
 }
 .resource-nav button {
   display: flex;

@@ -5,7 +5,7 @@ Responsibilities: Preserve appearance/layout and keep global navigation separate
 Important: Startup loads local summaries only; development validation and synthetic fixtures are excluded.
 */
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { Service } from "../bindings/github.com/sandjaie/KubeSift/internal/desktop";
+import { Service } from "../bindings/internal/desktop";
 import { useConnections } from "./connections/useConnections";
 import { ClusterList } from "./connections/ClusterList";
 import { ConnectionControls } from "./connections/ConnectionControls";
@@ -32,9 +32,10 @@ import { TerminalStart } from "./sessions/TerminalStart";
 import { ForwardStart } from "./sessions/ForwardStart";
 import { useWorkloads } from "./workloads/useWorkloads";
 import type { ResourceDetail, ResourceRef } from "./workloads/model";
-import { requestEditor, type EditorSession } from "./operations/editState";
+import { requestEditor, settleCreateEditor, type EditorSession, type EditorDestination } from "./operations/editState";
+import { CreateDialog } from "./operations/CreateDialog";
 import { EditDialog } from "./operations/EditDialog";
-import { closeEdit } from "./operations/api";
+import { closeEdit, type CreatedResourceOpening } from "./operations/api";
 import { OperationResults, useOperationResults } from "./operations/OperationResults";
 import "./styles.css";
 export default function App() {
@@ -47,6 +48,7 @@ export default function App() {
   const { state } = controller;
   const [page, setPage] = useState<"clusters" | "workspace" | "settings">("clusters");
   const [aiOpen, setAiOpen] = useState(false);
+  const [collapsedResourceGroups, setCollapsedResourceGroups] = useState<string[]>([]);
   const [hiddenNavigation, setHiddenNavigation] = useState<Record<string, boolean>>({});
   const aiButton = useRef<HTMLButtonElement>(null);
   const [palette, setPalette] = useState(false);
@@ -119,7 +121,7 @@ export default function App() {
     page === "workspace",
     (tab, namespace) => void controller.selectNamespace(tab, namespace),
   );
-  const [editor, setEditor] = useState<EditorSession>();
+  const [editor, setEditor] = useState<EditorSession<EditorDestination>>();
   const origin = editor && state.tabs[editor.tab];
   const originConnection =
     origin?.view?.state === "connected" || origin?.view?.state === "restricted" ? (origin.view.ref ?? undefined) : undefined;
@@ -128,7 +130,7 @@ export default function App() {
     workloads.refreshOperationTarget(result.resource, result.action === "delete");
   });
   function resumeEditor() {
-    if (!editor) return;
+    if (!editor || editor.submitting) return;
     if (state.tabs[editor.tab]) {
       controller.commit({ type: "focus", key: editor.tab });
       setPage("workspace");
@@ -136,7 +138,11 @@ export default function App() {
     setEditor({ ...editor, suspended: false });
   }
   const [resultsOpen, setResultsOpen] = useState(false);
-  const [openingOperationTarget, setOpeningOperationTarget] = useState<{ ref: ResourceRef; tab: string } | null>(null);
+  const [openingOperationTarget, setOpeningOperationTarget] = useState<{
+    ref: ResourceRef;
+    tab: string;
+    created?: CreatedResourceOpening;
+  } | null>(null);
   const operationConnectionKey = (ref: ResourceRef["connection"]) => JSON.stringify([ref.id, ref.generation]);
   const findOperationTab = (resource: ResourceRef) =>
     Object.entries(state.tabs).find(
@@ -145,7 +151,7 @@ export default function App() {
   useEffect(() => {
     if (!openingOperationTarget || page !== "workspace" || state.active !== openingOperationTarget.tab || !workloads.ready) return;
     setOpeningOperationTarget(null);
-    workloads.openOperationTarget(openingOperationTarget.ref);
+    workloads.openOperationTarget(openingOperationTarget.ref, openingOperationTarget.created);
   }, [openingOperationTarget, page, state.active, workloads.ready]);
   function choose(entry: CatalogEntry) {
     setPage("workspace");
@@ -153,7 +159,7 @@ export default function App() {
   }
   const [closeTarget, setCloseTarget] = useState<{ key: string; entries: string[] } | null>(null);
   function close(key: string) {
-    if (editor?.tab === key) {
+    if (editor?.tab === key && !editor.submitting) {
       setEditor({ ...editor, suspended: false, closing: true });
       return;
     }
@@ -236,7 +242,9 @@ export default function App() {
         />
         <button onClick={() => setPage("clusters")}>Choose cluster</button>
         {editor && (editor.suspended || editor.tab !== state.active || page !== "workspace") && (
-          <button onClick={resumeEditor}>Resume YAML edit</button>
+          <button disabled={editor.submitting} onClick={resumeEditor}>
+            {editor.submitting ? "Submitting create…" : editor.mode === "create" ? "Resume create draft" : "Resume YAML edit"}
+          </button>
         )}
         <button
           onClick={() => {
@@ -263,7 +271,31 @@ export default function App() {
           {aiOpen ? "Hide AI" : "Ask AI"}
         </button>
       </header>
-      {editor && (
+      {editor?.mode === "create" && (
+        <CreateDialog
+          key={editor.id}
+          destination={editor}
+          context={origin?.entry.context ?? "Original connection"}
+          connection={originConnection}
+          suspended={!editor.replacement && !editor.closing && (editor.suspended || editor.tab !== state.active || page !== "workspace")}
+          closing={editor.closing || !!editor.replacement}
+          replacing={!!editor.replacement}
+          onSuspend={() => setEditor({ ...editor, suspended: true })}
+          onCancelClose={() => setEditor({ ...editor, closing: false, replacement: undefined })}
+          onClose={() => {
+            setEditor(editor.replacement ? requestEditor(undefined, editor.replacement) : undefined);
+            if (editor.closing) closeTab(editor.tab);
+          }}
+          onConfirm={(token) => {
+            setEditor({ ...editor, suspended: true, submitting: true });
+            setResultsOpen(true);
+            void operationResults.submit("create", token, "").then((result) => {
+              setEditor((current) => settleCreateEditor(current, editor.id, result?.state === "accepted"));
+            });
+          }}
+        />
+      )}
+      {editor && editor.mode !== "create" && (
         <EditDialog
           key={JSON.stringify([editor.tab, editor.target])}
           target={editor.target}
@@ -294,12 +326,12 @@ export default function App() {
           onClose={() => setResultsOpen(false)}
           onRefresh={operationResults.refresh}
           canOpen={(ref) => !!findOperationTab(ref)}
-          onTarget={(ref) => {
+          onTarget={(ref, created) => {
             const tab = findOperationTab(ref);
             if (!tab) return;
             controller.commit({ type: "focus", key: tab });
             setPage("workspace");
-            setOpeningOperationTarget({ ref, tab });
+            setOpeningOperationTarget({ ref, tab, created });
           }}
         />
       )}
@@ -427,15 +459,42 @@ export default function App() {
                 key={state.active}
                 tab={active}
                 navigationOpen={!hiddenNavigation[state.active!]}
+                collapsedResourceGroups={collapsedResourceGroups}
+                onToggleResourceGroup={(group) =>
+                  setCollapsedResourceGroups((current) =>
+                    current.includes(group) ? current.filter((item) => item !== group) : [...current, group],
+                  )
+                }
                 controller={workloads}
                 operationResults={operationResults.results}
                 onInteractive={(kind, data) => {
                   if (state.active) setStartSession({ kind, data, tab: state.active, cluster: active.entry.context });
                 }}
-                onEdit={(target, reveal = false) => {
-                  const tab = state.active;
-                  if (tab) setEditor((current) => requestEditor(current, { tab, target, reveal }));
-                }}
+                onCreate={
+                  editor?.submitting
+                    ? undefined
+                    : () => {
+                        const tab = state.active;
+                        if (tab && active.view?.ref) {
+                          const destination = {
+                            mode: "create" as const,
+                            id: crypto.randomUUID(),
+                            tab,
+                            connection: active.view.ref,
+                            namespace: workloads.clusterScoped ? "" : active.namespace,
+                          };
+                          setEditor((current) => requestEditor(current, destination));
+                        }
+                      }
+                }
+                onEdit={
+                  editor?.submitting
+                    ? undefined
+                    : (target, reveal = false) => {
+                        const tab = state.active;
+                        if (tab) setEditor((current) => requestEditor(current, { tab, target, reveal }));
+                      }
+                }
                 onOperation={(action, token, acknowledgement) => {
                   const releaseDeletion = action === "delete" ? workloads.holdDeletionSelection() : undefined;
                   operationResults.submit(action, token, acknowledgement, releaseDeletion);

@@ -11,7 +11,7 @@ export type {
   SelectedPodPage,
   RolloutHistoryPage,
   RolloutRevision,
-} from "../../bindings/github.com/sandjaie/KubeSift/internal/kube/models";
+} from "../../bindings/internal/kube/models";
 
 export const availabilityLabels = {
   HorizontalPodAutoscaler: "HorizontalPodAutoscalers",

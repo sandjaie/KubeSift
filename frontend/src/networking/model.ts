@@ -4,12 +4,7 @@ Used by: Inventory, networking details and resource navigation.
 Responsibilities: Preserve optional values from typed Kubernetes JSON.
 Important: Missing values must not become positive health evidence.
 */
-export type {
-  NetworkPage,
-  NetworkRow,
-  ServiceSlicePage,
-  NetworkReferenceRequest,
-} from "../../bindings/github.com/sandjaie/KubeSift/internal/kube/models";
+export type { NetworkPage, NetworkRow, ServiceSlicePage, NetworkReferenceRequest } from "../../bindings/internal/kube/models";
 
 export const networkKinds = ["Service", "EndpointSlice", "Ingress", "IngressClass", "NetworkPolicy"] as const;
 export type NetworkKind = (typeof networkKinds)[number];

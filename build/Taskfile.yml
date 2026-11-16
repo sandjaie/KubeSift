@@ -9,8 +9,7 @@ tasks:
   bindings:
     cmds:
       - go mod tidy
-      - wails3 generate bindings -ts -i ./cmd/kubesift
-      - python3 scripts/source-descriptions.py bindings
+      - node scripts/generate-bindings.mjs
   frontend:
     deps: [bindings]
     preconditions:

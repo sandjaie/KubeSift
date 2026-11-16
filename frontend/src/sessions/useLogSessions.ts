@@ -5,7 +5,7 @@ Responsibilities: Register event delivery before activation and release native s
 Important: Theme, Settings and detail remounts do not own or recreate this subscription.
 */
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { ExplorerService } from "../../bindings/github.com/sandjaie/KubeSift/internal/desktop";
+import { ExplorerService } from "../../bindings/internal/desktop";
 import { acknowledge, activateSession, onSessionEvent, stopSession } from "../bridge";
 import { createLogStore } from "./logStore";
 export function useLogSessions() {

@@ -10,7 +10,7 @@ import { Modal } from "../ui/ReviewDialog";
 import { overviewObject, object, list } from "../workspace/ResourceOverview";
 import type { ResourceDetail } from "../workloads/model";
 import { readRequest, workloadAPI } from "../workloads/api";
-import type { ForwardCandidatePage, ForwardRequest } from "../../bindings/github.com/sandjaie/KubeSift/internal/kube/models";
+import type { ForwardCandidatePage, ForwardRequest } from "../../bindings/internal/kube/models";
 
 function validPort(text: string, allowZero = false) {
   return /^\d{1,5}$/.test(text) && Number(text) >= (allowZero ? 0 : 1) && Number(text) <= 65535;

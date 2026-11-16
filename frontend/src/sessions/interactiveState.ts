@@ -6,7 +6,7 @@ Important: View changes never replay commands or retarget a stream.
 */
 import { message } from "../connections/api";
 import type { ConnectionRef, SessionEvent, SessionRef } from "../bridge";
-import type { InteractiveEntry, ResourceRef } from "../../bindings/github.com/sandjaie/KubeSift/internal/kube/models";
+import type { InteractiveEntry, ResourceRef } from "../../bindings/internal/kube/models";
 
 export type OwnedInteractive = InteractiveEntry & { tab: string; cluster: string };
 export type InteractiveStart = () => { promise: Promise<InteractiveEntry>; cancel: () => void };
