@@ -137,6 +137,14 @@
         deletion, finalizer removal, generic resource deletion and unsafe StatefulSet retention overrides are excluded. Scale, Restart and
         Delete share native locks and aggregate limits; an uncertain response is never automatically retried.
       </p>
+      <h2 id="interactive-sessions">Interactive session design</h2>
+      <p>
+        The <a href="../superpowers/specs/2026-11-16-phase-1d6-interactive-sessions-design.md">1D.6 specification</a> uses existing
+        Kubernetes permissions for container exec and Pod port forwarding. Start is explicit; individual terminal commands are not dry-run
+        or reviewed mutations. Bind sessions to captured connection/Pod identities and never replay commands or migrate forwards
+        automatically. Forward only TCP to loopback; payloads remain native and terminal content is bounded memory, not diagnostic history.
+        Local laptop shell execution is outside this increment.
+      </p>
       <h2 id="workload-rollback">Workload rollback design</h2>
       <p>
         The <a href="../superpowers/specs/2026-11-16-phase-1d5-workload-rollback-design.md">1D.5 design</a> restores selected owned workload

@@ -2,6 +2,12 @@
 
 Updated 2026-11-16. Current integration branch is `develop`.
 
+## Phase 1D.6 · Interactive sessions
+
+- [Specification](../../docs/superpowers/specs/2026-11-16-phase-1d6-interactive-sessions-design.md) and [five-task plan](../../docs/superpowers/plans/2026-11-16-phase-1d6-interactive-sessions.md) prepared together at the user's request for review and a separate implementation session.
+- Pod-container terminals and Pod/Service TCP forwarding reuse current Sessions UI and native transports, with fixed identities and explicit stop/close. Local laptop terminals excluded from this increment; no automatic reconnect or command replay.
+- Builder review found no important unanswered questions. Minimal tests and agent desktop verification; no application or cluster changes during planning.
+
 ## Phase 1D.5 · Workload history and rollback
 
 - Implemented in the existing checkout from `2f74b4c` on `feature/phase-1d5-workload-rollback`. The [specification](../../docs/superpowers/specs/2026-11-16-phase-1d5-workload-rollback-design.md), [plan](../../docs/superpowers/plans/2026-11-16-phase-1d5-workload-rollback.md) and [validation report](../../docs/superpowers/validation/phase-1d5.html) cover reviewed Pod-template-only rollback for Deployments, StatefulSets and DaemonSets.
