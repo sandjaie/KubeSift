@@ -4,9 +4,9 @@ Updated 2026-11-16. Current integration branch is `develop`.
 
 ## Phase 1D.4 · Reviewed YAML editing
 
-- Implemented from `f3819d7` in the existing checkout. [Specification](../../docs/superpowers/specs/2026-11-16-phase-1d4-reviewed-yaml-editing-design.md), [plan](../../docs/superpowers/plans/2026-11-16-phase-1d4-yaml-editing.md), and [validation](../../docs/superpowers/validation/phase-1d4.html).
+- [PR #19](https://github.com/sandjaie/KubeSift/pull/19) squash-merged into `develop` as `87c7ce8` on 2026-11-16 Dubai time. Implemented from `f3819d7` in the existing checkout. [Specification](../../docs/superpowers/specs/2026-11-16-phase-1d4-reviewed-yaml-editing-design.md), [plan](../../docs/superpowers/plans/2026-11-16-phase-1d4-yaml-editing.md), and [validation](../../docs/superpowers/validation/phase-1d4.html).
 - Conditional editing and Secret stringData passed on both approved contexts. The packaged macOS verification covered ConfigMap and Secret edits, draft retention across tabs, Forbidden, stale confirmation and both themes. Fixture cleanup was verified.
-- Independent whole-PR review and targeted recheck passed. Integration into `develop` is pending.
+- Independent whole-PR review and targeted rechecks passed. Both approved contexts were checked after fixture and credential cleanup.
 
 ## Phase 1D.3 · Reviewed workload deletion
 
