@@ -2,6 +2,13 @@
 
 Updated 2026-11-16. Current integration branch is `develop`.
 
+## Next: Phase 1D.8 · Server-side apply and Phase 1D closure
+
+- Planning reconciled against merged 1D.7 (`fea4175`); implementation has not started. [Shared specification](../../docs/superpowers/specs/2026-11-16-phase-1d-completion-design.md) and [five-task plan](../../docs/superpowers/plans/2026-11-16-phase-1d8-server-side-apply.md).
+- Reuse native route/draft/operation infrastructure, normalized bindings and approved YAML permission model. Preserve collapsible sidebar groups, suspended draft result handling and exact-version resource navigation from the 1D.7 review fixes.
+- First prove existing-target SSA UID/version safety on both approved clusters; then implement ownership review/explicit takeover and complete the eight-increment exit audit. Phase 1D remains incomplete until this work is verified and merged with no closure blocker.
+- Separate implementation session, existing checkout, no worktree. Agent verification, one whole-PR review and ready-PR merge; no duplicate user UAT, release or 1E implementation.
+
 ## Phase 1D.7 · Reviewed resource creation
 
 - [PR #22](https://github.com/sandjaie/KubeSift/pull/22) squash-merged into `develop` as `fea4175` on 2026-11-16 Dubai time. Implemented from `b8bb628` in the existing checkout. The [shared specification](../../docs/superpowers/specs/2026-11-16-phase-1d-completion-design.md), [1D.7 plan](../../docs/superpowers/plans/2026-11-16-phase-1d7-resource-creation.md) and [validation report](../../docs/superpowers/validation/phase-1d7.html) cover binding regeneration, reviewed named creation and collapsible sidebar groups.

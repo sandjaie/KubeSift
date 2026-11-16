@@ -8,6 +8,21 @@
 
 **Architecture:** Reuse 1D.7 route/address/lock helpers and 1D.4 explicit full-object captures/parser/editor. Add a separate ApplyService using Kubernetes SSA, not JSON Patch merge emulation. Existing Create and Edit retain their own semantics. API-server preview owns value/ownership effects.
 
+## Reconciled implementation baseline
+
+Planning refresh on 2026-11-16: 1D.7 is merged as `fea4175` (PR #22), with checkpoint `00101a7`. This is the next increment; do not repeat creation or binding relocation. Preserve collapsible resource-sidebar sections, normalized `frontend/bindings/internal` imports, and current inspector/Secret behavior.
+
+Reuse the delivered code deliberately:
+
+- `internal/kube/manifest_target.go`: ManifestAddress, ResolveManifestTarget, CollectionPath/Path and ReadIdentity already exist. Creation/reading/patch capability checks are independent; apply requires Get and Patch, never List or Create. Keep exact-version routes and connection/proxy exclusions.
+- `internal/operation/coordinator.go`: address locks already ignore UID/version; storeDraft/reviseDraft/closeDraft and pending draft revisions are shared. Add apply to the existing result union and operationKey canonicalization; do not introduce a parallel draft store or use a Kind-only fallback for generic targets.
+- `internal/operation/http.go`: createPost/editPatch wrap sendRequest with bounded, non-replayable requests. Add a narrow SSA wrapper with fixed media type/fieldManager/Strict options and explicitly bound force. Preserve create/edit/deletion status and error handling.
+- `internal/operation/edit.go` / `edit_patch.go`: operationDraft, captured baseline and lossless parser/stringData helpers are available. Apply must reuse parsing/capture, not JSON Patch's field-merging semantics.
+- `frontend/src/App.tsx`, operations/CreateDialog.tsx, EditDialog.tsx and reviewState.ts own editor suspension/review state. Preserve the 1D.7 review fix: submission suspends its draft, and a late result cannot discard newer text. Uncertain results restore the unchanged submitted draft without automatic replay.
+- Accepted-resource navigation now supports exact-version readable APIs without List. Apply refresh/Open must keep that support, revalidate UID and preserve ordinary Secret metadata-only browsing outside explicit edit/reveal.
+
+The [1D.7 validation](../validation/phase-1d7.html) records actual two-context/native evidence and review fixes. Do not interpret its passes as unrun SSA tests. The historical marker suite remains outside the approved context pair; baseline custom APIs must not be removed during fixture cleanup.
+
 ## Prerequisites and review focus
 
 Use `/Users/sandjaieravi/dev/KubeSift`, no worktree; preserve unrelated edits. Verify merged 1D.7, its normalized frontend/bindings/internal layout and actual source first, adapt helper paths without changing contracts, then branch `feature/phase-1d8-server-side-apply`. Follow AGENTS.md, Kubernetes skill, current toolchain/Git workflow and approved 1D.4 permission simplicity. Kubernetes decides permissions; no kind allowlist or repeated Secret approval.
@@ -21,7 +36,7 @@ Use `/Users/sandjaieravi/dev/KubeSift`, no worktree; preserve unrelated edits. V
 ## Task 1 — Existing-target SSA protocol proof
 
 **Create:** `internal/operation/apply_protocol_test.go`, initial `tests/integration/apply_test.go` cases.
-**Modify:** shared operation HTTP helper only for fixed apply media/query options; reuse ManifestAddress resolver.
+**Modify:** `internal/operation/http.go` via a narrow `applyPatch` wrapper for fixed apply media/query options; reuse ManifestAddress and existing CaptureEdit rather than recreating discovery.
 
 - [ ] On task-owned ConfigMap and custom API fixtures in both approved kind contexts, prove PATCH application/apply-patch+yaml accepts native-injected original metadata.uid/resourceVersion with fieldManager kubesift-apply. Verify dry-run is non-persistent and real update preserves the target UID.
 - [ ] Prove server rejection of stale version, recreated same-name object and deletion after final GET without recreating it. Include force=true to prove ownership takeover cannot override identity/version guards. Verify returned statuses and actual object content, not just mock expectations.
@@ -35,7 +50,7 @@ Use `/Users/sandjaieravi/dev/KubeSift`, no worktree; preserve unrelated edits. V
 
 **Contracts:** `OpenApply(ctx, kube.EditTarget) (ApplyDraft,error)` captures current identity/version/full baseline natively and returns identity-only desired YAML plus bounded baseline reference. `PrepareApply(ctx, ApplyRequest{DraftID,YAML,TakeOwnership bool}) (ApplyReview,error)`. Review carries successful Token/ExpiresAt only after dry-run, ProposedYAML, BeforeYAML, ServerYAML, bounded ownership changes/warnings, or structured conflict evidence and no token. `CloseApply(id)` clears draft/payload/ownership references. Native stored capture includes draft revision and server identity; fieldManager is fixed, never bridge-selected.
 
-- [ ] Reuse lossless parse/stringData normalization. Reject changed target and server-owned fields; inject native UID/version only into wire payload. Do not seed the full live object as desired configuration, synthesize last-applied fields or treat identity-only/same-value apply as no-op.
+- [ ] Reuse coordinator storeDraft/reviseDraft/closeDraft and lossless parse/stringData normalization. Bind native conflict evidence to the same draft revision so a forged TakeOwnership flag cannot bypass matching conflict review. Reject changed target and server-owned fields; inject native UID/version only into wire payload. Do not seed the full live object as desired configuration, synthesize last-applied fields or treat identity-only/same-value apply as no-op.
 - [ ] Test omitted versus null fields, schema-driven list semantics (no local merging), exact numbers/unknown fields and secret normalization. Bound draft/review total at 2 MiB, native ownership parsing to decoded cap and rendered ownership summary to 100 entries/8 KiB with explicit truncation.
 - [ ] Perform SSA dry-run with manager kubesift-apply and force false/absent. Diff baseline against server result; project ownership acquired/released/shared where determinable from managedFields without fabricating completeness. Never submit managedFields or retain values in operation results.
 - [ ] Distinguish structured ownership conflicts from stale version/UID, Forbidden, immutable fields and generic 409. Show bounded manager/path evidence transiently. TakeOwnership true is allowed only for a currently matching conflict review/draft, invalidates the old review and reruns dry-run. Reset on changed draft/baseline; no auto-force.
@@ -48,7 +63,7 @@ Use `/Users/sandjaieravi/dev/KubeSift`, no worktree; preserve unrelated edits. V
 
 **Contracts:** `ExecuteApply(token string) (OperationResult,error)`, `RevokeApply(token string)`. Add action apply payload with manager/force-used and canonical existing target identity only. No desired document/values/managedFields in retained results. Execute cannot accept a new target, force choice or body.
 
-- [ ] Revalidate current source UID/version and send exact prepared SSA payload once with original guards; remove only dryRun. Shared address lock covers Create/Edit/Scale/Restart/Delete/Rollback; action tokens and replay lookup remain isolated.
+- [ ] Extend operationKey and result copying with explicit apply group/resource identity, testing same-address cross-action/cross-version locks for a custom kind as well as built-ins. Revalidate current source UID/version and send exact prepared SSA payload once with original guards; remove only dryRun. Shared address lock covers Create/Edit/Scale/Restart/Delete/Rollback; action tokens and replay lookup remain isolated.
 - [ ] Test post-GET race, wrong action, expiry, duplicate submission, draft revision and explicit force binding. Returned 200 must have correct UID/name/scope and usable version; unexpected 201 or invalid/oversize/lost success becomes Unknown and a test failure for unintended creation. No follow-up deletion/rollback.
 - [ ] Count actual wire requests for timeout/429/5xx/redirect/auth/bridge failure and repeated token. Never retry an uncertain write, rebase a version or auto-force conflicts. Valid accepted response can differ due to admission; preserve outcome without claiming convergence.
 - [ ] Wire thin preview/execute/revoke/close methods and connection lifecycle. Regenerate bindings, inspect changes and add typed wrappers. Run Go tests/race plus frontend typecheck and commit.
@@ -56,12 +71,12 @@ Use `/Users/sandjaieravi/dev/KubeSift`, no worktree; preserve unrelated edits. V
 ## Task 4 — Apply configuration UI in the existing YAML workflow
 
 **Create:** `frontend/src/operations/ApplyDialog.tsx`, `applyState.ts`, focused tests.
-**Modify:** current YAML action entry points, shared editor/diff primitives, OperationResults/api and READMEs.
+**Modify:** `frontend/src/App.tsx`, current ResourceYaml/fixed/generic/Secret action entry points, shared editor/diff/reviewState primitives, OperationResults/api and READMEs. Keep imports under normalized bindings/internal.
 
 - [ ] Add Apply configuration separately from Edit YAML for fixed/generic/explicit Secret views. Start with identity-only manifest and an existing-resource reference; display stable manager kubesift-apply and clarify omissions can remove previously owned fields.
 - [ ] Reuse normal review/Confirm: desired document, actual server value diff and expandable ownership summary. Conflicts show paths/managers and explicit Take over conflicting fields toggle in that flow, not a second approval wizard. No takeover for unrelated errors or stale captures.
-- [ ] Test changed draft/target/baseline resets force and review, late results/revocation, unsaved-draft navigation, disconnect, Secret isolation, bounded diff and keyboard/focus. Same values may still change ownership; do not suppress Confirm solely because a textual value diff is empty.
-- [ ] Preserve existing Edit/Create flows and mixed operation results. Accepted refresh uses captured UID, Unknown never auto-retries; copy remains explicit. Run full frontend tests/lint/typecheck and focused backend tests; commit.
+- [ ] Add mounted delayed-response tests for suspended submission: resume/edit cannot race an in-flight apply, acceptance clears only that submitted draft and uncertainty preserves its exact text. Test changed draft/target/baseline resets force and review, late results/revocation, unsaved-draft navigation, disconnect, Secret isolation, bounded diff and keyboard/focus. Same values may still change ownership; do not suppress Confirm solely because a textual value diff is empty.
+- [ ] Preserve existing Edit/Create flows, collapsible sidebar state and mixed operation results. Exact-version target refresh must work when Get/Patch are advertised but List is not. Accepted refresh uses captured UID, Unknown never auto-retries; copy remains explicit. Run full frontend tests/lint/typecheck and focused backend tests; commit.
 
 ## Task 5 — Verification, whole-PR review and Phase 1D closure
 
@@ -69,7 +84,7 @@ Use `/Users/sandjaieravi/dev/KubeSift`, no worktree; preserve unrelated edits. V
 **Modify:** apply integration suite/README, capability inventory, checkpoint and this checklist.
 
 - [ ] Use task-owned synthetic fixtures only in kind-dev-local-a/b. Cover built-in/cluster-scope/custom/Secret examples, denied patch, manager conflicts, deliberate takeover, ownership-only change, previously-owned field omission, other-manager preserved fields, list semantics and late UID/version/deletion races. Verify managedFields on real server; do not install product infrastructure.
-- [ ] Run full repository checks, targeted coordinator/parser/HTTP races, apply plus affected create/edit/operation/session integration, binding consistency, build/package. Packaged desktop verifies apply→conflict→explicit takeover→Confirm, Secret, denial/staleness, ownership-only review, preserved Create/Edit and both contexts/appearances/focus. No duplicate user UAT.
+- [ ] Run full repository checks, targeted coordinator/parser/HTTP races, apply plus affected create/edit/operation/session integration, binding consistency, build/package. Packaged desktop verifies apply→conflict→explicit takeover→Confirm, Secret, denial/staleness, ownership-only review, preserved Create/Edit, exact-version readable-without-List navigation, sidebar collapse and both contexts/appearances/focus. No duplicate user UAT.
 - [ ] Verify cleanup of owned resources/custom objects before CRDs/namespaces and temporary credentials on both contexts. Record real versus synthetic/native limits precisely.
 - [ ] Produce closure matrix linking all eight specs/plans/merge evidence/reports. Audit outstanding checkboxes and every Phase 1D exit criterion; classify remaining items as blocking or approved exclusions/compatibility limits. Carry 1D.6 stream identity/remote-child/throughput/platform limits explicitly. Run focused shared-component regressions where this change justifies them, not every historical scenario indiscriminately.
 - [ ] Request one fresh independent whole-PR review using repository review skill over complete code plus closure claims. Fix findings and targeted rechecks, update report/checklist. No completion claim if committed acceptance remains unverified or a blocker unresolved.
