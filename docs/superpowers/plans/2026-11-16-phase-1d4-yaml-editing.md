@@ -61,11 +61,11 @@ Native baseline ownership is per edit ID, not a global current context. Keep at 
 
 **Interfaces:** Produces `CaptureEdit`, `OpenEdit` and `CloseEdit` above. Reuses the current connection manager, bounded reader and exact YAML conversion.
 
-- [ ] Add `TestEditCapture` table cases: built-in namespaced, custom/cluster-scoped, explicit Secret read, unsupported patch and Forbidden. Assert route/scope/UID correctness; unknown permission hints do not block a request. Default Secret list paths still never fetch full bodies.
-- [ ] Run `go test ./internal/kube -run TestEditCapture -count=1`; confirm the new cases fail before implementation.
-- [ ] Implement native discovery route resolution for fixed and generic views; do not reuse generic-reader Secret exclusions as an edit prohibition. Fetch only the explicitly selected resource with the user's credentials. Reject wrong identity, unavailable API or unsupported operation with a specific message. No fallback URL, create or trial mutation.
-- [ ] Keep the full exact JSON baseline native. Produce YAML with fixed identity context and server-owned fields/status omitted from the editable projection; record that omission so it cannot become a removal. Preserve unknown fields. Add bounded capture ownership and cleanup without another connection manager.
-- [ ] Run `go test ./internal/kube ./internal/operation`; expect pass. Commit task files as `feat: capture existing resources for YAML editing`.
+- [x] Add `TestEditCapture` table cases: built-in namespaced, custom/cluster-scoped, explicit Secret read, unsupported patch and Forbidden. Assert route/scope/UID correctness; unknown permission hints do not block a request. Default Secret list paths still never fetch full bodies.
+- [x] Run `go test ./internal/kube -run TestEditCapture -count=1`; confirm the new cases fail before implementation.
+- [x] Implement native discovery route resolution for fixed and generic views; do not reuse generic-reader Secret exclusions as an edit prohibition. Fetch only the explicitly selected resource with the user's credentials. Reject wrong identity, unavailable API or unsupported operation with a specific message. No fallback URL, create or trial mutation.
+- [x] Keep the full exact JSON baseline native. Produce YAML with fixed identity context and server-owned fields/status omitted from the editable projection; record that omission so it cannot become a removal. Preserve unknown fields. Add bounded capture ownership and cleanup without another connection manager.
+- [x] Run `go test ./internal/kube ./internal/operation`; expect pass. Commit task files as `feat: capture existing resources for YAML editing`.
 
 ## Task 2: Generate a faithful conditional patch
 

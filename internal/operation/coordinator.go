@@ -49,6 +49,8 @@ type pendingReview struct {
 	expires         time.Time
 	acknowledgement string
 	payload         any
+	draftID         string
+	revision        uint64
 }
 
 type operationRecord struct {
@@ -64,6 +66,7 @@ type Coordinator struct {
 	stop        context.CancelFunc
 	prepares    chan struct{}
 	pending     map[string]pendingReview
+	captures    map[string]editCapture
 	results     map[string]*operationRecord
 	byToken     map[string]string
 	active      map[kube.ResourceRef]bool
@@ -77,7 +80,7 @@ func NewCoordinator(connections *connection.Manager, now func() time.Time) *Coor
 	}
 	ctx, stop := context.WithCancel(context.Background())
 	c := &Coordinator{connections: connections, now: now, ctx: ctx, stop: stop, prepares: make(chan struct{}, 16),
-		pending: map[string]pendingReview{}, results: map[string]*operationRecord{}, byToken: map[string]string{}, active: map[kube.ResourceRef]bool{}}
+		pending: map[string]pendingReview{}, captures: map[string]editCapture{}, results: map[string]*operationRecord{}, byToken: map[string]string{}, active: map[kube.ResourceRef]bool{}}
 	if connections != nil {
 		connections.AddCleanup(c.CloseConnection)
 	}
@@ -113,7 +116,12 @@ func (s *Coordinator) save(ctx context.Context, review pendingReview) (string, t
 	}
 	now := s.now()
 	s.prune(now)
-	if len(s.pending) >= 128 {
+	if review.draftID != "" {
+		if draft, ok := s.captures[review.draftID]; !ok || draft.revision != review.revision {
+			return "", time.Time{}, model.Fail("expired", "Edit capture changed or expired")
+		}
+	}
+	if len(s.pending)+len(s.captures) >= 128 {
 		return "", time.Time{}, model.Fail("busy", "Too many pending operation reviews")
 	}
 	token := model.ID()
@@ -231,6 +239,11 @@ func (s *Coordinator) ListOperationResults() []OperationResult {
 }
 
 func (s *Coordinator) prune(now time.Time) {
+	for id, draft := range s.captures {
+		if !now.Before(draft.expires) {
+			s.dropEdit(id)
+		}
+	}
 	for token, p := range s.pending {
 		if !now.Before(p.expires) {
 			delete(s.pending, token)
@@ -283,6 +296,9 @@ func (s *Coordinator) scheduleExpiry(now time.Time) {
 	for _, p := range s.pending {
 		consider(p.expires)
 	}
+	for _, capture := range s.captures {
+		consider(capture.expires)
+	}
 	for _, id := range s.byToken {
 		if finished := s.results[id].result.FinishedAt; finished != nil {
 			consider(finished.Add(10 * time.Minute))
@@ -303,6 +319,11 @@ func (s *Coordinator) scheduleExpiry(now time.Time) {
 func (s *Coordinator) CloseConnection(ref model.ConnectionRef) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	for id, draft := range s.captures {
+		if draft.baseline.Target.Connection == ref {
+			s.dropEdit(id)
+		}
+	}
 	for token, review := range s.pending {
 		if review.result.Resource.Connection == ref {
 			delete(s.pending, token)
@@ -318,4 +339,5 @@ func (s *Coordinator) Close() {
 		s.expiry = nil
 	}
 	clear(s.pending)
+	clear(s.captures)
 }

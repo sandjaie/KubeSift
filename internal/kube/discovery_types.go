@@ -31,6 +31,7 @@ type APIResourceDescriptor struct {
 	Namespaced bool   `json:"namespaced"`
 	List       bool   `json:"list"`
 	Get        bool   `json:"get"`
+	Patch      bool   `json:"patch"`
 	Mode       string `json:"mode"`
 	Reason     string `json:"reason"`
 	Handle     string `json:"handle"`

@@ -37,6 +37,9 @@ func apiVersionPath(group, version string) string {
 	return "/apis/" + group + "/" + version
 }
 func (a apiResource) read(client kubernetes.Interface, ns, name string) *rest.Request {
+	return fixedRead(client, a.path(ns, name))
+}
+func (a apiResource) path(ns, name string) string {
 	path := apiVersionPath(a.group, a.version)
 	if a.namespaced {
 		path += "/namespaces/" + ns
@@ -45,7 +48,7 @@ func (a apiResource) read(client kubernetes.Interface, ns, name string) *rest.Re
 	if name != "" {
 		path += "/" + name
 	}
-	return fixedRead(client, path)
+	return path
 }
 func fixedRead(client kubernetes.Interface, path string) *rest.Request {
 	return client.CoreV1().RESTClient().Get().AbsPath(path).SetHeader("Accept", "application/json").MaxRetries(0)
