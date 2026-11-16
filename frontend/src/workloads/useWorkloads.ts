@@ -74,8 +74,13 @@ export function useWorkloads(
   const patch = (value: Partial<KindState>) => commit({ type: "patch", tab: tabID, scope, kind, patch: value });
   useLayoutEffect(() => {
     setNavigationError("");
-    return cancelNavigation;
-  }, [tabID, namespaceScope, visible]);
+    return () => {
+      cancelNavigation();
+      const old = current.current[tabID];
+      if (old?.scope === namespaceScope && old.kinds[old.kind].deletionCapture)
+        commit({ type: "patch", tab: tabID, scope: kindScope(old, old.kind), kind: old.kind, patch: { deletionCapture: undefined } });
+    };
+  }, [tabID, namespaceScope, visible, commit]);
   useLayoutEffect(() => {
     if (!visible || !tabID) return;
     return () => {
@@ -338,30 +343,46 @@ export function useWorkloads(
         (detail) => show(entry, entries, detail),
       );
     },
+    holdDeletionSelection: () => {
+      if (!t || !selected || !canOpen(selected.resource)) return;
+      const capture = { row: selected, submitting: true };
+      patch({ deletionCapture: capture });
+      return (recoverable: boolean) => {
+        if (current.current[tabID]?.kinds[kind].deletionCapture !== capture) return;
+        patch({ deletionCapture: recoverable ? { ...capture, submitting: false } : undefined });
+      };
+    },
     refreshOperationTarget: (resource: ResourceRef, deletion = false) => {
+      const liveTab = current.current[tabID];
+      if (!liveTab || liveTab.kind !== kind || kindScope(liveTab, kind) !== scope) return;
+      const latest = liveTab.kinds[kind];
+      const row = latest.selected ?? (deletion ? latest.deletionCapture?.row : undefined);
       if (
         !t ||
-        !selected ||
+        !row ||
         !canOpen(resource) ||
-        selected.resource.uid !== resource.uid ||
-        selected.resource.name !== resource.name ||
+        row.resource.uid !== resource.uid ||
+        row.resource.name !== resource.name ||
+        row.resource.apiVersion !== resource.apiVersion ||
         kind !== resource.kind
       )
         return;
       cancelNavigation();
       patch({
-        refresh: inventory.refresh + 1,
-        sectionRefresh: inventory.sectionRefresh + 1,
+        refresh: latest.refresh + 1,
+        sectionRefresh: latest.sectionRefresh + 1,
         ...(deletion
           ? {
+              selected: row,
               section: "Overview",
               sectionCursor: "",
               sectionEpoch: ++serial.current,
               sections: {},
               referenceEvidence: undefined,
               retainedAfterDeletion: true,
+              deletionCapture: undefined,
             }
-          : { sections: { ...inventory.sections, Overview: undefined } }),
+          : { sections: { ...latest.sections, Overview: undefined } }),
       });
     },
     catalogRoute: t?.catalog,

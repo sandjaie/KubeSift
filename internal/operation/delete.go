@@ -101,7 +101,7 @@ func (c operationClient) inspectDelete(ctx context.Context, path string, ref kub
 	}
 	var parent scalePayload
 	if json.Unmarshal(raw, &parent) != nil || parent.Kind != ref.Kind || parent.APIVersion != ref.APIVersion ||
-		parent.Metadata.UID == "" || parent.Metadata.Version == "" {
+		parent.Metadata.UID == "" || parent.Metadata.Version == "" || (ref.Kind == "StatefulSet" && parent.Spec == nil) {
 		return DeleteImpact{}, invalidDeleteEvidence()
 	}
 	if !parent.matches(ref, version) || parent.Metadata.Deletion != nil {

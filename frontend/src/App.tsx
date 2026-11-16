@@ -310,7 +310,8 @@ export default function App() {
                 navigationOpen={!hiddenNavigation[state.active!]}
                 controller={workloads}
                 onOperation={(action, token, acknowledgement) => {
-                  operationResults.submit(action, token, acknowledgement);
+                  const releaseDeletion = action === "delete" ? workloads.holdDeletionSelection() : undefined;
+                  operationResults.submit(action, token, acknowledgement, releaseDeletion);
                   setResultsOpen(true);
                 }}
                 logs={

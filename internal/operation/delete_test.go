@@ -159,3 +159,48 @@ func makeFinalizers() []string {
 	}
 	return names
 }
+
+func TestDeleteRejectsMissingStatefulSetSpecBeforeWrite(t *testing.T) {
+	for _, malformed := range []string{
+		restartFixture("StatefulSet", "null", "{}"),
+		strings.Replace(restartFixture("StatefulSet", "{}", "{}"), `"spec":{},`, "", 1),
+	} {
+		var valid atomic.Bool
+		var writes atomic.Int32
+		scale, req := scaleServer(t, func(w http.ResponseWriter, r *http.Request) {
+			switch r.Method {
+			case http.MethodGet:
+				if valid.Load() {
+					fmt.Fprint(w, restartFixture("StatefulSet", "{}", "{}"))
+				} else {
+					fmt.Fprint(w, malformed)
+				}
+			case http.MethodPost:
+				w.WriteHeader(http.StatusForbidden)
+			case http.MethodDelete:
+				writes.Add(1)
+				fmt.Fprint(w, `{"apiVersion":"v1","kind":"Status","status":"Success"}`)
+			}
+		})
+		ctx := context.Background()
+		service := NewDeleteService(scale.connections, scale.coordinator, nil)
+		req.Resource.Kind = "StatefulSet"
+		request := DeleteRequest{req.Resource, req.SourceVersion}
+		_, err := service.PrepareDelete(ctx, request)
+		checkCode(t, err, "invalid_response")
+		if writes.Load() != 0 {
+			t.Fatal("preparation reached DELETE with missing spec")
+		}
+		valid.Store(true)
+		review, err := service.PrepareDelete(ctx, request)
+		if err != nil {
+			t.Fatal(err)
+		}
+		valid.Store(false)
+		result, err := service.ExecuteDelete(ctx, review.Token, req.Resource.Name)
+		if err != nil || result.State != "cancelled-before-send" || result.Problem == nil ||
+			result.Problem.Code != "invalid_response" || writes.Load() != 1 {
+			t.Fatalf("malformed recheck crossed the write boundary: %+v %v", result, err)
+		}
+	}
+}

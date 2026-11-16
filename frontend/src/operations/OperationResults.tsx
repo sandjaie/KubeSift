@@ -30,27 +30,32 @@ export function useOperationResults(onResult: (result: Pick<OperationResult, "re
   const acceptedDeletions = useRef(new Set<string>());
   const onFinish = useRef(onResult);
   onFinish.current = onResult;
+  const reportDeletion = useCallback((result: OperationResult) => {
+    const seen = acceptedDeletions.current;
+    if (result.state !== "accepted" || seen.has(result.operationID)) return;
+    seen.add(result.operationID);
+    if (seen.size > 128) {
+      const oldest = seen.values().next().value;
+      if (oldest !== undefined) seen.delete(oldest);
+    }
+    onFinish.current(result);
+  }, []);
   const refresh = useCallback(() => {
     const request = ++query.current;
     void listOperationResults().then(
       (rows) => {
         if (request !== query.current) return;
         const next = rows ?? [];
-        const accepted = new Set<string>();
         for (const row of next) {
-          if (row.action === "delete" && row.state === "accepted") {
-            accepted.add(row.operationID);
-            if (!acceptedDeletions.current.has(row.operationID)) onFinish.current(row);
-          }
+          if (row.action === "delete") reportDeletion(row);
         }
-        acceptedDeletions.current = accepted;
         setResults(next);
       },
       () => {
         if (request === query.current) setError("Operation results could not be read. Refresh results to check again.");
       },
     );
-  }, []);
+  }, [reportDeletion]);
   const tracking = pending > 0 || results.some((row) => row.state === "executing");
   useEffect(() => {
     refresh();
@@ -58,16 +63,19 @@ export function useOperationResults(onResult: (result: Pick<OperationResult, "re
     const timer = window.setInterval(refresh, 1000);
     return () => window.clearInterval(timer);
   }, [refresh, tracking]);
-  const submit = (action: OperationAction, token: string, acknowledgement: string) => {
+  const submit = (action: OperationAction, token: string, acknowledgement: string, releaseDeletion?: (recoverable: boolean) => void) => {
     setError("");
     setPending((count) => count + 1);
     const execute = submissions[action];
     void execute(token, acknowledgement)
       .then(
         (result) => {
-          if (action !== "delete") onFinish.current({ ...result, action });
+          if (action === "delete" && "action" in result) reportDeletion(result);
+          else onFinish.current({ ...result, action });
+          releaseDeletion?.(false);
         },
         (failure) => {
+          releaseDeletion?.(true);
           setError(message(failure) + " Check Operation results for a recorded outcome.");
         },
       )

@@ -32,7 +32,7 @@ export const emptyKind = (): KindState => ({
 export function inventorySelection(state: KindState | undefined, items: { resource: ResourceRef }[] | null) {
   if (!state?.selected) return null;
   const { selected } = state;
-  if (state.related || state.retainedAfterDeletion) return selected;
+  if (state.related || state.retainedAfterDeletion || state.deletionCapture?.submitting) return selected;
   return items?.find((row) => row.resource.uid === selected.resource.uid) ?? null;
 }
 export function canAutoRefresh(s: KindState, visible: boolean) {
@@ -125,6 +125,7 @@ export function reduceWorkloads(state: WorkloadsState, a: Action): WorkloadsStat
   if (a.type === "kind") {
     if (t.kind === a.kind) return state;
     const target = t.kinds[a.kind];
+    const source = t.kinds[t.kind];
     return {
       ...state,
       [a.tab]: {
@@ -133,6 +134,7 @@ export function reduceWorkloads(state: WorkloadsState, a: Action): WorkloadsStat
         navigation: [],
         kinds: {
           ...t.kinds,
+          ...(source.deletionCapture ? { [t.kind]: { ...source, deletionCapture: undefined } } : {}),
           ...clearOutgoingData(t, a.kind, a.epoch),
           [a.kind]: target.related
             ? {
@@ -140,6 +142,7 @@ export function reduceWorkloads(state: WorkloadsState, a: Action): WorkloadsStat
                 selected: null,
                 related: false,
                 retainedAfterDeletion: false,
+                deletionCapture: undefined,
                 identity: "",
                 referenceEvidence: undefined,
                 sections: {},
@@ -178,6 +181,7 @@ export function reduceWorkloads(state: WorkloadsState, a: Action): WorkloadsStat
             selected: { resource: a.entry.resource },
             related: true,
             retainedAfterDeletion: false,
+            deletionCapture: undefined,
             section: a.entry.section,
             sectionCursor: a.entry.cursor,
             sectionEpoch: a.epoch,
@@ -192,7 +196,14 @@ export function reduceWorkloads(state: WorkloadsState, a: Action): WorkloadsStat
   let patch: Partial<KindState>;
   if (a.type === "select") {
     if (a.row && k.selected?.resource.uid === a.row.resource.uid && !k.related && !t.navigation.length) return state;
-    patch = { related: false, retainedAfterDeletion: false, identity: "", referenceEvidence: undefined, selected: a.row };
+    patch = {
+      related: false,
+      retainedAfterDeletion: false,
+      deletionCapture: undefined,
+      identity: "",
+      referenceEvidence: undefined,
+      selected: a.row,
+    };
     if (!a.row || k.selected?.resource.uid !== a.row.resource.uid || k.section !== "Overview") {
       Object.assign(patch, { section: "Overview", sections: {}, sectionCursor: "", sectionEpoch: a.epoch });
     }

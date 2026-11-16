@@ -161,6 +161,7 @@ export interface KindState {
   selected: { resource: ResourceRef } | null;
   related: boolean;
   retainedAfterDeletion: boolean;
+  deletionCapture?: { row: { resource: ResourceRef }; submitting: boolean };
   identity: string;
   referenceEvidence?: ReferenceEvidence;
   section: Section;
