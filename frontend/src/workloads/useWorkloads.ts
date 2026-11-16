@@ -153,7 +153,14 @@ export function useWorkloads(
     // Scope is the stable immutable connection/namespace identity.
   }, [tabID, scope, kind, cursor, inventory.refresh, visible, !!t, commit]);
   useEffect(() => {
-    if (!visible || !selected || section === "Logs" || !resourceSections(kind).includes(section)) return;
+    if (
+      !visible ||
+      !selected ||
+      section === "Logs" ||
+      (kind === "Secret" && section === "YAML") ||
+      !resourceSections(kind).includes(section)
+    )
+      return;
     const capturedYAML = isClusterKind(kind) ? (inventory.sections.Overview?.data as ResourceDetail | undefined)?.capturedYAML : undefined;
     if (section === "YAML" && capturedYAML) {
       patch({ sections: { ...inventory.sections, YAML: { data: capturedYAML, error: "", loading: false } } });

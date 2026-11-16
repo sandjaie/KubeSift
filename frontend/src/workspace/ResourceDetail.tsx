@@ -38,6 +38,8 @@ import { SelectedPods } from "../availability/SelectedPods";
 import { ControllerRevisions } from "../availability/ControllerRevisions";
 import { NetworkOverview } from "../networking/NetworkOverview";
 import { ServiceEndpointSlices } from "../networking/ServiceEndpointSlices";
+import { fixedEditTarget } from "../operations/editState";
+import type { EditTarget } from "../operations/api";
 import { ResourceYaml } from "./ResourceYaml";
 import { ResourceEvents } from "./ResourceEvents";
 import { DeploymentPods } from "./DeploymentPods";
@@ -53,12 +55,14 @@ export function ResourceDetail({
   canReviewOperation,
   logs,
   onOperation,
+  onEdit,
 }: {
   controller: WorkloadController;
   context: string;
   stale: boolean;
   canReviewOperation: boolean;
   logs?: ReactNode;
+  onEdit?: (target: EditTarget, reveal?: boolean) => void;
   onOperation: (action: OperationAction, token: string, acknowledgement: string) => void;
 }) {
   const [review, setReview] = useState<{ action: OperationAction; key: string }>();
@@ -274,11 +278,21 @@ export function ResourceDetail({
           onSelect={(target) => c.openServiceSlice((data as ServiceSlicePage).sourceVersion, target)}
         />
       )}
-      {section === "YAML" && data && (
+      {section === "YAML" && kind === "Secret" && onEdit && (
+        <div className="evidence-toolbar yaml-toolbar">
+          <button onClick={() => onEdit(fixedEditTarget(row.resource), true)}>Reveal YAML</button>
+          <button onClick={() => onEdit(fixedEditTarget(row.resource))}>Edit YAML</button>
+        </div>
+      )}
+      {section === "YAML" && kind !== "Secret" && !data && onEdit && (
+        <button onClick={() => onEdit(fixedEditTarget(row.resource))}>Edit YAML</button>
+      )}
+      {section === "YAML" && kind !== "Secret" && data && (
         <ResourceYaml
           key={JSON.stringify([row.resource.uid, (data as YAMLDocument).fetchedAt])}
           data={data as YAMLDocument}
           containsConfigData={kind === "ConfigMap"}
+          onEdit={onEdit && (() => onEdit(fixedEditTarget(row.resource)))}
         />
       )}
       {section === "Events" && data && <ResourceEvents key={row.resource.uid} data={data as EventPage} onNext={c.nextSection} />}

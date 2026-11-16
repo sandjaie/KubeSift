@@ -10,7 +10,15 @@ import type { YAMLDocument } from "../workloads/model";
 import { evidenceTime } from "./ResourceOverview";
 import { yamlMatches, yamlMatchLimit } from "./yamlSearch";
 
-export function ResourceYaml({ data, containsConfigData }: { data: YAMLDocument; containsConfigData: boolean }) {
+export function ResourceYaml({
+  data,
+  containsConfigData,
+  onEdit,
+}: {
+  data: YAMLDocument;
+  containsConfigData: boolean;
+  onEdit?: () => void;
+}) {
   const [managed, setManaged] = useState(false);
   const [query, setQuery] = useState("");
   const [match, setMatch] = useState<{ text: string; query: string; index: number }>();
@@ -83,6 +91,7 @@ export function ResourceYaml({ data, containsConfigData }: { data: YAMLDocument;
           />
           Show managed fields
         </label>
+        {onEdit && <button onClick={onEdit}>Edit YAML</button>}
         <CopyTextButton label="Copy displayed YAML" copiedLabel="Displayed YAML copied" key={String(managed)} text={text} />
       </div>
       {containsConfigData && <p className="muted yaml-note">ConfigMap values can contain sensitive configuration. Check before sharing.</p>}

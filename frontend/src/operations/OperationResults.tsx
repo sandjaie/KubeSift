@@ -7,10 +7,11 @@ Important: Refreshing results or targets never calls Execute.
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { message } from "../connections/api";
 import { Modal } from "../ui/ReviewDialog";
-import type { ResourceRef } from "../workloads/model";
+import { isResourceKind, type ResourceRef } from "../workloads/model";
 import {
   checkDeleteTarget,
   executeDelete,
+  executeEdit,
   executeRestart,
   executeScale,
   listOperationResults,
@@ -19,19 +20,19 @@ import {
   type OperationResult,
 } from "./api";
 
-const submissions = { delete: executeDelete, restart: executeRestart, scale: executeScale };
-const actionLabel: Record<string, string> = { delete: "Delete", restart: "Restart", scale: "Scale" };
+const submissions = { delete: executeDelete, edit: executeEdit, restart: executeRestart, scale: executeScale };
+const actionLabel: Record<string, string> = { delete: "Delete", edit: "Edit YAML", restart: "Restart", scale: "Scale" };
 
-export function useOperationResults(onResult: (result: Pick<OperationResult, "resource" | "state" | "action">) => void) {
+export function useOperationResults(onResult: (result: Pick<OperationResult, "resource" | "state" | "action" | "edit">) => void) {
   const [results, setResults] = useState<OperationResult[]>([]);
   const [pending, setPending] = useState(0);
   const [error, setError] = useState("");
   const query = useRef(0);
-  const acceptedDeletions = useRef(new Set<string>());
+  const acceptedEditsAndDeletions = useRef(new Set<string>());
   const onFinish = useRef(onResult);
   onFinish.current = onResult;
-  const reportDeletion = useCallback((result: OperationResult) => {
-    const seen = acceptedDeletions.current;
+  const reportAcceptedMutation = useCallback((result: OperationResult) => {
+    const seen = acceptedEditsAndDeletions.current;
     if (result.state !== "accepted" || seen.has(result.operationID)) return;
     seen.add(result.operationID);
     if (seen.size > 128) {
@@ -47,7 +48,7 @@ export function useOperationResults(onResult: (result: Pick<OperationResult, "re
         if (request !== query.current) return;
         const next = rows ?? [];
         for (const row of next) {
-          if (row.action === "delete") reportDeletion(row);
+          if (row.action === "delete" || row.action === "edit") reportAcceptedMutation(row);
         }
         setResults(next);
       },
@@ -55,7 +56,7 @@ export function useOperationResults(onResult: (result: Pick<OperationResult, "re
         if (request === query.current) setError("Operation results could not be read. Refresh results to check again.");
       },
     );
-  }, [reportDeletion]);
+  }, [reportAcceptedMutation]);
   const tracking = pending > 0 || results.some((row) => row.state === "executing");
   useEffect(() => {
     refresh();
@@ -67,10 +68,10 @@ export function useOperationResults(onResult: (result: Pick<OperationResult, "re
     setError("");
     setPending((count) => count + 1);
     const execute = submissions[action];
-    void execute(token, acknowledgement)
+    return execute(token, acknowledgement)
       .then(
         (result) => {
-          if (action === "delete" && "action" in result) reportDeletion(result);
+          if ((action === "delete" || action === "edit") && "action" in result) reportAcceptedMutation(result);
           else onFinish.current({ ...result, action });
           releaseDeletion?.(false);
         },
@@ -162,7 +163,7 @@ export function OperationResults({
             row.finishedAt && <DeleteTargetCheck operationID={row.operationID} canCheck={canOpen(row.resource)} />
           ) : (
             <button
-              disabled={!canOpen(row.resource)}
+              disabled={!canOpen(row.resource) || (!!row.edit && !isResourceKind(row.resource.kind))}
               onClick={() => {
                 onTarget(row.resource);
                 onClose();

@@ -11,6 +11,8 @@ import { readRequest, workloadAPI as api } from "../workloads/api";
 import { isResourceKind } from "../workloads/model";
 import { ResourceSplit } from "../workspace/ResourceSplit";
 import { GenericResourceTable } from "./GenericResourceTable";
+import type { EditTarget } from "../operations/api";
+import { sameEditTarget } from "../operations/editState";
 import { GenericResourceDetail } from "./GenericResourceDetail";
 import {
   visibleGenericRoute,
@@ -49,6 +51,8 @@ export function APIResourceBrowser({
   onRoute,
   onBack,
   onDedicated,
+  onEdit,
+  acceptedEdit,
   widthPercent,
   heightPercent,
   onResize,
@@ -59,6 +63,8 @@ export function APIResourceBrowser({
   route?: CatalogSeed;
   onRoute: (route: CatalogSeed | null) => void;
   onBack: () => void;
+  onEdit: (target: EditTarget) => void;
+  acceptedEdit?: EditTarget;
   onDedicated: (kind: import("../workloads/model").ResourceKind) => void;
   widthPercent: number;
   heightPercent: number;
@@ -135,6 +141,9 @@ export function APIResourceBrowser({
       (error) => setDetail({ key, error: message(error) }),
     );
   }
+  useEffect(() => {
+    if (acceptedEdit && capture && sameEditTarget(acceptedEdit, capture.resource)) open(capture.resource);
+  }, [acceptedEdit]);
   return (
     <ResourceSplit widthPercent={widthPercent} heightPercent={heightPercent} onResize={onResize} onCommit={onCommit}>
       <section className="list-pane api-browser">
@@ -339,6 +348,8 @@ export function APIResourceBrowser({
             loading={detail.key === key && !!detail.loading}
             onSection={(section) => patch({ section })}
             onRefresh={() => open(capture.resource)}
+            onEdit={() => onEdit(capture.resource)}
+            canPatch={!!liveDescriptor?.patch}
             onBack={() => {
               clearDetail();
               patch({ capture: undefined, section: "Overview" });
