@@ -23,4 +23,9 @@
     Restart preparation checks the parent strategy and uses a guarded dry-run of the fixed Pod template annotation patch. The review retains
     hashes and safe evidence without retaining the parent manifest.
   </p>
+  <p>
+    DeleteService reviews one supported workload, then sends a conditional DeleteOptions body with Background propagation and server grace.
+    Check target resolves the retained result and reads the original route with the captured UID. It keeps its observation separate from the
+    result of the request.
+  </p>
 </html>

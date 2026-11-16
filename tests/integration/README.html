@@ -92,3 +92,11 @@ done</code></pre>
   controllers in the dedicated namespace and checks stale UID and version preconditions independently. Delete the owned namespace and
   temporary kubeconfigs after verification.
 </p>
+
+<p>
+  <code>TestReviewedDeletion</code> uses <code>KUBESIFT_DELETION_INTEGRATION=1</code> and the same isolated A/B kubeconfig directory. Run
+  <code>go test -tags=integration ./tests/integration -run '^TestReviewedDeletion$' -count=1 -v</code>. The test creates and cleans up a
+  unique labeled namespace per approved context. It covers all eight kinds, controlled read and delete permission hints, late version and
+  UID races, and actual background cleanup of representative dependents. The Deployment and CronJob descendants use the fixture image
+  already available in local kind. StatefulSet fixtures use no claim templates.
+</p>

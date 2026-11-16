@@ -1,6 +1,6 @@
 /*
 Purpose: Coordinate confirmed workload operations across action types.
-Used by: Scale and restart services.
+Used by: Scale, restart and delete services.
 Responsibilities: Bind tokens, share target locks and retain bounded session results.
 Important: Wrong-action tokens are never consumed or revealed.
 */
@@ -30,6 +30,7 @@ type OperationResult struct {
 	Problem     *model.Problem     `json:"problem"`
 	Scale       *ScaleResultData   `json:"scale"`
 	Restart     *RestartResultData `json:"restart"`
+	Delete      *DeleteResultData  `json:"delete"`
 }
 
 type ScaleResultData struct {
@@ -201,6 +202,10 @@ func copyOperationResult(result OperationResult) OperationResult {
 	if result.Restart != nil {
 		value := *result.Restart
 		result.Restart = &value
+	}
+	if result.Delete != nil {
+		value := *result.Delete
+		result.Delete = &value
 	}
 	return result
 }

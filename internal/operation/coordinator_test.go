@@ -69,16 +69,18 @@ func TestCoordinatorAggregateLimits(t *testing.T) {
 	_, _, err := c.prepare(context.Background())
 	checkCode(t, err, "busy")
 	ref := kube.ResourceRef{Connection: model.ConnectionRef{ID: "one"}, Name: "object"}
+	actions := []string{"scale", "restart", "delete"}
 	for i := 0; i < 128; i++ {
-		saveFixtureReview(t, c, []string{"scale", "restart"}[i%2], ref)
+		saveFixtureReview(t, c, actions[i%len(actions)], ref)
 	}
 	_, _, err = c.save(context.Background(), pendingReview{})
 	checkCode(t, err, "busy")
 	c.CloseConnection(ref.Connection)
 	var active []OperationResult
 	for i := 0; i < 4; i++ {
-		token := saveFixtureReview(t, c, "restart", kube.ResourceRef{Name: fmt.Sprint(i)})
-		_, result, err := c.begin("restart", token, "")
+		action := actions[i%len(actions)]
+		token := saveFixtureReview(t, c, action, kube.ResourceRef{Name: fmt.Sprint(i)})
+		_, result, err := c.begin(action, token, "")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -89,7 +91,7 @@ func TestCoordinatorAggregateLimits(t *testing.T) {
 	checkCode(t, err, "busy")
 	c.finish(active[0])
 	for i := 0; i < 101; i++ {
-		action := []string{"scale", "restart"}[i%2]
+		action := actions[i%len(actions)]
 		token := saveFixtureReview(t, c, action, ref)
 		_, result, err := c.begin(action, token, "")
 		if err != nil {

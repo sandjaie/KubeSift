@@ -11,6 +11,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/sandjaie/KubeSift/internal/connection"
 	"github.com/sandjaie/KubeSift/internal/kube"
@@ -140,7 +141,11 @@ func (c operationClient) inspect(ctx context.Context, path string, ref kube.Reso
 	return scale.Spec.desired(), impact, nil
 }
 func permissionOf(ctx context.Context, c operationClient, ref kube.ResourceRef, plural, verb, subresource string) string {
-	attrs := &auth.ResourceAttributes{Namespace: ref.Namespace, Name: ref.Name, Group: "apps", Version: "v1", Resource: plural, Subresource: subresource, Verb: verb}
+	group, version, grouped := strings.Cut(ref.APIVersion, "/")
+	if !grouped {
+		group, version = "", ref.APIVersion
+	}
+	attrs := &auth.ResourceAttributes{Namespace: ref.Namespace, Name: ref.Name, Group: group, Version: version, Resource: plural, Subresource: subresource, Verb: verb}
 	input := auth.SelfSubjectAccessReview{TypeMeta: metav1.TypeMeta{Kind: "SelfSubjectAccessReview", APIVersion: "authorization.k8s.io/v1"}, Spec: auth.SelfSubjectAccessReviewSpec{ResourceAttributes: attrs}}
 	var review auth.SelfSubjectAccessReview
 	_, err := c.call(ctx, http.MethodPost, "/apis/authorization.k8s.io/v1/selfsubjectaccessreviews", false, input, &review)

@@ -71,6 +71,7 @@ type DetailRequest struct {
 	Resource             ResourceRef `json:"resource"`
 }
 type ResourceDetail struct {
+	DeleteBlocked   string               `json:"deleteBlocked,omitempty"`
 	EventTarget     *ResourceRef         `json:"eventTarget,omitempty"`
 	CapturedYAML    *YAMLDocument        `json:"capturedYAML,omitempty"`
 	Availability    *AvailabilitySummary `json:"availability,omitempty"`

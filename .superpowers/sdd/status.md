@@ -1,12 +1,12 @@
 # KubeSift resumable status
 
-Updated 2026-11-15. Current integration branch is `develop`.
+Updated 2026-11-16. Current integration branch is `develop`.
 
 ## Phase 1D.3 · Reviewed workload deletion
 
-- Planning package prepared; implementation has not started. [Specification](../../docs/superpowers/specs/2026-11-15-phase-1d3-reviewed-deletion-design.md) and [five-task plan](../../docs/superpowers/plans/2026-11-15-phase-1d3-reviewed-deletion.md).
-- Eight fixed workload kinds, background deletion with server grace defaults, native UID/version preconditions, typed confirmation and operation-bound removal observations. No force/finalizer/storage deletion; unsafe StatefulSet retention policy is blocked.
-- Separate implementation session in the existing checkout, no worktree. Agent verification and one independent whole-PR review precede ready-PR merge. No duplicate manual UAT or release authorization.
+- Implemented on `feature/phase-1d3-reviewed-deletion` from `163848f` in the existing checkout. [Specification](../../docs/superpowers/specs/2026-11-15-phase-1d3-reviewed-deletion-design.md), [plan](../../docs/superpowers/plans/2026-11-15-phase-1d3-reviewed-deletion.md) and [validation](../../docs/superpowers/validation/phase-1d3.html).
+- Both approved kind contexts passed deletion, late UID/version races, and scale, restart and workload-read regressions. Packaged desktop checks covered exact-name review, the three result types, stale and denied cases, and original identity retention after a same-name replacement.
+- Independent whole-PR review and targeted recheck passed. Integration into `develop` is pending.
 
 ## Phase 1D.2 · Reviewed workload restart
 

@@ -35,6 +35,7 @@ type Service struct {
 	scale       *operation.ScaleService
 	coordinator *operation.Coordinator
 	restart     *operation.RestartService
+	deletion    *operation.DeleteService
 	fixtures    map[model.ConnectionRef]FixtureTarget
 	ctx         context.Context
 	cancel      context.CancelFunc
@@ -100,6 +101,7 @@ func NewService() *Service {
 	s.coordinator = operation.NewCoordinator(s.connections, time.Now)
 	s.scale = operation.NewScaleService(s.connections, s.coordinator)
 	s.restart = operation.NewRestartService(s.connections, s.coordinator, time.Now)
+	s.deletion = operation.NewDeleteService(s.connections, s.coordinator, time.Now)
 	s.fixtures = map[model.ConnectionRef]FixtureTarget{}
 	return s
 }

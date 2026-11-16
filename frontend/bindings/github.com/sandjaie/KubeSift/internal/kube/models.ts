@@ -355,6 +355,7 @@ export interface ResolvedStorageReference {
 }
 
 export interface ResourceDetail {
+  deleteBlocked?: string;
   eventTarget?: ResourceRef | null;
   capturedYAML?: YAMLDocument | null;
   availability?: AvailabilitySummary | null;

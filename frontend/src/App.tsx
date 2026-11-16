@@ -108,7 +108,7 @@ export default function App() {
     (tab, namespace) => void controller.selectNamespace(tab, namespace),
   );
   const operationResults = useOperationResults((result) => {
-    if (result.state === "accepted") workloads.refreshOperationTarget(result.resource);
+    if (result.state === "accepted") workloads.refreshOperationTarget(result.resource, result.action === "delete");
   });
   const [resultsOpen, setResultsOpen] = useState(false);
   const [openingOperationTarget, setOpeningOperationTarget] = useState<{ ref: ResourceRef; tab: string } | null>(null);
@@ -310,7 +310,8 @@ export default function App() {
                 navigationOpen={!hiddenNavigation[state.active!]}
                 controller={workloads}
                 onOperation={(action, token, acknowledgement) => {
-                  operationResults.submit(action, token, acknowledgement);
+                  const releaseDeletion = action === "delete" ? workloads.holdDeletionSelection() : undefined;
+                  operationResults.submit(action, token, acknowledgement, releaseDeletion);
                   setResultsOpen(true);
                 }}
                 logs={

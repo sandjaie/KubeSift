@@ -14,6 +14,60 @@ import * as kube$0 from "../kube/models.js";
 // @ts-ignore: Unused imports
 import * as model$0 from "../model/models.js";
 
+export interface DeleteImpact {
+  propagation: string;
+  gracePolicy: string;
+  podGrace: number | null;
+  podGraceDefault: boolean;
+  owner: DeleteOwner | null;
+  ownershipUnknown: boolean;
+  finalizers: string[] | null;
+  finalizerCount: number;
+  finalizersPartial: boolean;
+  whenDeleted: string;
+  retentionDefault: boolean;
+  desired: number | null;
+  current: number | null;
+  ready: number | null;
+  active: number | null;
+}
+
+export interface DeleteObservation {
+  operationID: string;
+  resource: kube$0.ResourceRef;
+  checkedAt: string;
+  state: string;
+  problem: model$0.Problem | null;
+}
+
+export interface DeleteOwner {
+  apiVersion: string;
+  kind: string;
+  name: string;
+  uid: string;
+}
+
+export interface DeletePreview {
+  token: string;
+  cluster: string;
+  resource: kube$0.ResourceRef;
+  sourceVersion: string;
+  expiresAt: string;
+  permission: string;
+  warnings: string[] | null;
+  impact: DeleteImpact;
+}
+
+export interface DeleteRequest {
+  resource: kube$0.ResourceRef;
+  sourceVersion: string;
+}
+
+export interface DeleteResultData {
+  propagation: string;
+  gracePolicy: string;
+}
+
 export interface OperationResult {
   action: string;
   cluster: string;
@@ -25,6 +79,7 @@ export interface OperationResult {
   problem: model$0.Problem | null;
   scale: ScaleResultData | null;
   restart: RestartResultData | null;
+  delete: DeleteResultData | null;
 }
 
 export interface Preview {

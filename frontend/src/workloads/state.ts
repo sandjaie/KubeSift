@@ -16,6 +16,7 @@ export const emptyKind = (): KindState => ({
   page: null,
   selected: null,
   related: false,
+  retainedAfterDeletion: false,
   identity: "",
   section: "Overview",
   sections: {},
@@ -28,12 +29,18 @@ export const emptyKind = (): KindState => ({
   sectionCursor: "",
   auto: false,
 });
+export function inventorySelection(state: KindState | undefined, items: { resource: ResourceRef }[] | null) {
+  if (!state?.selected) return null;
+  const { selected } = state;
+  if (state.related || state.retainedAfterDeletion || state.deletionCapture?.submitting) return selected;
+  return items?.find((row) => row.resource.uid === selected.resource.uid) ?? null;
+}
 export function canAutoRefresh(s: KindState, visible: boolean) {
   return visible && s.auto && s.history.length === 1 && !s.loading;
 }
 export type Action =
   | { type: "catalog"; tab: string; clusterScope: string; route?: CatalogSeed }
-  | { type: "select"; tab: string; row: { resource: ResourceRef }; epoch: number }
+  | { type: "select"; tab: string; row: { resource: ResourceRef } | null; epoch: number }
   | { type: "section"; tab: string; section: Section; epoch: number }
   | { type: "scope"; tab: string; scope: string; clusterScope?: string }
   | { type: "close"; tab: string }
@@ -118,6 +125,7 @@ export function reduceWorkloads(state: WorkloadsState, a: Action): WorkloadsStat
   if (a.type === "kind") {
     if (t.kind === a.kind) return state;
     const target = t.kinds[a.kind];
+    const source = t.kinds[t.kind];
     return {
       ...state,
       [a.tab]: {
@@ -126,9 +134,19 @@ export function reduceWorkloads(state: WorkloadsState, a: Action): WorkloadsStat
         navigation: [],
         kinds: {
           ...t.kinds,
+          ...(source.deletionCapture ? { [t.kind]: { ...source, deletionCapture: undefined } } : {}),
           ...clearOutgoingData(t, a.kind, a.epoch),
           [a.kind]: target.related
-            ? { ...target, selected: null, related: false, identity: "", referenceEvidence: undefined, sections: {} }
+            ? {
+                ...target,
+                selected: null,
+                related: false,
+                retainedAfterDeletion: false,
+                deletionCapture: undefined,
+                identity: "",
+                referenceEvidence: undefined,
+                sections: {},
+              }
             : target,
         },
       },
@@ -162,6 +180,8 @@ export function reduceWorkloads(state: WorkloadsState, a: Action): WorkloadsStat
             referenceEvidence: captureReferenceEvidence(a.entry.referenceEvidence, a.detail),
             selected: { resource: a.entry.resource },
             related: true,
+            retainedAfterDeletion: false,
+            deletionCapture: undefined,
             section: a.entry.section,
             sectionCursor: a.entry.cursor,
             sectionEpoch: a.epoch,
@@ -175,9 +195,16 @@ export function reduceWorkloads(state: WorkloadsState, a: Action): WorkloadsStat
   const k = t.kinds[kind];
   let patch: Partial<KindState>;
   if (a.type === "select") {
-    if (k.selected?.resource.uid === a.row.resource.uid && !k.related && !t.navigation.length) return state;
-    patch = { related: false, identity: "", referenceEvidence: undefined, selected: a.row };
-    if (k.selected?.resource.uid !== a.row.resource.uid || k.section !== "Overview") {
+    if (a.row && k.selected?.resource.uid === a.row.resource.uid && !k.related && !t.navigation.length) return state;
+    patch = {
+      related: false,
+      retainedAfterDeletion: false,
+      deletionCapture: undefined,
+      identity: "",
+      referenceEvidence: undefined,
+      selected: a.row,
+    };
+    if (!a.row || k.selected?.resource.uid !== a.row.resource.uid || k.section !== "Overview") {
       Object.assign(patch, { section: "Overview", sections: {}, sectionCursor: "", sectionEpoch: a.epoch });
     }
   } else if (a.type === "section") {
