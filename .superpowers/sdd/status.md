@@ -4,10 +4,9 @@ Updated 2026-11-16. Current integration branch is `develop`.
 
 ## Phase 1D.4 · Reviewed YAML editing
 
-- Approach approved: conditional patching of existing resources, including explicit Secret reveal/edit; creation and server-side apply remain separate.
-- [Specification](../../docs/superpowers/specs/2026-11-16-phase-1d4-reviewed-yaml-editing-design.md) approved in its simplified form on 2026-11-16. Preserve current UI, minimal behavior-focused tests and existing agent-owned verification policy. No implementation or cluster changes performed.
-- User clarified simplicity: Kubernetes owns permissions; one common Edit/diff/dry-run/Confirm flow, including Secrets, without app-specific resource restrictions, typed confirmations or repeated reveal gates. Spec simplified accordingly.
-- [Five-task implementation plan](../../docs/superpowers/plans/2026-11-16-phase-1d4-yaml-editing.md) prepared for review and a separate implementation session. No implementation steps started.
+- Implemented from `f3819d7` in the existing checkout. [Specification](../../docs/superpowers/specs/2026-11-16-phase-1d4-reviewed-yaml-editing-design.md), [plan](../../docs/superpowers/plans/2026-11-16-phase-1d4-yaml-editing.md), and [validation](../../docs/superpowers/validation/phase-1d4.html).
+- Conditional editing and Secret stringData passed on both approved contexts. The packaged macOS verification covered ConfigMap and Secret edits, draft retention across tabs, Forbidden, stale confirmation and both themes. Fixture cleanup was verified.
+- Independent whole-PR review and merge into `develop` are pending.
 
 ## Phase 1D.3 · Reviewed workload deletion
 
