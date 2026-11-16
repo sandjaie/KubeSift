@@ -44,6 +44,7 @@ export interface APIResourceDescriptor {
   namespaced: boolean;
   list: boolean;
   get: boolean;
+  patch: boolean;
   mode: string;
   reason: string;
   handle: string;
@@ -147,6 +148,17 @@ export interface CronJobSummary {
 export interface DetailRequest {
   includeConfigMapData?: boolean;
   resource: ResourceRef;
+}
+
+export interface EditTarget {
+  connection: model$0.ConnectionRef;
+  group: string;
+  version: string;
+  resource: string;
+  kind: string;
+  namespace: string;
+  name: string;
+  uid: string;
 }
 
 export interface EventInventoryPage {

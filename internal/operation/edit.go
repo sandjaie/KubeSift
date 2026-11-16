@@ -91,6 +91,9 @@ func (s *EditService) CloseEdit(id string) {
 }
 
 func (s *Coordinator) dropEdit(id string) {
+	if _, exists := s.captures[id]; !exists {
+		return
+	}
 	delete(s.captures, id)
 	s.revokeEditDraft(id)
 }
@@ -129,4 +132,84 @@ func renderEdit(object map[string]any) (string, error) {
 		return "", model.Fail("capacity", "Edit document exceeds the 2 MiB limit")
 	}
 	return kube.RenderEditYAML(raw)
+}
+
+type editReview struct {
+	version string
+	patch   []byte
+}
+
+func (s *EditService) PrepareEdit(ctx context.Context, req EditRequest) (EditPreview, error) {
+	c := s.coordinator
+	ctx, release, err := c.prepare(ctx)
+	if err != nil {
+		return EditPreview{}, err
+	}
+	defer release()
+	c.mu.Lock()
+	c.prune(c.now())
+	draft, ok := c.captures[req.DraftID]
+	if ok {
+		draft.revision++
+		c.captures[req.DraftID] = draft
+		c.revokeEditDraft(req.DraftID)
+	}
+	c.mu.Unlock()
+	if !ok {
+		return EditPreview{}, model.Fail("expired", "The editor capture expired. Refresh and review again")
+	}
+	patch, err := buildEditPatch(draft.baseline, req.YAML)
+	if err != nil {
+		return EditPreview{}, err
+	}
+	target := draft.baseline.Target
+	client, err := newOperationClient(s.connections, target.Connection)
+	if err != nil {
+		return EditPreview{}, err
+	}
+	if err := checkEditVersion(ctx, client, target, draft.baseline.ResourceVersion); err != nil {
+		return EditPreview{}, err
+	}
+	var raw json.RawMessage
+	var feedback editFeedback
+	warnings, err := client.editPatch(ctx, target.Path(), true, patch.body, &raw, &feedback)
+	if err != nil {
+		return EditPreview{}, editWriteProblem(ctx, client, target, draft.baseline.ResourceVersion, err, feedback, true)
+	}
+	if _, err := target.ReadVersion(raw); err != nil {
+		return EditPreview{}, err
+	}
+	server, err := editProjection(raw)
+	if err != nil {
+		return EditPreview{}, err
+	}
+	preview := EditPreview{Target: target, Warnings: warnings}
+	for _, item := range []struct {
+		source map[string]any
+		output *string
+	}{{patch.before, &preview.BeforeYAML}, {patch.proposed, &preview.ProposedYAML}, {server, &preview.ServerYAML}} {
+		*item.output, err = renderEdit(item.source)
+		if err != nil {
+			return EditPreview{}, err
+		}
+	}
+	if preview.ServerYAML == preview.ProposedYAML {
+		preview.ServerYAML = ""
+	}
+	if raw, err := json.Marshal(preview); err != nil || len(raw)+128 > editLimit {
+		return EditPreview{}, model.Fail("capacity", "The combined edit review exceeds the 2 MiB limit")
+	}
+	preview.Token, preview.ExpiresAt, err = c.save(ctx, pendingReview{
+		result:  OperationResult{Action: "edit", Cluster: draft.cluster, Resource: target.Ref(), Edit: &target},
+		payload: editReview{version: draft.baseline.ResourceVersion, patch: patch.body},
+		draftID: req.DraftID, revision: draft.revision,
+	})
+	if err != nil {
+		return EditPreview{}, err
+	}
+	return preview, nil
+}
+
+func (s *EditService) RevokeEdit(token string) {
+	s.coordinator.revoke("edit", token)
 }

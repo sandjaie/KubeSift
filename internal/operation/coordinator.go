@@ -8,6 +8,7 @@ package operation
 
 import (
 	"context"
+	"strings"
 	"sync"
 	"time"
 
@@ -31,6 +32,22 @@ type OperationResult struct {
 	Scale       *ScaleResultData   `json:"scale"`
 	Restart     *RestartResultData `json:"restart"`
 	Delete      *DeleteResultData  `json:"delete"`
+	Edit        *kube.EditTarget   `json:"edit,omitempty"`
+}
+
+// operationKey shares locks across API versions of the same canonical resource.
+func operationKey(result OperationResult) kube.ResourceRef {
+	key := result.Resource
+	if result.Edit != nil {
+		key.APIVersion, key.Kind = result.Edit.Group, result.Edit.Resource
+	} else if _, plural := deleteTarget(key); plural != "" {
+		group, _, grouped := strings.Cut(key.APIVersion, "/")
+		if !grouped {
+			group = ""
+		}
+		key.APIVersion, key.Kind = group, plural
+	}
+	return key
 }
 
 type ScaleResultData struct {
@@ -126,6 +143,11 @@ func (s *Coordinator) save(ctx context.Context, review pendingReview) (string, t
 	}
 	token := model.ID()
 	review.expires = now.Add(reviewTTL)
+	if review.draftID != "" {
+		draft := s.captures[review.draftID]
+		draft.expires = review.expires
+		s.captures[review.draftID] = draft
+	}
 	s.pending[token] = review
 	s.scheduleExpiry(now)
 	return token, review.expires, nil
@@ -155,15 +177,18 @@ func (s *Coordinator) begin(action, token, acknowledgement string) (*pendingRevi
 		err = model.Fail("acknowledgement", "The workload name did not match. Prepare a new review.")
 	case s.ctx.Err() != nil:
 		err = model.Fail("cancelled", "Operation service is closed")
-	case len(s.active) >= 4 || s.active[review.result.Resource]:
+	case len(s.active) >= 4 || s.active[operationKey(review.result)]:
 		err = model.Fail("busy", "An operation is already in progress or the execution limit was reached")
 	}
 	if err != nil {
 		return nil, OperationResult{}, err
 	}
+	if review.draftID != "" {
+		s.dropEdit(review.draftID)
+	}
 	result := review.result
 	result.OperationID, result.StartedAt, result.State = model.ID(), now, "executing"
-	s.active[result.Resource] = true
+	s.active[operationKey(result)] = true
 	s.byToken[token] = result.OperationID
 	s.results[result.OperationID] = &operationRecord{token: token, result: copyOperationResult(result)}
 	s.order = append(s.order, result.OperationID)
@@ -176,7 +201,7 @@ func (s *Coordinator) finish(result OperationResult) OperationResult {
 	now := s.now()
 	result.FinishedAt = &now
 	s.results[result.OperationID].result = result
-	delete(s.active, result.Resource)
+	delete(s.active, operationKey(result))
 	s.prune(now)
 	s.scheduleExpiry(now)
 	return copyOperationResult(result)
@@ -214,6 +239,10 @@ func copyOperationResult(result OperationResult) OperationResult {
 	if result.Delete != nil {
 		value := *result.Delete
 		result.Delete = &value
+	}
+	if result.Edit != nil {
+		value := *result.Edit
+		result.Edit = &value
 	}
 	return result
 }

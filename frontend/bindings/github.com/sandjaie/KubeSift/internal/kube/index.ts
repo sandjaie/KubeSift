@@ -29,6 +29,7 @@ export type {
   ControllerRevisionPage,
   CronJobSummary,
   DetailRequest,
+  EditTarget,
   EventInventoryPage,
   EventInventoryRow,
   EventPage,
