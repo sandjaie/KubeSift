@@ -44,7 +44,7 @@
       </p>
       <h2>Automated verification</h2>
       <p>
-        <code>scripts/check.sh</code> passed source descriptions, documentation links, formatting, Go tests and vet, and 102 frontend tests
+        <code>scripts/check.sh</code> passed source descriptions, documentation links, formatting, Go tests and vet, and 103 frontend tests
         plus lint and typechecking. <code>go test -race ./internal/operation</code>, Wails bindings, <code>npm run build</code>,
         <code>wails3 task package</code> and strict macOS signature verification passed.
       </p>
@@ -103,6 +103,23 @@
         The fixtures use zero replicas or a node selector that matches no nodes. They prove template acceptance, not Pod convergence. The
         native HTTP test covers denial and ambiguous responses; neither was induced in the packaged app. No other operating systems,
         clusters or vendor-specific history sources were exercised.
+      </p>
+      <h2>Independent review</h2>
+      <p>
+        Reviewer <code>rollback_pr_review</code> reviewed the full candidate <code>086b2325fb7c0bae19bed59dc53d71fe66b69c11</code> against
+        <code>develop</code> at base and merge base <code>2f74b4c9dce08b6e3af5db2edae91f2e2f35902e</code>. One finding blocked the original
+        candidate. Both findings were fixed.
+      </p>
+      <ul>
+        <li>KSF-001 (P2): Inventory Auto-refresh leaves the selected rollback review open. Refreshing Revisions still revokes it.</li>
+        <li>KSF-002 (P3): StatefulSet current and update revision names remain visible when their source rows are off-page.</li>
+      </ul>
+      <p>
+        The same reviewer cleared the focused changes through <code>35fe3b04237a176cad693df6aeb2c5cf46282c9c</code>. A mounted regression
+        reproduced premature cancellation and then verified both fixes. The full checks and signed package passed. In the final package, a
+        reviewed Deployment diff remained open for 24 seconds with the 15-second inventory Auto-refresh enabled. Confirm succeeded and Check
+        workload returned to the original Overview. API readback on A and B confirmed the expected template values, and the retest fixtures
+        and kubeconfigs were removed.
       </p>
     </main>
   </body>
