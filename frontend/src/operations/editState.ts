@@ -48,6 +48,7 @@ export type EditDestination = { mode?: "edit"; tab: string; target: EditTarget; 
 export type EditorDestination = EditDestination | CreateDestination;
 export type EditorSession<D extends EditorDestination = EditDestination> = D & {
   suspended: boolean;
+  submitting?: boolean;
   closing: boolean;
   replacement?: D;
 };
@@ -62,12 +63,18 @@ export function requestEditor(
   next: EditorDestination,
 ): EditorSession<EditorDestination> {
   if (!current) return { ...next, suspended: false, closing: false };
+  if (current.submitting) return current;
   const same =
     current.mode === "create"
       ? next.mode === "create" && sameEditConnection(current.connection, next.connection)
       : next.mode !== "create" && sameEditTarget(current.target, next.target);
   if (current.tab === next.tab && same) return { ...current, suspended: false, closing: false, replacement: undefined };
   return { ...current, replacement: next };
+}
+
+export function settleCreateEditor(current: EditorSession<EditorDestination> | undefined, id: string, accepted: boolean) {
+  if (current?.mode !== "create" || current.id !== id || !current.submitting) return current;
+  return accepted ? undefined : { ...current, submitting: false };
 }
 
 export function savedEditAfterCapture(results: OperationResult[], target: EditTarget, fetchedAt: string) {

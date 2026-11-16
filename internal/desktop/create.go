@@ -7,6 +7,7 @@ Important: Result inspection never writes or adopts an observed UID.
 package desktop
 
 import (
+	"github.com/sandjaie/KubeSift/internal/kube"
 	"github.com/sandjaie/KubeSift/internal/model"
 	"github.com/sandjaie/KubeSift/internal/operation"
 )
@@ -42,4 +43,13 @@ func (s *ExplorerService) InspectCreateName(id, operationID string) (operation.C
 	}
 	defer done()
 	return s.core.creation.InspectCreateName(ctx, operationID)
+}
+
+func (s *ExplorerService) ReadCreatedDetail(id, operationID string) (kube.GenericResourceDetail, error) {
+	ctx, done, err := s.beginWorkloadRead(id)
+	if err != nil {
+		return kube.GenericResourceDetail{}, err
+	}
+	defer done()
+	return s.core.creation.ReadCreatedDetail(ctx, operationID)
 }

@@ -12,6 +12,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/sandjaie/KubeSift/internal/kube"
 	"github.com/sandjaie/KubeSift/internal/model"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -68,6 +69,14 @@ func (s *CreateService) runCreate(ctx context.Context, result *OperationResult, 
 	}
 	result.State = "unknown"
 	result.Problem = &model.Problem{Code: "uncertain", Message: "The create outcome is unknown. Inspect the name and reconcile the draft before reviewing again."}
+}
+
+func (s *CreateService) ReadCreatedDetail(ctx context.Context, id string) (kube.GenericResourceDetail, error) {
+	result, err := s.coordinator.GetOperationResult(id)
+	if err != nil || result.Action != "create" || result.Create == nil || result.State != "accepted" || result.Resource.UID == "" {
+		return kube.GenericResourceDetail{}, model.Fail("not_found", "The accepted create result is unavailable")
+	}
+	return s.reader.ReadCreatedDetail(ctx, result.Create.Target, result.Resource.UID)
 }
 
 func (s *CreateService) InspectCreateName(ctx context.Context, id string) (CreateObservation, error) {

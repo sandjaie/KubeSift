@@ -23,7 +23,7 @@ export function GenericResourceDetail({
   section: "Overview" | "YAML";
   onSection: (section: "Overview" | "YAML") => void;
   onRefresh: () => void;
-  onEdit: () => void;
+  onEdit?: () => void;
   canPatch: boolean;
   onBack: () => void;
   loading: boolean;
@@ -63,7 +63,11 @@ export function GenericResourceDetail({
       ) : (
         <div className="evidence-section yaml-evidence">
           <div className="evidence-toolbar yaml-toolbar">
-            <button onClick={onEdit} disabled={!canPatch || loading} title={canPatch ? undefined : "This API does not advertise Patch"}>
+            <button
+              onClick={onEdit}
+              disabled={!canPatch || loading || !onEdit}
+              title={canPatch ? undefined : "This API does not advertise Patch"}
+            >
               Edit YAML
             </button>
             {!canPatch && <span className="muted">This API does not advertise Patch.</span>}

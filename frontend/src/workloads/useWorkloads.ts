@@ -5,7 +5,7 @@ Responsibilities: Cancel hidden reads, isolate epochs and fetch only the visible
 Important: Payloads remain bounded, in memory, and independent of connection-health polling.
 */
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import type { ManifestAddress } from "../operations/api";
+import type { CreatedResourceOpening } from "../operations/api";
 import type { ConnectionRef } from "../bridge";
 import { message } from "../connections/api";
 import { readRequest, workloadAPI as api } from "./api";
@@ -328,7 +328,7 @@ export function useWorkloads(
   return {
     kind,
     ready: !!t,
-    openOperationTarget: (resource: ResourceRef, created?: ManifestAddress) => {
+    openOperationTarget: (resource: ResourceRef, created?: CreatedResourceOpening) => {
       if (
         !t ||
         !visible ||
@@ -361,7 +361,7 @@ export function useWorkloads(
       }
       navigationRequest(
         async (id) => {
-          const { group, version, resource: plural, kind: createdKind, namespace: createdNamespace } = created;
+          const { group, version, resource: plural, kind: createdKind, namespace: createdNamespace } = created.target;
           const groups = await api.ReadAPIGroups(id, { connection, refresh: false });
           if (!groups.groups?.some((g) => g.group === group && g.versions?.includes(version)))
             throw new Error("The created resource's API version is unavailable.");
@@ -376,14 +376,17 @@ export function useWorkloads(
           );
           if (descriptor?.mode === "dedicated" && canOpen(resource, destinationNamespace))
             return { detail: await api.ReadResource(id, { resource }) };
-          if (descriptor?.mode !== "generic") throw new Error("The created resource does not have an available detail view.");
-          const capture = await api.ReadGenericDetail(id, {
-            connection,
-            handle: descriptor.handle,
-            namespace: createdNamespace,
-            name: resource.name,
-            uid: resource.uid,
-          });
+          if (!descriptor) throw new Error("The created resource's API is unavailable.");
+          const hasInventory = descriptor.mode === "generic";
+          const capture = hasInventory
+            ? await api.ReadGenericDetail(id, {
+                connection,
+                handle: descriptor.handle,
+                namespace: createdNamespace,
+                name: resource.name,
+                uid: resource.uid,
+              })
+            : await api.ReadCreatedDetail(id, created.operationID);
           const seed: CatalogSeed = {
             group,
             version,
@@ -394,6 +397,7 @@ export function useWorkloads(
             section: "Overview",
             origin,
             openedFromCreate: true,
+            createdDetailOperationID: hasInventory ? undefined : created.operationID,
           };
           return { seed };
         },

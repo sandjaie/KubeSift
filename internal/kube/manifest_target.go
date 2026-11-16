@@ -57,7 +57,7 @@ func (s *Service) ResolveManifestTarget(ctx context.Context, ref model.Connectio
 		group, version = "", group
 	}
 	target := ManifestAddress{Connection: ref, Group: group, Version: version, Resource: resource, Kind: kind, Namespace: namespace, Name: name}
-	if (grouped && group == "") || !target.valid() || (verb != "create" && verb != "patch") {
+	if (grouped && group == "") || !target.valid() || (verb != "create" && verb != "get" && verb != "patch") {
 		return ManifestAddress{}, model.Fail("invalid", "Enter a named resource with a valid API version, kind and resource")
 	}
 	client, err := s.boundedReadClient(ctx, ref)
@@ -88,6 +88,9 @@ func resolveManifestRoute(ctx context.Context, client kubernetes.Interface, targ
 	}
 	if verb == "create" && (match == nil || !match.Create) {
 		return ManifestAddress{}, model.Fail("unsupported", "This API version does not advertise Create for the requested kind and resource")
+	}
+	if verb == "get" && (match == nil || !match.Get) {
+		return ManifestAddress{}, model.Fail("unsupported", "This API version does not advertise Get for the selected resource")
 	}
 	if verb == "patch" && (match == nil || !match.Get || !match.Patch) {
 		return ManifestAddress{}, model.Fail("unsupported", "This API does not advertise both Get and Patch for the selected resource")

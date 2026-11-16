@@ -14,7 +14,7 @@ import type {
   ScaleRequest,
 } from "../../bindings/internal/operation/models";
 import type { ConnectionRef } from "../bridge";
-import type { EditTarget } from "../../bindings/internal/kube/models";
+import type { EditTarget, ManifestAddress } from "../../bindings/internal/kube/models";
 export type { EditTarget, ManifestAddress } from "../../bindings/internal/kube/models";
 export type {
   CreateDraft,
@@ -33,6 +33,8 @@ export type {
   ScalePreview,
   ScaleResult,
 } from "../../bindings/internal/operation/models";
+export type CreatedResourceOpening = { target: ManifestAddress; operationID: string };
+
 export type OperationAction = "scale" | "restart" | "delete" | "edit" | "rollback" | "create";
 export const prepareScale = (request: ScaleRequest) => readRequest((id) => workloadAPI.PrepareScale(id, request));
 export const executeScale = workloadAPI.ExecuteScale;

@@ -84,6 +84,7 @@ func TestYAMLCreation(t *testing.T) {
 				{"", "secrets", "Secret", "created-secret", "data: {marker: b2xk}\nstringData: {marker: synthetic-text}\n", true, ref},
 				{"apps", "deployments", "Deployment", "created-workload", "spec:\n  replicas: 0\n  selector: {matchLabels: {app: create-fixture}}\n  template:\n    metadata: {labels: {app: create-fixture}}\n    spec:\n      containers: [{name: app, image: 'registry.k8s.io/pause:3.10'}]\n", true, ref},
 				{createFixtureGroup, "widgets", "Widget", "created-widget", "spec: {count: 9007199254740993}\n", true, ref},
+				{"autoscaling", "horizontalpodautoscalers", "HorizontalPodAutoscaler", "created-hpa-v1", "spec: {scaleTargetRef: {apiVersion: apps/v1, kind: Deployment, name: absent-workload}, minReplicas: 1, maxReplicas: 1, targetCPUUtilizationPercentage: 50}\n", true, ref},
 				{"scheduling.k8s.io", "priorityclasses", "PriorityClass", "ks-create-" + ns.Name, "value: 0\nglobalDefault: false\npreemptionPolicy: Never\n", false, ref},
 			} {
 				t.Run(fixture.kind+"/"+fixture.name, func(t *testing.T) {
@@ -115,6 +116,8 @@ func TestYAMLCreation(t *testing.T) {
 						t.Fatal("result did not carry the actual identity", err)
 					}
 					if fixture.kind == "Secret" {
+						_, err := create.ReadCreatedDetail(ctx, result.OperationID)
+						restartErrorCode(t, err, "unsupported")
 						marker, _, _ := unstructured.NestedString(live.Object, "data", "marker")
 						if marker != "c3ludGhldGljLXRleHQ=" || live.Object["stringData"] != nil {
 							t.Fatal("Secret stringData precedence was lost")
@@ -126,7 +129,16 @@ func TestYAMLCreation(t *testing.T) {
 							t.Fatal("custom numeric value was not preserved")
 						}
 					}
+					if fixture.kind == "HorizontalPodAutoscaler" {
+						detail, err := create.ReadCreatedDetail(ctx, result.OperationID)
+						if err != nil || detail.Resource.Group != "autoscaling" || detail.Resource.Version != "v1" || detail.Resource.UID != result.Resource.UID {
+							t.Fatalf("alternate API version did not open by the accepted UID: %v", err)
+						}
+					}
+
 					if fixture.identity == creator {
+						_, err := create.ReadCreatedDetail(ctx, result.OperationID)
+						restartErrorCode(t, err, "forbidden")
 						observed, err := create.InspectCreateName(ctx, result.OperationID)
 						if err != nil || observed.State != "unavailable" {
 							t.Fatal("create-only fixture did not deny GET", err)

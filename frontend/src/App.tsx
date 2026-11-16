@@ -32,10 +32,10 @@ import { TerminalStart } from "./sessions/TerminalStart";
 import { ForwardStart } from "./sessions/ForwardStart";
 import { useWorkloads } from "./workloads/useWorkloads";
 import type { ResourceDetail, ResourceRef } from "./workloads/model";
-import { requestEditor, type EditorSession, type EditorDestination } from "./operations/editState";
+import { requestEditor, settleCreateEditor, type EditorSession, type EditorDestination } from "./operations/editState";
 import { CreateDialog } from "./operations/CreateDialog";
 import { EditDialog } from "./operations/EditDialog";
-import { closeEdit, type ManifestAddress } from "./operations/api";
+import { closeEdit, type CreatedResourceOpening } from "./operations/api";
 import { OperationResults, useOperationResults } from "./operations/OperationResults";
 import "./styles.css";
 export default function App() {
@@ -130,7 +130,7 @@ export default function App() {
     workloads.refreshOperationTarget(result.resource, result.action === "delete");
   });
   function resumeEditor() {
-    if (!editor) return;
+    if (!editor || editor.submitting) return;
     if (state.tabs[editor.tab]) {
       controller.commit({ type: "focus", key: editor.tab });
       setPage("workspace");
@@ -138,9 +138,11 @@ export default function App() {
     setEditor({ ...editor, suspended: false });
   }
   const [resultsOpen, setResultsOpen] = useState(false);
-  const [openingOperationTarget, setOpeningOperationTarget] = useState<{ ref: ResourceRef; tab: string; created?: ManifestAddress } | null>(
-    null,
-  );
+  const [openingOperationTarget, setOpeningOperationTarget] = useState<{
+    ref: ResourceRef;
+    tab: string;
+    created?: CreatedResourceOpening;
+  } | null>(null);
   const operationConnectionKey = (ref: ResourceRef["connection"]) => JSON.stringify([ref.id, ref.generation]);
   const findOperationTab = (resource: ResourceRef) =>
     Object.entries(state.tabs).find(
@@ -157,7 +159,7 @@ export default function App() {
   }
   const [closeTarget, setCloseTarget] = useState<{ key: string; entries: string[] } | null>(null);
   function close(key: string) {
-    if (editor?.tab === key) {
+    if (editor?.tab === key && !editor.submitting) {
       setEditor({ ...editor, suspended: false, closing: true });
       return;
     }
@@ -240,7 +242,9 @@ export default function App() {
         />
         <button onClick={() => setPage("clusters")}>Choose cluster</button>
         {editor && (editor.suspended || editor.tab !== state.active || page !== "workspace") && (
-          <button onClick={resumeEditor}>{editor.mode === "create" ? "Resume create draft" : "Resume YAML edit"}</button>
+          <button disabled={editor.submitting} onClick={resumeEditor}>
+            {editor.submitting ? "Submitting create…" : editor.mode === "create" ? "Resume create draft" : "Resume YAML edit"}
+          </button>
         )}
         <button
           onClick={() => {
@@ -283,11 +287,10 @@ export default function App() {
             if (editor.closing) closeTab(editor.tab);
           }}
           onConfirm={(token) => {
-            setEditor({ ...editor, suspended: true });
+            setEditor({ ...editor, suspended: true, submitting: true });
             setResultsOpen(true);
             void operationResults.submit("create", token, "").then((result) => {
-              if (result?.state === "accepted")
-                setEditor((current) => (current?.mode === "create" && current.id === editor.id ? undefined : current));
+              setEditor((current) => settleCreateEditor(current, editor.id, result?.state === "accepted"));
             });
           }}
         />
@@ -467,23 +470,31 @@ export default function App() {
                 onInteractive={(kind, data) => {
                   if (state.active) setStartSession({ kind, data, tab: state.active, cluster: active.entry.context });
                 }}
-                onCreate={() => {
-                  const tab = state.active;
-                  if (tab && active.view?.ref) {
-                    const destination = {
-                      mode: "create" as const,
-                      id: crypto.randomUUID(),
-                      tab,
-                      connection: active.view.ref,
-                      namespace: workloads.clusterScoped ? "" : active.namespace,
-                    };
-                    setEditor((current) => requestEditor(current, destination));
-                  }
-                }}
-                onEdit={(target, reveal = false) => {
-                  const tab = state.active;
-                  if (tab) setEditor((current) => requestEditor(current, { tab, target, reveal }));
-                }}
+                onCreate={
+                  editor?.submitting
+                    ? undefined
+                    : () => {
+                        const tab = state.active;
+                        if (tab && active.view?.ref) {
+                          const destination = {
+                            mode: "create" as const,
+                            id: crypto.randomUUID(),
+                            tab,
+                            connection: active.view.ref,
+                            namespace: workloads.clusterScoped ? "" : active.namespace,
+                          };
+                          setEditor((current) => requestEditor(current, destination));
+                        }
+                      }
+                }
+                onEdit={
+                  editor?.submitting
+                    ? undefined
+                    : (target, reveal = false) => {
+                        const tab = state.active;
+                        if (tab) setEditor((current) => requestEditor(current, { tab, target, reveal }));
+                      }
+                }
                 onOperation={(action, token, acknowledgement) => {
                   const releaseDeletion = action === "delete" ? workloads.holdDeletionSelection() : undefined;
                   operationResults.submit(action, token, acknowledgement, releaseDeletion);

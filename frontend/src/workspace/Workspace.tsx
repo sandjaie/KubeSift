@@ -61,8 +61,8 @@ export function Workspace({
   onResize: (n: number) => void;
   onCommitSize: () => void;
   logs?: ReactNode;
-  onCreate: () => void;
-  onEdit: (target: EditTarget, reveal?: boolean) => void;
+  onCreate?: () => void;
+  onEdit?: (target: EditTarget, reveal?: boolean) => void;
   onInteractive?: (kind: "terminal" | "forward", data: CapturedDetail) => void;
   operationResults: OperationResult[];
   onOperation: (action: OperationAction, token: string, acknowledgement: string) => void;
@@ -153,7 +153,7 @@ export function Workspace({
                 {kind === "Secret" && <span className="muted">Metadata only</span>}
                 <span className="muted">{rows.length} shown</span>
                 <button
-                  disabled={!canReviewOperation}
+                  disabled={!canReviewOperation || !onCreate}
                   onClick={(event) => {
                     event.currentTarget.focus();
                     onCreate?.();

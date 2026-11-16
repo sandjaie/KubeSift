@@ -20,7 +20,7 @@ import {
   listOperationResults,
   type CreateObservation,
   type DeleteObservation,
-  type ManifestAddress,
+  type CreatedResourceOpening,
   type OperationAction,
   type OperationResult,
 } from "./api";
@@ -132,7 +132,7 @@ export function OperationResults({
   error: string;
   onClose: () => void;
   onRefresh: () => void;
-  onTarget: (ref: ResourceRef, created?: ManifestAddress) => void;
+  onTarget: (ref: ResourceRef, created?: CreatedResourceOpening) => void;
   canOpen: (ref: ResourceRef) => boolean;
 }) {
   return (
@@ -199,7 +199,7 @@ export function OperationResults({
             <button
               disabled={!canOpen(row.resource) || (!!row.edit && !isResourceKind(row.resource.kind)) || (!!row.create && !row.resource.uid)}
               onClick={() => {
-                onTarget(row.resource, row.create?.target);
+                onTarget(row.resource, row.create ? { target: row.create.target, operationID: row.operationID } : undefined);
                 onClose();
               }}
             >

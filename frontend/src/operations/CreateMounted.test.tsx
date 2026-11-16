@@ -5,12 +5,12 @@ Used by: Frontend operation regression tests.
 Responsibilities: Exercise scope and generation changes, late tokens and one confirmation.
 Important: The bridge uses synthetic data and never connects to Kubernetes.
 */
-import { act } from "react";
+import { act, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { CreateDialog } from "./CreateDialog";
-import { OperationResults } from "./OperationResults";
-import { requestEditor, type EditorDestination } from "./editState";
+import { OperationResults, useOperationResults } from "./OperationResults";
+import { requestEditor, settleCreateEditor, type EditorDestination, type EditorSession } from "./editState";
 import type { CreatePreview, OperationResult } from "./api";
 
 const bridge = vi.hoisted(() => ({
@@ -144,6 +144,52 @@ test("a create draft waits for explicit replacement when an edit is requested", 
   expect(decision.replacement).toEqual(next);
 });
 
+test.each(["accepted", "unknown"])("a delayed %s submission owns its draft until the outcome arrives", async (state) => {
+  let finish!: (result: { state: string }) => void;
+  bridge.prepareCreate.mockReturnValueOnce({ promise: Promise.resolve(preview), cancel: vi.fn() });
+  bridge.listOperationResults.mockResolvedValue([]);
+  bridge.executeCreate.mockReturnValueOnce(new Promise((resolve) => (finish = resolve)));
+  function Harness() {
+    const [editor, setEditor] = useState<EditorSession<EditorDestination> | undefined>(() => requestEditor(undefined, destination));
+    const { submit } = useOperationResults(() => {});
+    if (editor?.mode !== "create") return null;
+    return (
+      <>
+        <button disabled={editor.submitting} onClick={() => setEditor((current) => requestEditor(current, destination))}>
+          Resume create draft
+        </button>
+        <button onClick={() => setEditor((current) => requestEditor(current, destination))}>Request same editor</button>
+        <CreateDialog
+          {...props}
+          suspended={editor.suspended}
+          onConfirm={(token) => {
+            setEditor({ ...editor, submitting: true, suspended: true });
+            void submit("create", token, "").then((result) => {
+              setEditor((current) => settleCreateEditor(current, editor.id, result?.state === "accepted"));
+            });
+          }}
+        />
+      </>
+    );
+  }
+  await act(async () => root.render(<Harness />));
+  await type("stringData: {key: synthetic-pending}");
+  await click("Review create");
+  await click("Confirm create");
+  expect(button("Resume create draft").disabled).toBe(true);
+  await click("Request same editor");
+  expect(host.querySelector("textarea")).toBeNull();
+  await act(async () => finish({ state }));
+  if (state === "accepted") {
+    expect(button("Resume create draft")).toBeUndefined();
+    expect(host.querySelector("textarea")).toBeNull();
+  } else {
+    await click("Resume create draft");
+    expect(host.querySelector("textarea")?.value).toContain("synthetic-pending");
+  }
+  expect(bridge.executeCreate).toHaveBeenCalledTimes(1);
+});
+
 test("Unknown offers name inspection only, while accepted opening uses the actual UID", async () => {
   const ref = { connection, apiVersion: "v1", kind: "Secret", namespace: "fixture", name: "demo", uid: "" };
   const base = {
@@ -186,5 +232,5 @@ test("Unknown offers name inspection only, while accepted opening uses the actua
   expect(host.textContent).toContain("does not establish");
   expect(bridge.executeCreate).not.toHaveBeenCalled();
   await click("Open resource");
-  expect(onTarget).toHaveBeenCalledWith({ ...ref, uid: "actual" }, target);
+  expect(onTarget).toHaveBeenCalledWith({ ...ref, uid: "actual" }, { target, operationID: "created" });
 });

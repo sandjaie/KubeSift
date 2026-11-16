@@ -198,6 +198,10 @@ export function ReadControllerRevisions(id: string, req: kube$0.RelatedRequest):
   return $Call.ByID(3551851450, id, req);
 }
 
+export function ReadCreatedDetail(id: string, operationID: string): $CancellablePromise<kube$0.GenericResourceDetail> {
+  return $Call.ByID(3536263793, id, operationID);
+}
+
 export function ReadEventInventory(id: string, req: kube$0.PageRequest): $CancellablePromise<kube$0.EventInventoryPage> {
   return $Call.ByID(3259958076, id, req);
 }

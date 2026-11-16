@@ -65,7 +65,7 @@ export function APIResourceBrowser({
   onRoute: (route: CatalogSeed | null) => void;
   onBack: () => void;
   onCreate?: () => void;
-  onEdit: (target: EditTarget) => void;
+  onEdit?: (target: EditTarget) => void;
   operationResults: OperationResult[];
   onDedicated: (kind: import("../workloads/model").ResourceKind) => void;
   widthPercent: number;
@@ -98,7 +98,9 @@ export function APIResourceBrowser({
   );
   const liveDescriptor = currentGenericDescriptor(descriptor, resources.data);
   const key = liveDescriptor ? JSON.stringify([connection.id, connection.generation, liveDescriptor.handle, scope]) : "";
-  useLayoutEffect(() => pending.cancel, [pending, key, cursor]);
+  const createdDetailID = active?.capture && active.createdDetailOperationID;
+  const detailKey = createdDetailID ? JSON.stringify([connection, createdDetailID, scope]) : key;
+  useLayoutEffect(() => pending.cancel, [pending, detailKey, cursor]);
   const inventory = useRead<GenericResourcePage>(key && JSON.stringify([key, cursor]), (id) =>
     api.ReadGenericResources(id, { connection, handle: descriptor!.handle, namespace: scope, cursor }),
   );
@@ -113,7 +115,7 @@ export function APIResourceBrowser({
     (g) => g.group === active?.group || (g.group || "core").toLowerCase().includes(groupFilter.trim().toLowerCase()),
   );
   const rows = (inventory.data?.items ?? []).filter((r) => r.resource.name.toLowerCase().includes(filter.trim().toLowerCase()));
-  const capture = liveDescriptor && (!inventory.error || active?.openedFromCreate) ? active?.capture : undefined;
+  const capture = createdDetailID || (liveDescriptor && (!inventory.error || active?.openedFromCreate)) ? active?.capture : undefined;
   const patch = (next: Partial<CatalogSeed>) => {
     if (active) onRoute({ ...active, ...next });
   };
@@ -124,25 +126,37 @@ export function APIResourceBrowser({
   const selecting = (candidate?: APIResourceDescriptor) => {
     clearDetail();
     setFilter("");
-    patch({ descriptor: candidate, history: [""], namespace, capture: undefined, section: "Overview", openedFromCreate: undefined });
+    patch({
+      descriptor: candidate,
+      history: [""],
+      namespace,
+      capture: undefined,
+      createdDetailOperationID: undefined,
+      section: "Overview",
+      openedFromCreate: undefined,
+    });
   };
   function open(resource: GenericResourceRef) {
-    if (!liveDescriptor || !key) return;
+    if (!detailKey) return;
+    const handle = liveDescriptor?.handle ?? "";
     clearDetail();
-    setDetail({ key, loading: true });
+    setDetail({ key: detailKey, loading: true });
     pending.start(
       readRequest((id) =>
-        api.ReadGenericDetail(id, { connection, handle: liveDescriptor.handle, namespace: scope, name: resource.name, uid: resource.uid }),
+        createdDetailID
+          ? api.ReadCreatedDetail(id, createdDetailID)
+          : api.ReadGenericDetail(id, { connection, handle, namespace: scope, name: resource.name, uid: resource.uid }),
       ),
       (data) => {
-        setDetail({ key });
+        setDetail({ key: detailKey });
         const route = latestRoute.current;
-        if (route?.descriptor?.handle === liveDescriptor.handle)
+        if (route && (createdDetailID ? route.createdDetailOperationID === createdDetailID : route.descriptor?.handle === handle))
           onRoute({ ...route, namespace, capture: data, section: capture?.resource.uid === resource.uid ? route.section : "Overview" });
       },
-      (error) => setDetail({ key, error: message(error) }),
+      (error) => setDetail({ key: detailKey, error: message(error) }),
     );
   }
+
   const refreshedEdit = useRef("");
   const matchingEdit = !detail.loading && capture && savedEditAfterCapture(operationResults, capture.resource, capture.fetchedAt);
   useEffect(() => {
@@ -167,7 +181,7 @@ export function APIResourceBrowser({
           <button
             onClick={() => {
               clearDetail();
-              patch({ descriptor: undefined, capture: undefined, history: [""] });
+              patch({ descriptor: undefined, capture: undefined, createdDetailOperationID: undefined, history: [""] });
               setRefresh((n) => n + 1);
             }}
           >
@@ -222,7 +236,13 @@ export function APIResourceBrowser({
               onChange={(e) => {
                 clearDetail();
                 setResourceFilter("");
-                patch({ version: e.target.value, descriptor: undefined, capture: undefined, history: [""] });
+                patch({
+                  version: e.target.value,
+                  descriptor: undefined,
+                  capture: undefined,
+                  createdDetailOperationID: undefined,
+                  history: [""],
+                });
               }}
             >
               <option value="">Select version</option>
@@ -320,7 +340,7 @@ export function APIResourceBrowser({
                 disabled={history.length <= 1 || inventory.loading}
                 onClick={() => {
                   clearDetail();
-                  patch({ history: history.slice(0, -1), capture: undefined });
+                  patch({ history: history.slice(0, -1), capture: undefined, createdDetailOperationID: undefined });
                 }}
               >
                 Previous
@@ -330,7 +350,11 @@ export function APIResourceBrowser({
                 disabled={!inventory.data?.page.nextCursor || history.length >= 20 || inventory.loading}
                 onClick={() => {
                   clearDetail();
-                  patch({ history: [...history, inventory.data!.page.nextCursor], capture: undefined });
+                  patch({
+                    history: [...history, inventory.data!.page.nextCursor],
+                    capture: undefined,
+                    createdDetailOperationID: undefined,
+                  });
                 }}
               >
                 Next
@@ -353,21 +377,21 @@ export function APIResourceBrowser({
         )}
       </section>
       <section className="detail-pane">
-        {detail.key === key && detail.loading && <p>Loading captured object…</p>}
-        {detail.key === key && detail.error && <p role="alert">{detail.error}</p>}
+        {detail.key === detailKey && detail.loading && <p>Loading captured object…</p>}
+        {detail.key === detailKey && detail.error && <p role="alert">{detail.error}</p>}
         {capture ? (
           <GenericResourceDetail
             key={JSON.stringify([capture.resource.uid, capture.fetchedAt])}
             capture={capture}
             section={active?.section ?? "Overview"}
-            loading={detail.key === key && !!detail.loading}
+            loading={detail.key === detailKey && !!detail.loading}
             onSection={(section) => patch({ section })}
             onRefresh={() => open(capture.resource)}
-            onEdit={() => onEdit(capture.resource)}
+            onEdit={onEdit && (() => onEdit(capture.resource))}
             canPatch={!!liveDescriptor?.patch}
             onBack={() => {
               clearDetail();
-              patch({ capture: undefined, section: "Overview" });
+              patch({ capture: undefined, createdDetailOperationID: undefined, section: "Overview" });
             }}
           />
         ) : (

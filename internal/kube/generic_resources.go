@@ -94,46 +94,74 @@ func (s *Service) ReadGenericDetail(ctx context.Context, req GenericDetailReques
 	if err != nil {
 		return GenericResourceDetail{}, err
 	}
-	if err := genericAddress(api, req.Namespace); err != nil {
-		return GenericResourceDetail{}, err
-	}
-	if !genericName(req.Name) || len(req.UID) == 0 || len(req.UID) > 128 {
-		return GenericResourceDetail{}, model.Fail("invalid", "Explicit valid resource name and UID required")
-	}
-	client, err := s.boundedReadClient(ctx, req.Connection)
+	detail, err := s.readManifestDetail(ctx, ManifestAddress{req.Connection, api.group, api.version, api.plural, api.kind, req.Namespace, req.Name}, req.UID)
 	if err != nil {
 		return GenericResourceDetail{}, err
 	}
-	raw, err := api.read(client, req.Namespace, req.Name).Do(ctx).Raw()
+	if _, err := s.resolveDescriptor(req.Connection, req.Handle); err != nil {
+		return GenericResourceDetail{}, err
+	}
+	return detail, nil
+}
+
+// ReadCreatedDetail reads the exact address from a retained successful create result, without an inventory handle.
+func (s *Service) ReadCreatedDetail(ctx context.Context, target ManifestAddress, uid string) (GenericResourceDetail, error) {
+	if target.Group == "" && target.Resource == "secrets" {
+		return GenericResourceDetail{}, model.Fail("unsupported", "Open Secrets through the metadata-only resource view")
+	}
+	resolved, err := s.ResolveManifestTarget(ctx, target.Connection, target.api().apiVersion(), target.Kind, target.Resource, target.Namespace, target.Name, "get")
+	if err != nil {
+		return GenericResourceDetail{}, err
+	}
+	detail, err := s.readManifestDetail(ctx, resolved, uid)
+	if err != nil {
+		return GenericResourceDetail{}, err
+	}
+	if err := s.connections.Validate(target.Connection); err != nil {
+		return GenericResourceDetail{}, err
+	}
+	return detail, nil
+}
+
+func (s *Service) readManifestDetail(ctx context.Context, target ManifestAddress, uid string) (GenericResourceDetail, error) {
+	api := target.api()
+	if err := genericAddress(api, target.Namespace); err != nil {
+		return GenericResourceDetail{}, err
+	}
+	if !genericName(target.Name) || len(uid) == 0 || len(uid) > 128 {
+		return GenericResourceDetail{}, model.Fail("invalid", "Explicit valid resource name and UID required")
+	}
+	client, err := s.boundedReadClient(ctx, target.Connection)
+	if err != nil {
+		return GenericResourceDetail{}, err
+	}
+	raw, err := api.read(client, target.Namespace, target.Name).Do(ctx).Raw()
 	if err != nil {
 		return GenericResourceDetail{}, readError(ctx, err)
 	}
 	if len(raw) > detailLimit {
 		return GenericResourceDetail{}, model.Fail("capacity", "Resource capture exceeds the 2 MiB size limit")
 	}
-	item, err := objectIdentity(raw, api, req.Namespace, false)
+	item, err := objectIdentity(raw, api, target.Namespace, false)
 	if err != nil {
 		return GenericResourceDetail{}, err
 	}
-	if item.Metadata.Name != req.Name {
+	if item.Metadata.Name != target.Name {
 		return GenericResourceDetail{}, model.Fail("invalid", "Server did not return the requested resource name")
 	}
-	if string(item.Metadata.UID) != req.UID {
+	if string(item.Metadata.UID) != uid {
 		return GenericResourceDetail{}, model.Fail("resource_replaced", "Resource replaced; select again")
 	}
 	rendered, err := exactYAML(raw)
 	if err != nil {
 		return GenericResourceDetail{}, err
 	}
-	out := GenericResourceDetail{Resource: genericRef(req.Connection, api, item.Metadata), ResourceVersion: item.Metadata.ResourceVersion, FetchedAt: time.Now().UTC(), ObjectJSON: string(raw), YAML: rendered}
+	out := GenericResourceDetail{Resource: genericRef(target.Connection, api, item.Metadata), ResourceVersion: item.Metadata.ResourceVersion, FetchedAt: time.Now().UTC(), ObjectJSON: string(raw), YAML: rendered}
 	if err := checkPayload(out); err != nil {
 		return GenericResourceDetail{}, err
 	}
 	if ctx.Err() != nil {
 		return GenericResourceDetail{}, safeError(ctx, ctx.Err())
-	}
-	if _, err := s.resolveDescriptor(req.Connection, req.Handle); err != nil {
-		return GenericResourceDetail{}, err
 	}
 	return out, nil
 }

@@ -97,3 +97,30 @@ func TestGenericInventoryCaptureAndGuards(t *testing.T) {
 		t.Fatal("invalidated descriptor reached network")
 	}
 }
+
+func TestCreatedDetailAllowsGetWithoutInventoryAndRejectsReplacement(t *testing.T) {
+	ctx := context.Background()
+	s, ref := workloadServer(t, func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if r.Method != http.MethodGet {
+			t.Errorf("unexpected method %s", r.Method)
+		}
+		switch r.URL.Path {
+		case "/apis/example.test/v1":
+			fmt.Fprint(w, `{"kind":"APIResourceList","groupVersion":"example.test/v1","resources":[{"name":"widgets","kind":"Widget","namespaced":true,"verbs":["get","create"]}]}`)
+		case "/apis/example.test/v1/namespaces/default/widgets/sample":
+			fmt.Fprint(w, `{"apiVersion":"example.test/v1","kind":"Widget","metadata":{"namespace":"default","name":"sample","uid":"actual","resourceVersion":"2"}}`)
+		default:
+			t.Errorf("unexpected request %s", r.URL.Path)
+			w.WriteHeader(http.StatusNotFound)
+		}
+	})
+	target := ManifestAddress{Connection: ref, Group: "example.test", Version: "v1", Resource: "widgets", Kind: "Widget", Namespace: "default", Name: "sample"}
+	detail, err := s.ReadCreatedDetail(ctx, target, "actual")
+	if err != nil || detail.Resource.UID != "actual" {
+		t.Fatalf("created detail = %+v, %v", detail, err)
+	}
+	if _, err := s.ReadCreatedDetail(ctx, target, "old"); err == nil || !strings.Contains(err.Error(), "resource_replaced") {
+		t.Fatalf("replacement check: %v", err)
+	}
+}
