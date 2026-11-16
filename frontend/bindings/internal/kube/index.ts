@@ -49,6 +49,7 @@ export type {
   InteractiveEntry,
   JobSummary,
   LogRequest,
+  ManifestAddress,
   NetworkPage,
   NetworkReferenceRequest,
   NetworkRow,

@@ -14,6 +14,41 @@ import * as kube$0 from "../kube/models.js";
 // @ts-ignore: Unused imports
 import * as model$0 from "../model/models.js";
 
+export interface CreateDraft {
+  id: string;
+  connection: model$0.ConnectionRef;
+  cluster: string;
+  namespace: string;
+}
+
+export interface CreateObservation {
+  operationID: string;
+  checkedAt: string;
+  state: string;
+  problem: model$0.Problem | null;
+}
+
+export interface CreatePreview {
+  token: string;
+  expiresAt: string;
+  target: kube$0.ManifestAddress;
+  proposedYAML: string;
+  serverYAML: string;
+  warnings: string[] | null;
+}
+
+export interface CreateRequest {
+  draftID: string;
+  yaml: string;
+  namespace: string;
+  resource: string;
+}
+
+export interface CreateResultData {
+  target: kube$0.ManifestAddress;
+  resourceVersion: string;
+}
+
 export interface DeleteImpact {
   propagation: string;
   gracePolicy: string;
@@ -105,6 +140,7 @@ export interface OperationResult {
   delete: DeleteResultData | null;
   rollback?: RollbackResultData | null;
   edit?: kube$0.EditTarget | null;
+  create?: CreateResultData | null;
 }
 
 export interface Preview {

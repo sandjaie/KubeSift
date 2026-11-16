@@ -62,10 +62,10 @@ Existing checkout `/Users/sandjaieravi/dev/KubeSift`, no worktree. Start from cu
 
 **Contracts:** `ExecuteCreate(token string) (OperationResult,error)`; `RevokeCreate(token string)`. Result action create includes canonical address and actual returned UID/version when valid, never documents. Add `InspectCreateName(ctx, operationID) (CreateObservation,error)` for explicit read-only reconciliation: resolve a retained terminal create result natively, GET canonical name when allowed, return checkedAt and existence/unavailable/replaced evidence without adopting an unknown request's object as its created identity.
 
-- [ ] Test exact prepared POST once, shared lock and token/draft revision binding. Between-review AlreadyExists rejects and never invokes edit/apply/delete or overwrites object. Re-read is not required to authorize create-only credentials.
-- [ ] Test HTTP 201 matching actual UID/version versus malformed/oversize/lost success Unknown. Count real transport dispatches on 429/5xx/redirect/auth failure/bridge loss/repeated confirmation; dry-run counted separately. No automatic replay or generated names.
-- [ ] Preserve accepted result if subsequent GET is Forbidden. Inspect name cannot infer causality or trigger operations; same-name ambiguity remains explicit. Object-specific NotFound versus missing API route follows existing safe observation rules.
-- [ ] Wire request cancellation for preview/inspection and operation-owned execution; regenerate bindings, inspect diff and add typed frontend wrappers. Run Go/desktop/race tests and frontend typecheck. Commit.
+- [x] Test exact prepared POST once, shared lock and token/draft revision binding. Between-review AlreadyExists rejects and never invokes edit/apply/delete or overwrites object. Re-read is not required to authorize create-only credentials.
+- [x] Test HTTP 201 matching actual UID/version versus malformed/oversize/lost success Unknown. Count real transport dispatches on 429/5xx/redirect/auth failure/bridge loss/repeated confirmation; dry-run counted separately. No automatic replay or generated names.
+- [x] Preserve accepted result if subsequent GET is Forbidden. Inspect name cannot infer causality or trigger operations; same-name ambiguity remains explicit. Object-specific NotFound versus missing API route follows existing safe observation rules.
+- [x] Wire request cancellation for preview/inspection and operation-owned execution; regenerate bindings, inspect diff and add typed frontend wrappers. Run Go/desktop/race tests and frontend typecheck. Commit.
 
 ## Task 4 — Inventory entry point and existing editor/review integration
 

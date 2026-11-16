@@ -35,3 +35,10 @@ type CreatePreview struct {
 	ServerYAML   string               `json:"serverYAML"`
 	Warnings     []string             `json:"warnings"`
 }
+
+type CreateObservation struct {
+	OperationID string         `json:"operationID"`
+	CheckedAt   time.Time      `json:"checkedAt"`
+	State       string         `json:"state"`
+	Problem     *model.Problem `json:"problem"`
+}

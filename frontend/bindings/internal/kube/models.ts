@@ -45,6 +45,7 @@ export interface APIResourceDescriptor {
   list: boolean;
   get: boolean;
   patch: boolean;
+  create: boolean;
   mode: string;
   reason: string;
   handle: string;
@@ -289,6 +290,16 @@ export interface LogRequest {
   previous: boolean;
   follow: boolean;
   tailLines: number;
+}
+
+export interface ManifestAddress {
+  connection: model$0.ConnectionRef;
+  group: string;
+  version: string;
+  resource: string;
+  kind: string;
+  namespace: string;
+  name: string;
 }
 
 export interface NetworkPage {

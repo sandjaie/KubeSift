@@ -74,7 +74,7 @@ func (c operationClient) patch(ctx context.Context, path string, dry bool, patch
 }
 
 func (c operationClient) send(ctx context.Context, method, path string, dry bool, raw []byte, contentType string, out any, notFound *operationStatus) ([]string, error) {
-	return c.sendRequest(ctx, method, path, dry, raw, contentType, out, notFound, nil, false)
+	return c.sendRequest(ctx, method, path, dry, raw, contentType, out, notFound, nil, false, false)
 }
 
 type editFeedback struct {
@@ -84,14 +84,18 @@ type editFeedback struct {
 }
 
 func (c operationClient) editPatch(ctx context.Context, path string, dry bool, patch []byte, out *json.RawMessage, feedback *editFeedback) ([]string, error) {
-	return c.sendRequest(ctx, http.MethodPatch, path, dry, patch, "application/json-patch+json", out, nil, feedback, false)
+	return c.sendRequest(ctx, http.MethodPatch, path, dry, patch, "application/json-patch+json", out, nil, feedback, false, false)
 }
 
 func (c operationClient) createPost(ctx context.Context, path string, dry bool, body []byte, out *json.RawMessage, feedback *editFeedback) ([]string, error) {
-	return c.sendRequest(ctx, http.MethodPost, path, dry, body, "application/json", out, nil, feedback, true)
+	return c.sendRequest(ctx, http.MethodPost, path, dry, body, "application/json", out, nil, feedback, true, false)
 }
 
-func (c operationClient) sendRequest(ctx context.Context, method, path string, dry bool, raw []byte, contentType string, out any, notFound *operationStatus, edit *editFeedback, create bool) ([]string, error) {
+func (c operationClient) observeCreate(ctx context.Context, path string, metadataOnly bool, out *json.RawMessage, missing *operationStatus) ([]string, error) {
+	return c.sendRequest(ctx, http.MethodGet, path, false, nil, "", out, missing, nil, false, metadataOnly)
+}
+
+func (c operationClient) sendRequest(ctx context.Context, method, path string, dry bool, raw []byte, contentType string, out any, notFound *operationStatus, edit *editFeedback, create, metadataOnly bool) ([]string, error) {
 	addr := *c.base
 	addr.Path = strings.TrimRight(addr.Path, "/") + path
 	addr.RawPath, addr.RawQuery, addr.Fragment = "", "", ""
@@ -115,7 +119,11 @@ func (c operationClient) sendRequest(ctx context.Context, method, path string, d
 	if err != nil {
 		return nil, model.Fail("invalid", "Cannot build operation request")
 	}
-	req.Header.Set("Accept", "application/json")
+	accept := "application/json"
+	if metadataOnly {
+		accept = "application/json;as=PartialObjectMetadata;g=meta.k8s.io;v=v1"
+	}
+	req.Header.Set("Accept", accept)
 	req.Header.Set("User-Agent", "KubeSift")
 	if raw != nil {
 		req.Header.Set("Content-Type", contentType)
