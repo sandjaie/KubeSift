@@ -72,11 +72,11 @@ Existing checkout `/Users/sandjaieravi/dev/KubeSift`, no worktree. Start from cu
 **Create:** `frontend/src/operations/CreateDialog.tsx`, `createState.ts`, focused state/render tests.
 **Modify:** inventory toolbar in actual workspace/table component, `operations/api.ts`, `OperationResults.tsx`, reusable editor/review components and README.
 
-- [ ] Add Create resource to active cluster inventory without requiring selected object. Offer minimal identity skeleton only, explicit namespace/cluster scope and kind/version route feedback. Preserve current UI patterns, no new editor library.
-- [ ] Implement edit→Review→Confirm flow using existing YAML/diff primitives; show proposed and server-preview changes together. No typed-name, repeated reveal or kind-specific approval gates. Confirm token only, never raw frontend-selected URL/body at execute.
-- [ ] Test namespace mismatch, unsaved draft retention/discard warning, changed generation invalidation, late replies/revocation, Secret isolation/clear-on-close and no-copy-unless-clicked. No automatic draft rebasing.
-- [ ] Add Create to mixed results; valid success opens actual UID-bound resource, read denial remains accepted, unknown result offers only explicit inspect/reconcile. Test existing Edit/Apply-placeholder distinction and no silent upsert.
-- [ ] Run frontend tests/lint/typecheck and focused backend tests; commit.
+- [x] Add Create resource to active cluster inventory without requiring selected object. Offer minimal identity skeleton only, explicit namespace/cluster scope and kind/version route feedback. Preserve current UI patterns, no new editor library.
+- [x] Implement edit→Review→Confirm flow using existing YAML/diff primitives; show proposed and server-preview changes together. No typed-name, repeated reveal or kind-specific approval gates. Confirm token only, never raw frontend-selected URL/body at execute.
+- [x] Test namespace mismatch, unsaved draft retention/discard warning, changed generation invalidation, late replies/revocation, Secret isolation/clear-on-close and no-copy-unless-clicked. No automatic draft rebasing.
+- [x] Add Create to mixed results; valid success opens actual UID-bound resource, read denial remains accepted, unknown result offers only explicit inspect/reconcile. Test existing Edit/Apply-placeholder distinction and no silent upsert.
+- [x] Run frontend tests/lint/typecheck and focused backend tests; commit.
 
 ## Task 5 — Verification, review and delivery
 

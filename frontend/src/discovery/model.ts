@@ -24,6 +24,7 @@ export type CatalogSeed = {
   history?: string[];
   namespace?: string;
   capture?: GenericResourceDetail;
+  openedFromCreate?: boolean;
   section?: "Overview" | "YAML";
 };
 export function selectCatalogIntent(intent: CatalogIntent, catalog: APIResourceCatalog): CatalogSeed {

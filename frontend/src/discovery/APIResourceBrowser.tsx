@@ -52,6 +52,7 @@ export function APIResourceBrowser({
   onBack,
   onDedicated,
   onEdit,
+  onCreate,
   operationResults,
   widthPercent,
   heightPercent,
@@ -63,6 +64,7 @@ export function APIResourceBrowser({
   route?: CatalogSeed;
   onRoute: (route: CatalogSeed | null) => void;
   onBack: () => void;
+  onCreate?: () => void;
   onEdit: (target: EditTarget) => void;
   operationResults: OperationResult[];
   onDedicated: (kind: import("../workloads/model").ResourceKind) => void;
@@ -111,7 +113,7 @@ export function APIResourceBrowser({
     (g) => g.group === active?.group || (g.group || "core").toLowerCase().includes(groupFilter.trim().toLowerCase()),
   );
   const rows = (inventory.data?.items ?? []).filter((r) => r.resource.name.toLowerCase().includes(filter.trim().toLowerCase()));
-  const capture = liveDescriptor && !inventory.error ? active?.capture : undefined;
+  const capture = liveDescriptor && (!inventory.error || active?.openedFromCreate) ? active?.capture : undefined;
   const patch = (next: Partial<CatalogSeed>) => {
     if (active) onRoute({ ...active, ...next });
   };
@@ -122,7 +124,7 @@ export function APIResourceBrowser({
   const selecting = (candidate?: APIResourceDescriptor) => {
     clearDetail();
     setFilter("");
-    patch({ descriptor: candidate, history: [""], namespace, capture: undefined, section: "Overview" });
+    patch({ descriptor: candidate, history: [""], namespace, capture: undefined, section: "Overview", openedFromCreate: undefined });
   };
   function open(resource: GenericResourceRef) {
     if (!liveDescriptor || !key) return;
@@ -153,6 +155,15 @@ export function APIResourceBrowser({
       <section className="list-pane api-browser">
         <div className="pane-heading">
           <h2>API resources</h2>
+          <button
+            disabled={!onCreate}
+            onClick={(event) => {
+              event.currentTarget.focus();
+              onCreate?.();
+            }}
+          >
+            Create resource…
+          </button>
           <button
             onClick={() => {
               clearDetail();

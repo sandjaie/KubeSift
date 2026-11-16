@@ -4,6 +4,7 @@ Used by: The common editor and its state tests.
 Responsibilities: Compare canonical targets and produce a small line diff.
 Important: The native service owns the patch and verifies the target.
 */
+import type { CreateDestination } from "./createState";
 import type { ConnectionRef } from "../bridge";
 import type { ResourceRef } from "../workloads/model";
 import type { EditPreview, EditTarget, OperationResult } from "./api";
@@ -43,13 +44,29 @@ export function canConfirmEdit(preview: Pick<EditPreview, "token" | "expiresAt" 
   return !!preview.token && now < Date.parse(preview.expiresAt) && sameEditTarget(preview.target, target);
 }
 
-export type EditDestination = { tab: string; target: EditTarget; reveal: boolean };
-export type EditorSession = EditDestination & { suspended: boolean; closing: boolean; replacement?: EditDestination };
+export type EditDestination = { mode?: "edit"; tab: string; target: EditTarget; reveal: boolean };
+export type EditorDestination = EditDestination | CreateDestination;
+export type EditorSession<D extends EditorDestination = EditDestination> = D & {
+  suspended: boolean;
+  closing: boolean;
+  replacement?: D;
+};
 
-export function requestEditor(current: EditorSession | undefined, next: EditDestination): EditorSession {
+export function requestEditor(current: EditorSession | undefined, next: EditDestination): EditorSession;
+export function requestEditor(
+  current: EditorSession<EditorDestination> | undefined,
+  next: EditorDestination,
+): EditorSession<EditorDestination>;
+export function requestEditor(
+  current: EditorSession<EditorDestination> | undefined,
+  next: EditorDestination,
+): EditorSession<EditorDestination> {
   if (!current) return { ...next, suspended: false, closing: false };
-  if (current.tab === next.tab && sameEditTarget(current.target, next.target))
-    return { ...current, suspended: false, closing: false, replacement: undefined };
+  const same =
+    current.mode === "create"
+      ? next.mode === "create" && sameEditConnection(current.connection, next.connection)
+      : next.mode !== "create" && sameEditTarget(current.target, next.target);
+  if (current.tab === next.tab && same) return { ...current, suspended: false, closing: false, replacement: undefined };
   return { ...current, replacement: next };
 }
 

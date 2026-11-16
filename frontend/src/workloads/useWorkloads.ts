@@ -5,6 +5,7 @@ Responsibilities: Cancel hidden reads, isolate epochs and fetch only the visible
 Important: Payloads remain bounded, in memory, and independent of connection-health polling.
 */
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import type { ManifestAddress } from "../operations/api";
 import type { ConnectionRef } from "../bridge";
 import { message } from "../connections/api";
 import { readRequest, workloadAPI as api } from "./api";
@@ -327,27 +328,82 @@ export function useWorkloads(
   return {
     kind,
     ready: !!t,
-    openOperationTarget: (resource: ResourceRef) => {
-      if (!t || !canOpen(resource, resource.namespace)) return;
-      const entry: NavigationEntry = { resource, section: "Overview", cursor: "", namespace: resource.namespace };
+    openOperationTarget: (resource: ResourceRef, created?: ManifestAddress) => {
+      if (
+        !t ||
+        !visible ||
+        !connection ||
+        resource.connection.id !== connection.id ||
+        resource.connection.generation !== connection.generation
+      )
+        return;
+      const destinationNamespace = resource.namespace || namespace;
+      const entry: NavigationEntry = { resource, section: "Overview", cursor: "", namespace: destinationNamespace };
       const { filter, sort, scroll, history } = inventory;
-      const entries =
-        selected && selected.resource.uid !== resource.uid
-          ? relatedHistory(
-              t.navigation,
-              {
-                resource: selected.resource,
-                section,
-                cursor: inventory.sectionCursor,
-                namespace,
-                position: { filter, sort, scroll, history },
-              },
-              resource,
-            )
-          : t.navigation;
+      const origin: NavigationEntry | undefined = selected
+        ? {
+            resource: selected.resource,
+            section,
+            cursor: inventory.sectionCursor,
+            namespace,
+            detail: inventory.sections.Overview?.data as ResourceDetail | undefined,
+            position: { filter, sort, scroll, history },
+          }
+        : undefined;
+      const entries = origin && origin.resource.uid !== resource.uid ? relatedHistory(t.navigation, origin, resource) : t.navigation;
+      if (!created) {
+        if (canOpen(resource, destinationNamespace))
+          navigationRequest(
+            (id) => api.ReadResource(id, { resource }),
+            (detail) => show(entry, entries, detail),
+          );
+        return;
+      }
       navigationRequest(
-        (id) => api.ReadResource(id, { resource }),
-        (detail) => show(entry, entries, detail),
+        async (id) => {
+          const { group, version, resource: plural, kind: createdKind, namespace: createdNamespace } = created;
+          const groups = await api.ReadAPIGroups(id, { connection, refresh: false });
+          if (!groups.groups?.some((g) => g.group === group && g.versions?.includes(version)))
+            throw new Error("The created resource's API version is unavailable.");
+          const catalog = await api.ReadAPIResources(id, { connection, group, version, refresh: false });
+          const descriptor = catalog.resources?.find(
+            (d) =>
+              d.resource === plural &&
+              d.group === group &&
+              d.version === version &&
+              d.kind === createdKind &&
+              d.namespaced === !!createdNamespace,
+          );
+          if (descriptor?.mode === "dedicated" && canOpen(resource, destinationNamespace))
+            return { detail: await api.ReadResource(id, { resource }) };
+          if (descriptor?.mode !== "generic") throw new Error("The created resource does not have an available detail view.");
+          const capture = await api.ReadGenericDetail(id, {
+            connection,
+            handle: descriptor.handle,
+            namespace: createdNamespace,
+            name: resource.name,
+            uid: resource.uid,
+          });
+          const seed: CatalogSeed = {
+            group,
+            version,
+            descriptor,
+            capture,
+            namespace: destinationNamespace,
+            history: [""],
+            section: "Overview",
+            origin,
+            openedFromCreate: true,
+          };
+          return { seed };
+        },
+        ({ detail, seed }) => {
+          if (detail) show(entry, entries, detail);
+          if (!seed) return;
+          commit({ type: "catalog", tab: tabID, clusterScope, route: seed });
+          commit({ type: "kind", tab: tabID, kind: "APIResources", epoch: ++serial.current });
+          if (destinationNamespace !== namespace) onNamespace(tabID, destinationNamespace);
+        },
       );
     },
     holdDeletionSelection: () => {

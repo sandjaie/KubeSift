@@ -15,7 +15,7 @@ import type {
 } from "../../bindings/internal/operation/models";
 import type { ConnectionRef } from "../bridge";
 import type { EditTarget } from "../../bindings/internal/kube/models";
-export type { EditTarget };
+export type { EditTarget, ManifestAddress } from "../../bindings/internal/kube/models";
 export type {
   CreateDraft,
   CreateObservation,
@@ -33,7 +33,7 @@ export type {
   ScalePreview,
   ScaleResult,
 } from "../../bindings/internal/operation/models";
-export type OperationAction = "scale" | "restart" | "delete" | "edit" | "rollback";
+export type OperationAction = "scale" | "restart" | "delete" | "edit" | "rollback" | "create";
 export const prepareScale = (request: ScaleRequest) => readRequest((id) => workloadAPI.PrepareScale(id, request));
 export const executeScale = workloadAPI.ExecuteScale;
 export const listScaleResults = workloadAPI.ListScaleResults;

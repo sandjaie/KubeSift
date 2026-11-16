@@ -13,7 +13,7 @@ import { closeEdit, openEdit, prepareEdit, revokeEdit, type EditDraft, type Edit
 import { canConfirmEdit, editDiff, sameEditConnection } from "./editState";
 import { reviewOwner } from "./reviewState";
 
-function Diff({ before, after }: { before: string; after: string }) {
+export function YAMLDiff({ before, after }: { before: string; after: string }) {
   return (
     <pre className="yaml-view edit-diff" tabIndex={0}>
       {editDiff(before, after)}
@@ -220,11 +220,11 @@ export function EditDialog({
           {preview && (
             <>
               <p role="status">Server dry-run passed.</p>
-              <Diff before={preview.beforeYAML} after={preview.proposedYAML} />
+              <YAMLDiff before={preview.beforeYAML} after={preview.proposedYAML} />
               {preview.serverYAML && (
                 <details>
                   <summary>Additional server changes</summary>
-                  <Diff before={preview.proposedYAML} after={preview.serverYAML} />
+                  <YAMLDiff before={preview.proposedYAML} after={preview.serverYAML} />
                 </details>
               )}
               {!!preview.warnings?.length && (

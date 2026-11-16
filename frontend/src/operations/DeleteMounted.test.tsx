@@ -23,6 +23,7 @@ const bridge = vi.hoisted(() => ({
   executeEdit: vi.fn(),
   executeRollback: vi.fn(),
   executeRestart: vi.fn(),
+  executeCreate: vi.fn(),
   executeScale: vi.fn(),
   listOperationResults: vi.fn(),
   readWorkloads: vi.fn(),
