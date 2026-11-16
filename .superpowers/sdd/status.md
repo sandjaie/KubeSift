@@ -4,9 +4,9 @@ Updated 2026-11-16. Current integration branch is `develop`.
 
 ## Phase 1D.5 · Workload history and rollback
 
-- [Specification](../../docs/superpowers/specs/2026-11-16-phase-1d5-workload-rollback-design.md) prepared for review: Deployment, StatefulSet and DaemonSet retained template rollback, current UI, simple diff/dry-run/Confirm and minimal tests.
+- [Specification](../../docs/superpowers/specs/2026-11-16-phase-1d5-workload-rollback-design.md) approved on 2026-11-16: Deployment, StatefulSet and DaemonSet retained template rollback, current UI, simple diff/dry-run/Confirm and minimal tests.
 - Other resource applicability is explicit: history sources link to their owning workload; Helm and OpenShift-specific rollback remain with 1E/1F. No fabricated generic history or automatic Pod deletion.
-- Next: approve the written specification, then create the implementation plan. No implementation or cluster changes performed during planning.
+- [Five-task implementation plan](../../docs/superpowers/plans/2026-11-16-phase-1d5-workload-rollback.md) prepared for review and a separate implementation session. No implementation or cluster changes performed during planning.
 
 ## Phase 1D.4 · Reviewed YAML editing
 

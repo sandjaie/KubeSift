@@ -1,6 +1,6 @@
 # Phase 1D.5 — Workload history and rollback
 
-**Status:** Design for review; scope approved for specification, implementation not authorized.
+**Status:** Approved by the user on 2026-11-16. Implementation belongs in a separate session.
 **Date:** 2026-11-16
 
 Owners: [roadmap](../../roadmap/roadmap.html#phase-1d), [UX](../../ux/workflows.html), [security](../../security/security-model.html), [engineering](../../engineering/engineering.html#agent-verification). Baseline: develop `36f795a`, after YAML editing merge `87c7ce8`.
@@ -90,4 +90,4 @@ Acceptance:
 
 ## Next step
 
-Superpowers builder review found no important unanswered planning questions. Review this specification, then create the Superpowers implementation plan after approval. No application implementation or cluster mutation occurs while authoring this spec.
+Superpowers builder review found no important unanswered planning questions. The [five-task implementation plan](../plans/2026-11-16-phase-1d5-workload-rollback.md) follows this approved specification. Review the plan and implement in a separate session. No application implementation or cluster mutation occurred during planning.
