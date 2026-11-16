@@ -280,3 +280,12 @@ func (m *Manager) ContextName(ref model.ConnectionRef) (string, error) {
 	}
 	return entry.resolved.Name(), nil
 }
+
+// Lifetime returns the cancellation scope of an exact connection generation.
+func (m *Manager) Lifetime(ref model.ConnectionRef) (context.Context, error) {
+	e, err := m.lookup(ref)
+	if err != nil {
+		return nil, err
+	}
+	return e.ctx, nil
+}

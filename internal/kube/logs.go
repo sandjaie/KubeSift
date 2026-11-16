@@ -200,4 +200,9 @@ func (s *Service) closeConnection(ref model.ConnectionRef) {
 			delete(s.productLogs, id)
 		}
 	}
+	for id, entry := range s.interactive {
+		if entry.Connection == ref {
+			delete(s.interactive, id)
+		}
+	}
 }

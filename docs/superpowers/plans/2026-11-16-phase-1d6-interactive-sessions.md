@@ -62,10 +62,10 @@ Desktop Open calls take a requestID through the existing cancellable request ada
 
 **Interfaces:** Produces target validation, product reservation/state lifecycle and Stop/Close; later tasks plug transports into this owner.
 
-- [ ] Add `TestInteractiveOwnership`: replacement UID rejected, eight retained entries reject ninth, stopped remains retained, Close frees slot, generation mismatch and cancel-before-activation clean up. Run `go test ./internal/kube -run TestInteractiveOwnership -count=1` and confirm new assertions fail.
-- [ ] Implement reservation under existing kube.Service synchronization, using the established product log lifecycle as a pattern without combining independent caps. Validate explicit Pod identity/container from a fresh read; pass a transport target only after validation.
-- [ ] Add cancellable pre-start/post-start and 15-second active Pod UID checks. A failed check stops work with a safe reason; no claim of atomic name-addressed exec/forward identity. Reuse connection cleanup fanout so adding this owner never replaces logs/terminals cleanup.
-- [ ] Implement pending cancellation and idempotent Stop/Close/connection shutdown, including retained-entry cleanup. Return bounded metadata only. Run `go test ./internal/kube ./internal/session`; expect pass. Commit `feat: own UID-bound interactive sessions`.
+- [x] Add `TestInteractiveOwnership`: replacement UID rejected, eight retained entries reject ninth, stopped remains retained, Close frees slot, generation mismatch and cancel-before-activation clean up. Run `go test ./internal/kube -run TestInteractiveOwnership -count=1` and confirm new assertions fail.
+- [x] Implement reservation under existing kube.Service synchronization, using the established product log lifecycle as a pattern without combining independent caps. Validate explicit Pod identity/container from a fresh read; pass a transport target only after validation.
+- [x] Add cancellable pre-start/post-start and 15-second active Pod UID checks. A failed check stops work with a safe reason; no claim of atomic name-addressed exec/forward identity. Reuse connection cleanup fanout so adding this owner never replaces logs/terminals cleanup.
+- [x] Implement pending cancellation and idempotent Stop/Close/connection shutdown, including retained-entry cleanup. Return bounded metadata only. Run `go test ./internal/kube ./internal/session`; expect pass. Commit `feat: own UID-bound interactive sessions`.
 
 ## Task 2: Product Pod terminal transport
 
