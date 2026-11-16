@@ -137,12 +137,14 @@
         automatically unhealthy; unavailable/stale health data must be identified. Alerts require evidence, not a decorative badge. Text and
         icons supplement color.
       </p>
-      <h2 id="workload-rollback">Workload history and rollback design</h2>
+      <h2 id="workload-rollback">Workload history and rollback</h2>
       <p>
         The <a href="../superpowers/specs/2026-11-16-phase-1d5-workload-rollback-design.md">1D.5 specification</a> extends existing workload
         detail Revisions views with select revision, template diff/dry-run and ordinary Confirm. Preserve current layout and interaction
         patterns. Show the retained history source and original target; explain partial history and current update strategy. Operation
-        acceptance does not mean all Pods have updated. No new dashboard, typed-name step or automatic Pod deletion is part of this design.
+        acceptance does not mean all Pods have updated. See the
+        <a href="../superpowers/validation/phase-1d5.html">rollback validation report</a>
+        for the exercised flows.
       </p>
       <h2 id="reviewed-yaml-editing">Reviewed YAML editing</h2>
       <p>

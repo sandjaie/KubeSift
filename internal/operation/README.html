@@ -32,4 +32,8 @@
     EditService captures one discovered object and reviews a conditional patch with Kubernetes dry-run. Drafts share the coordinator's
     limits and expiry. Retained edit results include the route, identity and outcome.
   </p>
+  <p>
+    RollbackService verifies retained ReplicaSet or ControllerRevision ownership and reads the captured workload. It dry-runs a conditional
+    replacement of only the Pod template. Confirm verifies the source and parent again, then sends the same reviewed patch once.
+  </p>
 </html>
