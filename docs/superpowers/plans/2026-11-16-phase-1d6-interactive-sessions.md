@@ -112,7 +112,7 @@ Desktop Open calls take a requestID through the existing cancellable request ada
 - [x] Run `wails3 task bindings`, `npm run build`, `scripts/check.sh`, `wails3 task package`; expect success. Inspect generated diffs, source headers and scoped formatting. Repeat short pressure/cleanup checks only for changed transport risks, not all historical 1A benchmarks.
 - [x] Verify packaged UI input/resize/paste, Service backend choice, actual forwarding, missing shell/error, Settings/theme/tab/dock persistence, tab-close cancellation and app-exit listener release. Briefly background/restore to record actual WebKit behavior; do not claim lossless terminal capture or untested cloud compatibility.
 - [x] Record actual results/limits in one technical report, link the validation index, update portable status and verified plan checkboxes. Keep execution logs ignored and payloads out of public evidence. Commit `test: validate interactive sessions and cleanup`.
-- [ ] Obtain one independent whole-PR review, fix blocking findings and rerun affected checks. Push feature branch and open a ready PR, then complete the authorized merge into develop under current Git workflow. Report final checks/PR/merge and any genuine blockers. No release or next increment.
+- [x] Obtain one independent whole-PR review, fix blocking findings and rerun affected checks. Push feature branch and open a ready PR, then complete the authorized merge into develop under current Git workflow. Report final checks/PR/merge and any genuine blockers. No release or next increment.
 
 ## Self-review and handoff
 
