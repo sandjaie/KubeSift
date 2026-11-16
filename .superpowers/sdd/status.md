@@ -5,7 +5,7 @@ Updated 2026-11-16. Current integration branch is `develop`.
 ## Phase 1D.6 · Interactive sessions
 
 - Implemented in the existing checkout from `355ff0f` on `feature/phase-1d6-interactive-sessions`. The [specification](../../docs/superpowers/specs/2026-11-16-phase-1d6-interactive-sessions-design.md), [plan](../../docs/superpowers/plans/2026-11-16-phase-1d6-interactive-sessions.md) and [validation report](../../docs/superpowers/validation/phase-1d6.html) cover Pod-container terminals and fixed Pod/Service loopback TCP forwards.
-- Repository and race checks, both approved kind contexts and packaged macOS verification passed. Fixture cleanup verified. Independent whole-PR review and develop integration pending.
+- Repository and race checks, both approved kind contexts and packaged macOS verification passed. Fixture cleanup verified. Independent whole-PR review and targeted fix passed. Develop integration pending.
 
 ## Phase 1D.5 · Workload history and rollback
 

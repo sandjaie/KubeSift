@@ -98,6 +98,20 @@
         walkthrough does not establish sustained WebKit throughput or a lossless transcript. No other platform, Kubernetes provider or
         context was exercised.
       </p>
+      <h2>Independent review</h2>
+      <p>
+        Reviewer <code>interactive_pr_review</code> reviewed the complete candidate
+        <code>71d0c5d78e52193569486ff455e78be3ebef3d9f</code> against <code>develop</code> at base and merge base
+        <code>355ff0f0939a84edc2bd5631ec93a78b4da108fa</code>. KSF-001 (P2) blocked the original candidate: an implicitly selected log entry
+        could lack its summary and controls. The fix derives the panel from the effective dock selection.
+      </p>
+      <p>
+        The same reviewer cleared the targeted changes at <code>f2a2ed1d6c405e0e39d1c27c9c8ac0f3943a96d3</code> after repeating the
+        synthetic render for both the first log and the fallback after an interactive session closes. Full checks and signature verification
+        passed again. In the packaged app on A, the logs-only fallback showed its summary. The first log required the existing Refresh
+        control after connection setup. Closing a selected terminal next to a running log selected the log and showed working Stop and Close
+        controls. The retest fixture and kubeconfig were removed.
+      </p>
     </main>
   </body>
 </html>
