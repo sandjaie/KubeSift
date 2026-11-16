@@ -137,6 +137,13 @@
         deletion, finalizer removal, generic resource deletion and unsafe StatefulSet retention overrides are excluded. Scale, Restart and
         Delete share native locks and aggregate limits; an uncertain response is never automatically retried.
       </p>
+      <h2 id="workload-rollback">Workload rollback design</h2>
+      <p>
+        The <a href="../superpowers/specs/2026-11-16-phase-1d5-workload-rollback-design.md">1D.5 design</a> restores selected owned workload
+        templates through the existing conditional write and dry-run boundary. Kubernetes permissions remain authoritative. Bind parent and
+        revision-source identities to the reviewed patch, reuse shared operation locks and never replay uncertain writes. Restoring a
+        template does not restore referenced Secret/configuration values, change strategy or authorize automatic Pod deletion.
+      </p>
       <h2 id="reviewed-yaml-editing">Reviewed YAML editing</h2>
       <p>
         The <a href="../superpowers/specs/2026-11-16-phase-1d4-reviewed-yaml-editing-design.md">1D.4 design</a> uses the user's existing

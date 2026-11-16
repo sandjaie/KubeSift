@@ -2,6 +2,12 @@
 
 Updated 2026-11-16. Current integration branch is `develop`.
 
+## Phase 1D.5 · Workload history and rollback
+
+- [Specification](../../docs/superpowers/specs/2026-11-16-phase-1d5-workload-rollback-design.md) prepared for review: Deployment, StatefulSet and DaemonSet retained template rollback, current UI, simple diff/dry-run/Confirm and minimal tests.
+- Other resource applicability is explicit: history sources link to their owning workload; Helm and OpenShift-specific rollback remain with 1E/1F. No fabricated generic history or automatic Pod deletion.
+- Next: approve the written specification, then create the implementation plan. No implementation or cluster changes performed during planning.
+
 ## Phase 1D.4 · Reviewed YAML editing
 
 - [PR #19](https://github.com/sandjaie/KubeSift/pull/19) squash-merged into `develop` as `87c7ce8` on 2026-11-16 Dubai time. Implemented from `f3819d7` in the existing checkout. [Specification](../../docs/superpowers/specs/2026-11-16-phase-1d4-reviewed-yaml-editing-design.md), [plan](../../docs/superpowers/plans/2026-11-16-phase-1d4-yaml-editing.md), and [validation](../../docs/superpowers/validation/phase-1d4.html).

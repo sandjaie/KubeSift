@@ -503,8 +503,14 @@
             <a href="../superpowers/specs/2026-11-16-phase-1d4-reviewed-yaml-editing-design.md">specification</a>.
           </li>
           <li>
-            <strong>Later operation increments.</strong> Specify rollback and separate manifest creation/server-side apply workflows with
-            their own ownership, conflict and impact semantics.
+            <strong>1D.5 — Workload history and rollback.</strong> Deployment, StatefulSet and DaemonSet retained revisions, template diff,
+            server dry-run and ordinary confirmation. Preserve current strategy and distinguish accepted template changes from rollout
+            completion. See the <a href="../superpowers/specs/2026-11-16-phase-1d5-workload-rollback-design.md">specification</a>. Helm and
+            OpenShift-specific rollback stay with their respective later workflows.
+          </li>
+          <li>
+            <strong>Later operation increments.</strong> Specify separate manifest creation/server-side apply workflows with their own
+            ownership, conflict and impact semantics.
           </li>
           <li>
             <strong>Interactive sessions.</strong> Product Pod exec and port forwarding require their own endpoint, lifecycle, stop and
