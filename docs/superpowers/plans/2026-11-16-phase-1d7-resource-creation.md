@@ -83,10 +83,10 @@ Existing checkout `/Users/sandjaieravi/dev/KubeSift`, no worktree. Start from cu
 **Create:** `tests/integration/creation_test.go`, `docs/superpowers/validation/phase-1d7.html`.
 **Modify:** integration README, checkpoint/plan and relevant source docs.
 
-- [ ] Use only task-owned synthetic fixtures on explicit kind-dev-local-a/b: ConfigMap/workload, Secret stringData, cluster-scoped example, custom API fixture and create-only/denied credentials. Prove preview non-persistence, real identity differs from simulated as applicable, AlreadyExists race leaves existing content/UID unchanged and get denial does not block permitted create.
-- [ ] Run meaningful full repository checks, focused coordinator/parser/transport race tests, creation integration plus affected editing/operations/session regressions, bindings/build/package. Do not duplicate every kind suite or use unapproved marker contexts.
-- [ ] Packaged desktop computer-use: create/review/cancel/confirm, namespace target, Secret, denied/AlreadyExists and accepted-with-get-denied, Open resource/Back and both contexts. Verify current appearances/focus/narrow layout and a real generated service call plus a session-event subscription after the bindings relocation. Record actual limits, no duplicate manual UAT.
-- [ ] Clean task-owned objects before CRDs/namespaces and temporary credentials; verify both contexts. Update validation/checkpoint/checked tasks and docs links; progress never goes in roadmap.
+- [x] Use only task-owned synthetic fixtures on explicit kind-dev-local-a/b: ConfigMap/workload, Secret stringData, cluster-scoped example, custom API fixture and create-only/denied credentials. Prove preview non-persistence, real identity differs from simulated as applicable, AlreadyExists race leaves existing content/UID unchanged and get denial does not block permitted create.
+- [x] Run meaningful full repository checks, focused coordinator/parser/transport race tests, creation integration plus affected editing/operations/session regressions, bindings/build/package. Do not duplicate every kind suite or use unapproved marker contexts.
+- [x] Packaged desktop computer-use: create/review/cancel/confirm, namespace target, Secret, denied/AlreadyExists and accepted-with-get-denied, Open resource/Back and both contexts. Verify current appearances/focus/narrow layout and a real generated service call plus a session-event subscription after the bindings relocation. Record actual limits, no duplicate manual UAT.
+- [x] Clean task-owned objects before CRDs/namespaces and temporary credentials; verify both contexts. Update validation/checkpoint/checked tasks and docs links; progress never goes in roadmap.
 - [ ] One fresh independent whole-PR review using repository skill, fixes and targeted rechecks; ready PR and authorized merge into develop when gates pass. Stop here. 1D.8 remains a separate implementation session; do not claim Phase 1D complete or release.
 
 ## Self-review
