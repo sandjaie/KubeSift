@@ -9,9 +9,9 @@ import type { ResourceDetail as Detail, ResourceRef } from "../workloads/model";
 import { deploymentCounts } from "../workloads/model";
 import { controllerOverview } from "./controllerOverview";
 import { PodPhase } from "./PodPhase";
-const object = (v: unknown): Record<string, unknown> =>
+export const object = (v: unknown): Record<string, unknown> =>
   v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
-const list = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
+export const list = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
 const text = (v: unknown) => (v === undefined || v === null ? "Unknown" : typeof v === "object" ? JSON.stringify(v, null, 2) : String(v));
 function Facts({ values }: { values: Record<string, unknown> }) {
   return (
