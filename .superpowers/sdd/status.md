@@ -5,9 +5,9 @@ Updated 2026-11-16. Current integration branch is `develop`.
 ## Phase 1D.4 · Reviewed YAML editing
 
 - Approach approved: conditional patching of existing resources, including explicit Secret reveal/edit; creation and server-side apply remain separate.
-- [Specification](../../docs/superpowers/specs/2026-11-16-phase-1d4-reviewed-yaml-editing-design.md) prepared for design review. Preserve current UI, minimal behavior-focused tests and existing agent-owned verification policy. No implementation or cluster changes performed.
+- [Specification](../../docs/superpowers/specs/2026-11-16-phase-1d4-reviewed-yaml-editing-design.md) approved in its simplified form on 2026-11-16. Preserve current UI, minimal behavior-focused tests and existing agent-owned verification policy. No implementation or cluster changes performed.
 - User clarified simplicity: Kubernetes owns permissions; one common Edit/diff/dry-run/Confirm flow, including Secrets, without app-specific resource restrictions, typed confirmations or repeated reveal gates. Spec simplified accordingly.
-- Next: approve the simplified spec, then create the Superpowers implementation plan for a separate session.
+- [Five-task implementation plan](../../docs/superpowers/plans/2026-11-16-phase-1d4-yaml-editing.md) prepared for review and a separate implementation session. No implementation steps started.
 
 ## Phase 1D.3 · Reviewed workload deletion
 

@@ -1,6 +1,6 @@
 # Phase 1D.4 — YAML editing
 
-**Status:** Simplified following user feedback; design for review, no implementation authorized.
+**Status:** Simplified specification approved by the user on 2026-11-16. Implementation belongs in a separate session.
 **Date:** 2026-11-16
 
 Owners: [roadmap](../../roadmap/roadmap.html#phase-1d), [security](../../security/security-model.html), [UX](../../ux/workflows.html), [engineering](../../engineering/engineering.html#agent-verification). Preserve the current UI and reuse existing operation infrastructure.
@@ -73,4 +73,4 @@ Acceptance:
 
 ## Next step
 
-Approve the simplified specification, then create the Superpowers implementation plan. No implementation, fixtures, release or cluster mutation occurs during this planning update.
+The [five-task implementation plan](../plans/2026-11-16-phase-1d4-yaml-editing.md) implements this approved specification. Review the plan and use a separate implementation session. No implementation, fixtures, release or cluster mutation occurred during planning.
