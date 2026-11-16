@@ -124,7 +124,7 @@ func (s *Service) runForward(ctx context.Context, t model.Target, local, remote 
 		return model.Fail("invalid", "Cannot create forward client")
 	}
 	url := client.CoreV1().RESTClient().Post().Namespace(t.Namespace).Resource("pods").Name(t.Name).SubResource("portforward").URL()
-	transport, upgrader, err := spdy.RoundTripperFor(cfg)
+	transport, upgrader, err := newStreamUpgrade(cfg, verify)
 	if err != nil {
 		return model.Fail("disconnected", "Cannot create forward transport")
 	}
@@ -136,7 +136,7 @@ func (s *Service) runForward(ctx context.Context, t model.Target, local, remote 
 		if err != nil {
 			return nil, "", err
 		}
-		return spdy.Negotiate(interactiveUpgrade{Upgrader: upgrader, ready: verify}, httpClient, request, protocols...)
+		return spdy.Negotiate(upgrader, httpClient, request, protocols...)
 	})
 	err = forwardListener(stream, dial, local, remote, func(port uint16) error {
 		if err := report(port); err != nil {

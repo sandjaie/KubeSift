@@ -131,3 +131,43 @@ func TestForwardListener(t *testing.T) {
 		t.Fatalf("cancelled forward: %v", err)
 	}
 }
+
+func TestCancelInteractiveUpgrade(t *testing.T) {
+	requested, release := make(chan struct{}), make(chan struct{})
+	s, connection := workloadServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"apiVersion":"v1","kind":"Pod","metadata":{"name":"work","namespace":"demo","uid":"present"},"status":{"phase":"Running"}}`)
+			return
+		}
+		close(requested)
+		select {
+		case <-release:
+		case <-r.Context().Done():
+		}
+	})
+	defer close(release)
+	resource := ResourceRef{Connection: connection, APIVersion: "v1", Kind: "Pod", Namespace: "demo", Name: "work", UID: "present"}
+	entry, err := s.OpenForward(context.Background(), ForwardRequest{Target: PodSessionTarget{Resource: resource}, RemotePort: 8080})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = s.sessions.Activate(entry.Session); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case <-requested:
+	case <-time.After(2 * time.Second):
+		t.Fatal("upgrade did not start")
+	}
+	stopped := make(chan error, 1)
+	go func() { stopped <- s.CloseInteractive(entry.Session) }()
+	select {
+	case err := <-stopped:
+		if err != nil || s.sessions.Stats().Sessions != 0 {
+			t.Fatalf("failed to release cancelled upgrade: %v", err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("Stop did not unblock the stalled upgrade")
+	}
+}

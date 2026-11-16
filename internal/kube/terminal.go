@@ -20,12 +20,11 @@ import (
 	"github.com/sandjaie/KubeSift/internal/model"
 	"github.com/sandjaie/KubeSift/internal/session"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/util/httpstream"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/remotecommand"
-	"k8s.io/client-go/transport/spdy"
 	clientexec "k8s.io/client-go/util/exec"
+	"k8s.io/klog/v2"
 )
 
 type terminal struct {
@@ -156,42 +155,6 @@ func (s *Service) Exec(ctx context.Context, t model.Target) (model.SessionRef, e
 	return ref, nil
 }
 
-// interactiveUpgrade preserves permission status without returning an API error body.
-type interactiveUpgrade struct {
-	spdy.Upgrader
-	ready func(uint16) error
-}
-
-func (u interactiveUpgrade) NewConnection(resp *http.Response) (httpstream.Connection, error) {
-	switch resp.StatusCode {
-	case http.StatusForbidden:
-		resp.Body.Close()
-		return nil, model.Fail("forbidden", "Kubernetes denied this Pod subresource")
-	case http.StatusUnauthorized:
-		resp.Body.Close()
-		return nil, model.Fail("auth_required", "Kubernetes rejected the current credentials")
-	case http.StatusNotFound:
-		resp.Body.Close()
-		return nil, model.Fail("stale_target", "The selected Pod or subresource is unavailable")
-	}
-	// The SPDY library can read a failed upgrade body. Bound it before parsing.
-	if resp.StatusCode != http.StatusSwitchingProtocols {
-		resp.Body = struct {
-			io.Reader
-			io.Closer
-		}{io.LimitReader(resp.Body, 8<<10), resp.Body}
-	}
-	conn, err := u.Upgrader.NewConnection(resp)
-	if err != nil || u.ready == nil {
-		return conn, err
-	}
-	if err := u.ready(0); err != nil {
-		conn.Close()
-		return nil, err
-	}
-	return conn, nil
-}
-
 func (s *Service) runTerminal(ctx context.Context, w *session.Writer, t model.Target, term *terminal, command []string, ready func(uint16) error) error {
 	defer term.close()
 	// The startup timer ends after upgrade/verification, not after the shell exits.
@@ -209,10 +172,7 @@ func (s *Service) runTerminal(ctx context.Context, w *session.Writer, t model.Ta
 	}
 	request := client.CoreV1().RESTClient().Post().Namespace(t.Namespace).Resource("pods").Name(t.Name).SubResource("exec").
 		VersionedParams(&corev1.PodExecOptions{Container: t.Container, Command: command, Stdin: true, Stdout: true, TTY: true}, scheme.ParameterCodec)
-	transport, upgrader, err := spdy.RoundTripperFor(cfg)
-	if err != nil {
-		return model.Fail("disconnected", "Cannot create terminal transport")
-	}
+
 	upgraded := func(port uint16) error {
 		if ready != nil {
 			if err := ready(port); err != nil {
@@ -222,7 +182,11 @@ func (s *Service) runTerminal(ctx context.Context, w *session.Writer, t model.Ta
 		timeout.Stop()
 		return nil
 	}
-	executor, err := remotecommand.NewSPDYExecutorRejectRedirects(transport, interactiveUpgrade{Upgrader: upgrader, ready: upgraded}, http.MethodPost, request.URL())
+	transport, upgrader, err := newStreamUpgrade(cfg, upgraded)
+	if err != nil {
+		return model.Fail("disconnected", "Cannot create terminal transport")
+	}
+	executor, err := remotecommand.NewSPDYExecutorRejectRedirects(transport, upgrader, http.MethodPost, request.URL())
 	if err != nil {
 		return model.Fail("disconnected", "Cannot create terminal transport")
 	}
@@ -247,7 +211,7 @@ func (s *Service) runTerminal(ctx context.Context, w *session.Writer, t model.Ta
 			}
 		}
 	}()
-	err = executor.StreamWithContext(streamCtx, remotecommand.StreamOptions{
+	err = executor.StreamWithContext(klog.NewContext(streamCtx, klog.Logger{}), remotecommand.StreamOptions{
 		Stdin: term.reader, Stdout: terminalOutput{streamCtx, w}, Tty: true, TerminalSizeQueue: terminalSizes{streamCtx, term.size},
 	})
 	term.close()

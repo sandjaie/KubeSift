@@ -87,7 +87,7 @@ func TestProductTerminal(t *testing.T) {
 	s, connection := workloadServer(t, func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		if r.Method == http.MethodGet {
-			fmt.Fprint(w, `{"apiVersion":"v1","kind":"Pod","metadata":{"name":"work","namespace":"demo","uid":"present"},"status":{"phase":"Running","containerStatuses":[{"name":"box","state":{"running":{}}}]}}`)
+			fmt.Fprint(w, `{"apiVersion":"v1","kind":"Pod","metadata":{"name":"work","namespace":"demo","uid":"present"},"status":{"phase":"Pending","initContainerStatuses":[{"name":"box","state":{"running":{}}}]}}`)
 			return
 		}
 		attempts.Add(1)

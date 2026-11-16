@@ -21,14 +21,14 @@ func transportTarget(pod PodSessionTarget) model.Target {
 	return model.Target{Connection: r.Connection, Namespace: r.Namespace, Name: r.Name, Container: pod.Container}
 }
 
-func (s *Service) interactivePod(ctx context.Context, pod PodSessionTarget, terminal bool) (*core.Pod, error) {
+func (s *Service) readInteractivePod(ctx context.Context, pod PodSessionTarget) (*core.Pod, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	ref := pod.Resource
-	if ref.Kind != "Pod" || ref.APIVersion != "v1" || (!terminal && pod.Container != "") {
+	if ref.Kind != "Pod" || ref.APIVersion != "v1" {
 		return nil, model.Fail("invalid", "Select an explicit Pod session target")
 	}
-	if err := target(transportTarget(pod), terminal); err != nil {
+	if err := target(transportTarget(pod), false); err != nil {
 		return nil, err
 	}
 	client, err := s.boundedReadClient(ctx, ref.Connection)
@@ -42,6 +42,20 @@ func (s *Service) interactivePod(ctx context.Context, pod PodSessionTarget, term
 	live := object.(*core.Pod)
 	if live.Namespace != ref.Namespace || live.Name != ref.Name || live.DeletionTimestamp != nil {
 		return nil, model.Fail("stale_target", "The selected Pod changed or is terminating")
+	}
+	return live, nil
+}
+
+func (s *Service) interactivePod(ctx context.Context, pod PodSessionTarget, terminal bool) (*core.Pod, error) {
+	if !terminal && pod.Container != "" {
+		return nil, model.Fail("invalid", "A port forward does not select a container")
+	}
+	if err := target(transportTarget(pod), terminal); err != nil {
+		return nil, err
+	}
+	live, err := s.readInteractivePod(ctx, pod)
+	if err != nil {
+		return nil, err
 	}
 	if terminal {
 		for _, group := range [][]core.ContainerStatus{live.Status.ContainerStatuses, live.Status.InitContainerStatuses, live.Status.EphemeralContainerStatuses} {
@@ -111,7 +125,7 @@ func (s *Service) runInteractive(ctx context.Context, w *session.Writer, pod Pod
 		verified := make(chan struct{})
 		monitor := make(chan error, 1)
 		go func() {
-			monitor <- s.monitorInteractive(stream, pod, terminal, verified, cancel)
+			monitor <- s.monitorInteractive(stream, pod, verified, cancel)
 		}()
 		err := run(stream, w, func(port uint16) error {
 			if _, err := s.interactivePod(stream, pod, terminal); err != nil {
@@ -140,7 +154,7 @@ func (s *Service) runInteractive(ctx context.Context, w *session.Writer, pod Pod
 	}
 }
 
-func (s *Service) monitorInteractive(ctx context.Context, pod PodSessionTarget, terminal bool, verified <-chan struct{}, cancel context.CancelFunc) error {
+func (s *Service) monitorInteractive(ctx context.Context, pod PodSessionTarget, verified <-chan struct{}, cancel context.CancelFunc) error {
 	select {
 	case <-ctx.Done():
 		return nil
@@ -154,10 +168,7 @@ func (s *Service) monitorInteractive(ctx context.Context, pod PodSessionTarget, 
 			return nil
 		case <-ticker.C:
 			// Exec ends naturally when its process exits; only recheck the active Pod identity.
-			if terminal {
-				pod.Container = ""
-			}
-			if _, err := s.interactivePod(ctx, pod, false); err != nil && ctx.Err() == nil {
+			if _, err := s.readInteractivePod(ctx, pod); err != nil && ctx.Err() == nil {
 				cancel()
 				return model.Fail("target_unverified", "The original Pod could no longer be verified. The session ended.")
 			}
