@@ -2,6 +2,12 @@
 
 Updated 2026-11-16. Current integration branch is `develop`.
 
+## Phase 1D.4 · Reviewed YAML editing
+
+- Approach approved: conditional patching of existing resources, including explicit Secret reveal/edit; creation and server-side apply remain separate.
+- [Specification](../../docs/superpowers/specs/2026-11-16-phase-1d4-reviewed-yaml-editing-design.md) prepared for design review. Preserve current UI, minimal behavior-focused tests and existing agent-owned verification policy. No implementation or cluster changes performed.
+- Next: approve the written spec, then create the Superpowers implementation plan for a separate session.
+
 ## Phase 1D.3 · Reviewed workload deletion
 
 - [PR #18](https://github.com/sandjaie/KubeSift/pull/18) squash-merged into `develop` as `cc28d2e` on 2026-11-16 Dubai time. Implemented from `163848f` in the existing checkout. [Specification](../../docs/superpowers/specs/2026-11-15-phase-1d3-reviewed-deletion-design.md), [plan](../../docs/superpowers/plans/2026-11-15-phase-1d3-reviewed-deletion.md) and [validation](../../docs/superpowers/validation/phase-1d3.html).

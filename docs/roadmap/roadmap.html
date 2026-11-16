@@ -497,8 +497,14 @@
             <a href="../superpowers/plans/2026-11-15-phase-1d3-reviewed-deletion.md">implementation plan</a>.
           </li>
           <li>
-            <strong>Later operation increments.</strong> Reuse the reviewed-operation boundary for YAML edit/apply and rollback; specify
-            each action's conflict and impact semantics before implementation.
+            <strong>1D.4 — Reviewed YAML editing.</strong> Conditional patching for existing discovered editable resources, including
+            explicit Secret reveal/edit, intended and server-preview diffs, required dry-run and confirmation. Preserve current UI; keep
+            creation and server-side apply separate. See the
+            <a href="../superpowers/specs/2026-11-16-phase-1d4-reviewed-yaml-editing-design.md">specification</a>.
+          </li>
+          <li>
+            <strong>Later operation increments.</strong> Specify rollback and separate manifest creation/server-side apply workflows with
+            their own ownership, conflict and impact semantics.
           </li>
           <li>
             <strong>Interactive sessions.</strong> Product Pod exec and port forwarding require their own endpoint, lifecycle, stop and
