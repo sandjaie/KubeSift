@@ -309,7 +309,6 @@ export function ResourceDetail({
             row.resource,
             canReviewOperation,
             c.inventory.sectionEpoch,
-            c.inventory.refresh,
             c.inventory.sectionRefresh,
             c.inventory.sectionCursor,
           ])}

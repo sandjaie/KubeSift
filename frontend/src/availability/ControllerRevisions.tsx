@@ -44,12 +44,15 @@ export function ControllerRevisions({
   const activeReview =
     canReview && review && request && rollbackSelectionKey(review) === rollbackSelectionKey(request) ? review : undefined;
   const showMarkers = resource.kind === "StatefulSet";
+  const absentFromPage = (name: string) => !!name && !rows.some((row) => row.resource.name === name);
   return (
     <div className="evidence-section">
       <p className="muted">
         Retained owned revisions · workload resourceVersion {data.sourceVersion}.
         {!data.complete && !data.problem && " More results may be available."}
       </p>
+      {showMarkers && absentFromPage(data.currentRevision) && <p className="muted">Captured currentRevision: {data.currentRevision}</p>}
+      {showMarkers && absentFromPage(data.updateRevision) && <p className="muted">Captured updateRevision: {data.updateRevision}</p>}
       {data.problem ? (
         <p role="alert">{data.problem.message}</p>
       ) : (
