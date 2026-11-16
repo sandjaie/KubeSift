@@ -1,11 +1,16 @@
 <!doctype html>
 <html lang="en">
-  <meta charset="utf-8" /><title>Product log sessions</title>
-  <h1>Product log sessions</h1>
+  <meta charset="utf-8" /><title>Product sessions</title>
+  <h1>Product sessions</h1>
   <p>
     logStore.ts owns bounded UTF-8 evidence, segment identities and offscreen acknowledgements. useLogSessions.ts mounts one application
     subscription. PodLogs.tsx owns the visible tab’s abortable request; LogViewer.tsx renders visible rows indexed by logRows.ts, with
     search and window expansion. Display updates are batched while native acknowledgements stay immediate. Leaving Logs releases its stream
     and history. logStore.test.ts protects lifecycle and retention.
+  </p>
+  <p>
+    interactiveState.ts owns pending and retained terminal/forward identities, independent of navigation. InteractiveSessions.tsx uses one
+    bottom dock for those entries and the visible log summaries. Each terminal mounts its own xterm and acknowledges parsed output even when
+    hidden. Stop retains feedback; Close frees the entry.
   </p>
 </html>

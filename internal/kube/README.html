@@ -16,4 +16,9 @@
     association separate from controller ownership. storage_references.go verifies explicit storage links and checks both sides of binding
     references.
   </p>
+  <p>
+    interactive.go owns pending terminal and forward slots and verifies the exact Pod identity. service_forward.go resolves a captured
+    Service TCP port to one selected Pod, never an EndpointSlice address. terminal.go and forward.go use the pinned SPDY protocols with one
+    cancellable HTTP upgrade per session.
+  </p>
 </html>
