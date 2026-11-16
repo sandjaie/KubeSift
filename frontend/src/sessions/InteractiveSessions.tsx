@@ -35,11 +35,11 @@ export function InteractiveSessions({
   onSelect: (id: string) => void;
 }) {
   const { entries, store } = controller;
-  const logEntry = logs.sessions.find((entry) => entry.id === selected);
   const selectedID =
-    entries.some((entry) => entry.session.id === selected) || logEntry
+    entries.some((entry) => entry.session.id === selected) || logs.sessions.some((entry) => entry.id === selected)
       ? selected
       : (entries[entries.length - 1]?.session.id ?? logs.sessions[logs.sessions.length - 1]?.id);
+  const logEntry = logs.sessions.find((entry) => entry.id === selectedID);
   useLayoutEffect(() => {
     for (const entry of entries) if (entry.kind === "forward") store.activate(entry.session);
   }, [entries, store]);
