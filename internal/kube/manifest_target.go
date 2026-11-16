@@ -89,8 +89,8 @@ func resolveManifestRoute(ctx context.Context, client kubernetes.Interface, targ
 	if verb == "create" && (match == nil || !match.Create) {
 		return ManifestAddress{}, model.Fail("unsupported", "This API version does not advertise Create for the requested kind and resource")
 	}
-	if verb == "get" && (match == nil || !match.Get) {
-		return ManifestAddress{}, model.Fail("unsupported", "This API version does not advertise Get for the selected resource")
+	if verb == "get" && (match == nil || !match.detailReadable) {
+		return ManifestAddress{}, model.Fail("unsupported", "This API version does not advertise a supported detail read for the selected resource")
 	}
 	if verb == "patch" && (match == nil || !match.Get || !match.Patch) {
 		return ManifestAddress{}, model.Fail("unsupported", "This API does not advertise both Get and Patch for the selected resource")

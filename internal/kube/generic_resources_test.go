@@ -107,7 +107,7 @@ func TestCreatedDetailAllowsGetWithoutInventoryAndRejectsReplacement(t *testing.
 		}
 		switch r.URL.Path {
 		case "/apis/example.test/v1":
-			fmt.Fprint(w, `{"kind":"APIResourceList","groupVersion":"example.test/v1","resources":[{"name":"widgets","kind":"Widget","namespaced":true,"verbs":["get","create"]}]}`)
+			fmt.Fprint(w, `{"kind":"APIResourceList","groupVersion":"example.test/v1","resources":[{"name":"widgets","kind":"Widget","namespaced":true,"verbs":["get","create"]},{"name":"proxy","kind":"Proxy","namespaced":true,"verbs":["get","create"]},{"name":"connect","kind":"Connect","namespaced":true,"verbs":["get","create"]},{"name":"sessions","kind":"Session","namespaced":true,"verbs":["get","create","connect"]}]}`)
 		case "/apis/example.test/v1/namespaces/default/widgets/sample":
 			fmt.Fprint(w, `{"apiVersion":"example.test/v1","kind":"Widget","metadata":{"namespace":"default","name":"sample","uid":"actual","resourceVersion":"2"}}`)
 		default:
@@ -122,5 +122,11 @@ func TestCreatedDetailAllowsGetWithoutInventoryAndRejectsReplacement(t *testing.
 	}
 	if _, err := s.ReadCreatedDetail(ctx, target, "old"); err == nil || !strings.Contains(err.Error(), "resource_replaced") {
 		t.Fatalf("replacement check: %v", err)
+	}
+	for _, endpoint := range []struct{ resource, kind string }{{"proxy", "Proxy"}, {"connect", "Connect"}, {"sessions", "Session"}} {
+		target.Resource, target.Kind = endpoint.resource, endpoint.kind
+		if _, err := s.ReadCreatedDetail(ctx, target, "actual"); err == nil || !strings.Contains(err.Error(), "unsupported") {
+			t.Fatalf("excluded %s endpoint: %v", endpoint.resource, err)
+		}
 	}
 }

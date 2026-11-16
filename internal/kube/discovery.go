@@ -315,6 +315,7 @@ func projectDiscovery(raw []byte, key versionKey) (APIResourceCatalog, error) {
 			}
 		}
 		d := APIResourceDescriptor{Group: key.group, Version: key.version, Resource: r.Name, Kind: r.Kind, Namespaced: *r.Namespaced, List: slices.Contains(r.Verbs, "list"), Get: slices.Contains(r.Verbs, "get"), Patch: slices.Contains(r.Verbs, "patch"), Create: slices.Contains(r.Verbs, "create")}
+		d.detailReadable = d.Get && !slices.Contains(r.Verbs, "connect") && d.Resource != "proxy" && d.Resource != "connect"
 		known, protected := dedicatedAPIs[[2]string{d.Group, d.Resource}]
 		switch {
 		case protected && known == d.api():
@@ -323,7 +324,7 @@ func projectDiscovery(raw []byte, key versionKey) (APIResourceCatalog, error) {
 		case protected:
 			d.Mode = "unavailable"
 			d.Reason = "This version or scope has no supported dedicated reader"
-		case !d.List || !d.Get || slices.Contains(r.Verbs, "connect") || d.Resource == "proxy" || d.Resource == "connect":
+		case !d.List || !d.detailReadable:
 			d.Mode = "unavailable"
 			d.Reason = "This API does not advertise supported inventory and detail reads"
 		default:

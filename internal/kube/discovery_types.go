@@ -36,6 +36,8 @@ type APIResourceDescriptor struct {
 	Mode       string `json:"mode"`
 	Reason     string `json:"reason"`
 	Handle     string `json:"handle"`
+
+	detailReadable bool
 }
 
 func (d APIResourceDescriptor) api() apiResource {
