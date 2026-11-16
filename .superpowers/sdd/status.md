@@ -5,7 +5,7 @@ Updated 2026-11-16. Current integration branch is `develop`.
 ## Phase 1D.5 · Workload history and rollback
 
 - Implemented in the existing checkout from `2f74b4c` on `feature/phase-1d5-workload-rollback`. The [specification](../../docs/superpowers/specs/2026-11-16-phase-1d5-workload-rollback-design.md), [plan](../../docs/superpowers/plans/2026-11-16-phase-1d5-workload-rollback.md) and [validation report](../../docs/superpowers/validation/phase-1d5.html) cover reviewed Pod-template-only rollback for Deployments, StatefulSets and DaemonSets.
-- Repository checks, both approved kind contexts and the packaged macOS verification passed. Fixture cleanup verified. Independent whole-PR review and targeted fixes passed. Develop integration pending.
+- Repository checks, both approved kind contexts and the packaged macOS verification passed. Fixture cleanup verified. Independent whole-PR review and targeted fixes passed. [PR #20](https://github.com/sandjaie/KubeSift/pull/20) squash-merged into `develop` as `13b94f6` on 2026-11-16 Dubai time.
 
 ## Phase 1D.4 · Reviewed YAML editing
 
