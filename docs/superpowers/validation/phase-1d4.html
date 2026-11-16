@@ -44,7 +44,7 @@
       </p>
       <h2>Automated verification</h2>
       <p>
-        Repository checks passed, including Go tests and vet and 97 frontend tests. The native operation race suite, Wails bindings,
+        Repository checks passed, including Go tests and vet and 101 frontend tests. The native operation race suite, Wails bindings,
         production frontend build, macOS bundle and strict signature verification passed.
       </p>
       <p>
@@ -87,7 +87,28 @@
         other operating systems, or an external Kubernetes context.
       </p>
       <h2>Independent review</h2>
-      <p>Pending whole-PR review.</p>
+      <p>
+        Reviewer <code>yaml_pr_review</code> reviewed the complete candidate at
+        <code>57fb2f384291030fbdcf340a910cc6c54c83680f</code> against <code>develop</code> at base and merge base
+        <code>f3819d7529cb41d8346f36fee560aaca375a861a</code>. Five P2 findings blocked that candidate.
+      </p>
+      <ul>
+        <li>
+          KSF-001 fixed. Opening a different target requires explicit discard of the prior editor. The prompt keeps its contents hidden.
+        </li>
+        <li>
+          KSF-002 fixed. A retained generic view refreshes the matching accepted edit after discovery and the captured target are available.
+        </li>
+        <li>KSF-003 fixed. Large reviews show the changed span with old and new lines before confirmation.</li>
+        <li>KSF-004 fixed. Refresh clears discarded text and its draft ID before requesting another capture.</li>
+        <li>KSF-005 fixed. Exact JSON numbers outside the float64 range keep their type alongside identically spelled quoted strings.</li>
+      </ul>
+      <p>
+        The same reviewer cleared the fix delta through <code>cf3c067552e310054cff525f0802730ed0da3399</code>. The final full check, race
+        suite, two-context integration and signed package passed. Mounted tests covered the replacement prompt, failed refresh and delayed
+        generic refresh. The final package kept the paused Secret hidden during replacement and showed, confirmed and refreshed a change to
+        the 40 KiB ConfigMap. Server reads verified the ConfigMap edit and that discarded Secret text did not save.
+      </p>
     </main>
   </body>
 </html>

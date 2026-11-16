@@ -6,7 +6,7 @@ Updated 2026-11-16. Current integration branch is `develop`.
 
 - Implemented from `f3819d7` in the existing checkout. [Specification](../../docs/superpowers/specs/2026-11-16-phase-1d4-reviewed-yaml-editing-design.md), [plan](../../docs/superpowers/plans/2026-11-16-phase-1d4-yaml-editing.md), and [validation](../../docs/superpowers/validation/phase-1d4.html).
 - Conditional editing and Secret stringData passed on both approved contexts. The packaged macOS verification covered ConfigMap and Secret edits, draft retention across tabs, Forbidden, stale confirmation and both themes. Fixture cleanup was verified.
-- Independent whole-PR review and merge into `develop` are pending.
+- Independent whole-PR review and targeted recheck passed. Integration into `develop` is pending.
 
 ## Phase 1D.3 · Reviewed workload deletion
 
