@@ -18,4 +18,3 @@ import "../github.com/wailsapp/wails/v3/internal/eventcreate.js";
  * Name of the custom event "session".
  */
 export const Session = "session";
-

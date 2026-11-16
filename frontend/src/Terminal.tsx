@@ -8,7 +8,7 @@ import { memo, useLayoutEffect, useRef, useState } from "react";
 import { Terminal as XTerm } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import "@xterm/xterm/css/xterm.css";
-import { Service } from "../bindings/github.com/sandjaie/KubeSift/internal/desktop";
+import { Service } from "../bindings/internal/desktop";
 import { activateSession, acknowledge, encodeBytes, eventBytes, onSessionEvent, type SessionRef } from "./bridge";
 
 export default memo(function TerminalView({

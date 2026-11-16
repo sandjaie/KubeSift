@@ -4,7 +4,7 @@ Used by: Configuration views and shared resource navigation.
 Responsibilities: Keep namespace scope and supported browse targets explicit.
 Important: Secret data is absent from these contracts.
 */
-export type { ConfigurationPage, ConfigurationRow } from "../../bindings/github.com/sandjaie/KubeSift/internal/kube/models";
+export type { ConfigurationPage, ConfigurationRow } from "../../bindings/internal/kube/models";
 
 export const configurationKinds = ["Namespace", "ResourceQuota", "LimitRange", "ConfigMap", "Secret"] as const;
 export type ConfigurationKind = (typeof configurationKinds)[number];

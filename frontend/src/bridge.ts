@@ -5,7 +5,7 @@ Responsibilities: Describe identities, encode terminal input and track event sub
 Important: Register before activation; frame acknowledgements bound native delivery and listener removal never substitutes for backend stop.
 */
 import { Events } from "@wailsio/runtime";
-import { Service } from "../bindings/github.com/sandjaie/KubeSift/internal/desktop";
+import { Service } from "../bindings/internal/desktop";
 export interface ConnectionRef {
   id: string;
   generation: number;

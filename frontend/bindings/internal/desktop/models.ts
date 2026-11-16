@@ -18,35 +18,35 @@ import * as model$0 from "../model/models.js";
 import * as session$0 from "../session/models.js";
 
 export interface FixtureTarget {
-    "target": model$0.Target;
-    "cluster": string;
-    "endpoint": string;
-    "uid": string;
+  target: model$0.Target;
+  cluster: string;
+  endpoint: string;
+  uid: string;
 }
 
 export interface RuntimeStats {
-    "sessions": session$0.Stats;
-    "goroutines": number;
-    "heapAlloc": number;
-    "heapSys": number;
+  sessions: session$0.Stats;
+  goroutines: number;
+  heapAlloc: number;
+  heapSys: number;
 }
 
 export interface ValidationSample {
-    "phase": number;
-    "cycle": number;
-    "elapsedMs": number;
-    "listeners": number;
-    "receivedLogBytes": number;
-    "retainedLogBytes": number;
-    "trimmedLogBytes": number;
-    "maxHistoryBytes": number;
-    "terminalRttMs": number[] | null;
-    "forwardPort": number;
-    "sessionErrors": number;
-    "hostileContentSeen": boolean;
+  phase: number;
+  cycle: number;
+  elapsedMs: number;
+  listeners: number;
+  receivedLogBytes: number;
+  retainedLogBytes: number;
+  trimmedLogBytes: number;
+  maxHistoryBytes: number;
+  terminalRttMs: number[] | null;
+  forwardPort: number;
+  sessionErrors: number;
+  hostileContentSeen: boolean;
 }
 
 export interface ValidationSetup {
-    "contexts": config$0.ContextSummary[] | null;
-    "autorun": boolean;
+  contexts: config$0.ContextSummary[] | null;
+  autorun: boolean;
 }

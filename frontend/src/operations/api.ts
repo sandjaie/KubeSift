@@ -5,14 +5,8 @@ Responsibilities: Supply preparation cancellation without owning execution.
 Important: Confirm forwards only the token and any acknowledgement required by that action.
 */
 import { readRequest, workloadAPI } from "../workloads/api";
-import type {
-  DeleteRequest,
-  EditRequest,
-  RollbackRequest,
-  RestartRequest,
-  ScaleRequest,
-} from "../../bindings/github.com/sandjaie/KubeSift/internal/operation/models";
-import type { EditTarget } from "../../bindings/github.com/sandjaie/KubeSift/internal/kube/models";
+import type { DeleteRequest, EditRequest, RollbackRequest, RestartRequest, ScaleRequest } from "../../bindings/internal/operation/models";
+import type { EditTarget } from "../../bindings/internal/kube/models";
 export type { EditTarget };
 export type {
   EditDraft,
@@ -27,7 +21,7 @@ export type {
   ScaleRequest,
   ScalePreview,
   ScaleResult,
-} from "../../bindings/github.com/sandjaie/KubeSift/internal/operation/models";
+} from "../../bindings/internal/operation/models";
 export type OperationAction = "scale" | "restart" | "delete" | "edit" | "rollback";
 export const prepareScale = (request: ScaleRequest) => readRequest((id) => workloadAPI.PrepareScale(id, request));
 export const executeScale = workloadAPI.ExecuteScale;

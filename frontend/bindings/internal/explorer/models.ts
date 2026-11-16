@@ -15,28 +15,28 @@ import * as kube$0 from "../kube/models.js";
 import * as model$0 from "../model/models.js";
 
 export interface Attempt {
-    "id": string;
+  id: string;
 }
 
 export interface ConnectRequest {
-    "sourceId": string;
-    "snapshotId": string;
-    "context": string;
-    "namespace": string;
+  sourceId: string;
+  snapshotId: string;
+  context: string;
+  namespace: string;
 }
 
 export interface ConnectionView {
-    "attemptId": string;
-    "sourceId": string;
-    "context": string;
-    "namespace": string;
-    "state": string;
-    "ref": model$0.ConnectionRef | null;
-    "problem": model$0.Problem | null;
-    "lastSuccessAt": string;
-    "namespaces": string[] | null;
-    "namespacesComplete": boolean;
-    "pods": kube$0.PodSummary[] | null;
-    "podProblem": model$0.Problem | null;
-    "podLoading": boolean;
+  attemptId: string;
+  sourceId: string;
+  context: string;
+  namespace: string;
+  state: string;
+  ref: model$0.ConnectionRef | null;
+  problem: model$0.Problem | null;
+  lastSuccessAt: string;
+  namespaces: string[] | null;
+  namespacesComplete: boolean;
+  pods: kube$0.PodSummary[] | null;
+  podProblem: model$0.Problem | null;
+  podLoading: boolean;
 }

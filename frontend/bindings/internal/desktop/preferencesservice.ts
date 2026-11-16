@@ -16,9 +16,9 @@ import { Call as $Call, CancellablePromise as $CancellablePromise } from "@wails
 import * as preferences$0 from "../preferences/models.js";
 
 export function GetPreferences(): $CancellablePromise<preferences$0.Preferences> {
-    return $Call.ByID(2953983651);
+  return $Call.ByID(2953983651);
 }
 
 export function SetPreferences(p: preferences$0.Preferences): $CancellablePromise<void> {
-    return $Call.ByID(723334951, p);
+  return $Call.ByID(723334951, p);
 }

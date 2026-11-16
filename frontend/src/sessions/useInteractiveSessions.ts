@@ -5,11 +5,11 @@ Responsibilities: Compose native bindings and subscribe to retained metadata.
 Important: Terminal data acknowledgements remain with the mounted renderer.
 */
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { ExplorerService } from "../../bindings/github.com/sandjaie/KubeSift/internal/desktop";
+import { ExplorerService } from "../../bindings/internal/desktop";
 import { activateSession, onSessionEvent } from "../bridge";
 import { readRequest } from "../workloads/api";
 import { createInteractiveStore } from "./interactiveState";
-import type { ForwardRequest, TerminalRequest } from "../../bindings/github.com/sandjaie/KubeSift/internal/kube/models";
+import type { ForwardRequest, TerminalRequest } from "../../bindings/internal/kube/models";
 
 export function useInteractiveSessions() {
   const [store] = useState(() =>

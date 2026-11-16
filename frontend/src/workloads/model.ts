@@ -15,7 +15,7 @@ export type {
   RelatedJobPage,
   EventPage,
   LogRequest,
-} from "../../bindings/github.com/sandjaie/KubeSift/internal/kube/models";
+} from "../../bindings/internal/kube/models";
 import type {
   ResourceRef,
   WorkloadPage,
@@ -25,7 +25,7 @@ import type {
   RelatedReplicaSetPage,
   RelatedJobPage,
   EventPage,
-} from "../../bindings/github.com/sandjaie/KubeSift/internal/kube/models";
+} from "../../bindings/internal/kube/models";
 import { isNetworkKind, networkKinds, type NetworkKind, type NetworkPage, type ServiceSlicePage } from "../networking/model";
 import { configurationKinds, isConfigurationKind, type ConfigurationKind, type ConfigurationPage } from "../configuration/model";
 import { isStorageKind, storageKinds, type StorageKind, type StoragePage, type ResolvedStorageReference } from "../storage/model";

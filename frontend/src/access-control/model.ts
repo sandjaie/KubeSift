@@ -5,7 +5,7 @@ Responsibilities: Keep external subjects inert and project only explicit resourc
 Important: The backend revalidates every opened reference.
 */
 import type { ResourceRef } from "../workloads/model";
-export type { AccessControlRow, AccessControlPage } from "../../bindings/github.com/sandjaie/KubeSift/internal/kube/models";
+export type { AccessControlRow, AccessControlPage } from "../../bindings/internal/kube/models";
 
 export const accessControlLabels = {
   ServiceAccount: "ServiceAccounts",

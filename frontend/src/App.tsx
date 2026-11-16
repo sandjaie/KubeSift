@@ -5,7 +5,7 @@ Responsibilities: Preserve appearance/layout and keep global navigation separate
 Important: Startup loads local summaries only; development validation and synthetic fixtures are excluded.
 */
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { Service } from "../bindings/github.com/sandjaie/KubeSift/internal/desktop";
+import { Service } from "../bindings/internal/desktop";
 import { useConnections } from "./connections/useConnections";
 import { ClusterList } from "./connections/ClusterList";
 import { ConnectionControls } from "./connections/ConnectionControls";

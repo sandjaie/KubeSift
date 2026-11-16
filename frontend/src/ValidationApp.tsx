@@ -5,12 +5,12 @@ Responsibilities: Keep explicit target controls, helper trust, independent tabs 
 Important: Render cluster strings as text, register session routes before activation and cancel backend work before removing UI state.
 */
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
-import { Service } from "../bindings/github.com/sandjaie/KubeSift/internal/desktop";
-import type { FixtureTarget } from "../bindings/github.com/sandjaie/KubeSift/internal/desktop/models";
-import type { Preview } from "../bindings/github.com/sandjaie/KubeSift/internal/operation/models";
-import type { RuntimeStats } from "../bindings/github.com/sandjaie/KubeSift/internal/desktop/models";
-import type { ContextSummary } from "../bindings/github.com/sandjaie/KubeSift/internal/config";
-import type { PreviewRecord, Entry } from "../bindings/github.com/sandjaie/KubeSift/internal/trust";
+import { Service } from "../bindings/internal/desktop";
+import type { FixtureTarget } from "../bindings/internal/desktop/models";
+import type { Preview } from "../bindings/internal/operation/models";
+import type { RuntimeStats } from "../bindings/internal/desktop/models";
+import type { ContextSummary } from "../bindings/internal/config";
+import type { PreviewRecord, Entry } from "../bindings/internal/trust";
 import {
   acknowledge,
   activateSession,

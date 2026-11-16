@@ -4,8 +4,8 @@ Used by: App only after the backend enables the explicit fixture validation mode
 Responsibilities: Reuse UI registration/activation/ack paths, collect numeric samples and stop every owned session.
 Important: Only the two backend-verified fixture contexts and fixed ks-validation Pod are used; no hidden domain-only soak substitutes for rendering.
 */
-import { Service } from "../bindings/github.com/sandjaie/KubeSift/internal/desktop";
-import type { ContextSummary } from "../bindings/github.com/sandjaie/KubeSift/internal/config";
+import { Service } from "../bindings/internal/desktop";
+import type { ContextSummary } from "../bindings/internal/config";
 import { listenerCount, type SessionRef, type Target, type ConnectionRef } from "./bridge";
 import type { WorkspaceState } from "./state";
 import { terminalSamples } from "./validation";

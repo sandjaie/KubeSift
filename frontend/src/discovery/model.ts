@@ -6,11 +6,7 @@ Important: Only native-issued handles are used for generic I/O.
 */
 import type { CatalogIntent } from "../cluster/model";
 import type { NavigationEntry } from "../workloads/model";
-import type {
-  APIResourceCatalog,
-  APIResourceDescriptor,
-  GenericResourceDetail,
-} from "../../bindings/github.com/sandjaie/KubeSift/internal/kube/models";
+import type { APIResourceCatalog, APIResourceDescriptor, GenericResourceDetail } from "../../bindings/internal/kube/models";
 export type {
   APIGroupCatalog,
   APIResourceCatalog,
@@ -19,7 +15,7 @@ export type {
   GenericResourcePage,
   GenericResourceRow,
   GenericResourceRef,
-} from "../../bindings/github.com/sandjaie/KubeSift/internal/kube/models";
+} from "../../bindings/internal/kube/models";
 export type CatalogSeed = {
   group: string;
   version: string;

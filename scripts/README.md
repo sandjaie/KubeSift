@@ -15,3 +15,6 @@
 `dev-clusters.sh` creates `dev-local-a` and `dev-local-b` when absent and applies their sample workloads. This validation does not delete those clusters.
 
 `dev-clusters.sh --explorer` calls `explorer-fixtures.py` to collision-check and apply the bounded explorer inventory only to the existing two local clusters, without reapplying shop/billing.
+
+`generate-bindings.mjs` stages Wails output, rewrites project module paths to `frontend/bindings/internal`,
+checks relative references and publishes the complete generated tree. Run `npm run bindings` or `wails3 task bindings`.

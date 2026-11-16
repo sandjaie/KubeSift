@@ -12,21 +12,21 @@ Important: Wails generates this glue; change Go contracts and regenerate rather 
 import * as model$0 from "../model/models.js";
 
 export interface CatalogEntry {
-    "sourceId": string;
-    "snapshotId": string;
-    "context": string;
-    "namespace": string;
-    "endpoint": string;
-    "sourceDisplay": string;
-    "environment": string;
-    "labelNeedsReview": boolean;
+  sourceId: string;
+  snapshotId: string;
+  context: string;
+  namespace: string;
+  endpoint: string;
+  sourceDisplay: string;
+  environment: string;
+  labelNeedsReview: boolean;
 }
 
 export interface SourceResult {
-    "sourceId": string;
-    "snapshotId": string;
-    "path": string;
-    "enabled": boolean;
-    "contexts": CatalogEntry[] | null;
-    "problem": model$0.Problem | null;
+  sourceId: string;
+  snapshotId: string;
+  path: string;
+  enabled: boolean;
+  contexts: CatalogEntry[] | null;
+  problem: model$0.Problem | null;
 }

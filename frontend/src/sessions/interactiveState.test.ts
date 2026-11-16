@@ -6,7 +6,7 @@ Important: The synthetic bridge never starts a native session.
 */
 import { expect, it, vi } from "vitest";
 import type { SessionEvent } from "../bridge";
-import type { InteractiveEntry } from "../../bindings/github.com/sandjaie/KubeSift/internal/kube/models";
+import type { InteractiveEntry } from "../../bindings/internal/kube/models";
 import { createInteractiveStore } from "./interactiveState";
 
 it("keeps one fixed owner across view changes and releases late or retained entries explicitly", async () => {
