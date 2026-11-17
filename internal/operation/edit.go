@@ -26,12 +26,13 @@ type EditService struct {
 }
 
 type operationDraft struct {
-	action     string
-	connection model.ConnectionRef
-	baseline   kube.EditCapture
-	cluster    string
-	expires    time.Time
-	revision   uint64
+	action        string
+	connection    model.ConnectionRef
+	baseline      kube.EditCapture
+	cluster       string
+	expires       time.Time
+	revision      uint64
+	applyConflict *[32]byte
 }
 
 func NewEditService(connections *connection.Manager, reader *kube.Service, coordinator *Coordinator) *EditService {
