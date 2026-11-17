@@ -50,6 +50,10 @@ export function CheckDeleteTarget(id: string, operationID: string): $Cancellable
   return $Call.ByID(1495043394, id, operationID);
 }
 
+export function CloseApply(draftID: string): $CancellablePromise<void> {
+  return $Call.ByID(3515762964, draftID);
+}
+
 export function CloseCreate(draftID: string): $CancellablePromise<void> {
   return $Call.ByID(764503940, draftID);
 }
@@ -68,6 +72,10 @@ export function ClosePodLogs(ref: model$0.SessionRef): $CancellablePromise<void>
 
 export function Disconnect(ref: model$0.ConnectionRef): $CancellablePromise<void> {
   return $Call.ByID(2590980822, ref);
+}
+
+export function ExecuteApply(token: string): $CancellablePromise<operation$0.OperationResult> {
+  return $Call.ByID(3759751197, token);
 }
 
 export function ExecuteCreate(token: string): $CancellablePromise<operation$0.OperationResult> {
@@ -126,6 +134,10 @@ export function ListSources(): $CancellablePromise<sources$0.SourceResult[] | nu
   return $Call.ByID(3320858230);
 }
 
+export function OpenApply(id: string, target: kube$0.EditTarget): $CancellablePromise<operation$0.ApplyDraft> {
+  return $Call.ByID(2069522064, id, target);
+}
+
 export function OpenCreate(id: string, ref: model$0.ConnectionRef, $namespace: string): $CancellablePromise<operation$0.CreateDraft> {
   return $Call.ByID(3735332520, id, ref, $namespace);
 }
@@ -144,6 +156,10 @@ export function OpenPodLogs(req: kube$0.LogRequest): $CancellablePromise<model$0
 
 export function OpenTerminal(id: string, req: kube$0.TerminalRequest): $CancellablePromise<kube$0.InteractiveEntry> {
   return $Call.ByID(1368815228, id, req);
+}
+
+export function PrepareApply(id: string, req: operation$0.ApplyRequest): $CancellablePromise<operation$0.ApplyReview> {
+  return $Call.ByID(840447417, id, req);
 }
 
 export function PrepareCreate(id: string, req: operation$0.CreateRequest): $CancellablePromise<operation$0.CreatePreview> {
@@ -180,6 +196,10 @@ export function ReadAPIResources(id: string, req: kube$0.APIResourceRequest): $C
 
 export function ReadAccessControl(id: string, req: kube$0.PageRequest): $CancellablePromise<kube$0.AccessControlPage> {
   return $Call.ByID(2491109527, id, req);
+}
+
+export function ReadAppliedDetail(id: string, operationID: string): $CancellablePromise<kube$0.GenericResourceDetail> {
+  return $Call.ByID(2190403700, id, operationID);
 }
 
 export function ReadAvailability(id: string, req: kube$0.PageRequest): $CancellablePromise<kube$0.AvailabilityPage> {
@@ -326,6 +346,10 @@ export function ResolveStorageReference(
 
 export function ReviewHelper(source: string, snapshot: string, name: string): $CancellablePromise<trust$0.PreviewRecord> {
   return $Call.ByID(2230528976, source, snapshot, name);
+}
+
+export function RevokeApply(token: string): $CancellablePromise<void> {
+  return $Call.ByID(2987491866, token);
 }
 
 export function RevokeCreate(token: string): $CancellablePromise<void> {
