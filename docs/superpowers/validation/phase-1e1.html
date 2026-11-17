@@ -135,6 +135,36 @@
         protected namespace deletion. Both namespaces, temporary kubeconfigs, the Helm 3 fixture binary and the desktop test bundle were
         removed. Independent review and develop integration are pending.
       </p>
+      <h2>Independent review</h2>
+      <p>
+        <code>phase1e1_pr_review</code> reviewed candidate <code>1d0e0bb55aaa0257d18fafa3944cc359d9ad1eda</code> against
+        <code>develop</code> at base and merge base <code>18db1af1ed7d2e21e312d172e3ea4c5cd648d063</code>.
+      </p>
+      <ul>
+        <li>
+          KSF-001 (P1) required full-object protection for a Secret reached through canonical discovery and source validation for Helm
+          refresh. The resolved route guard blocks full Secret reads. Helm refresh revalidates revision and manifest membership. A synthetic
+          HTTP test and both live contexts verified the change.
+        </li>
+        <li>
+          KSF-002 (P2) required Helm to use its own namespace controls after entering from a cluster-scoped resource. The native retest
+          opened Nodes and then Helm and confirmed the namespace picker was enabled.
+        </li>
+        <li>
+          KSF-003 (P2) required operation output to leave Helm before opening the target. A separate native regression created a test
+          ConfigMap through the existing Create resource action, entered Helm, and opened that ConfigMap from Operation results.
+        </li>
+        <li>
+          KSF-004 (P2) required explicit malformed and duplicate namespace fields to remain non-navigable. Native unit tests verified these
+          forms while live manifests with omitted namespaces retained their release namespace.
+        </li>
+      </ul>
+      <p>
+        The same reviewer cleared all four findings on <code>bcde65d76ce18bc1bd5fe811abecd7bbdc1e9f9e</code>, including the separately
+        published compatibility documentation at <code>9032c04</code>. Full checks, targeted races, both live integrations,
+        package/signature verification and the native walkthrough passed again. Retest fixtures and temporary isolated credentials were
+        removed. Develop integration is pending.
+      </p>
     </main>
   </body>
 </html>
