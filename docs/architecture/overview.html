@@ -187,6 +187,13 @@
         <a href="../engineering/toolchain.html#compatibility">Kubernetes and Helm compatibility and upgrade policy</a>
         for dependency maintenance and tested support claims.
       </p>
+      <h2 id="helm-management">Helm management design</h2>
+      <p>
+        <a href="../superpowers/specs/2026-11-17-phase-1e2-helm-management-design.md">Phase 1E.2</a> extends the native SDK with bounded
+        chart resolution, release-specific review tokens and owned operation workers. Keep inspection read-only. Operations retain their
+        cluster, namespace, driver and release target across navigation; report partial failures and cancellation without claiming atomicity
+        or automatic recovery. Local packages, HTTPS repositories and OCI registries resolve to native chart snapshots before confirmation.
+      </p>
     </main>
   </body>
 </html>

@@ -137,6 +137,14 @@
         deletion, finalizer removal, generic resource deletion and unsafe StatefulSet retention overrides are excluded. Scale, Restart and
         Delete share native locks and aggregate limits; an uncertain response is never automatically retried.
       </p>
+      <h2 id="helm-management">Helm management boundary</h2>
+      <p>
+        <a href="../superpowers/specs/2026-11-17-phase-1e2-helm-management-design.md">Phase 1E.2</a> uses Kubernetes authorization for
+        confirmed Helm actions. Preparation performs no cluster writes or hooks; review shows their potential impact and the limits of
+        dry-run evidence. Chart-source credentials are separate from cluster credentials, native, session-only and origin-scoped. Persist no
+        passwords or review payloads. Use trusted TLS, bounded chart decoding and no ambient plugins or executable credential helpers for
+        chart sources. Hooks and prior writes can survive cancellation; report outcomes honestly and do not retry mutations automatically.
+      </p>
       <h2 id="helm-inspection">Helm inspection boundary</h2>
       <p>
         Entering the <a href="../superpowers/specs/2026-11-17-phase-1e1-helm-inspection-design.md">1E.1 Helm view</a> intentionally reads

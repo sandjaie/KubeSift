@@ -2,6 +2,13 @@
 
 Updated 2026-11-17. Current integration branch is `develop`.
 
+## Phase 1E.2 · Native Helm release management
+
+- [Specification](../../docs/superpowers/specs/2026-11-17-phase-1e2-helm-management-design.md) and [six-task plan](../../docs/superpowers/plans/2026-11-17-phase-1e2-helm-management.md) prepared from `8ec0327` for separate implementation, as requested. No application code or dependencies changed.
+- All four release actions and local/HTTPS/OCI sources are included, with private session credentials, existing UI, one review/confirmation, minimal tests and agent desktop verification.
+- Fresh specification builder check found no important unanswered questions. Plan self-review maps scope and five main failure cases to the six tasks. Runtime SDK behavior remains implementation validation work.
+- Start `feature/phase-1e2-helm-management` from updated develop using Superpowers executing-plans. Current metrics remains Phase 1E.3.
+
 ## Phase 1E.1 · Native Helm release inspection
 
 - [PR #24](https://github.com/sandjaie/KubeSift/pull/24) squash-merged into `develop` as `b83d62d` on 2026-11-17 Dubai time. Implemented from `18db1af`. The [specification](../../docs/superpowers/specs/2026-11-17-phase-1e1-helm-inspection-design.md) and [plan](../../docs/superpowers/plans/2026-11-17-phase-1e1-helm-inspection.md) cover native namespace and driver selection, release history, revision evidence and links to current objects.

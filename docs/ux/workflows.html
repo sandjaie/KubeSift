@@ -146,6 +146,14 @@
         status is recorded release evidence; links open current Kubernetes resources and do not assert historical identity. No new dashboard
         or repeated permission prompts.
       </p>
+      <h2 id="helm-management">Helm management workflow</h2>
+      <p>
+        <a href="../superpowers/specs/2026-11-17-phase-1e2-helm-management-design.md">Phase 1E.2</a> adds Install and selected-release
+        Upgrade, Roll back and Uninstall to the existing Helm workspace. Reuse current dialogs, editors, diffs and result styling for
+        Prepare → Review → Confirm → Result. Keep the fixed target and chart version visible. Show values/manifest changes, hooks, CRDs and
+        namespace impact with preview limitations. Put source addresses, TLS configuration and session credential controls in Settings.
+        Navigation preserves native running work; cancellation and partial failures remain visible, with a release/history refresh action.
+      </p>
       <h2 id="interactive-sessions">Interactive sessions</h2>
       <p>
         The <a href="../superpowers/specs/2026-11-16-phase-1d6-interactive-sessions-design.md">1D.6 specification</a> adds terminal and
