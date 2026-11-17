@@ -77,6 +77,12 @@ func (s *EditService) CloseEdit(id string) { s.coordinator.closeDraft("edit", id
 var serverEditMetadata = []string{"creationTimestamp", "deletionTimestamp", "deletionGracePeriodSeconds", "generation", "managedFields", "selfLink"}
 
 func editProjection(raw []byte) (map[string]any, error) {
+	object, err := yamlValueProjection(raw)
+	delete(object, "status")
+	return object, err
+}
+
+func yamlValueProjection(raw []byte) (map[string]any, error) {
 	var object map[string]any
 	decoder := json.NewDecoder(bytes.NewReader(raw))
 	decoder.UseNumber()
@@ -87,7 +93,6 @@ func editProjection(raw []byte) (map[string]any, error) {
 	if !ok {
 		return nil, model.Fail("invalid_response", "Kubernetes returned invalid resource metadata")
 	}
-	delete(object, "status")
 	for _, key := range serverEditMetadata {
 		delete(metadata, key)
 	}

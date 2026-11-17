@@ -11,7 +11,7 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { APIResourceBrowser } from "../discovery/APIResourceBrowser";
 import type { CatalogSeed } from "../discovery/model";
 import { EditDialog } from "./EditDialog";
-import { settleApplyEditor } from "./applyState";
+import { applyEditorHidden, settleApplyEditor } from "./applyState";
 import { requestEditor, type EditorDestination, type EditorSession } from "./editState";
 import type { OperationResult } from "./api";
 
@@ -28,6 +28,7 @@ const bridge = vi.hoisted(() => ({
   resources: vi.fn(),
   inventory: vi.fn(),
   detail: vi.fn(),
+  appliedDetail: vi.fn(),
 }));
 vi.mock("./api", () => bridge);
 vi.mock("@wailsio/runtime", () => ({}));
@@ -38,6 +39,7 @@ vi.mock("../workloads/api", () => ({
     ReadAPIResources: bridge.resources,
     ReadGenericResources: bridge.inventory,
     ReadGenericDetail: bridge.detail,
+    ReadAppliedDetail: bridge.appliedDetail,
   },
 }));
 
@@ -215,7 +217,7 @@ test("a retained generic view applies the accepted edit when discovery becomes r
   expect(host.querySelector("textarea")?.value).toBe("spec: after");
 });
 
-test.each(["accepted", "unknown"])("delayed apply %s settles only its submitted draft", async (state) => {
+test.each(["accepted", "unknown", "detached"])("delayed apply %s settles only its submitted draft", async (state) => {
   let finish!: (accepted: boolean) => void;
   const response = new Promise<boolean>((resolve) => {
     finish = resolve;
@@ -251,16 +253,19 @@ test.each(["accepted", "unknown"])("delayed apply %s settles only its submitted 
 
   function Harness() {
     const [editor, setEditor] = useState<EditorSession<EditorDestination> | undefined>(() => requestEditor(undefined, destination));
+    const [origin, setOrigin] = useState(true);
     if (editor?.mode !== "apply") return null;
     return (
       <>
         <button disabled={editor.submitting} onClick={() => setEditor((current) => requestEditor(current, destination))}>
           Resume apply
         </button>
+        <button onClick={() => setOrigin(false)}>Close origin tab</button>
         <EditDialog
           {...props}
           apply
-          suspended={editor.suspended}
+          connection={origin ? props.connection : undefined}
+          suspended={applyEditorHidden(editor.suspended, origin, origin)}
           onConfirm={(token, id, serverYAML) => {
             props.onConfirm(token, id, serverYAML);
             setEditor({ ...editor, submitting: true, suspended: true });
@@ -285,8 +290,16 @@ test.each(["accepted", "unknown"])("delayed apply %s settles only its submitted 
   expect(host.querySelector("textarea")).toBeNull();
   expect(host.querySelector<HTMLButtonElement>("button")?.disabled).toBe(true);
   expect(host.textContent).not.toContain("sensitive-fixture");
+  if (state === "detached") await click("Close origin tab");
   await act(async () => finish(state === "accepted"));
-  if (state === "unknown") {
+  if (state === "detached") {
+    await click("Resume apply");
+    expect(host.querySelector("textarea")?.value).toBe(desired);
+    expect(host.querySelector("textarea")?.readOnly).toBe(true);
+    const review = Array.from(host.querySelectorAll("button")).find((button) => button.textContent === "Review changes");
+    expect(review?.disabled).toBe(true);
+    expect(host.textContent).toContain("You can copy the draft");
+  } else if (state === "unknown") {
     await click("Resume apply");
     expect(host.querySelector("textarea")?.value).toBe(desired);
     expect(host.textContent).not.toContain("Take over conflicting fields");
@@ -298,4 +311,64 @@ test.each(["accepted", "unknown"])("delayed apply %s settles only its submitted 
   }
   const newer = { ...requestEditor(undefined, { ...destination, id: "newer" }), submitting: true };
   expect(settleApplyEditor(newer, destination.id, true)).toBe(newer);
+});
+
+test("the accepted apply detail refreshes by operation ID when discovery does not advertise List", async () => {
+  const descriptor = {
+    group: "review.test",
+    version: "v1beta1",
+    resource: "widgets",
+    kind: "Widget",
+    namespaced: true,
+    handle: "",
+    mode: "unavailable",
+    reason: "No List",
+    list: false,
+    get: true,
+    patch: true,
+    create: true,
+  };
+  const resource = {
+    ...target,
+    group: descriptor.group,
+    version: descriptor.version,
+    resource: descriptor.resource,
+    kind: descriptor.kind,
+  };
+  const capture = { resource, resourceVersion: "7", fetchedAt: "2026-11-17T09:00:00Z", objectJSON: "{}", yaml: "spec: before" };
+  bridge.groups.mockResolvedValueOnce({ groups: [{ group: descriptor.group, versions: [descriptor.version] }], epoch: "root" });
+  bridge.resources.mockResolvedValueOnce({ resources: [descriptor], epoch: "version" });
+  bridge.appliedDetail.mockResolvedValueOnce({ ...capture, resourceVersion: "8", yaml: "spec: refreshed" });
+  function Browser() {
+    const [route, setRoute] = useState<CatalogSeed>({
+      ...descriptor,
+      namespace: resource.namespace,
+      descriptor,
+      capture,
+      section: "YAML",
+      createdDetailOperationID: "accepted-apply",
+      detailFromApply: true,
+    });
+    return (
+      <APIResourceBrowser
+        connection={resource.connection}
+        namespace={resource.namespace}
+        route={route}
+        onRoute={(next) => next && setRoute(next)}
+        onBack={vi.fn()}
+        onDedicated={vi.fn()}
+        onApply={vi.fn()}
+        operationResults={[]}
+        onResize={vi.fn()}
+        onCommit={vi.fn()}
+        widthPercent={40}
+        heightPercent={40}
+      />
+    );
+  }
+  await act(async () => root.render(<Browser />));
+  await click("Refresh object");
+  expect(bridge.appliedDetail).toHaveBeenCalledExactlyOnceWith("request", "accepted-apply");
+  expect(bridge.inventory).not.toHaveBeenCalled();
+  expect(host.querySelector("textarea")?.value).toBe("spec: refreshed");
 });

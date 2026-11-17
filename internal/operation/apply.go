@@ -38,7 +38,7 @@ func applyIdentity(target kube.EditTarget) map[string]any {
 }
 
 func applyProjection(raw []byte) (map[string]any, error) {
-	object, err := editProjection(raw)
+	object, err := yamlValueProjection(raw)
 	if err != nil {
 		return nil, err
 	}

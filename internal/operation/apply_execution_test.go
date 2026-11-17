@@ -35,16 +35,16 @@ func TestApplyExecution(t *testing.T) {
 		{"lost response", "unknown"},
 	} {
 		t.Run(tc.mode, func(t *testing.T) {
-			const path = "/api/v1/namespaces/default/configmaps/web"
-			const live = `{"apiVersion":"v1","kind":"ConfigMap","metadata":{"name":"web","namespace":"default","uid":"uid","resourceVersion":"7"},"data":{"marker":"old"}}`
-			const preview = `{"apiVersion":"v1","kind":"ConfigMap","metadata":{"name":"web","namespace":"default","uid":"uid","resourceVersion":"7"},"data":{"marker":"synthetic","default":"from-admission"}}`
+			const path = "/apis/review.test/v1/namespaces/default/widgets/web"
+			const live = `{"apiVersion":"review.test/v1","kind":"Widget","metadata":{"name":"web","namespace":"default","uid":"uid","resourceVersion":"7"},"data":{"marker":"old"},"status":{"result":"before-admission"}}`
+			const preview = `{"apiVersion":"review.test/v1","kind":"Widget","metadata":{"name":"web","namespace":"default","uid":"uid","resourceVersion":"7"},"data":{"marker":"synthetic","default":"from-admission"},"status":{"result":"preview-status"}}`
 			var dry, real atomic.Int32
 			var reviewed atomic.Value
 			base, request := scaleServer(t, func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				switch r.Method + " " + r.URL.Path {
-				case "GET /api/v1":
-					fmt.Fprint(w, `{"kind":"APIResourceList","groupVersion":"v1","resources":[{"name":"configmaps","kind":"ConfigMap","namespaced":true,"verbs":["get","patch"]}]}`)
+				case "GET /apis/review.test/v1":
+					fmt.Fprint(w, `{"kind":"APIResourceList","groupVersion":"review.test/v1","resources":[{"name":"widgets","kind":"Widget","namespaced":true,"verbs":["get","patch"]}]}`)
 				case "GET " + path:
 					if tc.mode == "deleted after GET" && real.Load() > 0 {
 						w.WriteHeader(404)
@@ -82,7 +82,7 @@ func TestApplyExecution(t *testing.T) {
 						w.WriteHeader(201)
 						fmt.Fprint(w, preview)
 					case "admission changed":
-						fmt.Fprint(w, strings.ReplaceAll(preview, "from-admission", "changed-on-execution"))
+						fmt.Fprint(w, strings.ReplaceAll(preview, "preview-status", "changed-on-execution"))
 					case "invalid success":
 						fmt.Fprint(w, strings.ReplaceAll(preview, `"uid"`, `"wrong"`))
 					case "oversize success":
@@ -104,7 +104,7 @@ func TestApplyExecution(t *testing.T) {
 			})
 			s := NewApplyService(base.connections, kube.NewService(base.connections, session.NewManager(nil)), base.coordinator)
 			ctx := context.Background()
-			draft, err := s.OpenApply(ctx, kube.EditTarget{Connection: request.Resource.Connection, Version: "v1", Kind: "ConfigMap", Namespace: "default", Name: "web", UID: "uid"})
+			draft, err := s.OpenApply(ctx, kube.EditTarget{Connection: request.Resource.Connection, Group: "review.test", Version: "v1", Kind: "Widget", Namespace: "default", Name: "web", UID: "uid"})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -123,7 +123,7 @@ func TestApplyExecution(t *testing.T) {
 				req.TakeOwnership = true
 				p, err = s.PrepareApply(ctx, req)
 			}
-			if err != nil || p.Token == "" || !strings.Contains(p.ServerYAML, "from-admission") {
+			if err != nil || p.Token == "" || !strings.Contains(p.ServerYAML, "from-admission") || !strings.Contains(p.ServerYAML, "preview-status") || !strings.Contains(p.BeforeYAML, "before-admission") || strings.Contains(p.ProposedYAML, "status") {
 				t.Fatalf("invalid preview: %+v %v", p, err)
 			}
 			if _, err := base.ExecuteScale(ctx, p.Token, ""); err == nil {
@@ -145,8 +145,14 @@ func TestApplyExecution(t *testing.T) {
 			if err != nil || r.OperationID != duplicate.OperationID || duplicate.ResponseChanged || duplicate.ObservedYAML != "" || real.Load() != expectedWrites {
 				t.Fatalf("duplicate reapplied or did not recover original result: %+v %v, writes=%d", duplicate, err, real.Load())
 			}
+			if tc.mode == "updated" {
+				detail, err := s.ReadAppliedDetail(ctx, r.OperationID)
+				if err != nil || detail.Resource.UID != "uid" || detail.Resource.Group != "review.test" || detail.Resource.Version != "v1" {
+					t.Fatalf("exact existing-object detail could not be read without List: %+v (%v)", detail.Resource, err)
+				}
+			}
 			summary, _ := json.Marshal(r)
-			if strings.Contains(string(summary), "synthetic") || strings.Contains(string(summary), "from-admission") {
+			if strings.Contains(string(summary), "synthetic") || strings.Contains(string(summary), "from-admission") || strings.Contains(string(summary), "changed-on-execution") {
 				t.Error("result leaked edited values")
 			}
 		})

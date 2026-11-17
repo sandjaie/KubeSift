@@ -35,7 +35,7 @@ import type { ResourceDetail, ResourceRef } from "./workloads/model";
 import { requestEditor, settleCreateEditor, type EditorSession, type EditorDestination } from "./operations/editState";
 import { CreateDialog } from "./operations/CreateDialog";
 import { ApplyResponseDialog } from "./operations/ApplyDialog";
-import { settleApplyEditor } from "./operations/applyState";
+import { applyEditorHidden, settleApplyEditor } from "./operations/applyState";
 import { EditDialog } from "./operations/EditDialog";
 import { closeApply, closeEdit, type CreatedResourceOpening } from "./operations/api";
 import { OperationResults, useOperationResults } from "./operations/OperationResults";
@@ -125,6 +125,9 @@ export default function App() {
   );
   const [editor, setEditor] = useState<EditorSession<EditorDestination>>();
   const origin = editor && state.tabs[editor.tab];
+  const inOriginWorkspace = !!editor && editor.tab === state.active && page === "workspace";
+  const editorHidden =
+    editor?.mode === "apply" ? applyEditorHidden(editor.suspended, !!origin, inOriginWorkspace) : !!editor?.suspended || !inOriginWorkspace;
   const originConnection =
     origin?.view?.state === "connected" || origin?.view?.state === "restricted" ? (origin.view.ref ?? undefined) : undefined;
   const operationResults = useOperationResults((result) => {
@@ -243,7 +246,7 @@ export default function App() {
           onClose={close}
         />
         <button onClick={() => setPage("clusters")}>Choose cluster</button>
-        {editor && (editor.suspended || editor.tab !== state.active || page !== "workspace") && (
+        {editor && editorHidden && (
           <button disabled={editor.submitting} onClick={resumeEditor}>
             {editor.submitting
               ? "Submitting operation…"
@@ -287,7 +290,7 @@ export default function App() {
           destination={editor}
           context={origin?.entry.context ?? "Original connection"}
           connection={originConnection}
-          suspended={!editor.replacement && !editor.closing && (editor.suspended || editor.tab !== state.active || page !== "workspace")}
+          suspended={!editor.replacement && !editor.closing && editorHidden}
           closing={editor.closing || !!editor.replacement}
           replacing={!!editor.replacement}
           onSuspend={() => setEditor({ ...editor, suspended: true })}
@@ -305,7 +308,7 @@ export default function App() {
           }}
         />
       )}
-      {editor?.mode === "apply" && editor.observation && !editor.suspended && editor.tab === state.active && page === "workspace" && (
+      {editor?.mode === "apply" && editor.observation && !editorHidden && (
         <ApplyResponseDialog
           observation={editor.observation}
           onClose={() => {
@@ -321,7 +324,7 @@ export default function App() {
           target={editor.target}
           context={origin?.entry.context ?? "Original connection"}
           connection={originConnection}
-          suspended={!editor.replacement && !editor.closing && (editor.suspended || editor.tab !== state.active || page !== "workspace")}
+          suspended={!editor.replacement && !editor.closing && editorHidden}
           reveal={editor.reveal}
           closing={editor.closing || !!editor.replacement}
           replacing={!!editor.replacement}

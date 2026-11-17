@@ -17,3 +17,7 @@ export function settleApplyEditor(
   if (current?.mode !== "apply" || current.id !== id || !current.submitting) return current;
   return accepted && !observation ? undefined : { ...current, submitting: false, observation };
 }
+
+export function applyEditorHidden(suspended: boolean, originExists: boolean, inOriginWorkspace: boolean) {
+  return suspended || (originExists && !inOriginWorkspace);
+}

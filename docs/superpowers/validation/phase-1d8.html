@@ -93,7 +93,7 @@
 
       <h2>Automated and live integration evidence</h2>
       <p>
-        <code>scripts/check.sh</code> passed source descriptions, documentation links, Go tests and vet, binding normalization tests, 113
+        <code>scripts/check.sh</code> passed source descriptions, documentation links, Go tests and vet, binding normalization tests, 115
         frontend tests, lint and typecheck. Race checks covered operations, the desktop bridge, Kubernetes reads and sessions. Normalized
         binding regeneration, production bundling, <code>wails3 task package</code> and strict signature verification passed.
       </p>
@@ -153,7 +153,35 @@
       </p>
 
       <h2>Review and integration</h2>
-      <p>Independent review and develop integration pending.</p>
+      <p>
+        The independent reviewer <code>phase1d8_pr_review</code> reviewed <code>2aebe92af58f0db1d396a3c6efe9cc5ace324aad</code> against
+        <code>develop</code> at base and merge base <code>4b59c449a4edcfd24c6d699b33cc499ba18075b2</code>. Both findings blocked the
+        original candidate.
+      </p>
+      <ul>
+        <li>
+          <strong>KSF-001 (P2):</strong> closing the origin tab during submission made an Unknown draft or changed accepted response
+          unreachable. A detached apply can now resume for read-only inspection, copy and discard. The mounted regression closes the origin
+          during submission and verifies the draft remains visible with review disabled.
+        </li>
+        <li>
+          <strong>KSF-002 (P2):</strong> the Edit projection hid status-only changes in apply review and the accepted response. Apply now
+          renders status on the server side of the diff and in transient response comparison, and still rejects status in desired YAML. A
+          synthetic API verifies both the preview and an admission response that differs only in status.
+        </li>
+      </ul>
+      <p>
+        The packaged no-List Badge case exercised Kubernetes RBAC denial of List. Separate synthetic native and mounted tests verify
+        exact-version read and refresh when discovery does not advertise List at all. No real server with an unadvertised List verb was used
+        for this fallback.
+      </p>
+      <p>
+        After the fixes, full checks and targeted races passed, and Apply and Edit passed again on both kind contexts. In the rebuilt signed
+        package, a custom resource without a status subresource showed removal of its previously owned status in the dry-run diff, and the
+        confirmed write removed that value without changing UID. The fixture and isolated kubeconfig were removed. The detached, late
+        Unknown and admission response paths were tested synthetically.
+      </p>
+      <p>Targeted review recheck and develop integration pending.</p>
     </main>
   </body>
 </html>

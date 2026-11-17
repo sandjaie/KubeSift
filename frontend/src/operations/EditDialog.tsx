@@ -216,7 +216,8 @@ export function EditDialog({
           {loading && <p role="status">Reading the resource from Kubernetes…</p>}
           {!available && (
             <p role="alert">
-              The original capture is disconnected or its connection changed. Refresh from Kubernetes to start a new review.
+              The original capture is disconnected or its connection changed.{" "}
+              {apply && !connection ? " You can copy the draft or close this editor." : " Refresh from Kubernetes to start a new review."}
             </p>
           )}
           {error && <p role="alert">{error}</p>}
@@ -240,7 +241,7 @@ export function EditDialog({
                 aria-label={editing ? "Resource YAML" : "Revealed YAML"}
                 className="yaml-view edit-source"
                 value={text}
-                readOnly={!editing}
+                readOnly={!editing || (apply && !available)}
                 spellCheck={false}
                 autoCorrect="off"
                 autoCapitalize="none"
