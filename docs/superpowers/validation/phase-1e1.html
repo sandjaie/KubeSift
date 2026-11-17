@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Phase 1E.1 Helm inspection validation · KubeSift</title>
+    <link rel="stylesheet" href="../../assets/planning.css" />
+    <script src="../../assets/theme.js"></script>
+  </head>
+  <body>
+    <aside class="rail">
+      <a class="skip" href="#content">Skip to content</a
+      ><a class="mark" href="../../index.html"><span class="mark-name">KubeSift</span><span class="mark-sub">Planning</span></a>
+      <h2>Index</h2>
+      <a href="../../index.html">Planning index</a>
+      <h2>Product</h2>
+      <a href="../../product/requirements.html">Requirements</a><a href="../../product/feature-matrix.html">Capabilities</a>
+      <h2>Architecture</h2>
+      <a href="../../architecture/overview.html">Overview</a><a href="../../architecture/decisions.html">Decisions</a>
+      <h2>Safeguards</h2>
+      <a href="../../security/security-model.html">Security and AI</a>
+      <h2>Delivery</h2>
+      <a href="../../roadmap/roadmap.html">Roadmap</a><a href="../../ux/workflows.html">UX workflows</a
+      ><a href="../../ux/mocks/index.html">Mockups</a>
+      <h2>Engineering</h2>
+      <a href="../../engineering/engineering.html">Playbook</a><a href="../../engineering/local-development.html">Local development</a
+      ><a href="../../engineering/toolchain.html">Toolchain</a
+      ><a href="../../engineering/kubernetes-development.html">Kubernetes references</a>
+      <h2>Superpowers</h2>
+      <a href="../../superpowers/specs/2026-11-05-kubesift-design.md">Design specification</a
+      ><a href="../../superpowers/plans/README.html">Plans</a
+      ><a href="../../superpowers/validation/index.html" aria-current="page">Validation</a
+      ><a href="../../superpowers/evidence/index.html">Evidence</a>
+    </aside>
+
+    <header>
+      <a href="../../index.html">KubeSift / Planning</a>
+      <h1>Phase 1E.1 Helm inspection validation</h1>
+    </header>
+    <main id="content">
+      <p>
+        Validated on 17 November 2026 Dubai time from <code>develop</code> at <code>18db1af</code>. See the
+        <a href="../specs/2026-11-17-phase-1e1-helm-inspection-design.md">design</a> and
+        <a href="../plans/2026-11-17-phase-1e1-helm-inspection.md">implementation plan</a>.
+      </p>
+
+      <h2>SDK and build</h2>
+      <p>
+        Helm Go SDK <code>v4.3.1</code> and the Kubernetes API, apimachinery, client-go and streaming modules at
+        <code>v0.37.1</code> compiled and passed the repository suite with Go 1.27.3. The Go module baseline remains 1.26.0. The dependency
+        changes also include compatible YAML, protobuf and supporting library versions. The SDK ships under Apache 2.0 and the pinned module
+        contains a license file without a separate NOTICE file. The app uses the SDK Kubernetes storage drivers and chart-value helper.
+      </p>
+      <p>
+        <code>wails3 task bindings</code>, the production frontend build, <code>scripts/check.sh</code> with 116 frontend tests,
+        <code>go test -race ./internal/helmreader ./internal/desktop</code>, and <code>wails3 task package</code> passed. Strict signature
+        verification passed for the local macOS bundle. The stripped executable was approximately 51 MB versus 48 MB for the prior Phase
+        1D.8 local build. This measures build size.
+      </p>
+
+      <h2>Live records</h2>
+      <p>
+        <code>kind-dev-local-a</code> and <code>kind-dev-local-b</code> both ran Kubernetes <code>v1.37.0</code>. Using only those explicit
+        contexts and owned namespaces, the local ConfigMap chart generated two revisions of the same release in each storage driver.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Context</th>
+            <th scope="col">Record producer</th>
+            <th scope="col">Storage</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>kind-dev-local-a</td>
+            <td>Helm <code>v3.19.0+g3d8990f</code></td>
+            <td>Secret and ConfigMap</td>
+          </tr>
+          <tr>
+            <td>kind-dev-local-b</td>
+            <td>Helm <code>v4.3.1+gc0d08d0</code></td>
+            <td>Secret and ConfigMap</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        The fixture producers ran explicit <code>helm upgrade --install</code> and <code>helm upgrade</code> with <code>--no-hooks</code>.
+        The Helm 3 archive passed the published SHA-256 check. The opt-in <code>TestHelmInspection</code> used isolated kubeconfigs and
+        verified retained ordering, historical values, stored manifests, hooks and notes, computed values, a current-resource link with the
+        newer value, a genuinely empty inventory and Kubernetes authorization denial. Hook-created resources were absent. Synthetic HTTP
+        tests covered the decoder cap, cancellation, changed identity and refusal to choose a latest revision from an incomplete
+        1,001-record scan.
+      </p>
+      <pre><code>KUBESIFT_HELM_INTEGRATION=1 go test -tags=integration ./tests/integration -run '^TestHelmInspection$' -count=1 -v</code></pre>
+
+      <h2>Native desktop walkthrough</h2>
+      <p>
+        The signed production bundle started on arm64 macOS 26.7.1 with a PATH containing only <code>/usr/bin:/bin</code>, where
+        <code>helm</code> was unavailable. macOS accessibility was disabled in the session. A separate signed test bundle used the same
+        production renderer and native services, with a temporary DOM automation script injected into its actual Wails WebKit window. The
+        production bundle contains no test harness. The full workflow ran with the same isolated PATH and an inherited
+        <code>HELM_DRIVER=configmap</code>; the view still began in Secret storage.
+      </p>
+      <ul>
+        <li>
+          Opened both context-specific namespaces and selected each storage driver. The same release name produced distinct records. The
+          corrupt ConfigMap row carried its own error, while the usable release remained available.
+        </li>
+        <li>
+          Selected revision 1 and viewed overrides, computed values, exact stored manifest, hook definitions and notes. Opened the current
+          ConfigMap from Resources, then used Back to release and confirmed the same revision remained selected.
+        </li>
+        <li>
+          Changed appearance in Settings, returned to the workspace and checked Light and Dark. Restored the saved preference. The
+          exact-name filter showed an empty state, and the context B restricted credential showed a List denial without another driver.
+        </li>
+      </ul>
+      <p>
+        The initial walkthrough exposed an empty metadata decoding defect. Kubernetes can encode a genuine empty list with
+        <code>items: null</code>. The decoder now accepts that representation and still rejects an absent items field. Both live tests and
+        the native walkthrough passed after the correction.
+      </p>
+
+      <h2>Coverage and remaining limits</h2>
+      <p>
+        The recorded producer versions and both local storage drivers establish representative Helm 3 and 4 coverage. Helm 2/Tiller and SQL
+        storage are unsupported. Computed values are unavailable if the stored chart lacks its declared dependency trees or overrides
+        introduce incompatible table shapes that Helm could log. Stored overrides remain readable. Helm SDK JSON decoding can round large
+        values internally. Revision ordering uses exact decimal text. Current object links establish only the identity read at navigation
+        time. Other clusters, historic chart formats, and OS-level accessibility and keyboard interactions were untested.
+      </p>
+      <p>
+        Before cleanup, both contexts still had exactly revisions 1 and 2 for each driver and no hook-created ConfigMaps. UID preconditions
+        protected namespace deletion. Both namespaces, temporary kubeconfigs, the Helm 3 fixture binary and the desktop test bundle were
+        removed. Independent review and develop integration are pending.
+      </p>
+      <h2>Independent review</h2>
+      <p>
+        <code>phase1e1_pr_review</code> reviewed candidate <code>1d0e0bb55aaa0257d18fafa3944cc359d9ad1eda</code> against
+        <code>develop</code> at base and merge base <code>18db1af1ed7d2e21e312d172e3ea4c5cd648d063</code>.
+      </p>
+      <ul>
+        <li>
+          KSF-001 (P1) required full-object protection for a Secret reached through canonical discovery and source validation for Helm
+          refresh. The resolved route guard blocks full Secret reads. Helm refresh revalidates revision and manifest membership. A synthetic
+          HTTP test and both live contexts verified the change.
+        </li>
+        <li>
+          KSF-002 (P2) required Helm to use its own namespace controls after entering from a cluster-scoped resource. The native retest
+          opened Nodes and then Helm and confirmed the namespace picker was enabled.
+        </li>
+        <li>
+          KSF-003 (P2) required operation output to leave Helm before opening the target. A separate native regression created a test
+          ConfigMap through the existing Create resource action, entered Helm, and opened that ConfigMap from Operation results.
+        </li>
+        <li>
+          KSF-004 (P2) required explicit malformed and duplicate namespace fields to remain non-navigable. Native unit tests verified these
+          forms while live manifests with omitted namespaces retained their release namespace.
+        </li>
+      </ul>
+      <p>
+        The same reviewer cleared all four findings on <code>bcde65d76ce18bc1bd5fe811abecd7bbdc1e9f9e</code>, including the separately
+        published compatibility documentation at <code>9032c04</code>. Full checks, targeted races, both live integrations,
+        package/signature verification and the native walkthrough passed again. Retest fixtures and temporary isolated credentials were
+        removed. Develop integration is pending.
+      </p>
+    </main>
+  </body>
+</html>

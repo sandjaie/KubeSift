@@ -138,3 +138,10 @@ done</code></pre>
   two approved contexts and remove them by UID. Run these sequentially with <code>TestYAMLCreation</code> because they use the same
   task-owned fixture CRD name.
 </p>
+
+<p>
+  Enable <code>TestHelmInspection</code> with <code>KUBESIFT_HELM_INTEGRATION=1</code>, the isolated A/B kubeconfigs and the fixture
+  variables described in <a href="../fixtures/helm/README.md">the Helm chart fixture</a>. The test uses both approved contexts and reads
+  task-owned releases and denied storage variants. It verifies retained revisions and historical sections, driver isolation, exact-name
+  filtering, the current-resource link and Kubernetes List denial.
+</p>

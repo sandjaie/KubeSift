@@ -106,12 +106,12 @@ func (s *Service) ReadGenericDetail(ctx context.Context, req GenericDetailReques
 
 // ReadCreatedDetail reads the exact address from a retained successful create result, without an inventory handle.
 func (s *Service) ReadCreatedDetail(ctx context.Context, target ManifestAddress, uid string) (GenericResourceDetail, error) {
-	if target.Group == "" && target.Resource == "secrets" {
-		return GenericResourceDetail{}, model.Fail("unsupported", "Open Secrets through the metadata-only resource view")
-	}
 	resolved, err := s.ResolveManifestTarget(ctx, target.Connection, target.api().apiVersion(), target.Kind, target.Resource, target.Namespace, target.Name, "get")
 	if err != nil {
 		return GenericResourceDetail{}, err
+	}
+	if resolved.Group == "" && resolved.Resource == "secrets" {
+		return GenericResourceDetail{}, model.Fail("unsupported", "Open Secrets through the metadata-only resource view")
 	}
 	detail, err := s.readManifestDetail(ctx, resolved, uid)
 	if err != nil {

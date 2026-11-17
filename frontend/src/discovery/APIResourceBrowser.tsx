@@ -101,7 +101,12 @@ export function APIResourceBrowser({
   const liveDescriptor = currentGenericDescriptor(descriptor, resources.data);
   const key = liveDescriptor ? JSON.stringify([connection.id, connection.generation, liveDescriptor.handle, scope]) : "";
   const createdDetailID = active?.capture && active.createdDetailOperationID;
-  const detailKey = createdDetailID ? JSON.stringify([connection, createdDetailID, scope]) : key;
+  const manifestDetail = active?.capture && active.manifestDetail;
+  const detailKey = manifestDetail
+    ? JSON.stringify([manifestDetail, active?.capture?.resource.uid])
+    : createdDetailID
+      ? JSON.stringify([connection, createdDetailID, scope])
+      : key;
   useLayoutEffect(() => pending.cancel, [pending, detailKey, cursor]);
   const inventory = useRead<GenericResourcePage>(key && JSON.stringify([key, cursor]), (id) =>
     api.ReadGenericResources(id, { connection, handle: descriptor!.handle, namespace: scope, cursor }),
@@ -117,7 +122,8 @@ export function APIResourceBrowser({
     (g) => g.group === active?.group || (g.group || "core").toLowerCase().includes(groupFilter.trim().toLowerCase()),
   );
   const rows = (inventory.data?.items ?? []).filter((r) => r.resource.name.toLowerCase().includes(filter.trim().toLowerCase()));
-  const capture = createdDetailID || (liveDescriptor && (!inventory.error || active?.openedFromCreate)) ? active?.capture : undefined;
+  const capture =
+    manifestDetail || createdDetailID || (liveDescriptor && (!inventory.error || active?.openedFromCreate)) ? active?.capture : undefined;
   const patch = (next: Partial<CatalogSeed>) => {
     if (active) onRoute({ ...active, ...next });
   };
@@ -134,6 +140,7 @@ export function APIResourceBrowser({
       namespace,
       capture: undefined,
       createdDetailOperationID: undefined,
+      manifestDetail: undefined,
       section: "Overview",
       openedFromCreate: undefined,
     });
@@ -145,16 +152,25 @@ export function APIResourceBrowser({
     setDetail({ key: detailKey, loading: true });
     pending.start(
       readRequest((id) =>
-        createdDetailID
-          ? active?.detailFromApply
-            ? api.ReadAppliedDetail(id, createdDetailID)
-            : api.ReadCreatedDetail(id, createdDetailID)
-          : api.ReadGenericDetail(id, { connection, handle, namespace: scope, name: resource.name, uid: resource.uid }),
+        manifestDetail
+          ? api.ReadHelmCurrentDetail(id, manifestDetail, resource.uid)
+          : createdDetailID
+            ? active?.detailFromApply
+              ? api.ReadAppliedDetail(id, createdDetailID)
+              : api.ReadCreatedDetail(id, createdDetailID)
+            : api.ReadGenericDetail(id, { connection, handle, namespace: scope, name: resource.name, uid: resource.uid }),
       ),
       (data) => {
         setDetail({ key: detailKey });
         const route = latestRoute.current;
-        if (route && (createdDetailID ? route.createdDetailOperationID === createdDetailID : route.descriptor?.handle === handle))
+        if (
+          route &&
+          (manifestDetail
+            ? route.manifestDetail === manifestDetail
+            : createdDetailID
+              ? route.createdDetailOperationID === createdDetailID
+              : route.descriptor?.handle === handle)
+        )
           onRoute({ ...route, namespace, capture: data, section: capture?.resource.uid === resource.uid ? route.section : "Overview" });
       },
       (error) => setDetail({ key: detailKey, error: message(error) }),
@@ -185,7 +201,13 @@ export function APIResourceBrowser({
           <button
             onClick={() => {
               clearDetail();
-              patch({ descriptor: undefined, capture: undefined, createdDetailOperationID: undefined, history: [""] });
+              patch({
+                descriptor: undefined,
+                capture: undefined,
+                createdDetailOperationID: undefined,
+                manifestDetail: undefined,
+                history: [""],
+              });
               setRefresh((n) => n + 1);
             }}
           >
@@ -245,6 +267,7 @@ export function APIResourceBrowser({
                   descriptor: undefined,
                   capture: undefined,
                   createdDetailOperationID: undefined,
+                  manifestDetail: undefined,
                   history: [""],
                 });
               }}
@@ -358,6 +381,7 @@ export function APIResourceBrowser({
                     history: [...history, inventory.data!.page.nextCursor],
                     capture: undefined,
                     createdDetailOperationID: undefined,
+                    manifestDetail: undefined,
                   });
                 }}
               >
@@ -393,10 +417,10 @@ export function APIResourceBrowser({
             onRefresh={() => open(capture.resource)}
             onEdit={onEdit && (() => onEdit(capture.resource))}
             onApply={onApply && (() => onApply(capture.resource))}
-            canPatch={!!(liveDescriptor ?? (createdDetailID ? descriptor : undefined))?.patch}
+            canPatch={!!(liveDescriptor ?? (createdDetailID || manifestDetail ? descriptor : undefined))?.patch}
             onBack={() => {
               clearDetail();
-              patch({ capture: undefined, createdDetailOperationID: undefined, section: "Overview" });
+              patch({ capture: undefined, createdDetailOperationID: undefined, manifestDetail: undefined, section: "Overview" });
             }}
           />
         ) : (

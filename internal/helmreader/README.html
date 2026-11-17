@@ -1,0 +1,12 @@
+<!doctype html>
+<title>Helm inspection</title>
+<h1>Helm inspection</h1>
+<p>
+  Release inventory scans Helm-labeled metadata in one namespace and one storage driver. The pinned SDK decodes the captured record only
+  after request, identity, and size checks. Computed values use stored chart defaults and overrides. Records with unavailable dependency
+  charts or incompatible value tables retain their stored override view.
+</p>
+<p>
+  Inspection reads Kubernetes with the selected connection. It uses neither a Helm executable nor the Helm action engine. The SDK v1 release
+  record decoder uses Go JSON numeric semantics.
+</p>

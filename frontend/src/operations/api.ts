@@ -14,6 +14,7 @@ import type {
   RestartRequest,
   ScaleRequest,
 } from "../../bindings/internal/operation/models";
+import type { OpenResourceRequest } from "../../bindings/internal/helmreader/models";
 import type { ConnectionRef } from "../bridge";
 import type { EditTarget, ManifestAddress } from "../../bindings/internal/kube/models";
 export type { EditTarget, ManifestAddress } from "../../bindings/internal/kube/models";
@@ -36,7 +37,9 @@ export type {
   ScalePreview,
   ScaleResult,
 } from "../../bindings/internal/operation/models";
-export type CreatedResourceOpening = { target: ManifestAddress; operationID: string; action?: "apply" };
+export type CreatedResourceOpening =
+  | { target: ManifestAddress; operationID: string; action?: "apply" }
+  | { target: ManifestAddress; action: "helm"; source: OpenResourceRequest };
 
 export type OperationAction = "scale" | "restart" | "delete" | "edit" | "rollback" | "create" | "apply";
 export const prepareScale = (request: ScaleRequest) => readRequest((id) => workloadAPI.PrepareScale(id, request));
