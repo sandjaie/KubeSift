@@ -16,6 +16,8 @@ import { TrustSettings } from "./settings/TrustSettings";
 import { defaultPreferences, loadPreferences, savePreferences, type Preferences } from "./settings/preferences";
 import { ClusterTabs } from "./workspace/ClusterTabs";
 import { NamespaceControl } from "./workspace/NamespaceControl";
+import { HelmWorkspace } from "./helm/HelmWorkspace";
+import { useHelm } from "./helm/useHelm";
 import { Workspace } from "./workspace/Workspace";
 import { CommandPalette } from "./workspace/CommandPalette";
 import { commandForKey } from "./workspace/commands";
@@ -116,11 +118,27 @@ export default function App() {
     return () => window.removeEventListener("keydown", listener);
   }, []);
   const active = state.active ? state.tabs[state.active] : null;
+  const [helmDestinations, setHelmDestinations] = useState<Record<string, { mode: "helm" | "resource"; source?: string }>>({});
+  const helmDestination = state.active ? helmDestinations[state.active] : undefined;
+  const showingHelm = helmDestination?.mode === "helm";
+  const helmNamespace = helmDestination?.source ?? active?.namespace ?? "default";
+  const helmConnection = active?.view?.state === "connected" || active?.view?.state === "restricted" ? active.view.ref : undefined;
+  const helm = useHelm(
+    state.active ?? "",
+    helmConnection ?? undefined,
+    helmNamespace,
+    showingHelm && page === "workspace" && active?.namespace === helmNamespace,
+  );
+  useEffect(() => {
+    if (!showingHelm || !helmDestination?.source || active?.namespace !== helmDestination.source || !state.active) return;
+    const tab = state.active;
+    setHelmDestinations((old) => ({ ...old, [tab]: { mode: "helm" } }));
+  }, [showingHelm, helmDestination?.source, active?.namespace, state.active]);
   const workloads = useWorkloads(
     state.active ?? "",
     active?.view?.ref ?? null,
     active?.namespace ?? "default",
-    page === "workspace",
+    page === "workspace" && !showingHelm,
     (tab, namespace) => void controller.selectNamespace(tab, namespace),
   );
   const [editor, setEditor] = useState<EditorSession<EditorDestination>>();
@@ -174,6 +192,12 @@ export default function App() {
     void Promise.all([logs.store.closeTab(key), interactive.store.closeTab(key)])
       .then(() => {
         workloads.close(key);
+        helm.closeTab(key);
+        setHelmDestinations((old) => {
+          const next = { ...old };
+          delete next[key];
+          return next;
+        });
         return controller.cancel(key);
       })
       .catch(() => setStartupError("Could not close the tab’s sessions. Retry cleanup."));
@@ -246,6 +270,20 @@ export default function App() {
           onClose={close}
         />
         <button onClick={() => setPage("clusters")}>Choose cluster</button>
+        {page === "workspace" && helmDestination?.mode === "resource" && (
+          <button
+            onClick={() => {
+              const tab = state.active;
+              if (!tab) return;
+              setHelmDestinations((old) => ({ ...old, [tab]: { mode: "helm", source: helmDestination.source } }));
+              if (helmDestination.source && active?.namespace !== helmDestination.source) {
+                void controller.selectNamespace(tab, helmDestination.source);
+              }
+            }}
+          >
+            Back to release
+          </button>
+        )}
         {editor && editorHidden && (
           <button disabled={editor.submitting} onClick={resumeEditor}>
             {editor.submitting
@@ -505,6 +543,38 @@ export default function App() {
                   )
                 }
                 controller={workloads}
+                helmPane={
+                  (showingHelm && (
+                    <HelmWorkspace
+                      helm={helm}
+                      namespace={helmNamespace}
+                      widthPercent={preferences.detailWidthPercent}
+                      heightPercent={preferences.detailHeightPercent}
+                      onResize={(axis, value) => resize(axis === "x" ? "detailWidthPercent" : "detailHeightPercent", value)}
+                      onCommit={commitSize}
+                      onOpen={({ address, resource }) => {
+                        const tab = state.active;
+                        if (!tab) return;
+                        setHelmDestinations((old) => ({ ...old, [tab]: { mode: "resource", source: helmNamespace } }));
+                        setOpeningOperationTarget({ tab, ref: resource, created: { action: "helm", target: address } });
+                      }}
+                    />
+                  )) ||
+                  undefined
+                }
+                onHelm={() => {
+                  const tab = state.active;
+                  if (tab) setHelmDestinations((old) => ({ ...old, [tab]: { mode: "helm" } }));
+                }}
+                onResourceDestination={() => {
+                  const tab = state.active;
+                  if (tab)
+                    setHelmDestinations((old) => {
+                      const next = { ...old };
+                      delete next[tab];
+                      return next;
+                    });
+                }}
                 operationResults={operationResults.results}
                 onInteractive={(kind, data) => {
                   if (state.active) setStartSession({ kind, data, tab: state.active, cluster: active.entry.context });

@@ -12,11 +12,13 @@ import { yamlMatches, yamlMatchLimit } from "./yamlSearch";
 
 export function ResourceYaml({
   data,
+  stored,
   containsConfigData,
   onEdit,
   onApply,
 }: {
-  data: YAMLDocument;
+  data?: YAMLDocument;
+  stored?: { text: string; label: string };
   containsConfigData: boolean;
   onEdit?: () => void;
   onApply?: () => void;
@@ -26,7 +28,8 @@ export function ResourceYaml({
   const [match, setMatch] = useState<{ text: string; query: string; index: number }>();
   const area = useRef<HTMLTextAreaElement>(null);
   const mark = useRef<HTMLElement>(null);
-  const text = managed ? data.withManagedFields : data.withoutManagedFields;
+  const text = stored?.text ?? (managed ? data?.withManagedFields : data?.withoutManagedFields) ?? "";
+  const label = stored?.label ?? "YAML";
   const matches = useMemo(() => yamlMatches(text, query), [text, query]);
   const total = Math.min(matches.length, yamlMatchLimit);
   const index = match?.text === text && match.query === query ? match.index : -1;
@@ -56,8 +59,8 @@ export function ResourceYaml({
     <div className="evidence-section yaml-evidence">
       <div className="evidence-toolbar yaml-toolbar">
         <input
-          aria-label="Search displayed YAML"
-          placeholder="Search displayed YAML"
+          aria-label={`Search displayed ${label}`}
+          placeholder={`Search displayed ${label}`}
           spellCheck={false}
           autoCorrect="off"
           autoCapitalize="none"
@@ -82,24 +85,26 @@ export function ResourceYaml({
             </span>
           )}
         </div>
-        <label className="yaml-managed">
-          <input
-            type="checkbox"
-            checked={managed}
-            onChange={(event) => {
-              setManaged(event.target.checked);
-              setMatch(undefined);
-            }}
-          />
-          Show managed fields
-        </label>
+        {data && (
+          <label className="yaml-managed">
+            <input
+              type="checkbox"
+              checked={managed}
+              onChange={(event) => {
+                setManaged(event.target.checked);
+                setMatch(undefined);
+              }}
+            />
+            Show managed fields
+          </label>
+        )}
         {onEdit && <button onClick={onEdit}>Edit YAML</button>}
         {onApply && <button onClick={onApply}>Apply configuration…</button>}
-        <CopyTextButton label="Copy displayed YAML" copiedLabel="Displayed YAML copied" key={String(managed)} text={text} />
+        <CopyTextButton label={`Copy displayed ${label}`} copiedLabel={`Displayed ${label} copied`} key={String(managed)} text={text} />
       </div>
       {containsConfigData && <p className="muted yaml-note">ConfigMap values can contain sensitive configuration. Check before sharing.</p>}
       {highlight ? (
-        <pre className="yaml-view yaml-source" tabIndex={0} aria-label="Read-only server YAML">
+        <pre className="yaml-view yaml-source" tabIndex={0} aria-label={stored ? `Stored ${label}` : "Read-only server YAML"}>
           {lines.map((line, row) => {
             const from = Math.max(0, offset - start);
             const to = Math.min(line.length, offset + query.length - start);
@@ -126,7 +131,7 @@ export function ResourceYaml({
             ref={area}
             className="yaml-view"
             onKeyDown={searchKey}
-            aria-label="Read-only server YAML"
+            aria-label={stored ? `Stored ${label}` : "Read-only server YAML"}
             readOnly
             wrap="off"
             spellCheck={false}
@@ -134,15 +139,17 @@ export function ResourceYaml({
           />
         </>
       )}
-      <details className="muted">
-        <summary>
-          Captured {evidenceTime(data.fetchedAt)} · resourceVersion {data.resourceVersion || "Unknown"}
-        </summary>
-        <p>
-          Exact capture {data.fetchedAt || "Unknown"}. Server representation with managed fields {managed ? "included" : "omitted"}.
-          Original comments and ordering may differ. Fields unknown to this app’s Kubernetes types may be omitted.
-        </p>
-      </details>
+      {data && (
+        <details className="muted">
+          <summary>
+            Captured {evidenceTime(data.fetchedAt)} · resourceVersion {data.resourceVersion || "Unknown"}
+          </summary>
+          <p>
+            Exact capture {data.fetchedAt || "Unknown"}. Server representation with managed fields {managed ? "included" : "omitted"}.
+            Original comments and ordering may differ. Fields unknown to this app’s Kubernetes types may be omitted.
+          </p>
+        </details>
+      )}
     </div>
   );
 }

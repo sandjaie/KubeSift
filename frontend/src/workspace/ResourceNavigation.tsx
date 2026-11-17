@@ -59,7 +59,7 @@ export const destinations = [
       ["CustomResourceDefinition", clusterLabels.CustomResourceDefinition, true],
       ["APIService", clusterLabels.APIService, true],
       ["APIResources", "API resources", true],
-      ["Helm", "Helm", false],
+      ["Helm", "Helm", true],
       ["OpenShift", "OpenShift", false],
     ],
   },

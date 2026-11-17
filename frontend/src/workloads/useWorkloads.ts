@@ -386,9 +386,11 @@ export function useWorkloads(
                 name: resource.name,
                 uid: resource.uid,
               })
-            : await (created.action === "apply"
-                ? api.ReadAppliedDetail(id, created.operationID)
-                : api.ReadCreatedDetail(id, created.operationID));
+            : await (created.action === "helm"
+                ? api.ReadHelmCurrentDetail(id, created.target, resource.uid)
+                : created.action === "apply"
+                  ? api.ReadAppliedDetail(id, created.operationID)
+                  : api.ReadCreatedDetail(id, created.operationID));
           const seed: CatalogSeed = {
             group,
             version,
@@ -399,7 +401,8 @@ export function useWorkloads(
             section: "Overview",
             origin,
             openedFromCreate: true,
-            createdDetailOperationID: hasInventory ? undefined : created.operationID,
+            createdDetailOperationID: hasInventory || created.action === "helm" ? undefined : created.operationID,
+            manifestDetail: !hasInventory && created.action === "helm" ? created.target : undefined,
             detailFromApply: created.action === "apply",
           };
           return { seed };

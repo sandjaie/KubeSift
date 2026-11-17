@@ -36,7 +36,9 @@ export type {
   ScalePreview,
   ScaleResult,
 } from "../../bindings/internal/operation/models";
-export type CreatedResourceOpening = { target: ManifestAddress; operationID: string; action?: "apply" };
+export type CreatedResourceOpening =
+  | { target: ManifestAddress; operationID: string; action?: "apply" }
+  | { target: ManifestAddress; action: "helm" };
 
 export type OperationAction = "scale" | "restart" | "delete" | "edit" | "rollback" | "create" | "apply";
 export const prepareScale = (request: ScaleRequest) => readRequest((id) => workloadAPI.PrepareScale(id, request));

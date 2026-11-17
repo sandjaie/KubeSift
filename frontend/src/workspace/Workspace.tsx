@@ -49,6 +49,9 @@ export function Workspace({
   onCreate,
   onInteractive,
   operationResults,
+  helmPane,
+  onHelm,
+  onResourceDestination,
 }: {
   tab: ConnectionTab;
   controller: WorkloadController;
@@ -67,6 +70,9 @@ export function Workspace({
   onApply?: (target: EditTarget) => void;
   onInteractive?: (kind: "terminal" | "forward", data: CapturedDetail) => void;
   operationResults: OperationResult[];
+  helmPane?: ReactNode;
+  onHelm: () => void;
+  onResourceDestination: () => void;
   onOperation: (action: OperationAction, token: string, acknowledgement: string) => void;
 }) {
   const i = c.inventory,
@@ -97,11 +103,15 @@ export function Workspace({
           <>
             <div className="navigation-host">
               <ResourceNavigation
-                kind={kind}
+                kind={helmPane ? "Helm" : kind}
                 collapsedGroups={collapsedResourceGroups}
                 onToggleGroup={onToggleResourceGroup}
                 onSelect={(k) => {
-                  if (isResourceKind(k)) c.selectKind(k);
+                  if (k === "Helm") onHelm();
+                  else if (isResourceKind(k)) {
+                    onResourceDestination();
+                    c.selectKind(k);
+                  }
                 }}
               />
             </div>
@@ -115,7 +125,9 @@ export function Workspace({
             />
           </>
         )}
-        {kind === "APIResources" ? (
+        {helmPane ? (
+          helmPane
+        ) : kind === "APIResources" ? (
           tab.view?.ref && (
             <APIResourceBrowser
               key={JSON.stringify(tab.view.ref)}
