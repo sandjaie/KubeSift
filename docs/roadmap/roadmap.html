@@ -545,6 +545,34 @@
       </section>
       <section id="phase-1e">
         <h2>1E · Helm, metrics and node administration</h2>
+        <h3 id="phase-1e-sequence">Increment order</h3>
+        <p>
+          Follow this sequence without asking for a new priority choice at each handoff. Each increment receives its own specification,
+          implementation plan and verification; all remain part of Phase 1E scope.
+        </p>
+        <ol>
+          <li>
+            <strong>1E.1 — Helm release inspection.</strong> Native SDK release list/details/history, values, stored manifests, hooks, notes
+            and current-resource links. <a href="../superpowers/specs/2026-11-17-phase-1e1-helm-inspection-design.md">Specification</a> and
+            <a href="../superpowers/plans/2026-11-17-phase-1e1-helm-inspection.md">implementation plan</a>.
+          </li>
+          <li>
+            <strong>1E.2 — Helm management.</strong> User-initiated install, upgrade, rollback and uninstall with chart sources, hooks,
+            namespace/cluster impact and normal review/confirmation.
+          </li>
+          <li>
+            <strong>1E.3 — Current metrics.</strong> Pod/node CPU and memory from existing Metrics API, explicit units/denominators,
+            freshness and unavailable states. No supporting infrastructure installed by KubeSift.
+          </li>
+          <li>
+            <strong>1E.4 — Historical metrics.</strong> Existing Prometheus-compatible sources, bounded authorized queries,
+            source/time-range evidence and supported OpenShift monitoring.
+          </li>
+          <li>
+            <strong>1E.5 — Node administration.</strong> Cordon, uncordon and drain with eviction/PDB behavior, progress, cancellation and
+            reviewed disruption settings.
+          </li>
+        </ol>
         <p><strong>Outcome:</strong> administer existing clusters without installing supporting infrastructure for KubeSift.</p>
         <ul>
           <li>

@@ -137,6 +137,15 @@
         deletion, finalizer removal, generic resource deletion and unsafe StatefulSet retention overrides are excluded. Scale, Restart and
         Delete share native locks and aggregate limits; an uncertain response is never automatically retried.
       </p>
+      <h2 id="helm-inspection">Helm inspection boundary</h2>
+      <p>
+        Entering the <a href="../superpowers/specs/2026-11-17-phase-1e1-helm-inspection-design.md">1E.1 Helm view</a> intentionally reads
+        Helm-owned release records using existing namespace/driver permissions. This explicit flow may read Secret-backed release payloads;
+        ordinary Secret browsing remains metadata-only. Keep values, manifests, hooks and notes local and ephemeral, out of diagnostics,
+        persisted history and AI. Do not imply redaction or execute stored content. Never fall back to another storage driver after
+        Forbidden, invoke plugins or access chart repositories during inspection. SDK decoding and reads must obey app cancellation and size
+        limits.
+      </p>
       <h2 id="interactive-sessions">Interactive session design</h2>
       <p>
         The <a href="../superpowers/specs/2026-11-16-phase-1d6-interactive-sessions-design.md">1D.6 specification</a> uses existing

@@ -2,6 +2,13 @@
 
 Updated 2026-11-17. Current integration branch is `develop`.
 
+## Phase 1E.1 · Native Helm release inspection
+
+- Native Go SDK approach selected. [Specification](../../docs/superpowers/specs/2026-11-17-phase-1e1-helm-inspection-design.md) and [five-task plan](../../docs/superpowers/plans/2026-11-17-phase-1e1-helm-inspection.md) prepared together for review and separate implementation.
+- Candidate SDK v4.3.1 matches Go 1.26 and requires Kubernetes v0.37.1 dependency alignment/verification. No dependencies or application changes made during planning. Builder review found no important unanswered questions.
+- Inspect selected namespace/driver releases, history and revision content in the current UI. No writes, hooks execution or runtime Helm CLI. Compatibility is to be verified, not claimed by planning.
+- [Phase 1E sequence](../../docs/roadmap/roadmap.html#phase-1e-sequence) fixes inspection → management → current metrics → historical metrics → node administration; all remain committed scope.
+
 ## Phase 1D.8 · Server-side apply and Phase 1D closure
 
 - [PR #23](https://github.com/sandjaie/KubeSift/pull/23) squash-merged into `develop` as `1484bb2` on 2026-11-17 Dubai time. Implemented from `4b59c44` in the existing checkout. See the [specification](../../docs/superpowers/specs/2026-11-16-phase-1d-completion-design.md) and [plan](../../docs/superpowers/plans/2026-11-16-phase-1d8-server-side-apply.md).

@@ -176,6 +176,15 @@
       </ul>
       <p>References informed the discussion; verify exact dependency versions and provider APIs when implementation is authorized.</p>
       <footer>2026-11-05 · Draft for review · <a href="../index.html">Planning index</a></footer>
+      <h2 id="native-helm">Native Helm integration design</h2>
+      <p>
+        <a href="../superpowers/specs/2026-11-17-phase-1e1-helm-inspection-design.md">Phase 1E.1</a> uses Helm's Go SDK inside a focused
+        native reader, with owned cluster credentials and no shipped Helm CLI requirement. A bounded request-local storage adapter preserves
+        cancellation and release-decode limits. Namespace-scoped Secret storage is default; ConfigMap storage is explicit. Pin and verify
+        SDK/client compatibility in the <a href="../superpowers/plans/2026-11-17-phase-1e1-helm-inspection.md">implementation plan</a>; no
+        cluster infrastructure or chart network access is needed for inspection. Later Helm management extends this integration under its
+        own design.
+      </p>
     </main>
   </body>
 </html>
