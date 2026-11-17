@@ -133,7 +133,7 @@
       <p>
         Before cleanup, both contexts still had exactly revisions 1 and 2 for each driver and no hook-created ConfigMaps. UID preconditions
         protected namespace deletion. Both namespaces, temporary kubeconfigs, the Helm 3 fixture binary and the desktop test bundle were
-        removed. Independent review and develop integration are pending.
+        removed.
       </p>
       <h2>Independent review</h2>
       <p>
@@ -163,7 +163,17 @@
         The same reviewer cleared all four findings on <code>bcde65d76ce18bc1bd5fe811abecd7bbdc1e9f9e</code>, including the separately
         published compatibility documentation at <code>9032c04</code>. Full checks, targeted races, both live integrations,
         package/signature verification and the native walkthrough passed again. Retest fixtures and temporary isolated credentials were
-        removed. Develop integration is pending.
+        removed.
+      </p>
+      <p>
+        Documentation-only recheck covered publication head <code>56dfb10eeb628f7ec9cea1510ea845c25d1b4860</code>. It noted one stale review
+        status (KSF-005, P3), corrected in this merge record.
+      </p>
+      <h2>Merge</h2>
+      <p>
+        <a href="https://github.com/sandjaie/KubeSift/pull/24">PR #24</a> squash-merged into <code>develop</code> as
+        <code>b83d62decb24dee016ad56262dc8e9cee61acec6</code> on 17 November 2026 Dubai time. The merged tree matched the independently
+        reviewed publication head.
       </p>
     </main>
   </body>

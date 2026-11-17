@@ -4,9 +4,9 @@ Updated 2026-11-17. Current integration branch is `develop`.
 
 ## Phase 1E.1 · Native Helm release inspection
 
-- Implemented from `18db1af` on `feature/phase-1e1-helm-inspection`. The [specification](../../docs/superpowers/specs/2026-11-17-phase-1e1-helm-inspection-design.md) and [plan](../../docs/superpowers/plans/2026-11-17-phase-1e1-helm-inspection.md) cover native namespace and driver selection, release history, revision evidence and links to current objects.
+- [PR #24](https://github.com/sandjaie/KubeSift/pull/24) squash-merged into `develop` as `b83d62d` on 2026-11-17 Dubai time. Implemented from `18db1af`. The [specification](../../docs/superpowers/specs/2026-11-17-phase-1e1-helm-inspection-design.md) and [plan](../../docs/superpowers/plans/2026-11-17-phase-1e1-helm-inspection.md) cover native namespace and driver selection, release history, revision evidence and links to current objects.
 - Helm SDK v4.3.1 with Kubernetes v0.37.1 clients passed the automated checks, both approved kind contexts and the native WebKit walkthrough. Helm 3.19.0 and 4.3.1 produced the live fixtures. [Validation](../../docs/superpowers/validation/phase-1e1.html) records packaging, coverage limits and fixture cleanup.
-- The independent whole-PR review and targeted recheck cleared four findings. Develop integration is pending.
+- The independent whole-PR review and targeted recheck cleared all blocking findings. Phase 1E.1 is complete.
 
 ## Phase 1D.8 · Server-side apply and Phase 1D closure
 

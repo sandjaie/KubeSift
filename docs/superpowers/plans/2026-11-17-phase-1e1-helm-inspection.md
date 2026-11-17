@@ -112,7 +112,7 @@ Thin ExplorerService bridge methods mirror reads with `(requestID string, req)` 
 - [x] Run `wails3 task bindings`, `npm run build`, `scripts/check.sh`, `wails3 task package`; expect pass. Compare package size to baseline and record dependency impact, without inventing a performance success claim. Check source headers and formatter output.
 - [x] Agent-run packaged verification: both clusters, namespace/driver isolation, select old revision, read Values/Manifest/Hooks/Notes, open current resource/Back, no releases/Forbidden/corrupt feedback and both themes. Prove the packaged path works without invoking a Helm executable. Use synthetic content only in screenshots.
 - [x] Publish one technical report with exact SDK/client versions, tested record producer versions/backends, commands, native evidence and unsupported/unrun cases. Update checkpoint/plan and validation index; detailed logs stay ignored. Commit `test: validate native Helm inspection`.
-- [ ] Obtain one independent whole-PR review through repository skill, resolve blocking findings and rerun affected checks. Push branch, open ready PR and complete authorized merge to develop under current workflow. No duplicate UAT gate, release or 1E.2 implementation.
+- [x] Obtain one independent whole-PR review through repository skill, resolve blocking findings and rerun affected checks. Push branch, open ready PR and complete authorized merge to develop under current workflow. No duplicate UAT gate, release or 1E.2 implementation.
 
 ## Self-review and handoff
 
