@@ -85,6 +85,39 @@ scripts/check.sh</code></pre>
         Install Docker, kind and kubectl when running the approved integration fixtures. See
         <a href="local-development.html">Local development</a> for the cluster contexts, fixture commands and validation boundaries.
       </p>
+      <h2 id="compatibility">Kubernetes and Helm compatibility</h2>
+      <p>
+        KubeSift bundles pinned Kubernetes client-go and Helm Go SDK dependencies. Updating a cluster or the Helm CLI on a laptop does not
+        automatically require a KubeSift release, and the installed Helm CLI does not control the bundled SDK version.
+      </p>
+      <ul>
+        <li>
+          Kubernetes patch releases normally need no application change. Review each minor release for new, deprecated or removed APIs. Use
+          API discovery to handle available resources and show clear unavailable-feature errors; discovery alone does not prove
+          compatibility.
+        </li>
+        <li>
+          Publish a tested Kubernetes version range and Helm release-format/storage coverage with release validation. Test representative
+          versions on the approved local clusters and record exact versions and limitations. Do not claim every cluster, Helm major version
+          or provider is supported merely because the client connects.
+        </li>
+        <li>
+          Review dependency updates regularly. Prioritize relevant security fixes, then needed bug fixes, API compatibility and features. A
+          new upstream patch or minor version is a review trigger, not an automatic requirement to ship a new KubeSift version.
+        </li>
+        <li>
+          For an upgrade, check the Go requirement and compatibility between Helm and Kubernetes modules, update pins together where
+          required, run the affected checks and packaged-app smoke test, and record verified coverage before release. Treat major Helm
+          changes and Kubernetes API removals as explicit compatibility work.
+        </li>
+      </ul>
+      <p>
+        Kubernetes publishes approximately three minor releases per year and regular patch releases. Older clients can work across multiple
+        server versions, but new or removed APIs may limit features. See the
+        <a href="https://kubernetes.io/releases/release/">Kubernetes release cycle</a>,
+        <a href="https://github.com/kubernetes/client-go#compatibility-matrix">client-go compatibility guidance</a> and
+        <a href="https://helm.sh/docs/sdk/">Helm SDK documentation</a>. No untested support range is promised here.
+      </p>
       <h2 id="validation-history">Validation history</h2>
       <p>
         The macOS package build sets a deployment target of 13.0. The
