@@ -82,6 +82,15 @@ func TestHelmInspection(t *testing.T) {
 				if err != nil || current.Resource.UID == "" || current.Resource.Name != "phase1e1-"+driver {
 					t.Fatalf("could not resolve current resource: %+v (%v)", current, err)
 				}
+				refresh, err := service.ReadCurrentDetail(ctx, current.Source, current.Resource.UID)
+				if err != nil || refresh.Resource.UID != current.Resource.UID {
+					t.Fatalf("captured Helm link could not refresh its current object: %v", err)
+				}
+				forged := current.Source
+				forged.Resource.Name += "-other"
+				if _, err := service.ReadCurrentDetail(ctx, forged, current.Resource.UID); err == nil {
+					t.Fatal("Helm refresh accepted a resource outside the stored manifest")
+				}
 				mapData, err := client.CoreV1().ConfigMaps(ns).Get(ctx, current.Resource.Name, metav1.GetOptions{})
 				if err != nil || mapData.Data["marker"] != "two" || string(mapData.UID) != current.Resource.UID {
 					t.Fatalf("resource link did not resolve the current version: %v", err)

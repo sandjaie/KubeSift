@@ -4,14 +4,10 @@ Used by: Catalog navigation and generic views.
 Responsibilities: Match live descriptors and reset scoped state when namespace changes.
 Important: Only native-issued handles are used for generic I/O.
 */
+import type { OpenResourceRequest } from "../../bindings/internal/helmreader/models";
 import type { CatalogIntent } from "../cluster/model";
 import type { NavigationEntry } from "../workloads/model";
-import type {
-  APIResourceCatalog,
-  APIResourceDescriptor,
-  GenericResourceDetail,
-  ManifestAddress,
-} from "../../bindings/internal/kube/models";
+import type { APIResourceCatalog, APIResourceDescriptor, GenericResourceDetail } from "../../bindings/internal/kube/models";
 export type {
   APIGroupCatalog,
   APIResourceCatalog,
@@ -32,7 +28,7 @@ export type CatalogSeed = {
   openedFromCreate?: boolean;
   createdDetailOperationID?: string;
   detailFromApply?: boolean;
-  manifestDetail?: ManifestAddress;
+  manifestDetail?: OpenResourceRequest;
   section?: "Overview" | "YAML";
 };
 export function selectCatalogIntent(intent: CatalogIntent, catalog: APIResourceCatalog): CatalogSeed {

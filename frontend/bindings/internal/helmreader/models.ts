@@ -17,6 +17,7 @@ import * as model$0 from "../model/models.js";
 export interface CurrentResource {
   address: kube$0.ManifestAddress;
   resource: kube$0.ResourceRef;
+  source: OpenResourceRequest;
 }
 
 export interface DetailRequest {

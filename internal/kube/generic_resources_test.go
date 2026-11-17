@@ -106,6 +106,8 @@ func TestCreatedDetailAllowsGetWithoutInventoryAndRejectsReplacement(t *testing.
 			t.Errorf("unexpected method %s", r.Method)
 		}
 		switch r.URL.Path {
+		case "/api/v1":
+			fmt.Fprint(w, `{"kind":"APIResourceList","groupVersion":"v1","resources":[{"name":"secrets","kind":"Secret","namespaced":true,"verbs":["get","list"]}]}`)
 		case "/apis/example.test/v1":
 			fmt.Fprint(w, `{"kind":"APIResourceList","groupVersion":"example.test/v1","resources":[{"name":"widgets","kind":"Widget","namespaced":true,"verbs":["get","create"]},{"name":"proxy","kind":"Proxy","namespaced":true,"verbs":["get","create"]},{"name":"connect","kind":"Connect","namespaced":true,"verbs":["get","create"]},{"name":"sessions","kind":"Session","namespaced":true,"verbs":["get","create","connect"]}]}`)
 		case "/apis/example.test/v1/namespaces/default/widgets/sample":
@@ -122,6 +124,10 @@ func TestCreatedDetailAllowsGetWithoutInventoryAndRejectsReplacement(t *testing.
 	}
 	if _, err := s.ReadCreatedDetail(ctx, target, "old"); err == nil || !strings.Contains(err.Error(), "resource_replaced") {
 		t.Fatalf("replacement check: %v", err)
+	}
+	secret := ManifestAddress{Connection: ref, Version: "v1", Kind: "Secret", Namespace: "default", Name: "sample"}
+	if _, err := s.ReadCreatedDetail(ctx, secret, "actual"); err == nil || !strings.Contains(err.Error(), "unsupported") {
+		t.Fatalf("resolved Secret must not enter the full object reader: %v", err)
 	}
 	for _, endpoint := range []struct{ resource, kind string }{{"proxy", "Proxy"}, {"connect", "Connect"}, {"sessions", "Session"}} {
 		target.Resource, target.Kind = endpoint.resource, endpoint.kind

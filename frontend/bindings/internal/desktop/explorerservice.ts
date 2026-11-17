@@ -255,10 +255,10 @@ export function ReadGenericResources(id: string, req: kube$0.GenericPageRequest)
 
 export function ReadHelmCurrentDetail(
   id: string,
-  address: kube$0.ManifestAddress,
+  req: helmreader$0.OpenResourceRequest,
   uid: string,
 ): $CancellablePromise<kube$0.GenericResourceDetail> {
-  return $Call.ByID(3513981040, id, address, uid);
+  return $Call.ByID(3513981040, id, req, uid);
 }
 
 export function ReadHelmHistory(id: string, req: helmreader$0.HistoryRequest): $CancellablePromise<helmreader$0.HistoryPage> {

@@ -387,7 +387,7 @@ export function useWorkloads(
                 uid: resource.uid,
               })
             : await (created.action === "helm"
-                ? api.ReadHelmCurrentDetail(id, created.target, resource.uid)
+                ? api.ReadHelmCurrentDetail(id, created.source, resource.uid)
                 : created.action === "apply"
                   ? api.ReadAppliedDetail(id, created.operationID)
                   : api.ReadCreatedDetail(id, created.operationID));
@@ -402,7 +402,7 @@ export function useWorkloads(
             origin,
             openedFromCreate: true,
             createdDetailOperationID: hasInventory || created.action === "helm" ? undefined : created.operationID,
-            manifestDetail: !hasInventory && created.action === "helm" ? created.target : undefined,
+            manifestDetail: !hasInventory && created.action === "helm" ? created.source : undefined,
             detailFromApply: created.action === "apply",
           };
           return { seed };

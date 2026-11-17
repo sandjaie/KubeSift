@@ -141,6 +141,15 @@ export default function App() {
     page === "workspace" && !showingHelm,
     (tab, namespace) => void controller.selectNamespace(tab, namespace),
   );
+  const clusterScoped = !showingHelm && workloads.clusterScoped;
+  function leaveHelm(tab: string) {
+    setHelmDestinations((old) => {
+      if (!old[tab]) return old;
+      const next = { ...old };
+      delete next[tab];
+      return next;
+    });
+  }
   const [editor, setEditor] = useState<EditorSession<EditorDestination>>();
   const origin = editor && state.tabs[editor.tab];
   const inOriginWorkspace = !!editor && editor.tab === state.active && page === "workspace";
@@ -172,10 +181,11 @@ export default function App() {
       ([, tab]) => tab.view?.ref && operationConnectionKey(tab.view.ref) === operationConnectionKey(resource.connection),
     )?.[0];
   useEffect(() => {
-    if (!openingOperationTarget || page !== "workspace" || state.active !== openingOperationTarget.tab || !workloads.ready) return;
+    if (!openingOperationTarget || showingHelm || page !== "workspace" || state.active !== openingOperationTarget.tab || !workloads.ready)
+      return;
     setOpeningOperationTarget(null);
     workloads.openOperationTarget(openingOperationTarget.ref, openingOperationTarget.created);
-  }, [openingOperationTarget, page, state.active, workloads.ready]);
+  }, [openingOperationTarget, showingHelm, page, state.active, workloads.ready]);
   function choose(entry: CatalogEntry) {
     setPage("workspace");
     void controller.connect(entry);
@@ -193,11 +203,7 @@ export default function App() {
       .then(() => {
         workloads.close(key);
         helm.closeTab(key);
-        setHelmDestinations((old) => {
-          const next = { ...old };
-          delete next[key];
-          return next;
-        });
+        leaveHelm(key);
         return controller.cancel(key);
       })
       .catch(() => setStartupError("Could not close the tab’s sessions. Retry cleanup."));
@@ -406,6 +412,7 @@ export default function App() {
           onTarget={(ref, created) => {
             const tab = findOperationTab(ref);
             if (!tab) return;
+            leaveHelm(tab);
             controller.commit({ type: "focus", key: tab });
             setPage("workspace");
             setOpeningOperationTarget({ ref, tab, created });
@@ -424,14 +431,14 @@ export default function App() {
               ☰
             </button>
             <strong title={active.entry.sourceDisplay}>{active.entry.context}</strong>
-            {workloads.clusterScoped && <span className="muted">Cluster-scoped</span>}
+            {clusterScoped && <span className="muted">Cluster-scoped</span>}
             <NamespaceControl
               key={state.active}
               namespace={active.namespace}
               names={active.view?.namespaces ?? []}
               complete={active.view?.namespacesComplete ?? false}
               disabled={
-                workloads.clusterScoped ||
+                clusterScoped ||
                 !active.view?.ref ||
                 active.view.state === "connecting" ||
                 (!!active.view.problem && active.view.problem.code !== "forbidden")
@@ -552,11 +559,11 @@ export default function App() {
                       heightPercent={preferences.detailHeightPercent}
                       onResize={(axis, value) => resize(axis === "x" ? "detailWidthPercent" : "detailHeightPercent", value)}
                       onCommit={commitSize}
-                      onOpen={({ address, resource }) => {
+                      onOpen={({ address, resource, source }) => {
                         const tab = state.active;
                         if (!tab) return;
                         setHelmDestinations((old) => ({ ...old, [tab]: { mode: "resource", source: helmNamespace } }));
-                        setOpeningOperationTarget({ tab, ref: resource, created: { action: "helm", target: address } });
+                        setOpeningOperationTarget({ tab, ref: resource, created: { action: "helm", target: address, source } });
                       }}
                     />
                   )) ||
@@ -567,13 +574,7 @@ export default function App() {
                   if (tab) setHelmDestinations((old) => ({ ...old, [tab]: { mode: "helm" } }));
                 }}
                 onResourceDestination={() => {
-                  const tab = state.active;
-                  if (tab)
-                    setHelmDestinations((old) => {
-                      const next = { ...old };
-                      delete next[tab];
-                      return next;
-                    });
+                  if (state.active) leaveHelm(state.active);
                 }}
                 operationResults={operationResults.results}
                 onInteractive={(kind, data) => {

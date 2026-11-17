@@ -48,3 +48,12 @@ func TestManifestIdentitiesDoNotInventScope(t *testing.T) {
 		t.Fatalf("unexpected stored identities: %+v", rows)
 	}
 }
+
+func TestManifestDoesNotDefaultInvalidNamespaces(t *testing.T) {
+	for _, field := range []string{"namespace: []", "namespace: null", "namespace: [first]", "namespace: default, namespace: other", "namespace: ''"} {
+		rows, _ := manifestResources(context.Background(), nil, RecordRef{}, "apiVersion: v1\nkind: ConfigMap\nmetadata: {name: sample, "+field+"}\n")
+		if len(rows) != 1 || rows[0].Issue != "The document has an invalid or ambiguous namespace." {
+			t.Fatalf("malformed namespace was treated as omitted: %q: %+v", field, rows)
+		}
+	}
+}

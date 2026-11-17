@@ -44,13 +44,13 @@ func (s *ExplorerService) OpenHelmResource(id string, req helmreader.OpenResourc
 	defer done()
 	return s.core.helm.OpenResource(ctx, req)
 }
-func (s *ExplorerService) ReadHelmCurrentDetail(id string, address kube.ManifestAddress, uid string) (kube.GenericResourceDetail, error) {
+func (s *ExplorerService) ReadHelmCurrentDetail(id string, req helmreader.OpenResourceRequest, uid string) (kube.GenericResourceDetail, error) {
 	ctx, done, err := s.beginWorkloadRead(id)
 	if err != nil {
 		return kube.GenericResourceDetail{}, err
 	}
 	defer done()
-	return s.core.kube.ReadCreatedDetail(ctx, address, uid)
+	return s.core.helm.ReadCurrentDetail(ctx, req, uid)
 }
 func (s *ExplorerService) CloseHelmScope(ref model.ConnectionRef, namespace, driver string) {
 	s.core.helm.CloseScope(ref, namespace, driver)
