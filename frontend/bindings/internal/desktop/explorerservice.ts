@@ -16,6 +16,9 @@ import { Call as $Call, CancellablePromise as $CancellablePromise } from "@wails
 import * as explorer$0 from "../explorer/models.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
+import * as helmreader$0 from "../helmreader/models.js";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
 import * as kube$0 from "../kube/models.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
@@ -60,6 +63,10 @@ export function CloseCreate(draftID: string): $CancellablePromise<void> {
 
 export function CloseEdit(draftID: string): $CancellablePromise<void> {
   return $Call.ByID(3778343236, draftID);
+}
+
+export function CloseHelmScope(ref: model$0.ConnectionRef, $namespace: string, driver: string): $CancellablePromise<void> {
+  return $Call.ByID(4041434512, ref, $namespace, driver);
 }
 
 export function CloseInteractive(ref: model$0.SessionRef): $CancellablePromise<void> {
@@ -122,6 +129,10 @@ export function InspectCreateName(id: string, operationID: string): $Cancellable
   return $Call.ByID(3510075343, id, operationID);
 }
 
+export function ListHelmReleases(id: string, req: helmreader$0.ListRequest): $CancellablePromise<helmreader$0.ReleasePage> {
+  return $Call.ByID(2995418634, id, req);
+}
+
 export function ListOperationResults(): $CancellablePromise<operation$0.OperationResult[] | null> {
   return $Call.ByID(4120304269);
 }
@@ -148,6 +159,10 @@ export function OpenEdit(id: string, target: kube$0.EditTarget): $CancellablePro
 
 export function OpenForward(id: string, req: kube$0.ForwardRequest): $CancellablePromise<kube$0.InteractiveEntry> {
   return $Call.ByID(834662529, id, req);
+}
+
+export function OpenHelmResource(id: string, req: helmreader$0.OpenResourceRequest): $CancellablePromise<helmreader$0.CurrentResource> {
+  return $Call.ByID(3339065612, id, req);
 }
 
 export function OpenPodLogs(req: kube$0.LogRequest): $CancellablePromise<model$0.SessionRef> {
@@ -236,6 +251,22 @@ export function ReadGenericDetail(id: string, req: kube$0.GenericDetailRequest):
 
 export function ReadGenericResources(id: string, req: kube$0.GenericPageRequest): $CancellablePromise<kube$0.GenericResourcePage> {
   return $Call.ByID(448559530, id, req);
+}
+
+export function ReadHelmCurrentDetail(
+  id: string,
+  address: kube$0.ManifestAddress,
+  uid: string,
+): $CancellablePromise<kube$0.GenericResourceDetail> {
+  return $Call.ByID(3513981040, id, address, uid);
+}
+
+export function ReadHelmHistory(id: string, req: helmreader$0.HistoryRequest): $CancellablePromise<helmreader$0.HistoryPage> {
+  return $Call.ByID(201707108, id, req);
+}
+
+export function ReadHelmSection(id: string, req: helmreader$0.DetailRequest): $CancellablePromise<helmreader$0.ReleaseSection> {
+  return $Call.ByID(2057919075, id, req);
 }
 
 export function ReadNetworking(id: string, req: kube$0.PageRequest): $CancellablePromise<kube$0.NetworkPage> {

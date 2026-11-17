@@ -11,6 +11,7 @@ import (
 	"context"
 	"github.com/sandjaie/KubeSift/internal/config"
 	"github.com/sandjaie/KubeSift/internal/connection"
+	"github.com/sandjaie/KubeSift/internal/helmreader"
 	"github.com/sandjaie/KubeSift/internal/kube"
 	"github.com/sandjaie/KubeSift/internal/model"
 	"github.com/sandjaie/KubeSift/internal/operation"
@@ -31,6 +32,7 @@ type Service struct {
 	connections *connection.Manager
 	auth        *lazyAuth
 	kube        *kube.Service
+	helm        *helmreader.Service
 	operations  *operation.Service
 	scale       *operation.ScaleService
 	coordinator *operation.Coordinator
@@ -101,6 +103,7 @@ func NewService() *Service {
 	s.sessions.RequireBridgeAcknowledgements()
 	s.sessions.SetValidate(func(target model.Target) error { return s.connections.Validate(target.Connection) })
 	s.kube = kube.NewService(s.connections, s.sessions)
+	s.helm = helmreader.NewService(s.connections, s.kube)
 	s.operations = operation.NewService(s.connections, time.Now)
 	s.coordinator = operation.NewCoordinator(s.connections, time.Now)
 	s.scale = operation.NewScaleService(s.connections, s.coordinator)

@@ -101,3 +101,26 @@ func resolveManifestRoute(ctx context.Context, client kubernetes.Interface, targ
 	target.Resource = match.Resource
 	return target, nil
 }
+
+// SupportsManifestRead reports whether this API exposes a safe object detail route.
+func (d APIResourceDescriptor) SupportsManifestRead() bool { return d.detailReadable }
+
+// ReadCurrentManifestIdentity resolves the UID for a user-selected live address.
+func (s *Service) ReadCurrentManifestIdentity(ctx context.Context, target ManifestAddress) (ResourceRef, error) {
+	ref := target.Ref()
+	if ref.APIVersion == "v1" && target.Resource == "secrets" {
+		detail, err := s.readSecretMetadata(ctx, ref)
+		return detail.Resource, err
+	}
+	client, err := s.boundedReadClient(ctx, target.Connection)
+	if err != nil {
+		return ResourceRef{}, err
+	}
+	raw, err := target.api().read(client, target.Namespace, target.Name).Do(ctx).Raw()
+	if err != nil {
+		return ResourceRef{}, readError(ctx, err)
+	}
+	uid, _, err := target.ReadIdentity(raw)
+	ref.UID = uid
+	return ref, err
+}
