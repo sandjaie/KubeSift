@@ -9,12 +9,14 @@ package operation
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/sandjaie/KubeSift/internal/kube"
 	"k8s.io/client-go/rest"
@@ -69,5 +71,30 @@ func TestApplyPatchProtocol(t *testing.T) {
 				t.Fatalf("status=%d returned %v, response=%s, attempts=%d", tc.status, err, out, attempts.Load())
 			}
 		})
+	}
+}
+
+func TestApplyTransportTimeoutSendsOnce(t *testing.T) {
+	var attempts atomic.Int32
+	release := make(chan struct{})
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		attempts.Add(1)
+		select {
+		case <-r.Context().Done():
+		case <-release:
+		}
+	}))
+	defer server.Close()
+	defer close(release)
+	base, _ := url.Parse(server.URL)
+	bounded, err := kube.BoundedHTTPClient(&rest.Config{Host: server.URL, Timeout: 500 * time.Millisecond})
+	if err != nil {
+		t.Fatal(err)
+	}
+	client := operationClient{base: base, client: bounded}
+	var out json.RawMessage
+	_, err = client.applyPatch(context.Background(), "/resource", false, false, []byte(`{}`), &out, nil, nil)
+	if !errors.Is(err, context.DeadlineExceeded) || attempts.Load() != 1 {
+		t.Fatalf("expected one timed-out write; got %v, attempts=%d", err, attempts.Load())
 	}
 }

@@ -10,6 +10,7 @@ Important: Wails generates this glue; change Go contracts and regenerate rather 
 export type {
   ApplyConflict,
   ApplyDraft,
+  ApplyExecution,
   ApplyOwnershipChange,
   ApplyRequest,
   ApplyResultData,

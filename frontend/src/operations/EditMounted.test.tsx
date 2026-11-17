@@ -11,11 +11,16 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { APIResourceBrowser } from "../discovery/APIResourceBrowser";
 import type { CatalogSeed } from "../discovery/model";
 import { EditDialog } from "./EditDialog";
-import { requestEditor, type EditorSession } from "./editState";
+import { settleApplyEditor } from "./applyState";
+import { requestEditor, type EditorDestination, type EditorSession } from "./editState";
 import type { OperationResult } from "./api";
 
 const bridge = vi.hoisted(() => ({
   closeEdit: vi.fn(),
+  openApply: vi.fn(),
+  prepareApply: vi.fn(),
+  revokeApply: vi.fn(),
+  closeApply: vi.fn(),
   openEdit: vi.fn(),
   prepareEdit: vi.fn(),
   revokeEdit: vi.fn(),
@@ -208,4 +213,89 @@ test("a retained generic view applies the accepted edit when discovery becomes r
   await act(async () => resolveGroups({ groups: [{ group: descriptor.group, versions: ["v1"], preferred: "v1" }], epoch: "root" }));
   expect(bridge.detail).toHaveBeenCalledOnce();
   expect(host.querySelector("textarea")?.value).toBe("spec: after");
+});
+
+test.each(["accepted", "unknown"])("delayed apply %s settles only its submitted draft", async (state) => {
+  let finish!: (accepted: boolean) => void;
+  const response = new Promise<boolean>((resolve) => {
+    finish = resolve;
+  });
+  const destination = { mode: "apply" as const, tab: "a", target, reveal: false as const, id: "apply-ui" };
+  const draft = {
+    id: "native-apply",
+    target,
+    resourceVersion: "3",
+    cluster: "a",
+    yaml: "kind: Secret",
+    baselineYAML: "data: sensitive-fixture",
+  };
+  const preview = {
+    target,
+    token: "",
+    expiresAt: new Date(Date.now() + 60_000).toISOString(),
+    beforeYAML: "unchanged",
+    serverYAML: "unchanged",
+    proposedYAML: "secret-proposal",
+    force: false,
+    ownershipIncomplete: false,
+    ownershipTruncated: false,
+    warnings: [],
+  };
+  bridge.openApply.mockReturnValue({ promise: Promise.resolve(draft), cancel: vi.fn() });
+  bridge.prepareApply
+    .mockReturnValueOnce({
+      promise: Promise.resolve({ ...preview, conflicts: [{ field: ".data.marker", manager: "another-manager" }] }),
+      cancel: vi.fn(),
+    })
+    .mockReturnValueOnce({ promise: Promise.resolve({ ...preview, token: "forced-review", force: true }), cancel: vi.fn() });
+
+  function Harness() {
+    const [editor, setEditor] = useState<EditorSession<EditorDestination> | undefined>(() => requestEditor(undefined, destination));
+    if (editor?.mode !== "apply") return null;
+    return (
+      <>
+        <button disabled={editor.submitting} onClick={() => setEditor((current) => requestEditor(current, destination))}>
+          Resume apply
+        </button>
+        <EditDialog
+          {...props}
+          apply
+          suspended={editor.suspended}
+          onConfirm={(token, id, serverYAML) => {
+            props.onConfirm(token, id, serverYAML);
+            setEditor({ ...editor, submitting: true, suspended: true });
+            void response.then((accepted) => setEditor((current) => settleApplyEditor(current, editor.id, accepted)));
+          }}
+        />
+      </>
+    );
+  }
+  await act(async () => root.render(<Harness />));
+  const desired = "stringData: {marker: synthetic-pending}";
+  await type(desired);
+  await click("Review changes");
+  expect(host.textContent).toContain("another-manager");
+  expect(Array.from(host.querySelectorAll("button")).some((element) => element.textContent === "Confirm")).toBe(false);
+  const takeover = host.querySelector<HTMLInputElement>("input[type=checkbox]")!;
+  await act(async () => takeover.click());
+  expect(bridge.prepareApply).toHaveBeenLastCalledWith({ draftID: draft.id, yaml: desired, takeOwnership: true });
+  expect(host.textContent).toContain("No value changes");
+  await click("Confirm");
+  expect(props.onConfirm).toHaveBeenCalledExactlyOnceWith("forced-review", draft.id, "unchanged");
+  expect(host.querySelector("textarea")).toBeNull();
+  expect(host.querySelector<HTMLButtonElement>("button")?.disabled).toBe(true);
+  expect(host.textContent).not.toContain("sensitive-fixture");
+  await act(async () => finish(state === "accepted"));
+  if (state === "unknown") {
+    await click("Resume apply");
+    expect(host.querySelector("textarea")?.value).toBe(desired);
+    expect(host.textContent).not.toContain("Take over conflicting fields");
+    bridge.prepareApply.mockReturnValueOnce({ promise: Promise.resolve({ ...preview, token: "fresh" }), cancel: vi.fn() });
+    await click("Review changes");
+    expect(bridge.prepareApply).toHaveBeenLastCalledWith({ draftID: draft.id, yaml: desired, takeOwnership: false });
+  } else {
+    expect(host.querySelector("button")).toBeNull();
+  }
+  const newer = { ...requestEditor(undefined, { ...destination, id: "newer" }), submitting: true };
+  expect(settleApplyEditor(newer, destination.id, true)).toBe(newer);
 });

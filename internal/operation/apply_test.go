@@ -91,3 +91,47 @@ func TestApplyTakeoverEvidenceCannotBeReused(t *testing.T) {
 		t.Fatal("late conflict should not replace current revision evidence")
 	}
 }
+
+func TestApplySharesCanonicalLockAcrossActions(t *testing.T) {
+	for _, target := range []kube.EditTarget{
+		{Group: "apps", Version: "v1", Kind: "Deployment", Resource: "deployments", Namespace: "default", Name: "test", UID: "old"},
+		{Group: "example.test", Version: "v1", Kind: "Widget", Resource: "widgets", Namespace: "default", Name: "test", UID: "old"},
+	} {
+		t.Run(target.Kind, func(t *testing.T) {
+			c := NewCoordinator(nil, nil)
+			defer c.Close()
+			apply := OperationResult{Action: "apply", Resource: target.Ref(), Apply: &ApplyResultData{Target: target}}
+			token, _, err := c.save(context.Background(), pendingReview{result: apply})
+			if err != nil {
+				t.Fatal(err)
+			}
+			_, _, err = c.begin("apply", token, "")
+			if err != nil {
+				t.Fatal(err)
+			}
+			other := target
+			other.Version, other.UID = "v2", "replacement"
+			create := OperationResult{Action: "create", Resource: other.Ref(), Create: &CreateResultData{Target: kube.ManifestAddress{
+				Group: other.Group, Version: other.Version, Resource: other.Resource, Kind: other.Kind, Namespace: other.Namespace, Name: other.Name,
+			}}}
+			create.Resource.UID = ""
+			token, _, err = c.save(context.Background(), pendingReview{result: create})
+			if err != nil {
+				t.Fatal(err)
+			}
+			_, _, err = c.begin("create", token, "")
+			checkCode(t, err, "busy")
+			token, _, err = c.save(context.Background(), pendingReview{result: OperationResult{Action: "edit", Resource: other.Ref(), Edit: &other}})
+			if err != nil {
+				t.Fatal(err)
+			}
+			_, _, err = c.begin("edit", token, "")
+			checkCode(t, err, "busy")
+			if target.Kind == "Deployment" {
+				token = saveFixtureReview(t, c, "restart", target.Ref())
+				_, _, err = c.begin("restart", token, "")
+				checkCode(t, err, "busy")
+			}
+		})
+	}
+}

@@ -103,7 +103,9 @@ func managedApplyFields(raw []byte, version string) applyFields {
 func applyOwnership(before, after []byte, version string) (changes []ApplyOwnershipChange, incomplete, truncated bool) {
 	old, next := managedApplyFields(before, version), managedApplyFields(after, version)
 	oldShared, nextShared := old.self.Intersection(old.others), next.self.Intersection(next.others)
-	incomplete = old.incomplete || next.incomplete
+	if old.incomplete || next.incomplete {
+		return nil, true, false
+	}
 	budget := applyEvidenceLimit - 2
 	for _, item := range []struct {
 		set    *fieldpath.Set

@@ -74,7 +74,7 @@ export function Disconnect(ref: model$0.ConnectionRef): $CancellablePromise<void
   return $Call.ByID(2590980822, ref);
 }
 
-export function ExecuteApply(token: string): $CancellablePromise<operation$0.OperationResult> {
+export function ExecuteApply(token: string): $CancellablePromise<operation$0.ApplyExecution> {
   return $Call.ByID(3759751197, token);
 }
 

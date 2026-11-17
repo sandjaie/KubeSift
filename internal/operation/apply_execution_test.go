@@ -26,10 +26,12 @@ func TestApplyExecution(t *testing.T) {
 	}{
 		{"updated", "accepted"},
 		{"takeover", "accepted"},
+		{"admission changed", "accepted"},
 		{"stale before dispatch", "stale"},
 		{"deleted after GET", "stale"},
 		{"unexpected creation", "unknown"},
 		{"invalid success", "unknown"},
+		{"oversize success", "unknown"},
 		{"lost response", "unknown"},
 	} {
 		t.Run(tc.mode, func(t *testing.T) {
@@ -79,8 +81,12 @@ func TestApplyExecution(t *testing.T) {
 					case "unexpected creation":
 						w.WriteHeader(201)
 						fmt.Fprint(w, preview)
+					case "admission changed":
+						fmt.Fprint(w, strings.ReplaceAll(preview, "from-admission", "changed-on-execution"))
 					case "invalid success":
 						fmt.Fprint(w, strings.ReplaceAll(preview, `"uid"`, `"wrong"`))
+					case "oversize success":
+						fmt.Fprint(w, strings.ReplaceAll(preview, "synthetic", strings.Repeat("x", editLimit)))
 					case "lost response":
 						conn, _, err := w.(http.Hijacker).Hijack()
 						if err != nil {
@@ -123,16 +129,20 @@ func TestApplyExecution(t *testing.T) {
 			if _, err := base.ExecuteScale(ctx, p.Token, ""); err == nil {
 				t.Fatal("Scale took an apply review")
 			}
-			r, err := s.ExecuteApply(p.Token)
+			out, err := s.ExecuteApplyObserved(p.Token)
+			r := out.OperationResult
 			if err != nil || r.State != tc.state {
 				t.Fatalf("got %+v %v, want %s", r, err, tc.state)
 			}
-			duplicate, err := s.ExecuteApply(p.Token)
+			if tc.mode == "admission changed" && (!out.ResponseChanged || !strings.Contains(out.ObservedYAML, "changed-on-execution")) {
+				t.Fatal("the submitting editor did not receive a changed server response")
+			}
+			duplicate, err := s.ExecuteApplyObserved(p.Token)
 			expectedWrites := int32(1)
 			if tc.mode == "stale before dispatch" {
 				expectedWrites = 0
 			}
-			if err != nil || r.OperationID != duplicate.OperationID || real.Load() != expectedWrites {
+			if err != nil || r.OperationID != duplicate.OperationID || duplicate.ResponseChanged || duplicate.ObservedYAML != "" || real.Load() != expectedWrites {
 				t.Fatalf("duplicate reapplied or did not recover original result: %+v %v, writes=%d", duplicate, err, real.Load())
 			}
 			summary, _ := json.Marshal(r)

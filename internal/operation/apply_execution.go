@@ -8,6 +8,7 @@ package operation
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -17,18 +18,43 @@ import (
 )
 
 func (s *ApplyService) ExecuteApply(token string) (OperationResult, error) {
+	out, err := s.ExecuteApplyObserved(token)
+	return out.OperationResult, err
+}
+
+func (s *ApplyService) ExecuteApplyObserved(token string) (ApplyExecution, error) {
 	c := s.coordinator
 	prepared, result, err := c.begin("apply", token, "")
 	if prepared == nil {
-		return result, err
+		return ApplyExecution{OperationResult: result}, err
 	}
 	ctx, cancel := context.WithTimeout(c.ctx, operationDeadline)
 	defer cancel()
-	result.State, result.Problem = s.runApply(ctx, *result.Apply, prepared.payload.(applyReviewPayload))
-	return c.finish(result), nil
+	var applied json.RawMessage
+	review := prepared.payload.(applyReviewPayload)
+	result.State, result.Problem = s.runApply(ctx, *result.Apply, review, &applied)
+	out := ApplyExecution{OperationResult: c.finish(result)}
+	if out.State != "accepted" {
+		return out, nil
+	}
+	object, err := applyProjection(applied)
+	if err != nil {
+		out.ResponseChanged = true
+		return out, nil
+	}
+	observed, err := renderEdit(object)
+	out.ResponseChanged = err != nil || sha256.Sum256([]byte(observed)) != review.previewHash
+	if err == nil && out.ResponseChanged {
+		// Show the observed values only when both sides fit the review budget.
+		rendered, _ := json.Marshal(observed)
+		if len(rendered)+review.previewSize+1024 <= editLimit {
+			out.ObservedYAML = observed
+		}
+	}
+	return out, nil
 }
 
-func (s *ApplyService) runApply(ctx context.Context, info ApplyResultData, review applyReviewPayload) (string, *model.Problem) {
+func (s *ApplyService) runApply(ctx context.Context, info ApplyResultData, review applyReviewPayload, applied *json.RawMessage) (string, *model.Problem) {
 	target := info.Target
 	address, err := s.reader.ResolveManifestTarget(ctx, target.Connection, target.Ref().APIVersion, target.Kind, target.Resource, target.Namespace, target.Name, "patch")
 	if err != nil {
@@ -59,6 +85,7 @@ func (s *ApplyService) runApply(ctx context.Context, info ApplyResultData, revie
 	_, err = client.applyPatch(ctx, target.Path(), false, info.Force, review.body, &raw, &feedback, nil)
 	if err == nil {
 		if _, err := target.ReadVersion(raw); err == nil {
+			*applied = raw
 			return "accepted", nil
 		}
 	}

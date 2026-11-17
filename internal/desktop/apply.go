@@ -29,8 +29,8 @@ func (s *ExplorerService) PrepareApply(id string, req operation.ApplyRequest) (o
 	return s.core.applying.PrepareApply(ctx, req)
 }
 
-func (s *ExplorerService) ExecuteApply(token string) (operation.OperationResult, error) {
-	return s.core.applying.ExecuteApply(token)
+func (s *ExplorerService) ExecuteApply(token string) (operation.ApplyExecution, error) {
+	return s.core.applying.ExecuteApplyObserved(token)
 }
 
 func (s *ExplorerService) RevokeApply(token string) { s.core.applying.RevokeApply(token) }

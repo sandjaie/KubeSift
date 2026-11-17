@@ -364,7 +364,7 @@ export function useWorkloads(
           const { group, version, resource: plural, kind: createdKind, namespace: createdNamespace } = created.target;
           const groups = await api.ReadAPIGroups(id, { connection, refresh: false });
           if (!groups.groups?.some((g) => g.group === group && g.versions?.includes(version)))
-            throw new Error("The created resource's API version is unavailable.");
+            throw new Error("The resource's API version is unavailable.");
           const catalog = await api.ReadAPIResources(id, { connection, group, version, refresh: false });
           const descriptor = catalog.resources?.find(
             (d) =>
@@ -376,7 +376,7 @@ export function useWorkloads(
           );
           if (descriptor?.mode === "dedicated" && canOpen(resource, destinationNamespace))
             return { detail: await api.ReadResource(id, { resource }) };
-          if (!descriptor) throw new Error("The created resource's API is unavailable.");
+          if (!descriptor) throw new Error("The resource's API is unavailable.");
           const hasInventory = descriptor.mode === "generic";
           const capture = hasInventory
             ? await api.ReadGenericDetail(id, {
@@ -386,7 +386,9 @@ export function useWorkloads(
                 name: resource.name,
                 uid: resource.uid,
               })
-            : await api.ReadCreatedDetail(id, created.operationID);
+            : await (created.action === "apply"
+                ? api.ReadAppliedDetail(id, created.operationID)
+                : api.ReadCreatedDetail(id, created.operationID));
           const seed: CatalogSeed = {
             group,
             version,
@@ -398,6 +400,7 @@ export function useWorkloads(
             origin,
             openedFromCreate: true,
             createdDetailOperationID: hasInventory ? undefined : created.operationID,
+            detailFromApply: created.action === "apply",
           };
           return { seed };
         },

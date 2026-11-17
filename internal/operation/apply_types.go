@@ -43,3 +43,10 @@ type ApplyResultData struct {
 	Manager string          `json:"manager"`
 	Force   bool            `json:"force"`
 }
+
+// ApplyExecution is returned to the submitting editor only, never from history.
+type ApplyExecution struct {
+	OperationResult
+	ResponseChanged bool   `json:"responseChanged,omitempty"`
+	ObservedYAML    string `json:"observedYAML,omitempty"`
+}

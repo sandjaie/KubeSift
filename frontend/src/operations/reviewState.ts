@@ -17,6 +17,9 @@ export function reviewOwner(revoke: (token: string) => void) {
   }
   return {
     abandon,
+    resume: () => {
+      confirmed = false;
+    },
     canPrepare: () => !active && !confirmed,
     prepare<T extends { token: string }>(
       request: { promise: Promise<T>; cancel: () => void },

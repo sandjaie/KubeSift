@@ -137,8 +137,10 @@ func buildApplyPayload(capture kube.EditCapture, input string) (string, []byte, 
 }
 
 type applyReviewPayload struct {
-	version string
-	body    []byte
+	version     string
+	body        []byte
+	previewHash [32]byte
+	previewSize int
 }
 
 func (s *ApplyService) PrepareApply(ctx context.Context, req ApplyRequest) (ApplyReview, error) {
@@ -209,7 +211,7 @@ func (s *ApplyService) PrepareApply(ctx context.Context, req ApplyRequest) (Appl
 	}
 	review.Token, review.ExpiresAt, err = c.save(ctx, pendingReview{
 		result:  OperationResult{Action: "apply", Cluster: draft.cluster, Resource: target.Ref(), Apply: &ApplyResultData{Target: target, Manager: applyManager, Force: req.TakeOwnership}},
-		payload: applyReviewPayload{version: version, body: body}, draftID: req.DraftID, revision: draft.revision,
+		payload: applyReviewPayload{version: version, body: body, previewHash: sha256.Sum256([]byte(review.ServerYAML)), previewSize: len(review.ServerYAML)}, draftID: req.DraftID, revision: draft.revision,
 	})
 	if err != nil {
 		return ApplyReview{}, err
