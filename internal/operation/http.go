@@ -49,10 +49,11 @@ type operationStatus struct {
 	Reason     string
 	Code       int
 	Details    *struct {
-		Group *string
-		Kind  *string
-		Name  *string
-		UID   *string
+		Group  *string
+		Kind   *string
+		Name   *string
+		UID    *string
+		Causes []struct{ Reason, Message, Field string }
 	}
 }
 
@@ -74,7 +75,7 @@ func (c operationClient) patch(ctx context.Context, path string, dry bool, patch
 }
 
 func (c operationClient) send(ctx context.Context, method, path string, dry bool, raw []byte, contentType string, out any, notFound *operationStatus) ([]string, error) {
-	return c.sendRequest(ctx, method, path, dry, raw, contentType, out, notFound, nil, false, false)
+	return c.sendRequest(ctx, method, path, dry, raw, contentType, out, requestOptions{notFound: notFound})
 }
 
 type editFeedback struct {
@@ -84,18 +85,33 @@ type editFeedback struct {
 }
 
 func (c operationClient) editPatch(ctx context.Context, path string, dry bool, patch []byte, out *json.RawMessage, feedback *editFeedback) ([]string, error) {
-	return c.sendRequest(ctx, http.MethodPatch, path, dry, patch, "application/json-patch+json", out, nil, feedback, false, false)
+	return c.sendRequest(ctx, http.MethodPatch, path, dry, patch, "application/json-patch+json", out, requestOptions{edit: feedback})
 }
 
 func (c operationClient) createPost(ctx context.Context, path string, dry bool, body []byte, out *json.RawMessage, feedback *editFeedback) ([]string, error) {
-	return c.sendRequest(ctx, http.MethodPost, path, dry, body, "application/json", out, nil, feedback, true, false)
+	return c.sendRequest(ctx, http.MethodPost, path, dry, body, "application/json", out, requestOptions{edit: feedback, create: true})
 }
 
 func (c operationClient) observeCreate(ctx context.Context, path string, metadataOnly bool, out *json.RawMessage, missing *operationStatus) ([]string, error) {
-	return c.sendRequest(ctx, http.MethodGet, path, false, nil, "", out, missing, nil, false, metadataOnly)
+	return c.sendRequest(ctx, http.MethodGet, path, false, nil, "", out, requestOptions{notFound: missing, metadataOnly: metadataOnly})
 }
 
-func (c operationClient) sendRequest(ctx context.Context, method, path string, dry bool, raw []byte, contentType string, out any, notFound *operationStatus, edit *editFeedback, create, metadataOnly bool) ([]string, error) {
+const applyManager = "kubesift-apply"
+
+type requestOptions struct {
+	notFound             *operationStatus
+	edit                 *editFeedback
+	create, metadataOnly bool
+	apply, force         bool
+	conflict             *operationStatus
+}
+
+func (c operationClient) applyPatch(ctx context.Context, path string, dry, force bool, raw []byte, out *json.RawMessage, feedback *editFeedback, conflict *operationStatus) ([]string, error) {
+	return c.sendRequest(ctx, http.MethodPatch, path, dry, raw, "application/apply-patch+yaml", out,
+		requestOptions{apply: true, force: force, edit: feedback, conflict: conflict})
+}
+
+func (c operationClient) sendRequest(ctx context.Context, method, path string, dry bool, raw []byte, contentType string, out any, options requestOptions) ([]string, error) {
 	addr := *c.base
 	addr.Path = strings.TrimRight(addr.Path, "/") + path
 	addr.RawPath, addr.RawQuery, addr.Fragment = "", "", ""
@@ -103,11 +119,17 @@ func (c operationClient) sendRequest(ctx context.Context, method, path string, d
 	if dry {
 		query.Set("dryRun", "All")
 	}
-	if edit != nil || create {
+	if options.edit != nil || options.create || options.apply {
 		query.Set("fieldValidation", "Strict")
 	}
-	if create {
+	if options.create {
 		query.Set("fieldManager", "kubesift-create")
+	}
+	if options.apply {
+		query.Set("fieldManager", applyManager)
+		if options.force {
+			query.Set("force", "true")
+		}
 	}
 	addr.RawQuery = query.Encode()
 	var body io.Reader
@@ -120,7 +142,7 @@ func (c operationClient) sendRequest(ctx context.Context, method, path string, d
 		return nil, model.Fail("invalid", "Cannot build operation request")
 	}
 	accept := "application/json"
-	if metadataOnly {
+	if options.metadataOnly {
 		accept = "application/json;as=PartialObjectMetadata;g=meta.k8s.io;v=v1"
 	}
 	req.Header.Set("Accept", accept)
@@ -134,16 +156,17 @@ func (c operationClient) sendRequest(ctx context.Context, method, path string, d
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 ||
-		(create && resp.StatusCode != http.StatusCreated) ||
+		(options.create && resp.StatusCode != http.StatusCreated) ||
+		(options.apply && resp.StatusCode != http.StatusOK) ||
 		(method == http.MethodDelete && resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusAccepted) {
-		if notFound != nil && resp.StatusCode == http.StatusNotFound {
+		if notFound := options.notFound; notFound != nil && resp.StatusCode == http.StatusNotFound {
 			response, err := io.ReadAll(resp.Body)
 			var status operationStatus
 			if err == nil && json.Unmarshal(response, &status) == nil {
 				*notFound = status
 			}
 		}
-		if edit != nil && (resp.StatusCode == http.StatusUnprocessableEntity || resp.StatusCode == http.StatusBadRequest) {
+		if edit := options.edit; edit != nil && (resp.StatusCode == http.StatusUnprocessableEntity || resp.StatusCode == http.StatusBadRequest) {
 			var status struct {
 				Message string
 				Details struct {
@@ -159,6 +182,13 @@ func (c operationClient) sendRequest(ctx context.Context, method, path string, d
 				for _, cause := range status.Details.Causes {
 					edit.immutable = edit.immutable || strings.Contains(strings.ToLower(cause.Message), "immutable")
 				}
+			}
+		}
+		if options.conflict != nil && resp.StatusCode == http.StatusConflict {
+			raw, err := io.ReadAll(io.LimitReader(resp.Body, (8<<10)+1))
+			var status operationStatus
+			if err == nil && len(raw) <= 8<<10 && json.Unmarshal(raw, &status) == nil {
+				*options.conflict = status
 			}
 		}
 		return nil, operationHTTPStatus(resp.StatusCode)

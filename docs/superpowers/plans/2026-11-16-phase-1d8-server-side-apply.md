@@ -38,10 +38,10 @@ Use `/Users/sandjaieravi/dev/KubeSift`, no worktree; preserve unrelated edits. V
 **Create:** `internal/operation/apply_protocol_test.go`, initial `tests/integration/apply_test.go` cases.
 **Modify:** `internal/operation/http.go` via a narrow `applyPatch` wrapper for fixed apply media/query options; reuse ManifestAddress and existing CaptureEdit rather than recreating discovery.
 
-- [ ] On task-owned ConfigMap and custom API fixtures in both approved kind contexts, prove PATCH application/apply-patch+yaml accepts native-injected original metadata.uid/resourceVersion with fieldManager kubesift-apply. Verify dry-run is non-persistent and real update preserves the target UID.
-- [ ] Prove server rejection of stale version, recreated same-name object and deletion after final GET without recreating it. Include force=true to prove ownership takeover cannot override identity/version guards. Verify returned statuses and actual object content, not just mock expectations.
+- [x] On task-owned ConfigMap and custom API fixtures in both approved kind contexts, prove PATCH application/apply-patch+yaml accepts native-injected original metadata.uid/resourceVersion with fieldManager kubesift-apply. Verify dry-run is non-persistent and real update preserves the target UID.
+- [x] Prove server rejection of stale version, recreated same-name object and deletion after final GET without recreating it. Include force=true to prove ownership takeover cannot override identity/version guards. Verify returned statuses and actual object content, not just mock expectations.
 - [ ] If an API cannot enforce these guards, return an explicit unsupported-safety limitation for that endpoint. Representative built-in/custom proof is a delivery gate: never silently drop preconditions, substitute unconditional apply, or treat HTTP 201 as an ordinary update.
-- [ ] Add fixed fieldManager, Strict validation, optional explicit force and dryRun query support to the non-replayable bounded transport. No arbitrary bridge options. Run focused protocol tests before building the UI; commit test-backed plumbing.
+- [x] Add fixed fieldManager, Strict validation, optional explicit force and dryRun query support to the non-replayable bounded transport. No arbitrary bridge options. Run focused protocol tests before building the UI; commit test-backed plumbing.
 
 ## Task 2 — Apply drafts, field ownership and dry-run review
 
