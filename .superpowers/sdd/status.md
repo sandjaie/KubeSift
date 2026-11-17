@@ -6,7 +6,7 @@ Updated 2026-11-17. Current integration branch is `develop`.
 
 - Implemented from `4b59c44` on `feature/phase-1d8-server-side-apply` in the existing checkout. See the [specification](../../docs/superpowers/specs/2026-11-16-phase-1d-completion-design.md) and [plan](../../docs/superpowers/plans/2026-11-16-phase-1d8-server-side-apply.md).
 - UID/version safety, ownership and permission checks passed on both approved kind contexts. Repository/race checks, signed arm64 macOS desktop verification and fixture cleanup passed. [Validation](../../docs/superpowers/validation/phase-1d8.html) records exact evidence and limits.
-- The [exit audit](../../docs/superpowers/validation/phase-1d-closure.html) accounts for all eight increments. Phase 1D remains open pending whole-PR review and verified merge. No release or Phase 1E implementation.
+- The [exit audit](../../docs/superpowers/validation/phase-1d-closure.html) accounts for all eight increments. The independent whole-PR review and targeted recheck cleared both findings. Phase 1D remains open pending verified merge. No release or Phase 1E implementation.
 
 ## Phase 1D.7 · Reviewed resource creation
 
