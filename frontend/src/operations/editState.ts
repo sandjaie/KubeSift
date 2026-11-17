@@ -4,6 +4,7 @@ Used by: The common editor and its state tests.
 Responsibilities: Compare canonical targets and produce a small line diff.
 Important: The native service owns the patch and verifies the target.
 */
+import type { ApplyObservation } from "./applyState";
 import type { CreateDestination } from "./createState";
 import type { ConnectionRef } from "../bridge";
 import type { ResourceRef } from "../workloads/model";
@@ -45,7 +46,15 @@ export function canConfirmEdit(preview: Pick<EditPreview, "token" | "expiresAt" 
 }
 
 export type EditDestination = { mode?: "edit"; tab: string; target: EditTarget; reveal: boolean };
-export type EditorDestination = EditDestination | CreateDestination;
+export type ApplyDestination = {
+  mode: "apply";
+  id: string;
+  tab: string;
+  target: EditTarget;
+  reveal: false;
+  observation?: ApplyObservation;
+};
+export type EditorDestination = EditDestination | CreateDestination | ApplyDestination;
 export type EditorSession<D extends EditorDestination = EditDestination> = D & {
   suspended: boolean;
   submitting?: boolean;
@@ -62,12 +71,12 @@ export function requestEditor(
   current: EditorSession<EditorDestination> | undefined,
   next: EditorDestination,
 ): EditorSession<EditorDestination> {
-  if (!current) return { ...next, suspended: false, closing: false };
+  if (!current || (current.mode === "apply" && current.observation)) return { ...next, suspended: false, closing: false };
   if (current.submitting) return current;
   const same =
     current.mode === "create"
       ? next.mode === "create" && sameEditConnection(current.connection, next.connection)
-      : next.mode !== "create" && sameEditTarget(current.target, next.target);
+      : next.mode !== "create" && (current.mode === "apply") === (next.mode === "apply") && sameEditTarget(current.target, next.target);
   if (current.tab === next.tab && same) return { ...current, suspended: false, closing: false, replacement: undefined };
   return { ...current, replacement: next };
 }
@@ -81,7 +90,10 @@ export function savedEditAfterCapture(results: OperationResult[], target: EditTa
   const captured = Date.parse(fetchedAt);
   return results.find(
     (row) =>
-      row.state === "accepted" && row.edit && row.finishedAt && Date.parse(row.finishedAt) >= captured && sameEditTarget(row.edit, target),
+      row.state === "accepted" &&
+      row.finishedAt &&
+      Date.parse(row.finishedAt) >= captured &&
+      (row.edit ? sameEditTarget(row.edit, target) : !!row.apply && sameEditTarget(row.apply.target, target)),
   )?.operationID;
 }
 

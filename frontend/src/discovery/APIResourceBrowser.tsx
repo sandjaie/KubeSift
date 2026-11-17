@@ -52,6 +52,7 @@ export function APIResourceBrowser({
   onBack,
   onDedicated,
   onEdit,
+  onApply,
   onCreate,
   operationResults,
   widthPercent,
@@ -66,6 +67,7 @@ export function APIResourceBrowser({
   onBack: () => void;
   onCreate?: () => void;
   onEdit?: (target: EditTarget) => void;
+  onApply?: (target: EditTarget) => void;
   operationResults: OperationResult[];
   onDedicated: (kind: import("../workloads/model").ResourceKind) => void;
   widthPercent: number;
@@ -144,7 +146,9 @@ export function APIResourceBrowser({
     pending.start(
       readRequest((id) =>
         createdDetailID
-          ? api.ReadCreatedDetail(id, createdDetailID)
+          ? active?.detailFromApply
+            ? api.ReadAppliedDetail(id, createdDetailID)
+            : api.ReadCreatedDetail(id, createdDetailID)
           : api.ReadGenericDetail(id, { connection, handle, namespace: scope, name: resource.name, uid: resource.uid }),
       ),
       (data) => {
@@ -388,7 +392,8 @@ export function APIResourceBrowser({
             onSection={(section) => patch({ section })}
             onRefresh={() => open(capture.resource)}
             onEdit={onEdit && (() => onEdit(capture.resource))}
-            canPatch={!!liveDescriptor?.patch}
+            onApply={onApply && (() => onApply(capture.resource))}
+            canPatch={!!(liveDescriptor ?? (createdDetailID ? descriptor : undefined))?.patch}
             onBack={() => {
               clearDetail();
               patch({ capture: undefined, createdDetailOperationID: undefined, section: "Overview" });

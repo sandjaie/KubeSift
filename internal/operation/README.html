@@ -40,4 +40,9 @@
     Create prepares one named YAML resource through exact API discovery and a mandatory strict dry-run POST. The editor shows the normalized
     proposal and server preview. Only the proposed bytes are retained with the review.
   </p>
+  <p>
+    Apply captures an existing identity, starts with identity-only desired YAML, and uses strict Kubernetes server-side apply. The
+    coordinator binds force to an earlier structured ownership conflict for the same draft and rechecks the UID and version before one
+    dispatch. Actual response differences are returned only to the submitting editor.
+  </p>
 </html>

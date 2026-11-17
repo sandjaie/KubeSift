@@ -56,6 +56,7 @@ export function ResourceDetail({
   logs,
   onOperation,
   onEdit,
+  onApply,
   onInteractive,
 }: {
   controller: WorkloadController;
@@ -64,6 +65,7 @@ export function ResourceDetail({
   canReviewOperation: boolean;
   logs?: ReactNode;
   onEdit?: (target: EditTarget, reveal?: boolean) => void;
+  onApply?: (target: EditTarget) => void;
   onInteractive?: (kind: "terminal" | "forward", data: Detail) => void;
   onOperation: (action: OperationAction, token: string, acknowledgement: string) => void;
 }) {
@@ -294,10 +296,14 @@ export function ResourceDetail({
         <div className="evidence-toolbar yaml-toolbar">
           <button onClick={() => onEdit(fixedEditTarget(row.resource), true)}>Reveal YAML</button>
           <button onClick={() => onEdit(fixedEditTarget(row.resource))}>Edit YAML</button>
+          {onApply && <button onClick={() => onApply(fixedEditTarget(row.resource))}>Apply configuration…</button>}
         </div>
       )}
       {section === "YAML" && kind !== "Secret" && !data && onEdit && (
-        <button onClick={() => onEdit(fixedEditTarget(row.resource))}>Edit YAML</button>
+        <div className="evidence-toolbar yaml-toolbar">
+          <button onClick={() => onEdit(fixedEditTarget(row.resource))}>Edit YAML</button>
+          {onApply && <button onClick={() => onApply(fixedEditTarget(row.resource))}>Apply configuration…</button>}
+        </div>
       )}
       {section === "YAML" && kind !== "Secret" && data && (
         <ResourceYaml
@@ -305,6 +311,7 @@ export function ResourceDetail({
           data={data as YAMLDocument}
           containsConfigData={kind === "ConfigMap"}
           onEdit={onEdit && (() => onEdit(fixedEditTarget(row.resource)))}
+          onApply={onApply && (() => onApply(fixedEditTarget(row.resource)))}
         />
       )}
       {section === "Events" && data && <ResourceEvents key={row.resource.uid} data={data as EventPage} onNext={c.nextSection} />}

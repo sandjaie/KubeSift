@@ -14,10 +14,12 @@ export function ResourceYaml({
   data,
   containsConfigData,
   onEdit,
+  onApply,
 }: {
   data: YAMLDocument;
   containsConfigData: boolean;
   onEdit?: () => void;
+  onApply?: () => void;
 }) {
   const [managed, setManaged] = useState(false);
   const [query, setQuery] = useState("");
@@ -92,6 +94,7 @@ export function ResourceYaml({
           Show managed fields
         </label>
         {onEdit && <button onClick={onEdit}>Edit YAML</button>}
+        {onApply && <button onClick={onApply}>Apply configuration…</button>}
         <CopyTextButton label="Copy displayed YAML" copiedLabel="Displayed YAML copied" key={String(managed)} text={text} />
       </div>
       {containsConfigData && <p className="muted yaml-note">ConfigMap values can contain sensitive configuration. Check before sharing.</p>}

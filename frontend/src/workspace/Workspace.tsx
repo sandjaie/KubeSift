@@ -45,6 +45,7 @@ export function Workspace({
   logs,
   onOperation,
   onEdit,
+  onApply,
   onCreate,
   onInteractive,
   operationResults,
@@ -63,6 +64,7 @@ export function Workspace({
   logs?: ReactNode;
   onCreate?: () => void;
   onEdit?: (target: EditTarget, reveal?: boolean) => void;
+  onApply?: (target: EditTarget) => void;
   onInteractive?: (kind: "terminal" | "forward", data: CapturedDetail) => void;
   operationResults: OperationResult[];
   onOperation: (action: OperationAction, token: string, acknowledgement: string) => void;
@@ -124,6 +126,7 @@ export function Workspace({
               onBack={c.restoreCatalogSource}
               onDedicated={c.selectKind}
               onEdit={onEdit}
+              onApply={onApply}
               onCreate={canReviewOperation ? onCreate : undefined}
               operationResults={operationResults}
               widthPercent={detailWidthPercent}
@@ -281,6 +284,7 @@ export function Workspace({
                   logs={logs}
                   onOperation={onOperation}
                   onEdit={onEdit}
+                  onApply={onApply}
                   onInteractive={onInteractive}
                 />
               ) : (

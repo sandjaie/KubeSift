@@ -15,6 +15,7 @@ export function GenericResourceDetail({
   onSection,
   onRefresh,
   onEdit,
+  onApply,
   canPatch,
   onBack,
   loading,
@@ -24,6 +25,7 @@ export function GenericResourceDetail({
   onSection: (section: "Overview" | "YAML") => void;
   onRefresh: () => void;
   onEdit?: () => void;
+  onApply?: () => void;
   canPatch: boolean;
   onBack: () => void;
   loading: boolean;
@@ -69,6 +71,9 @@ export function GenericResourceDetail({
               title={canPatch ? undefined : "This API does not advertise Patch"}
             >
               Edit YAML
+            </button>
+            <button onClick={onApply} disabled={!canPatch || loading || !onApply}>
+              Apply configuration…
             </button>
             {!canPatch && <span className="muted">This API does not advertise Patch.</span>}
             <CopyTextButton

@@ -11,6 +11,7 @@ import { isResourceKind, type ResourceRef } from "../workloads/model";
 import {
   checkDeleteTarget,
   executeCreate,
+  executeApply,
   inspectCreateName,
   executeDelete,
   executeEdit,
@@ -28,6 +29,7 @@ import {
 import { rollbackAcceptedText } from "./rollbackState";
 
 const submissions = {
+  apply: executeApply,
   create: executeCreate,
   delete: executeDelete,
   edit: executeEdit,
@@ -36,6 +38,7 @@ const submissions = {
   scale: executeScale,
 };
 const actionLabel: Record<string, string> = {
+  apply: "Apply configuration",
   create: "Create resource",
   delete: "Delete",
   edit: "Edit YAML",
@@ -69,7 +72,8 @@ export function useOperationResults(onResult: (result: Pick<OperationResult, "re
         if (request !== query.current) return;
         const next = rows ?? [];
         for (const row of next) {
-          if (row.action === "delete" || row.action === "edit" || row.action === "rollback") reportAcceptedMutation(row);
+          if (row.action === "delete" || row.action === "edit" || row.action === "rollback" || row.action === "apply")
+            reportAcceptedMutation(row);
         }
         setResults(next);
       },
@@ -92,7 +96,8 @@ export function useOperationResults(onResult: (result: Pick<OperationResult, "re
     return execute(token, acknowledgement)
       .then(
         (result) => {
-          if ((action === "delete" || action === "edit" || action === "rollback") && "action" in result) reportAcceptedMutation(result);
+          if ((action === "delete" || action === "edit" || action === "rollback" || action === "apply") && "action" in result)
+            reportAcceptedMutation(result);
           else onFinish.current({ ...result, action });
           releaseDeletion?.(false);
           return result;
@@ -188,6 +193,12 @@ export function OperationResults({
             </>
           )}
           {row.create && row.state === "accepted" && <p>Kubernetes created this resource. Opening it requires read permission.</p>}
+          {row.apply && (
+            <p>
+              Field manager: <code>{row.apply.manager}</code>
+              {row.apply.force ? " · Takeover requested" : ""}.
+            </p>
+          )}
           {row.problem?.message && <p>{row.problem.message}</p>}
           <time dateTime={row.finishedAt ?? row.startedAt}>{new Date(row.finishedAt ?? row.startedAt).toLocaleTimeString()}</time>{" "}
           {row.delete ? (
@@ -199,7 +210,14 @@ export function OperationResults({
             <button
               disabled={!canOpen(row.resource) || (!!row.edit && !isResourceKind(row.resource.kind)) || (!!row.create && !row.resource.uid)}
               onClick={() => {
-                onTarget(row.resource, row.create ? { target: row.create.target, operationID: row.operationID } : undefined);
+                onTarget(
+                  row.resource,
+                  row.apply
+                    ? { target: row.apply.target, operationID: row.operationID, action: "apply" }
+                    : row.create
+                      ? { target: row.create.target, operationID: row.operationID }
+                      : undefined,
+                );
                 onClose();
               }}
             >

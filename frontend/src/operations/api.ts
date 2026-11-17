@@ -6,6 +6,7 @@ Important: Confirm forwards only the token and any acknowledgement required by t
 */
 import { readRequest, workloadAPI } from "../workloads/api";
 import type {
+  ApplyRequest,
   CreateRequest,
   DeleteRequest,
   EditRequest,
@@ -17,6 +18,8 @@ import type { ConnectionRef } from "../bridge";
 import type { EditTarget, ManifestAddress } from "../../bindings/internal/kube/models";
 export type { EditTarget, ManifestAddress } from "../../bindings/internal/kube/models";
 export type {
+  ApplyDraft,
+  ApplyReview,
   CreateDraft,
   CreateObservation,
   CreatePreview,
@@ -33,9 +36,9 @@ export type {
   ScalePreview,
   ScaleResult,
 } from "../../bindings/internal/operation/models";
-export type CreatedResourceOpening = { target: ManifestAddress; operationID: string };
+export type CreatedResourceOpening = { target: ManifestAddress; operationID: string; action?: "apply" };
 
-export type OperationAction = "scale" | "restart" | "delete" | "edit" | "rollback" | "create";
+export type OperationAction = "scale" | "restart" | "delete" | "edit" | "rollback" | "create" | "apply";
 export const prepareScale = (request: ScaleRequest) => readRequest((id) => workloadAPI.PrepareScale(id, request));
 export const executeScale = workloadAPI.ExecuteScale;
 export const listScaleResults = workloadAPI.ListScaleResults;
@@ -85,3 +88,13 @@ export const closeCreate = (id: string) => {
   if (id) void workloadAPI.CloseCreate(id).catch(() => {});
 };
 export const inspectCreateName = (operationID: string) => readRequest((id) => workloadAPI.InspectCreateName(id, operationID));
+
+export const openApply = (target: EditTarget) => readRequest((id) => workloadAPI.OpenApply(id, target));
+export const prepareApply = (request: ApplyRequest) => readRequest((id) => workloadAPI.PrepareApply(id, request));
+export const executeApply = workloadAPI.ExecuteApply;
+export const revokeApply = (token: string) => {
+  if (token) void workloadAPI.RevokeApply(token).catch(() => {});
+};
+export const closeApply = (id: string) => {
+  if (id) void workloadAPI.CloseApply(id).catch(() => {});
+};

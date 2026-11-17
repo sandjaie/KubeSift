@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Phase 1D.8 server-side apply validation · KubeSift</title>
+    <link rel="stylesheet" href="../../assets/planning.css" />
+    <script src="../../assets/theme.js"></script>
+  </head>
+  <body>
+    <aside class="rail">
+      <a class="skip" href="#content">Skip to content</a
+      ><a class="mark" href="../../index.html"><span class="mark-name">KubeSift</span><span class="mark-sub">Planning</span></a>
+      <h2>Index</h2>
+      <a href="../../index.html">Planning index</a>
+      <h2>Product</h2>
+      <a href="../../product/requirements.html">Requirements</a><a href="../../product/feature-matrix.html">Capabilities</a>
+      <h2>Architecture</h2>
+      <a href="../../architecture/overview.html">Overview</a><a href="../../architecture/decisions.html">Decisions</a>
+      <h2>Safeguards</h2>
+      <a href="../../security/security-model.html">Security and AI</a>
+      <h2>Delivery</h2>
+      <a href="../../roadmap/roadmap.html">Roadmap</a><a href="../../ux/workflows.html">UX workflows</a
+      ><a href="../../ux/mocks/index.html">Mockups</a>
+      <h2>Engineering</h2>
+      <a href="../../engineering/engineering.html">Playbook</a><a href="../../engineering/local-development.html">Local development</a
+      ><a href="../../engineering/toolchain.html">Toolchain</a
+      ><a href="../../engineering/kubernetes-development.html">Kubernetes references</a>
+      <h2>Superpowers</h2>
+      <a href="../../superpowers/specs/2026-11-05-kubesift-design.md">Design specification</a
+      ><a href="../../superpowers/plans/README.html">Plans</a
+      ><a href="../../superpowers/validation/index.html" aria-current="page">Validation</a
+      ><a href="../../superpowers/evidence/index.html">Evidence</a>
+    </aside>
+    <header>
+      <a href="../../index.html">KubeSift / Planning</a>
+      <h1>Phase 1D.8 server-side apply validation</h1>
+    </header>
+    <main id="content">
+      <p>
+        Started 17 November 2026 Dubai time from <code>develop</code> at <code>4b59c44</code>. See the
+        <a href="../specs/2026-11-16-phase-1d-completion-design.md">specification</a>,
+        <a href="../plans/2026-11-16-phase-1d8-server-side-apply.md">plan</a>, and
+        <a href="phase-1d-closure.html">Phase 1D closure audit</a>.
+      </p>
+
+      <h2>Existing-resource safety gate</h2>
+      <p>
+        <code>TestExistingApplyProtocol</code> sent the same guarded apply media type and strict options planned for the app to
+        <code>kind-dev-local-a</code> and <code>kind-dev-local-b</code>, both Kubernetes v1.37.0. On each server, a ConfigMap and a
+        synthetic Widget had the following results:
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Case</th>
+            <th scope="col">HTTP status</th>
+            <th scope="col">Object readback</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Matching UID/version, dry-run</td>
+            <td>200</td>
+            <td>Live object stayed unchanged.</td>
+          </tr>
+          <tr>
+            <td>Matching UID/version, real write</td>
+            <td>200</td>
+            <td>Value updated; UID was preserved.</td>
+          </tr>
+          <tr>
+            <td>Stale version, with and without force</td>
+            <td>409</td>
+            <td>Current version and value were unchanged.</td>
+          </tr>
+          <tr>
+            <td>Same name with a different UID and current version, with and without force</td>
+            <td>422</td>
+            <td>Replacement stayed unchanged.</td>
+          </tr>
+          <tr>
+            <td>Deleted after GET, with and without force</td>
+            <td>409</td>
+            <td>Object stayed absent.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        There was no HTTP 201 in the representative real-server cases. A synthetic 201 response verifies that the app records Unknown with
+        an unsupported-safety diagnostic and performs no cleanup mutation or replay.
+      </p>
+
+      <h2>Automated and live integration evidence</h2>
+      <p>
+        <code>scripts/check.sh</code> passed source descriptions, documentation links, Go tests and vet, binding normalization tests, 115
+        frontend tests, lint and typecheck. Race checks covered operations, the desktop bridge, Kubernetes reads and sessions. Normalized
+        binding regeneration, production bundling, <code>wails3 task package</code> and strict signature verification passed.
+      </p>
+      <p>
+        <code>TestYAMLApply</code> verified both contexts with ConfigMaps, Secrets, a namespaced Widget and a cluster-scoped PriorityClass.
+        Real managedFields showed shared ownership after a same-value apply, a conflict with the original manager, exclusive ownership after
+        deliberate takeover, and release/removal of an omitted owned value. Another manager’s field survived. The tests also checked Secret
+        stringData precedence, exact custom numeric data, list replacement as determined by the API, and forbidden Patch with Get allowed.
+      </p>
+      <p>
+        Native synthetic checks cover same-address locks across actions and API versions, exact guarded bytes, abort/staleness before
+        dispatch, post-GET races, unexpected or lost responses, response differences, and recovery of an existing result without a second
+        PATCH. Retained results omit manifests and response values. Mounted checks cover explicit takeover, same-value confirmation, delayed
+        completion, preservation of the exact draft after Unknown and rejection of late results for a different draft.
+      </p>
+      <p>
+        The Create, Edit, retained-history Rollback and interactive integration suites passed on both contexts. A separate legacy Restart
+        probe stopped before any mutation because its owned restart fixtures were absent. Its original acceptance remains in
+        <a href="phase-1d2.html">the 1D.2 report</a>.
+      </p>
+
+      <h2>Packaged macOS verification</h2>
+      <p>
+        The walkthrough ran on arm64 macOS 26.7.1. The signed package was rebuilt after adding transient apply response evidence; a new
+        ConfigMap apply and accepted-result refresh passed on context A.
+      </p>
+      <ul>
+        <li>
+          A ConfigMap opened from an identity-only editor with initial Cancel focus. The dry-run showed the actual owner and field, with no
+          Confirm until deliberate takeover. Confirmation returned Accepted, and Open target showed the new value and the preserved field.
+        </li>
+        <li>
+          A Secret began in metadata-only browsing. Apply opened directly without a second reveal. A synthetic stringData value was accepted
+          and verified against the server. Edit still opened the captured YAML; Create still opened a separate editor.
+        </li>
+        <li>
+          On B, a same-value apply showed that ownership could change and kept Confirm available. A later stale submission showed Target
+          changed, and resuming the draft restored the exact text. A read-only B credential saw Forbidden with no takeover or Confirm.
+        </li>
+        <li>
+          Using one Get/Create/Patch credential without List permission, created a Badge via <code>v1beta1</code>, opened it from the create
+          result, applied with deliberate takeover, then opened and refreshed the apply result at <code>v1beta1</code> with the original
+          UID. The resource sidebar preserved its collapsed group across A/B. Light and Dark were checked, Escape dismissed the editor, and
+          the original appearance and sidebar state were restored.
+        </li>
+      </ul>
+      <p>
+        Server readback verified both desktop ConfigMaps, the Secret and the custom object. The custom object was removed before its CRD,
+        and UID-protected fixture namespaces, RBAC objects and isolated kubeconfigs were removed.
+      </p>
+
+      <h2>Limits</h2>
+      <p>
+        Real-server validation covers the two local kind servers, with packaged checks on arm64 macOS. Admission response differences and
+        unexpected success statuses were synthetic; no admission webhook was added for verification. The ownership summary can be incomplete
+        for cross-version managed fields or exceed its display cap. Kubernetes acceptance does not establish controller convergence.
+      </p>
+
+      <h2>Review and integration</h2>
+      <p>
+        The independent reviewer <code>phase1d8_pr_review</code> reviewed <code>2aebe92af58f0db1d396a3c6efe9cc5ace324aad</code> against
+        <code>develop</code> at base and merge base <code>4b59c449a4edcfd24c6d699b33cc499ba18075b2</code>. Both findings blocked the
+        original candidate.
+      </p>
+      <ul>
+        <li>
+          <strong>KSF-001 (P2):</strong> closing the origin tab during submission made an Unknown draft or changed accepted response
+          unreachable. A detached apply can now resume for read-only inspection, copy and discard. The mounted regression closes the origin
+          during submission and verifies the draft remains visible with review disabled.
+        </li>
+        <li>
+          <strong>KSF-002 (P2):</strong> the Edit projection hid status-only changes in apply review and the accepted response. Apply now
+          renders status on the server side of the diff and in transient response comparison, and still rejects status in desired YAML. A
+          synthetic API verifies both the preview and an admission response that differs only in status.
+        </li>
+      </ul>
+      <p>
+        The packaged no-List Badge case exercised Kubernetes RBAC denial of List. Separate synthetic native and mounted tests verify
+        exact-version read and refresh when discovery does not advertise List at all. No real server with an unadvertised List verb was used
+        for this fallback.
+      </p>
+      <p>
+        After the fixes, full checks and targeted races passed, and Apply and Edit passed again on both kind contexts. In the rebuilt signed
+        package, a custom resource without a status subresource showed removal of its previously owned status in the dry-run diff, and the
+        confirmed write removed that value without changing UID. The fixture and isolated kubeconfig were removed. The detached, late
+        Unknown and admission response paths were tested synthetically.
+      </p>
+      <p>
+        The same reviewer cleared both findings on the targeted delta to <code>e8fa5024f377c4d60e59907c7d3ce5f73b859cf1</code>. No blocking
+        findings remain. Develop integration is pending.
+      </p>
+    </main>
+  </body>
+</html>

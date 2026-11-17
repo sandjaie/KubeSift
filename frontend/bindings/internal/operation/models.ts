@@ -14,6 +14,75 @@ import * as kube$0 from "../kube/models.js";
 // @ts-ignore: Unused imports
 import * as model$0 from "../model/models.js";
 
+export interface ApplyConflict {
+  manager: string;
+  field: string;
+}
+
+export interface ApplyDraft {
+  id: string;
+  target: kube$0.EditTarget;
+  resourceVersion: string;
+  cluster: string;
+  yaml: string;
+  baselineYAML: string;
+}
+
+/**
+ * ApplyExecution is returned to the submitting editor only, never from history.
+ */
+export interface ApplyExecution {
+  action: string;
+  cluster: string;
+  operationID: string;
+  resource: kube$0.ResourceRef;
+  startedAt: string;
+  finishedAt: string | null;
+  state: string;
+  problem: model$0.Problem | null;
+  scale: ScaleResultData | null;
+  restart: RestartResultData | null;
+  delete: DeleteResultData | null;
+  rollback?: RollbackResultData | null;
+  edit?: kube$0.EditTarget | null;
+  create?: CreateResultData | null;
+  apply?: ApplyResultData | null;
+  responseChanged?: boolean;
+  observedYAML?: string;
+}
+
+export interface ApplyOwnershipChange {
+  field: string;
+  change: string;
+}
+
+export interface ApplyRequest {
+  draftID: string;
+  yaml: string;
+  takeOwnership: boolean;
+}
+
+export interface ApplyResultData {
+  target: kube$0.EditTarget;
+  manager: string;
+  force: boolean;
+}
+
+export interface ApplyReview {
+  token: string;
+  expiresAt: string;
+  target: kube$0.EditTarget;
+  beforeYAML: string;
+  proposedYAML: string;
+  serverYAML: string;
+  warnings: string[] | null;
+  conflicts?: ApplyConflict[] | null;
+  ownership?: ApplyOwnershipChange[] | null;
+  ownershipIncomplete: boolean;
+  ownershipTruncated: boolean;
+  force: boolean;
+}
+
 export interface CreateDraft {
   id: string;
   connection: model$0.ConnectionRef;
@@ -141,6 +210,7 @@ export interface OperationResult {
   rollback?: RollbackResultData | null;
   edit?: kube$0.EditTarget | null;
   create?: CreateResultData | null;
+  apply?: ApplyResultData | null;
 }
 
 export interface Preview {

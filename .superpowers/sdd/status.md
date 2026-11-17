@@ -1,19 +1,17 @@
 # KubeSift resumable status
 
-Updated 2026-11-16. Current integration branch is `develop`.
+Updated 2026-11-17. Current integration branch is `develop`.
 
-## Next: Phase 1D.8 · Server-side apply and Phase 1D closure
+## Phase 1D.8 · Server-side apply and Phase 1D closure
 
-- Planning reconciled against merged 1D.7 (`fea4175`); implementation has not started. [Shared specification](../../docs/superpowers/specs/2026-11-16-phase-1d-completion-design.md) and [five-task plan](../../docs/superpowers/plans/2026-11-16-phase-1d8-server-side-apply.md).
-- Reuse native route/draft/operation infrastructure, normalized bindings and approved YAML permission model. Preserve collapsible sidebar groups, suspended draft result handling and exact-version resource navigation from the 1D.7 review fixes.
-- First prove existing-target SSA UID/version safety on both approved clusters; then implement ownership review/explicit takeover and complete the eight-increment exit audit. Phase 1D remains incomplete until this work is verified and merged with no closure blocker.
-- Separate implementation session, existing checkout, no worktree. Agent verification, one whole-PR review and ready-PR merge; no duplicate user UAT, release or 1E implementation.
+- Implemented from `4b59c44` on `feature/phase-1d8-server-side-apply` in the existing checkout. See the [specification](../../docs/superpowers/specs/2026-11-16-phase-1d-completion-design.md) and [plan](../../docs/superpowers/plans/2026-11-16-phase-1d8-server-side-apply.md).
+- UID/version safety, ownership and permission checks passed on both approved kind contexts. Repository/race checks, signed arm64 macOS desktop verification and fixture cleanup passed. [Validation](../../docs/superpowers/validation/phase-1d8.html) records exact evidence and limits.
+- The [exit audit](../../docs/superpowers/validation/phase-1d-closure.html) accounts for all eight increments. The independent whole-PR review and targeted recheck cleared both findings. Phase 1D remains open pending verified merge. No release or Phase 1E implementation.
 
 ## Phase 1D.7 · Reviewed resource creation
 
 - [PR #22](https://github.com/sandjaie/KubeSift/pull/22) squash-merged into `develop` as `fea4175` on 2026-11-16 Dubai time. Implemented from `b8bb628` in the existing checkout. The [shared specification](../../docs/superpowers/specs/2026-11-16-phase-1d-completion-design.md), [1D.7 plan](../../docs/superpowers/plans/2026-11-16-phase-1d7-resource-creation.md) and [validation report](../../docs/superpowers/validation/phase-1d7.html) cover binding regeneration, reviewed named creation and collapsible sidebar groups.
 - Repository and race checks, both approved kind contexts, packaged macOS verification, fixture cleanup and the independent whole-PR review and rechecks passed.
-- Phase 1D.8 server-side apply and the consolidated exit audit remain for a separate session under the [1D.8 plan](../../docs/superpowers/plans/2026-11-16-phase-1d8-server-side-apply.md).
 
 ## Phase 1D.6 · Interactive sessions
 

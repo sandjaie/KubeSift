@@ -92,7 +92,7 @@ func resolveManifestRoute(ctx context.Context, client kubernetes.Interface, targ
 	if verb == "get" && (match == nil || !match.detailReadable) {
 		return ManifestAddress{}, model.Fail("unsupported", "This API version does not advertise a supported detail read for the selected resource")
 	}
-	if verb == "patch" && (match == nil || !match.Get || !match.Patch) {
+	if verb == "patch" && (match == nil || !match.detailReadable || !match.Patch) {
 		return ManifestAddress{}, model.Fail("unsupported", "This API does not advertise both Get and Patch for the selected resource")
 	}
 	if err := genericAddress(match.api(), target.Namespace); err != nil {

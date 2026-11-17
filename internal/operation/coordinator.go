@@ -35,6 +35,7 @@ type OperationResult struct {
 	Rollback    *RollbackResultData `json:"rollback,omitempty"`
 	Edit        *kube.EditTarget    `json:"edit,omitempty"`
 	Create      *CreateResultData   `json:"create,omitempty"`
+	Apply       *ApplyResultData    `json:"apply,omitempty"`
 }
 
 // operationKey shares locks across API versions of the same canonical resource.
@@ -43,6 +44,8 @@ func operationKey(result OperationResult) kube.ResourceRef {
 	key.UID = ""
 	if result.Create != nil {
 		key.APIVersion, key.Kind = result.Create.Target.Group, result.Create.Target.Resource
+	} else if result.Apply != nil {
+		key.APIVersion, key.Kind = result.Apply.Target.Group, result.Apply.Target.Resource
 	} else if result.Edit != nil {
 		key.APIVersion, key.Kind = result.Edit.Group, result.Edit.Resource
 	} else if _, plural := deleteTarget(result.Resource); plural != "" {
@@ -194,7 +197,7 @@ func (s *Coordinator) begin(action, token, acknowledgement string) (*pendingRevi
 		return nil, OperationResult{}, err
 	}
 	if review.draftID != "" {
-		if action == "create" {
+		if action == "create" || action == "apply" {
 			s.revokeDraft(review.draftID)
 		} else {
 			s.dropDraft(review.draftID)
@@ -265,6 +268,10 @@ func copyOperationResult(result OperationResult) OperationResult {
 	if result.Create != nil {
 		value := *result.Create
 		result.Create = &value
+	}
+	if result.Apply != nil {
+		value := *result.Apply
+		result.Apply = &value
 	}
 	return result
 }
@@ -444,7 +451,9 @@ func (s *Coordinator) reviseDraft(action, id string) (operationDraft, error) {
 		return operationDraft{}, model.Fail("expired", "The editor capture expired. Reopen the editor and review again")
 	}
 	draft.revision++
-	s.captures[id] = draft
+	next := draft
+	next.applyConflict = nil
+	s.captures[id] = next
 	s.revokeDraft(id)
 	return draft, nil
 }

@@ -34,8 +34,10 @@ import { useWorkloads } from "./workloads/useWorkloads";
 import type { ResourceDetail, ResourceRef } from "./workloads/model";
 import { requestEditor, settleCreateEditor, type EditorSession, type EditorDestination } from "./operations/editState";
 import { CreateDialog } from "./operations/CreateDialog";
+import { ApplyResponseDialog } from "./operations/ApplyDialog";
+import { applyEditorHidden, settleApplyEditor } from "./operations/applyState";
 import { EditDialog } from "./operations/EditDialog";
-import { closeEdit, type CreatedResourceOpening } from "./operations/api";
+import { closeApply, closeEdit, type CreatedResourceOpening } from "./operations/api";
 import { OperationResults, useOperationResults } from "./operations/OperationResults";
 import "./styles.css";
 export default function App() {
@@ -123,6 +125,9 @@ export default function App() {
   );
   const [editor, setEditor] = useState<EditorSession<EditorDestination>>();
   const origin = editor && state.tabs[editor.tab];
+  const inOriginWorkspace = !!editor && editor.tab === state.active && page === "workspace";
+  const editorHidden =
+    editor?.mode === "apply" ? applyEditorHidden(editor.suspended, !!origin, inOriginWorkspace) : !!editor?.suspended || !inOriginWorkspace;
   const originConnection =
     origin?.view?.state === "connected" || origin?.view?.state === "restricted" ? (origin.view.ref ?? undefined) : undefined;
   const operationResults = useOperationResults((result) => {
@@ -241,9 +246,17 @@ export default function App() {
           onClose={close}
         />
         <button onClick={() => setPage("clusters")}>Choose cluster</button>
-        {editor && (editor.suspended || editor.tab !== state.active || page !== "workspace") && (
+        {editor && editorHidden && (
           <button disabled={editor.submitting} onClick={resumeEditor}>
-            {editor.submitting ? "Submitting create…" : editor.mode === "create" ? "Resume create draft" : "Resume YAML edit"}
+            {editor.submitting
+              ? "Submitting operation…"
+              : editor.mode === "create"
+                ? "Resume create draft"
+                : editor.mode === "apply"
+                  ? editor.observation
+                    ? "View apply response"
+                    : "Resume apply draft"
+                  : "Resume YAML edit"}
           </button>
         )}
         <button
@@ -277,7 +290,7 @@ export default function App() {
           destination={editor}
           context={origin?.entry.context ?? "Original connection"}
           connection={originConnection}
-          suspended={!editor.replacement && !editor.closing && (editor.suspended || editor.tab !== state.active || page !== "workspace")}
+          suspended={!editor.replacement && !editor.closing && editorHidden}
           closing={editor.closing || !!editor.replacement}
           replacing={!!editor.replacement}
           onSuspend={() => setEditor({ ...editor, suspended: true })}
@@ -295,13 +308,23 @@ export default function App() {
           }}
         />
       )}
-      {editor && editor.mode !== "create" && (
+      {editor?.mode === "apply" && editor.observation && !editorHidden && (
+        <ApplyResponseDialog
+          observation={editor.observation}
+          onClose={() => {
+            setEditor(undefined);
+            if (editor.closing) closeTab(editor.tab);
+          }}
+        />
+      )}
+      {editor && editor.mode !== "create" && !(editor.mode === "apply" && editor.observation) && (
         <EditDialog
-          key={JSON.stringify([editor.tab, editor.target])}
+          key={editor.mode === "apply" ? editor.id : JSON.stringify([editor.tab, editor.target])}
+          apply={editor.mode === "apply"}
           target={editor.target}
           context={origin?.entry.context ?? "Original connection"}
           connection={originConnection}
-          suspended={!editor.replacement && !editor.closing && (editor.suspended || editor.tab !== state.active || page !== "workspace")}
+          suspended={!editor.replacement && !editor.closing && editorHidden}
           reveal={editor.reveal}
           closing={editor.closing || !!editor.replacement}
           replacing={!!editor.replacement}
@@ -311,7 +334,23 @@ export default function App() {
             setEditor(editor.replacement ? requestEditor(undefined, editor.replacement) : undefined);
             if (editor.closing) closeTab(editor.tab);
           }}
-          onConfirm={(token, draftID) => {
+          onConfirm={(token, draftID, reviewedServerYAML) => {
+            if (editor.mode === "apply") {
+              setEditor({ ...editor, suspended: true, submitting: true });
+              setResultsOpen(true);
+              void operationResults.submit("apply", token, "").then((result) => {
+                const accepted = result?.state === "accepted";
+                if (accepted) closeApply(draftID);
+                const observed =
+                  result && "observedYAML" in result && typeof result.observedYAML === "string" ? result.observedYAML : undefined;
+                const observation =
+                  accepted && result && "responseChanged" in result && result.responseChanged && reviewedServerYAML !== undefined
+                    ? { before: observed ? reviewedServerYAML : "", observed }
+                    : undefined;
+                setEditor((current) => settleApplyEditor(current, editor.id, accepted, observation));
+              });
+              return;
+            }
             void operationResults.submit("edit", token, "").finally(() => closeEdit(draftID));
             setEditor(undefined);
             setResultsOpen(true);
@@ -493,6 +532,16 @@ export default function App() {
                     : (target, reveal = false) => {
                         const tab = state.active;
                         if (tab) setEditor((current) => requestEditor(current, { tab, target, reveal }));
+                      }
+                }
+                onApply={
+                  editor?.submitting
+                    ? undefined
+                    : (target) => {
+                        const tab = state.active;
+                        if (!tab) return;
+                        const id = crypto.randomUUID();
+                        setEditor((current) => requestEditor(current, { mode: "apply", id, tab, target, reveal: false }));
                       }
                 }
                 onOperation={(action, token, acknowledgement) => {

@@ -12,7 +12,7 @@ import { Modal } from "../ui/ReviewDialog";
 import { closeCreate, openCreate, prepareCreate, revokeCreate, type CreateDraft, type CreatePreview } from "./api";
 import { createSkeleton, canConfirmCreate, type CreateDestination } from "./createState";
 import { sameEditConnection } from "./editState";
-import { YAMLDiff } from "./EditDialog";
+import { YAMLDiff } from "./YAMLDiff";
 import { reviewOwner } from "./reviewState";
 
 export function CreateDialog({

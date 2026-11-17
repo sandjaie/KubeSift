@@ -128,3 +128,13 @@ done</code></pre>
   disposable custom API per approved context. It covers dry-run non-persistence, namespaced and cluster-scoped creation, Secret stringData,
   late name collisions, create-only access, and denied dry-run. Cleanup uses fixture identities.
 </p>
+
+<p>
+  Enable <code>TestExistingApplyProtocol</code> and <code>TestYAMLApply</code> with <code>KUBESIFT_APPLY_INTEGRATION=1</code> and the
+  isolated A/B kubeconfig directory. Run
+  <code>go test -tags=integration ./tests/integration -run '^Test(ExistingApplyProtocol|YAMLApply)$' -count=1 -v</code>. The protocol test
+  checks real UID/version/deletion rejection even when force is set. The service test checks ownership-only changes, conflicts and explicit
+  takeover, omission, read-only denial, Secret normalization and custom/cluster-scoped objects. Both suites create their own fixtures on the
+  two approved contexts and remove them by UID. Run these sequentially with <code>TestYAMLCreation</code> because they use the same
+  task-owned fixture CRD name.
+</p>

@@ -26,12 +26,13 @@ type EditService struct {
 }
 
 type operationDraft struct {
-	action     string
-	connection model.ConnectionRef
-	baseline   kube.EditCapture
-	cluster    string
-	expires    time.Time
-	revision   uint64
+	action        string
+	connection    model.ConnectionRef
+	baseline      kube.EditCapture
+	cluster       string
+	expires       time.Time
+	revision      uint64
+	applyConflict *[32]byte
 }
 
 func NewEditService(connections *connection.Manager, reader *kube.Service, coordinator *Coordinator) *EditService {
@@ -76,6 +77,12 @@ func (s *EditService) CloseEdit(id string) { s.coordinator.closeDraft("edit", id
 var serverEditMetadata = []string{"creationTimestamp", "deletionTimestamp", "deletionGracePeriodSeconds", "generation", "managedFields", "selfLink"}
 
 func editProjection(raw []byte) (map[string]any, error) {
+	object, err := yamlValueProjection(raw)
+	delete(object, "status")
+	return object, err
+}
+
+func yamlValueProjection(raw []byte) (map[string]any, error) {
 	var object map[string]any
 	decoder := json.NewDecoder(bytes.NewReader(raw))
 	decoder.UseNumber()
@@ -86,7 +93,6 @@ func editProjection(raw []byte) (map[string]any, error) {
 	if !ok {
 		return nil, model.Fail("invalid_response", "Kubernetes returned invalid resource metadata")
 	}
-	delete(object, "status")
 	for _, key := range serverEditMetadata {
 		delete(metadata, key)
 	}
