@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Phase 1D exit audit · KubeSift</title>
+    <link rel="stylesheet" href="../../assets/planning.css" />
+    <script src="../../assets/theme.js"></script>
+  </head>
+  <body>
+    <aside class="rail">
+      <a class="skip" href="#content">Skip to content</a
+      ><a class="mark" href="../../index.html"><span class="mark-name">KubeSift</span><span class="mark-sub">Planning</span></a>
+      <h2>Index</h2>
+      <a href="../../index.html">Planning index</a>
+      <h2>Product</h2>
+      <a href="../../product/requirements.html">Requirements</a><a href="../../product/feature-matrix.html">Capabilities</a>
+      <h2>Architecture</h2>
+      <a href="../../architecture/overview.html">Overview</a><a href="../../architecture/decisions.html">Decisions</a>
+      <h2>Safeguards</h2>
+      <a href="../../security/security-model.html">Security and AI</a>
+      <h2>Delivery</h2>
+      <a href="../../roadmap/roadmap.html">Roadmap</a><a href="../../ux/workflows.html">UX workflows</a
+      ><a href="../../ux/mocks/index.html">Mockups</a>
+      <h2>Engineering</h2>
+      <a href="../../engineering/engineering.html">Playbook</a><a href="../../engineering/local-development.html">Local development</a
+      ><a href="../../engineering/toolchain.html">Toolchain</a
+      ><a href="../../engineering/kubernetes-development.html">Kubernetes references</a>
+      <h2>Superpowers</h2>
+      <a href="../../superpowers/specs/2026-11-05-kubesift-design.md">Design specification</a
+      ><a href="../../superpowers/plans/README.html">Plans</a
+      ><a href="../../superpowers/validation/index.html" aria-current="page">Validation</a
+      ><a href="../../superpowers/evidence/index.html">Evidence</a>
+    </aside>
+    <header>
+      <a href="../../index.html">KubeSift / Planning</a>
+      <h1>Phase 1D exit audit</h1>
+    </header>
+    <main id="content">
+      <p>
+        Audit against the <a href="../../roadmap/roadmap.html#phase-1d">Phase 1D exit criteria</a> and
+        <a href="../specs/2026-11-16-phase-1d-completion-design.md">completion design</a>. This is an evidence record, not a new acceptance
+        checklist.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Increment</th>
+            <th scope="col">Evidence</th>
+            <th scope="col">Develop merge</th>
+            <th scope="col">Scope verified</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">1D.1 · Scale</th>
+            <td>
+              <a href="../specs/2026-11-14-phase-1d1-reviewed-scaling-design.md">Spec</a> ·
+              <a href="../plans/2026-11-14-phase-1d1-reviewed-scaling.md">Plan</a> · <a href="phase-1d1.html">Validation</a>
+            </td>
+            <td><a href="https://github.com/sandjaie/KubeSift/pull/15">PR #15</a> · <code>9005fcc</code></td>
+            <td>Scale review, authorization, stale/uncertain responses, and bounded result handling.</td>
+          </tr>
+          <tr>
+            <th scope="row">1D.2 · Restart</th>
+            <td>
+              <a href="../specs/2026-11-15-phase-1d2-reviewed-restart-design.md">Spec</a> ·
+              <a href="../plans/2026-11-15-phase-1d2-reviewed-restart.md">Plan</a> · <a href="phase-1d2.html">Validation</a>
+            </td>
+            <td><a href="https://github.com/sandjaie/KubeSift/pull/17">PR #17</a> · <code>74dea68</code></td>
+            <td>Deployment, StatefulSet and DaemonSet template restarts with strategy limits and UID/version checks.</td>
+          </tr>
+          <tr>
+            <th scope="row">1D.3 · Delete</th>
+            <td>
+              <a href="../specs/2026-11-15-phase-1d3-reviewed-deletion-design.md">Spec</a> ·
+              <a href="../plans/2026-11-15-phase-1d3-reviewed-deletion.md">Plan</a> · <a href="phase-1d3.html">Validation</a>
+            </td>
+            <td><a href="https://github.com/sandjaie/KubeSift/pull/18">PR #18</a> · <code>cc28d2e</code></td>
+            <td>Eight workload kinds, reviewed deletion, stale/replaced targets and background dependent cleanup.</td>
+          </tr>
+          <tr>
+            <th scope="row">1D.4 · Edit YAML</th>
+            <td>
+              <a href="../specs/2026-11-16-phase-1d4-reviewed-yaml-editing-design.md">Spec</a> ·
+              <a href="../plans/2026-11-16-phase-1d4-yaml-editing.md">Plan</a> · <a href="phase-1d4.html">Validation</a>
+            </td>
+            <td><a href="https://github.com/sandjaie/KubeSift/pull/19">PR #19</a> · <code>87c7ce8</code></td>
+            <td>Conditional JSON Patch, authorization, Secret normalization and draft retention.</td>
+          </tr>
+          <tr>
+            <th scope="row">1D.5 · Rollback</th>
+            <td>
+              <a href="../specs/2026-11-16-phase-1d5-workload-rollback-design.md">Spec</a> ·
+              <a href="../plans/2026-11-16-phase-1d5-workload-rollback.md">Plan</a> · <a href="phase-1d5.html">Validation</a>
+            </td>
+            <td><a href="https://github.com/sandjaie/KubeSift/pull/20">PR #20</a> · <code>13b94f6</code></td>
+            <td>Retained history, Pod template only, preserve replicas/storage/strategy. No claim of Pod convergence.</td>
+          </tr>
+          <tr>
+            <th scope="row">1D.6 · Terminal and forwarding</th>
+            <td>
+              <a href="../specs/2026-11-16-phase-1d6-interactive-sessions-design.md">Spec</a> ·
+              <a href="../plans/2026-11-16-phase-1d6-interactive-sessions.md">Plan</a> · <a href="phase-1d6.html">Validation</a>
+            </td>
+            <td><a href="https://github.com/sandjaie/KubeSift/pull/21">PR #21</a> · <code>39e0705</code></td>
+            <td>
+              Terminal, resize, fixed Pod/Service loopback endpoints, navigation retention, explicit Stop and Close. See stream limits
+              below.
+            </td>
+          </tr>
+          <tr>
+            <th scope="row">1D.7 · Named creation</th>
+            <td>
+              <a href="../specs/2026-11-16-phase-1d-completion-design.md">Spec</a> ·
+              <a href="../plans/2026-11-16-phase-1d7-resource-creation.md">Plan</a> · <a href="phase-1d7.html">Validation</a>
+            </td>
+            <td><a href="https://github.com/sandjaie/KubeSift/pull/22">PR #22</a> · <code>fea4175</code></td>
+            <td>Server dry-run, create-only access, atomic name collision, exact-version Open.</td>
+          </tr>
+          <tr>
+            <th scope="row">1D.8 · Existing-resource apply</th>
+            <td>
+              <a href="../specs/2026-11-16-phase-1d-completion-design.md">Spec</a> ·
+              <a href="../plans/2026-11-16-phase-1d8-server-side-apply.md">Plan</a> · <a href="phase-1d8.html">Validation</a>
+            </td>
+            <td>Pending</td>
+            <td>UID/version safety, owner conflict, takeover, omission, authorization and exact-version navigation.</td>
+          </tr>
+        </tbody>
+      </table>
+      <h2>Exit criteria and outstanding items</h2>
+      <ul>
+        <li>
+          <strong>Reviewed operations:</strong> the reports show representative success for named creation, existing-object apply, editing,
+          restart, scale, deletion and rollback. Apply and Edit use different server semantics.
+        </li>
+        <li>
+          <strong>Safety and authorization:</strong> evidence covers name collisions, stale versions and wrong UIDs, ownership conflicts,
+          denied requests and uncertain responses. Reviewed targets are fixed; ownership takeover requires a separate server preview inside
+          the same review; ambiguous writes are not replayed.
+        </li>
+        <li>
+          <strong>Sessions:</strong> the 1D.6 report verifies session ownership through navigation, deterministic Stop and Close, tab-close
+          cleanup, and listener release at app exit. Terminal/forward integration was repeated during 1D.8.
+        </li>
+        <li>
+          <strong>Plan audit:</strong> 1D.1–1D.7 have no open task checkboxes. Phase 1D stays open until 1D.8 has passed independent review
+          and merged. The historical Restart suite was not rerun with its legacy fixtures; its existing acceptance and the current shared
+          operation regressions are separate evidence.
+        </li>
+      </ul>
+      <h2>Scope and compatibility limits</h2>
+      <p>
+        Kubernetes stream URLs address Pods by name. UID checks reduce setup races without an atomic UID precondition. Closing the transport
+        does not guarantee every remote child exits. Short packaged tests do not establish sustained WebKit throughput, a lossless
+        transcript or behavior on other platforms or providers. The apply proof is limited to representative built-in and custom resources
+        on the approved kind servers; it does not establish compatibility for every endpoint or Kubernetes release.
+      </p>
+      <p>
+        Bulk or multi-document operations, generated names, prune, arbitrary subresource actions, automatic rebase/retry, local-machine
+        shells, releases, and Phase 1E are outside the committed Phase 1D scope. The audit makes no parity, provider completeness or
+        distribution claim.
+      </p>
+    </main>
+  </body>
+</html>

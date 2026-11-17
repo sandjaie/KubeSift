@@ -43,9 +43,10 @@
       <p>
         Read-only configuration: <a href="../superpowers/specs/2026-11-14-phase-1c3c-configuration-design.md">Phase 1C.3c</a> covers
         Namespaces, ResourceQuotas, LimitRanges, ConfigMaps and Secret identity metadata, with explicit Pod configuration links. See the
-        <a href="../superpowers/validation/phase-1c3c.html">validation report</a>. Default Secret browsing remains metadata-only;
-        <a href="../superpowers/validation/phase-1d4.html">Phase 1D.4</a> adds explicit authorized Secret reveal/edit using the common YAML
-        workflow.
+        <a href="../superpowers/validation/phase-1c3c.html">validation report</a>. Default Secret browsing remains metadata-only; the common
+        YAML workflow exposes Secret content only after a deliberate
+        <a href="../superpowers/validation/phase-1d4.html">reveal or edit</a> or an
+        <a href="../superpowers/validation/phase-1d8.html">apply</a>, subject to Kubernetes authorization.
       </p>
       <div class="table-scroll">
         <table>
@@ -95,8 +96,9 @@
             <td>Required for Phase 1D closure</td>
             <td>
               <a href="../superpowers/specs/2026-11-16-phase-1d-completion-design.md">Specified single-object workflows</a>: no overwrite on
-              create, explicit SSA field ownership and conflicts, server dry-run and immutable target review. Completion evidence belongs in
-              phase validation reports and the checkpoint.
+              create, explicit SSA field ownership and conflicts, server dry-run and immutable target review. See the
+              <a href="../superpowers/validation/phase-1d7.html">named creation</a> and
+              <a href="../superpowers/validation/phase-1d8.html">existing-resource apply</a> evidence.
             </td>
           </tr>
           <tr>
