@@ -133,7 +133,7 @@ Implementer may consolidate small files or split a growing file, but must preser
 - [x] Agent-run packaged macOS walkthrough covers the four actions, private source Settings, precise context labels, hooks/CRD impact, cancellation and failure state, both themes, keyboard/focus, existing inspection and current-resource navigation. Verify no runtime Helm process or credentials in app files/logs and no background requests after native cleanup. No duplicate manual UAT gate.
 - [x] Write the validation report with exact SDK/client/server/fixture versions, supported storage and source coverage, commands and native screenshots, limitations and cleanup. Keep detailed operational logs in ignored `.superpowers/sdd/`. Update checkpoint and plan only from verified outcomes. Commit `test: phase1e2-task6 validate Helm management`.
 - [x] Apply the repository's independent whole-PR review once to the complete candidate, fix blocking findings and do targeted rechecks.
-- [ ] Push a ready PR to develop and finish the authorized merge after checks/review pass. Report real blockers if any; no release, main merge or next-phase implementation.
+- [x] Push a ready PR to develop and finish the authorized merge after checks/review pass. Report real blockers if any; no release, main merge or next-phase implementation.
 
 ## Self-review and implementation handoff
 
