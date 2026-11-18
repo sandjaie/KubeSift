@@ -88,8 +88,8 @@
               <code>KUBESIFT_HELM_INTEGRATION=1 go test -tags=integration ./tests/integration -run '^TestHelmManagement$' -count=1 -v</code>
             </td>
             <td>
-              Initial pass in 54.204 seconds; review-correction passes in 97.297 and 79.209 seconds, with explicit isolated kubeconfigs and
-              the pinned Helm 3 fixture binary.
+              Initial pass in 54.204 seconds; review-correction passes in 97.297, 79.209 and 125.606 seconds, with explicit isolated
+              kubeconfigs and the pinned Helm 3 fixture binary.
             </td>
           </tr>
         </tbody>
@@ -154,6 +154,12 @@
         clicks; a shared control fix passed its failing-then-passing regression. The rebuilt package passed reconnect Cancel (operation
         preserved) and confirmed reconnect (worker stopped, retained Outcome unknown result). The final app exited normally.
       </p>
+      <p>
+        Final packaged verification after the Mac was unlocked passed the numeric and resource-identity fixture. Native review preserved the
+        ConfigMap name <code>2026-11-18</code>, then install succeeded with the new CRD and dependent resource. An explicit-context read
+        confirmed <code>first: yes</code> from the integer revision comparison and the exact value <code>9007199254740993</code>. The final
+        application exited normally. Earlier window-access failures were not counted as passing checks.
+      </p>
       <h2>Corrections found by verification</h2>
       <p>
         The first live run exposed a namespace fallback in the SDK's raw-config loader: release storage was correctly scoped but resource
@@ -174,8 +180,9 @@
         nine. The targeted recheck at <code>185c538a02d3029e174836901b1c46c907638605</code> resolved KSF-002 through KSF-009, but found
         disabled-dependency eligibility in KSF-001 and new numeric-fidelity blocker KSF-010. Hook paths (KSF-011) and lookup error
         categories (KSF-012) were nonblocking correctness findings; all were accepted. Author corrections passed the native regression
-        suites, final repository checks and both-cluster integration. Final reviewer recheck and the additional numeric-chart package smoke
-        are pending; desktop automation currently cannot access application or Finder windows.
+        suites, final repository checks and both-cluster integration. The recheck at <code>76f1e1fa2a963829fd3f7d4880ecd1785ee5c868</code>
+        cleared KSF-001 and KSF-010–012, then identified KSF-013 (preview resource identity). Its correction passed the targeted race test
+        (3.348 seconds), full repository checks and both-cluster integration. Final independent recheck is pending.
       </p>
       <table>
         <thead>
@@ -270,6 +277,14 @@
             <td>
               The first host lookup error survives the worker's consequent template error. A denied lookup retains the sanitized forbidden
               category.
+            </td>
+          </tr>
+          <tr>
+            <td>KSF-013 · P1 · Preview resource identity</td>
+            <td>
+              With no eligible CRDs, install preview passes the original reader to Helm. When deferring a CR, retained documents keep their
+              original bytes; filtered List children use Kubernetes YAML-to-JSON semantics and exact JSON numbers. Date-named ConfigMaps and
+              a large List integer passed the failing-then-passing regression.
             </td>
           </tr>
         </tbody>

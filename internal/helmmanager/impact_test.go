@@ -84,3 +84,34 @@ func TestDisabledDependencyCannotSupplyPreviewCRD(t *testing.T) {
 		t.Fatal("disabled dependency improperly deferred unknown kind")
 	}
 }
+
+func TestCRDPreviewPreservesKubernetesScalars(t *testing.T) {
+	mapper := meta.NewDefaultRESTMapper([]schema.GroupVersion{{Version: "v1"}})
+	mapper.Add(schema.GroupVersionKind{Version: "v1", Kind: "ConfigMap"}, meta.RESTScopeNamespace)
+	custom := schema.GroupVersionKind{Group: "example.test", Version: "v1", Kind: "Example"}
+	original := "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: 2026-11-18\n"
+	for _, withCRD := range []bool{false, true} {
+		builder := &recordingBuilder{}
+		preview := &crdPreviewClient{Interface: builder, mapper: mapper}
+		manifest := original
+		if withCRD {
+			preview.declared = map[schema.GroupVersionKind]bool{custom: true}
+			manifest += "---\napiVersion: example.test/v1\nkind: Example\nmetadata:\n  name: deferred\n"
+		}
+		if _, err := preview.Build(strings.NewReader(manifest), true); err != nil {
+			t.Fatal(err)
+		}
+		if !strings.Contains(builder.text, original) {
+			t.Fatalf("retained identity changed: %q", builder.text)
+		}
+	}
+	builder := &recordingBuilder{}
+	preview := &crdPreviewClient{Interface: builder, mapper: mapper, declared: map[schema.GroupVersionKind]bool{custom: true}}
+	manifest := "apiVersion: v1\nkind: List\nitems:\n- apiVersion: v1\n  kind: ConfigMap\n  metadata:\n    name: 2026-11-18\n  number: 9007199254740993\n- apiVersion: example.test/v1\n  kind: Example\n  metadata:\n    name: deferred\n"
+	if _, err := preview.Build(strings.NewReader(manifest), true); err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(builder.text, "T00:") || !strings.Contains(builder.text, "9007199254740993") || strings.Contains(builder.text, "deferred") {
+		t.Fatalf("retained List semantics changed: %s", builder.text)
+	}
+}

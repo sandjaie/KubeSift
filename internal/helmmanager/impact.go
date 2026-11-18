@@ -7,7 +7,9 @@ Important: Deferred objects remain in review; execution always uses the normal S
 package helmmanager
 
 import (
+	"bufio"
 	"bytes"
+	"encoding/json"
 	"io"
 	"strings"
 
@@ -17,6 +19,7 @@ import (
 	"helm.sh/helm/v4/pkg/kube"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	kubeyaml "k8s.io/apimachinery/pkg/util/yaml"
 )
 
 func declaredCRDs(ch *chartv2.Chart) (map[schema.GroupVersionKind]bool, error) {
@@ -73,70 +76,88 @@ func (c *crdPreviewClient) Build(reader io.Reader, validate bool) (kube.Resource
 			return nil, err
 		}
 	}
+	if len(c.declared) == 0 {
+		return c.Interface.Build(reader, validate)
+	}
 	raw, err := readBounded(reader, renderedLimit)
 	if err != nil {
 		return nil, err
 	}
-	decoder := yaml.NewDecoder(bytes.NewReader(raw))
+	documents := kubeyaml.NewYAMLReader(bufio.NewReader(bytes.NewReader(raw)))
 	var filtered bytes.Buffer
 	for {
-		var node yaml.Node
-		if err := decoder.Decode(&node); err == io.EOF {
+		document, err := documents.Read()
+		if err == io.EOF {
 			break
 		} else if err != nil {
+			return nil, model.Fail("invalid", "A rendered resource could not be reviewed.")
+		}
+		var node yaml.Node
+		if err := yaml.Unmarshal(document, &node); err != nil {
 			return nil, model.Fail("invalid", "A rendered resource could not be reviewed.")
 		}
 		if err := boundedYAML(&node, 0); err != nil {
 			return nil, err
 		}
-		var object map[string]any
-		if err := node.Decode(&object); err != nil {
+		encoded, err := kubeyaml.ToJSON(document)
+		if err != nil {
 			return nil, model.Fail("invalid", "A rendered resource could not be reviewed.")
 		}
-		keep, err := c.filter(object)
+		var object map[string]any
+		decoder := json.NewDecoder(bytes.NewReader(encoded))
+		decoder.UseNumber()
+		if err := decoder.Decode(&object); err != nil {
+			return nil, model.Fail("invalid", "A rendered resource could not be reviewed.")
+		}
+		keep, changed, err := c.filter(object)
 		if err != nil {
 			return nil, err
 		}
 		if keep {
-			encoded, err := yaml.Marshal(object)
-			if err != nil {
-				return nil, model.Fail("invalid", "A rendered resource could not be reviewed.")
+			if changed {
+				document, err = json.Marshal(object)
+				if err != nil {
+					return nil, model.Fail("invalid", "A rendered resource could not be reviewed.")
+				}
 			}
 			filtered.WriteString("---\n")
-			filtered.Write(encoded)
+			filtered.Write(document)
+			filtered.WriteByte('\n')
 		}
 	}
 	return c.Interface.Build(&filtered, validate)
 }
 
-func (c *crdPreviewClient) filter(object map[string]any) (bool, error) {
+func (c *crdPreviewClient) filter(object map[string]any) (bool, bool, error) {
 	kind, _ := object["kind"].(string)
 	version, _ := object["apiVersion"].(string)
 	if kind == "List" {
 		items, ok := object["items"].([]any)
 		if !ok {
-			return true, nil
+			return true, false, nil
 		}
 		kept := make([]any, 0, len(items))
+		changed := false
 		for _, item := range items {
 			child, ok := item.(map[string]any)
 			if !ok {
-				return true, nil
+				return true, false, nil
 			}
-			keep, err := c.filter(child)
+			keep, childChanged, err := c.filter(child)
 			if err != nil {
-				return false, err
+				return false, false, err
 			}
+			changed = changed || childChanged
 			if keep {
 				kept = append(kept, child)
 			}
 		}
 		object["items"] = kept
-		return len(kept) > 0, nil
+		return len(kept) > 0, changed, nil
 	}
 	gvk := schema.FromAPIVersionAndKind(version, kind)
 	if _, declared := c.declared[gvk]; !declared {
-		return true, nil
+		return true, false, nil
 	}
 	_, err := c.mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
 	if meta.IsNoMatchError(err) {
@@ -144,9 +165,9 @@ func (c *crdPreviewClient) filter(object map[string]any) (bool, error) {
 			c.deferred = map[schema.GroupVersionKind]bool{}
 		}
 		c.deferred[gvk] = true
-		return false, nil
+		return false, true, nil
 	}
-	return true, err
+	return true, false, err
 }
 
 func (r *reviewData) scopeIdentity(item map[string]string) error {
