@@ -6,4 +6,16 @@
     Taskfile.yml holds the macOS build; package-macos.sh creates a local ad-hoc-signed app including license notices; config.yml configures
     development. darwin contains required native resources. No publication runs here.
   </p>
+  <h2>Application icon</h2>
+  <p>
+    <a href="branding/kubesift.svg">branding/kubesift.svg</a> is the approved vector source. From the repository root on macOS, run
+    <code>swift build/branding/generate-icons.swift</code> after editing it to regenerate the 1024-pixel PNG and
+    <code>darwin/icons.icns</code>. AppKit renders all standard 1x/2x icon sizes; iconutil encodes the ICNS. No extra dependency is needed.
+    Commit the SVG, PNG and ICNS together. Normal packaging uses the committed ICNS and does not regenerate icons.
+  </p>
+  <p>
+    Both app property lists use CFBundleIconFile=icons. The default Wails Assets.car and CFBundleIconName are intentionally absent so an
+    asset-catalog icon cannot override this resource. Run <code>bash build/package-macos.sh</code> to repackage an existing binary after an
+    icon-only edit; this also verifies the ad-hoc signature.
+  </p>
 </html>

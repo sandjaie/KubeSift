@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>KubeSift application icon validation</title>
+    <link rel="stylesheet" href="../../assets/planning.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Application icon · 18 November 2026</h1>
+      <p>
+        Implemented the user-approved monochrome segmented cube as an SVG, with PNG and macOS ICNS exports.
+        <a href="../../ux/workflows.html#app-icon">UX ownership and canonical artwork</a>. The existing frontend logo/navigation were not
+        changed.
+      </p>
+      <ul>
+        <li>
+          AppKit exported the SVG at every standard ICNS size; transparent-corner assertions passed. iconutil decoded the resulting ICNS
+          successfully.
+        </li>
+        <li>Visually inspected the 1024px master and decoded 16px/32px icons. The silhouette remains recognizable at small sizes.</li>
+        <li>
+          Both plist syntax checks and package script syntax check passed. Removed the default Wails asset catalogue and its plist
+          references to prevent icon override.
+        </li>
+        <li>
+          Repackaged the existing local executable using build/package-macos.sh. Packaged ICNS bytes match the committed resource;
+          Assets.car is absent; codesign --verify --deep --strict passed.
+        </li>
+        <li>
+          Native Finder verification showed the new icon in the file list and large preview. macOS adds its own preview styling; the source
+          artwork has no bevels or gradients.
+        </li>
+        <li>Documentation links, source-description checks and diff whitespace checks passed.</li>
+      </ul>
+      <p>
+        No application logic changed. Full Go/frontend suites, cluster tests and an application rebuild were not run for this asset-only
+        change. The existing executable was repackaged, not rebuilt; this does not establish new runtime behavior, signing/notarization or
+        release readiness. No trademark/similarity search was performed.
+      </p>
+      <p>
+        Independent reviewer /root/icon_review reviewed the full candidate 7aa8270b2649a10b530f0f43514370b98bda4028 against
+        develop/merge-base 10ed221a1ad6f3e274df62c757cb6b72f60b3a28: no findings, no blocking findings. The reviewer independently checked
+        plist/shell syntax, whitespace, packaged icon equality and strict signature verification. Repeated generation also reproduced
+        identical PNG/ICNS bytes. The implementation PR records final merge and documentation follow-up coverage.
+      </p>
+    </main>
+  </body>
+</html>
