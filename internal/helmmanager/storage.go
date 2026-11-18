@@ -35,6 +35,7 @@ func validateStoredSize(rel release.Releaser) error {
 }
 
 func (d *managementStorage) Create(key string, rel release.Releaser) error {
+	restoreHookPaths(rel)
 	if err := validateStoredSize(rel); err != nil {
 		return err
 	}
@@ -42,6 +43,7 @@ func (d *managementStorage) Create(key string, rel release.Releaser) error {
 }
 
 func (d *managementStorage) Update(key string, rel release.Releaser) error {
+	restoreHookPaths(rel)
 	if err := validateStoredSize(rel); err != nil {
 		return err
 	}

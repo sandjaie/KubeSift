@@ -58,12 +58,21 @@ func declaredCRDs(ch *chartv2.Chart) (map[schema.GroupVersionKind]bool, error) {
 
 type crdPreviewClient struct {
 	kube.Interface
+	chart    *chartv2.Chart
 	mapper   meta.RESTMapper
 	declared map[schema.GroupVersionKind]bool
 	deferred map[schema.GroupVersionKind]bool
 }
 
 func (c *crdPreviewClient) Build(reader io.Reader, validate bool) (kube.ResourceList, error) {
+	// Helm selects dependencies before Build; disabled providers cannot justify deferral.
+	if c.chart != nil {
+		var err error
+		c.declared, err = declaredCRDs(c.chart)
+		if err != nil {
+			return nil, err
+		}
+	}
 	raw, err := readBounded(reader, renderedLimit)
 	if err != nil {
 		return nil, err

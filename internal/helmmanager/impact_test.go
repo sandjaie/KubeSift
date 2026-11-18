@@ -7,6 +7,9 @@ Important: Synthetic discovery performs no Kubernetes writes.
 package helmmanager
 
 import (
+	"helm.sh/helm/v4/pkg/chart/common"
+	chartv2 "helm.sh/helm/v4/pkg/chart/v2"
+	chartutil "helm.sh/helm/v4/pkg/chart/v2/util"
 	"io"
 	"strings"
 	"testing"
@@ -59,5 +62,25 @@ func TestPreviewCRDAndResourceImpact(t *testing.T) {
 		if !strings.Contains(r.sections["resources"], text) {
 			t.Fatalf("missing %q in impact: %s", text, r.sections["resources"])
 		}
+	}
+}
+
+func TestDisabledDependencyCannotSupplyPreviewCRD(t *testing.T) {
+	ch := &chartv2.Chart{Metadata: &chartv2.Metadata{Name: "parent", Version: "1.0.0", APIVersion: "v2", Dependencies: []*chartv2.Dependency{{Name: "provider", Version: "1.0.0", Condition: "provider.enabled"}}}, Values: map[string]any{"provider": map[string]any{"enabled": false}}}
+	ch.AddDependency(&chartv2.Chart{Metadata: &chartv2.Metadata{Name: "provider", Version: "1.0.0", APIVersion: "v2"}, Files: []*common.File{{Name: "crds/example.yaml", Data: []byte("apiVersion: apiextensions.k8s.io/v1\nkind: CustomResourceDefinition\nspec:\n  group: example.test\n  scope: Namespaced\n  names:\n    kind: Example\n  versions:\n  - name: v1\n    served: true\n")}}})
+	declared, err := declaredCRDs(ch)
+	if err != nil || len(declared) != 1 {
+		t.Fatal("fixture missing CRD", err)
+	}
+	builder := &recordingBuilder{}
+	preview := &crdPreviewClient{Interface: builder, chart: ch, mapper: meta.NewDefaultRESTMapper(nil), declared: declared}
+	if err := chartutil.ProcessDependencies(ch, map[string]any{}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := preview.Build(strings.NewReader("apiVersion: example.test/v1\nkind: Example\nmetadata:\n  name: parent-resource\n"), true); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(builder.text, "kind: Example") || len(preview.deferred) > 0 || len(preview.declared) > 0 {
+		t.Fatal("disabled dependency improperly deferred unknown kind")
 	}
 }

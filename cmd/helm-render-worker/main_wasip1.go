@@ -8,7 +8,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"io"
 	"log"
@@ -24,37 +23,39 @@ import (
 func main() {
 	log.SetOutput(io.Discard)
 	slog.SetDefault(slog.New(slog.DiscardHandler))
-	input := json.NewDecoder(os.Stdin)
-	output := json.NewEncoder(os.Stdout)
+	input := os.Stdin
+	output := os.Stdout
 	var request wire.Request
-	if input.Decode(&request) != nil {
-		_ = output.Encode(wire.Message{Error: "invalid"})
+	if wire.Read(input, &request) != nil {
+		_ = wire.Write(output, wire.Message{Error: "invalid"})
 		return
 	}
 	lookup := func(apiVersion, kind, namespace, name string) (map[string]any, error) {
-		if err := output.Encode(wire.Message{Lookup: []string{apiVersion, kind, namespace, name}}); err != nil {
+		if err := wire.Write(output, wire.Message{Lookup: []string{apiVersion, kind, namespace, name}}); err != nil {
 			return nil, err
 		}
 		var response wire.LookupResponse
-		if err := input.Decode(&response); err != nil || response.Failed {
+		if err := wire.Read(input, &response); err != nil || response.Failed {
 			return nil, errors.New("lookup failed")
 		}
-		return response.Object, nil
+		return wire.Unpack(response.Object).(map[string]any), nil
 	}
+	request.Values = wire.Unpack(request.Values).(common.Values)
+	request.Release = wire.Unpack(request.Release).(map[string]any)
 	renderer := engine.Engine{CustomTemplateFuncs: template.FuncMap{"lookup": lookup}}
 	values := common.Values{"Values": request.Values, "Release": request.Release, "Capabilities": request.Capabilities}
 	files, err := renderer.RenderWithContext(context.Background(), request.Chart.Restore(), values)
 	if err != nil {
-		_ = output.Encode(wire.Message{Error: "invalid"})
+		_ = wire.Write(output, wire.Message{Error: "invalid"})
 		return
 	}
 	size := 0
 	for name, text := range files {
 		size += len(name) + len(text)
 		if size > wire.OutputLimit {
-			_ = output.Encode(wire.Message{Error: "capacity"})
+			_ = wire.Write(output, wire.Message{Error: "capacity"})
 			return
 		}
 	}
-	_ = output.Encode(wire.Message{Files: files})
+	_ = wire.Write(output, wire.Message{Files: files})
 }

@@ -205,17 +205,17 @@ func (s *Service) Prepare(ctx context.Context, req PrepareRequest) (Review, erro
 		if !ok {
 			return Review{}, model.Fail("unsupported", "This chart format is not supported by Helm actions.")
 		}
-		r.declared, err = declaredCRDs(v2)
-		if err != nil {
-			return Review{}, err
-		}
-		previewClient := &crdPreviewClient{Interface: cfg.sdk.KubeClient, mapper: r.mapper, declared: r.declared}
-		if req.Action == "install" && len(r.declared) > 0 {
+		previewClient := &crdPreviewClient{Interface: cfg.sdk.KubeClient, mapper: r.mapper, chart: v2}
+		if req.Action == "install" {
 			cfg.sdk.KubeClient = previewClient
 		}
 		proposed, err = previewRelease(ctx, cfg.sdk, req, ch, values)
 		if err != nil {
 			return Review{}, safeHelmError(ctx, err)
+		}
+		r.declared, err = declaredCRDs(v2)
+		if err != nil {
+			return Review{}, err
 		}
 		r.deferred = previewClient.deferred
 		if len(r.deferred) > 0 {
@@ -319,6 +319,7 @@ func previewRelease(ctx context.Context, cfg *action.Configuration, req PrepareR
 	}
 	finish := boundedActionRender(ctx, cfg, v2)
 	defer func() {
+		restoreHookPaths(result)
 		if err := finish(); err != nil {
 			resultErr = err
 		}

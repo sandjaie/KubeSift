@@ -67,7 +67,10 @@
         <tbody>
           <tr>
             <td><code>go test -race ./internal/helmmanager ./internal/helmrender</code></td>
-            <td>Passed after review corrections: manager 308.007 seconds and renderer 290.388 seconds under race instrumentation.</td>
+            <td>
+              Passed after review corrections: manager 337.531 seconds and renderer 310.477 seconds under race instrumentation. The final
+              pure collection-codec delta also passed its race-instrumented boundary test (1.856 seconds).
+            </td>
           </tr>
           <tr>
             <td><code>wails3 task bindings</code>, <code>npm run build</code>, <code>wails3 task package</code></td>
@@ -85,8 +88,8 @@
               <code>KUBESIFT_HELM_INTEGRATION=1 go test -tags=integration ./tests/integration -run '^TestHelmManagement$' -count=1 -v</code>
             </td>
             <td>
-              Initial pass in 54.204 seconds; review-correction pass in 97.297 seconds, with explicit isolated kubeconfigs and the pinned
-              Helm 3 fixture binary.
+              Initial pass in 54.204 seconds; review-correction passes in 97.297 and 79.209 seconds, with explicit isolated kubeconfigs and
+              the pinned Helm 3 fixture binary.
             </td>
           </tr>
         </tbody>
@@ -168,7 +171,11 @@
         Reviewer <code>/root/phase1e2_review</code> (GPT-6.2 Astra, high reasoning, fresh context) reviewed base and merge base
         <code>0ba4d2d58f2297077d270c9fa4509b1172957925</code> through candidate <code>d740ca76ea3ad759a38813298e5e9072f344bd3f</code>. The
         initial verdict was blocking, with nine findings and no declined judgments or deferred minors. The implementing agent accepted all
-        nine. Targeted follow-up on the correction commit is pending.
+        nine. The targeted recheck at <code>185c538a02d3029e174836901b1c46c907638605</code> resolved KSF-002 through KSF-009, but found
+        disabled-dependency eligibility in KSF-001 and new numeric-fidelity blocker KSF-010. Hook paths (KSF-011) and lookup error
+        categories (KSF-012) were nonblocking correctness findings; all were accepted. Author corrections passed the native regression
+        suites, final repository checks and both-cluster integration. Final reviewer recheck and the additional numeric-chart package smoke
+        are pending; desktop automation currently cannot access application or Finder windows.
       </p>
       <table>
         <thead>
@@ -182,7 +189,8 @@
             <td>KSF-001 · P1 · New CRD dependents</td>
             <td>
               Only absent kinds declared by packaged CRDs defer server mapping checks in preview. Their identities and unverified status
-              remain visible. The updated both-cluster first-install fixture passed.
+              remain visible. Eligibility is evaluated after SDK dependency selection; a disabled CRD provider cannot bypass ordinary
+              mapping checks. The regression and updated both-cluster first-install fixture passed.
             </td>
           </tr>
           <tr>
@@ -241,6 +249,27 @@
             <td>
               Impact includes removed current resources and keep policy, resolves scope/default namespace through discovery or packaged
               CRDs, and labels unresolved scope explicitly.
+            </td>
+          </tr>
+          <tr>
+            <td>KSF-010 · P1 · SDK numeric fidelity</td>
+            <td>
+              A private bounded typed protocol preserves concrete scalar types, large integers, timestamps and empty collections. Native SDK
+              and worker outputs match for revision comparison, a large integer, fraction, timestamp, empty list/map and lookup integer.
+            </td>
+          </tr>
+          <tr>
+            <td>KSF-011 · P2 · Hook source paths</td>
+            <td>
+              Each rendered document retains its original source marker; review and persistence restore hook paths before storage. Two
+              distinct hook templates retain their distinct original paths in the SDK action regression.
+            </td>
+          </tr>
+          <tr>
+            <td>KSF-012 · P2 · Lookup diagnostics</td>
+            <td>
+              The first host lookup error survives the worker's consequent template error. A denied lookup retains the sanitized forbidden
+              category.
             </td>
           </tr>
         </tbody>

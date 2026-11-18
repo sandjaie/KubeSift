@@ -217,14 +217,16 @@ func TestBoundedActionPreservesDependenciesAndStoredChart(t *testing.T) {
 		"demo/templates/cm.yaml":                   "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: {{ include \"child.name\" . }}\ndata:\n  value: {{ .Subcharts.renamed.Values.message | quote }}\n",
 		"demo/charts/disabled/Chart.yaml":          "apiVersion: v2\nname: disabled\nversion: 1.0.0\n",
 		"demo/charts/disabled/templates/fail.yaml": `{{ fail "disabled dependency rendered" }}`,
+		"demo/templates/hook-a.yaml":               "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: hook-a\n  annotations:\n    helm.sh/hook: pre-install\n",
+		"demo/templates/hook-b.yaml":               "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: hook-b\n  annotations:\n    helm.sh/hook: post-install\n",
 		"demo/templates/NOTES.txt":                 "Installed {{ .Release.Name }} in {{ .Release.Namespace }}",
 		"demo/charts/child/Chart.yaml":             "apiVersion: v2\nname: child\nversion: 1.0.0\n",
 		"demo/charts/child/templates/_helpers.tpl": "{{ define \"child.name\" }}child-name{{ end }}",
 		"demo/charts/child/templates/cm.yaml":      "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: child\ndata:\n  value: {{ .Values.message | quote }}\n",
 	})
-	cfg := &action.Configuration{KubeClient: &fake.PrintingKubeClient{Out: io.Discard}, Releases: storage.Init(driver.NewMemory()), Capabilities: common.DefaultCapabilities.Copy(), RESTClientGetter: &nativeGetter{config: &rest.Config{Host: "https://unused.invalid"}, namespace: "owned"}}
+	cfg := &action.Configuration{KubeClient: &fake.PrintingKubeClient{Out: io.Discard}, Releases: storage.Init(&managementStorage{Driver: driver.NewMemory()}), Capabilities: common.DefaultCapabilities.Copy(), RESTClientGetter: &nativeGetter{config: &rest.Config{Host: "https://unused.invalid"}, namespace: "owned"}}
 	cfg.SetLogger(slog.DiscardHandler)
-	r := &reviewData{Review: Review{Action: "install", Target: Target{Namespace: "owned", ReleaseName: "demo"}, Options: Options{TimeoutSeconds: 60}}, raw: raw}
+	r := &reviewData{Review: Review{Action: "install", Target: Target{Namespace: "owned", ReleaseName: "demo"}, Options: Options{TimeoutSeconds: 60, DisableHooks: true}}, raw: raw}
 	if err := invokeAction(context.Background(), cfg, r); err != nil {
 		t.Fatal(err)
 	}
@@ -233,6 +235,9 @@ func TestBoundedActionPreservesDependenciesAndStoredChart(t *testing.T) {
 		t.Fatal(err)
 	}
 	rel := storedRelease.(*stored.Release)
+	if len(rel.Hooks) != 2 || rel.Hooks[0].Path != "demo/templates/hook-a.yaml" || rel.Hooks[1].Path != "demo/templates/hook-b.yaml" {
+		t.Fatalf("original hook paths lost: %#v %#v", rel.Hooks[0], rel.Hooks[1])
+	}
 	if !strings.Contains(rel.Manifest, "child-name") || strings.Count(rel.Manifest, "inherited") != 2 || rel.Info.Notes != "Installed demo in owned" || len(rel.Chart.Dependencies()) != 1 {
 		t.Fatalf("SDK semantics changed: %s %q", rel.Manifest, rel.Info.Notes)
 	}

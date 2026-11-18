@@ -11,13 +11,14 @@ import (
 	"context"
 	"crypto/rand"
 	_ "embed"
-	"encoding/json"
+	"encoding/binary"
 	"io"
 
 	"github.com/sandjaie/KubeSift/internal/helmrender/wire"
 	"github.com/sandjaie/KubeSift/internal/model"
 	"github.com/tetratelabs/wazero"
 	"github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
+	"helm.sh/helm/v4/pkg/chart/common"
 )
 
 //go:embed worker.wasm
@@ -55,11 +56,13 @@ func compiledRenderer(ctx context.Context) (wazero.Runtime, wazero.CompiledModul
 type Lookup func(apiVersion, kind, namespace, name string) (map[string]any, error)
 
 func Render(ctx context.Context, request wire.Request, lookup Lookup) (map[string]string, error) {
-	input, err := json.Marshal(request)
-	if err != nil || len(input) > wire.WireLimit {
+	request.Values = wire.Pack(request.Values).(common.Values)
+	request.Release = wire.Pack(request.Release).(map[string]any)
+	stdin := &bytes.Buffer{}
+	if err := wire.Write(stdin, request); err != nil {
 		return nil, model.Fail("capacity", "Chart rendering input exceeds its memory budget.")
 	}
-	stdin := bytes.NewBuffer(append(input, '\n'))
+
 	output := &renderOutput{input: stdin, lookup: lookup}
 	runtime, code, err := compiledRenderer(ctx)
 	if err == nil {
@@ -98,16 +101,23 @@ func (o *renderOutput) Write(data []byte) (int, error) {
 	}
 	o.pending.Write(data)
 	for {
-		line, _, found := bytes.Cut(o.pending.Bytes(), []byte{'\n'})
-		if !found {
+		if o.pending.Len() < 4 {
+			break
+		}
+		frameSize := int(binary.BigEndian.Uint32(o.pending.Bytes()[:4]))
+		if frameSize > wire.WireLimit {
+			o.err = model.Fail("capacity", "Helm renderer message exceeds its limit.")
+			return 0, o.err
+		}
+		if o.pending.Len() < 4+frameSize {
 			break
 		}
 		var message wire.Message
-		if err := json.Unmarshal(line, &message); err != nil || o.complete {
+		if err := wire.Read(bytes.NewReader(o.pending.Next(4+frameSize)), &message); err != nil || o.complete {
 			o.err = model.Fail("invalid_response", "Invalid bounded-renderer response.")
 			return 0, o.err
 		}
-		o.pending.Next(len(line) + 1)
+
 		if len(message.Lookup) != 0 {
 			if len(message.Lookup) != 4 || o.lookup == nil {
 				o.err = model.Fail("invalid", "Invalid Helm lookup request.")
@@ -123,17 +133,20 @@ func (o *renderOutput) Write(data []byte) (int, error) {
 			if err != nil {
 				o.err = err
 			}
-			response, encodeErr := json.Marshal(wire.LookupResponse{Object: object, Failed: err != nil})
-			if encodeErr != nil || len(response) > wire.OutputLimit {
+			var response bytes.Buffer
+			encodeErr := wire.Write(&response, wire.LookupResponse{Object: wire.Pack(object).(map[string]any), Failed: err != nil})
+			if encodeErr != nil || response.Len() > wire.OutputLimit {
 				o.err = model.Fail("capacity", "Helm lookup exceeds its rendering budget.")
 				return 0, o.err
 			}
-			o.input.Write(response)
-			o.input.WriteByte('\n')
+			o.input.Write(response.Bytes())
 			continue
 		}
 		o.complete = true
 		if message.Error != "" {
+			if o.err != nil {
+				continue
+			}
 			o.err = model.Fail("invalid", "Helm template rendering failed. Check the chart and values.")
 			if message.Error == "capacity" {
 				o.err = model.Fail("capacity", "Rendered Helm content exceeds 8 MiB.")

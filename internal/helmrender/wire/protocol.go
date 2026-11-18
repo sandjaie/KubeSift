@@ -20,7 +20,9 @@ type Chart struct {
 }
 
 func Capture(ch *chartv2.Chart) Chart {
-	out := Chart{Data: ch}
+	data := *ch
+	data.Values = Pack(ch.Values).(map[string]any)
+	out := Chart{Data: &data}
 	for _, dependency := range ch.Dependencies() {
 		out.Dependencies = append(out.Dependencies, Capture(dependency))
 	}
@@ -28,6 +30,7 @@ func Capture(ch *chartv2.Chart) Chart {
 }
 
 func (ch Chart) Restore() *chartv2.Chart {
+	ch.Data.Values = Unpack(ch.Data.Values).(map[string]any)
 	for _, dependency := range ch.Dependencies {
 		ch.Data.AddDependency(dependency.Restore())
 	}

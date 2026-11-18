@@ -20,6 +20,9 @@ import (
 	"helm.sh/helm/v4/pkg/chart/common"
 	chartv2 "helm.sh/helm/v4/pkg/chart/v2"
 	"helm.sh/helm/v4/pkg/engine"
+	"helm.sh/helm/v4/pkg/release"
+	stored "helm.sh/helm/v4/pkg/release/v1"
+	releaseutil "helm.sh/helm/v4/pkg/release/v1/util"
 )
 
 func boundedActionRender(ctx context.Context, cfg *action.Configuration, ch *chartv2.Chart) func() error {
@@ -100,8 +103,14 @@ func boundedActionRender(ctx context.Context, cfg *action.Configuration, ch *cha
 						}
 						continue
 					}
-					if strings.TrimSpace(files[path]) != "" {
-						output.WriteString("\n---\n# Source: " + path + "\n" + files[path])
+					documents := releaseutil.SplitManifests(files[path])
+					keys := make([]string, 0, len(documents))
+					for key := range documents {
+						keys = append(keys, key)
+					}
+					sort.Sort(releaseutil.BySplitManifestsOrder(keys))
+					for _, key := range keys {
+						output.WriteString("\n---\n# Source: " + path + "\n" + documents[key])
 					}
 				}
 				resources = output.String()
@@ -121,5 +130,22 @@ func boundedActionRender(ctx context.Context, cfg *action.Configuration, ch *cha
 	return func() error {
 		restore()
 		return renderErr
+	}
+}
+
+// Restore the source marker inserted per document by the bounded adapter before review or storage.
+func restoreHookPaths(value release.Releaser) {
+	rel, ok := value.(*stored.Release)
+	if !ok || rel == nil {
+		return
+	}
+	for _, hook := range rel.Hooks {
+		if hook == nil || !strings.HasSuffix(hook.Path, "/templates/kubesift-rendered.yaml") {
+			continue
+		}
+		line, _, _ := strings.Cut(hook.Manifest, "\n")
+		if path, ok := strings.CutPrefix(line, "# Source: "); ok {
+			hook.Path = path
+		}
 	}
 }
