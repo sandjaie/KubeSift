@@ -17,7 +17,9 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"encoding/pem"
+	"errors"
 	"fmt"
+	"github.com/sandjaie/KubeSift/internal/model"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -143,14 +145,40 @@ func TestChartSources(t *testing.T) {
 		t.Setenv("HELM_REGISTRY_CONFIG", filepath.Join(t.TempDir(), "must-not-read"))
 		manifest, _ := json.Marshal(map[string]any{"schemaVersion": 2, "mediaType": "application/vnd.oci.image.manifest.v1+json", "config": map[string]any{"mediaType": "application/vnd.cncf.helm.config.v1+json", "digest": chartHash([]byte("{}")), "size": 2}, "layers": []map[string]any{{"mediaType": "application/vnd.cncf.helm.chart.content.v1.tar+gzip", "digest": chartHash(raw), "size": len(raw)}}})
 		var expired atomic.Bool
+		var missing atomic.Bool
+		var bearer atomic.Bool
+		var tokens atomic.Int32
+		var realm string
 		repo := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			user, pass, _ := r.BasicAuth()
-			if expired.Load() || user != "test" || pass != "secret" {
-				w.Header().Set("WWW-Authenticate", `Basic realm="chart"`)
+			if r.URL.Path == "/token" {
+				if user != "test" || pass != "secret" || r.URL.Query().Get("scope") != "repository:demo:pull" {
+					t.Error("token exchange lost credentials or scope")
+					w.WriteHeader(401)
+					return
+				}
+				tokens.Add(1)
+				fmt.Fprint(w, `{"token":"synthetic-token","expires_in":300}`)
+				return
+			}
+			authorized := user == "test" && pass == "secret"
+			if bearer.Load() {
+				authorized = r.Header.Get("Authorization") == "Bearer synthetic-token"
+			}
+			if expired.Load() || !authorized {
+				challenge := `Basic realm="chart"`
+				if bearer.Load() {
+					challenge = `Bearer realm="` + realm + `",service="fixture",scope="repository:demo:pull"`
+				}
+				w.Header().Set("WWW-Authenticate", challenge)
 				w.WriteHeader(401)
 				return
 			}
 			if strings.Contains(r.URL.Path, "/manifests/") {
+				if missing.Load() {
+					w.WriteHeader(404)
+					return
+				}
 				w.Header().Set("Content-Type", "application/vnd.oci.image.manifest.v1+json")
 				w.Header().Set("Docker-Content-Digest", chartHash(manifest))
 				w.Header().Set("Content-Length", fmt.Sprint(len(manifest)))
@@ -164,6 +192,7 @@ func TestChartSources(t *testing.T) {
 			}
 		}))
 		defer repo.Close()
+		realm = repo.URL + "/token"
 		ca := filepath.Join(t.TempDir(), "ca.pem")
 		writeTestCA(t, ca, repo.Certificate())
 		s := NewService(nil)
@@ -177,9 +206,19 @@ func TestChartSources(t *testing.T) {
 		if err != nil || got.Digest != chartHash(raw) {
 			t.Fatalf("OCI: %+v %v", got, err)
 		}
+		bearer.Store(true)
+		if _, err := s.ResolveChart(context.Background(), req); err != nil || tokens.Load() == 0 {
+			t.Fatalf("bearer token exchange failed: %v", err)
+		}
+		bearer.Store(false)
 		expired.Store(true)
-		if _, err := s.ResolveChart(context.Background(), req); err == nil {
-			t.Fatal("expired credential accepted")
+		if _, err := s.ResolveChart(context.Background(), req); !problemCode(err, "authentication") {
+			t.Fatalf("expired credential classification: %v", err)
+		}
+		expired.Store(false)
+		missing.Store(true)
+		if _, err := s.ResolveChart(context.Background(), req); !problemCode(err, "not_found") {
+			t.Fatalf("missing chart classification: %v", err)
 		}
 	})
 	t.Run("downgrade and idle expiry", func(t *testing.T) {
@@ -273,6 +312,11 @@ func TestChartSources(t *testing.T) {
 		}
 	})
 
+}
+
+func problemCode(err error, code string) bool {
+	var problem *model.Problem
+	return errors.As(err, &problem) && problem.Code == code
 }
 
 func writeTestCA(t *testing.T, path string, certs ...*x509.Certificate) {

@@ -13,6 +13,8 @@ import (
 	"strconv"
 
 	"github.com/sandjaie/KubeSift/internal/model"
+	"helm.sh/helm/v4/pkg/chart/common"
+	chartv2 "helm.sh/helm/v4/pkg/chart/v2"
 	stored "helm.sh/helm/v4/pkg/release/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -47,7 +49,47 @@ func ReadCaptured(ctx context.Context, client kubernetes.Interface, ref RecordRe
 	if !ok {
 		return nil, model.Fail("unsupported", "Unsupported stored release format.")
 	}
-	return v, nil
+	return v, ValidateManagementRelease(v)
+}
+
+// Inspection tolerates absent optional details; management must not pass nil SDK pointers.
+func ValidateManagementRelease(r *stored.Release) error {
+	if r == nil || r.Info == nil || r.Chart == nil {
+		return corruptRow()
+	}
+	var checkChart func(*chartv2.Chart) bool
+	checkChart = func(ch *chartv2.Chart) bool {
+		if ch == nil || ch.Metadata == nil {
+			return false
+		}
+		for _, files := range [][]*common.File{ch.Templates, ch.Files, ch.Raw} {
+			for _, file := range files {
+				if file == nil {
+					return false
+				}
+			}
+		}
+		for _, dependency := range ch.Metadata.Dependencies {
+			if dependency == nil {
+				return false
+			}
+		}
+		for _, dependency := range ch.Dependencies() {
+			if !checkChart(dependency) {
+				return false
+			}
+		}
+		return true
+	}
+	if !checkChart(r.Chart) {
+		return corruptRow()
+	}
+	for _, hook := range r.Hooks {
+		if hook == nil {
+			return corruptRow()
+		}
+	}
+	return nil
 }
 
 // VerifyPayload checks expansion and identity before a management driver decodes a record.
@@ -67,14 +109,10 @@ func PayloadVerifier() func(context.Context, metav1.ObjectMeta, string) error {
 		if err != nil {
 			return err
 		}
-		var identity struct {
-			Name      string `json:"name"`
-			Namespace string `json:"namespace"`
-			Version   int    `json:"version"`
-		}
+		var identity stored.Release
 		if json.Unmarshal(raw, &identity) != nil || identity.Name != ref.ReleaseName || identity.Namespace != ref.Namespace || strconv.Itoa(identity.Version) != ref.Revision {
 			return model.Fail("invalid_response", "Stored release identity does not match its record.")
 		}
-		return nil
+		return ValidateManagementRelease(&identity)
 	}
 }

@@ -26,6 +26,8 @@ import (
 	chartv2 "helm.sh/helm/v4/pkg/chart/v2"
 	helmkube "helm.sh/helm/v4/pkg/kube"
 	stored "helm.sh/helm/v4/pkg/release/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 const renderedLimit = 8 << 20
@@ -40,6 +42,9 @@ type reviewData struct {
 	sections map[string]string
 	offsets  map[string]map[int]bool
 	cancel   context.CancelFunc
+	mapper   meta.RESTMapper
+	declared map[schema.GroupVersionKind]bool
+	deferred map[schema.GroupVersionKind]bool
 }
 
 func reviewValues(text string) (map[string]any, error) {
@@ -157,6 +162,10 @@ func (s *Service) Prepare(ctx context.Context, req PrepareRequest) (Review, erro
 	if err != nil {
 		return Review{}, err
 	}
+	r.mapper, err = cfg.sdk.RESTClientGetter.ToRESTMapper()
+	if err != nil {
+		return Review{}, safeHelmError(ctx, err)
+	}
 	current, previous, err := helmreader.CaptureHead(ctx, cfg.client, req.Target)
 	if err != nil {
 		return Review{}, err
@@ -192,13 +201,25 @@ func (s *Service) Prepare(ctx context.Context, req PrepareRequest) (Review, erro
 		if err != nil {
 			return Review{}, err
 		}
+		v2, ok := ch.(*chartv2.Chart)
+		if !ok {
+			return Review{}, model.Fail("unsupported", "This chart format is not supported by Helm actions.")
+		}
+		r.declared, err = declaredCRDs(v2)
+		if err != nil {
+			return Review{}, err
+		}
+		previewClient := &crdPreviewClient{Interface: cfg.sdk.KubeClient, mapper: r.mapper, declared: r.declared}
+		if req.Action == "install" && len(r.declared) > 0 {
+			cfg.sdk.KubeClient = previewClient
+		}
 		proposed, err = previewRelease(ctx, cfg.sdk, req, ch, values)
 		if err != nil {
 			return Review{}, safeHelmError(ctx, err)
 		}
-		v2, ok := ch.(*chartv2.Chart)
-		if !ok {
-			return Review{}, model.Fail("unsupported", "This chart format is not supported by Helm actions.")
+		r.deferred = previewClient.deferred
+		if len(r.deferred) > 0 {
+			r.Warnings = append(r.Warnings, "Unverified new CRD kinds: their resources are marked in the impact section, but server mapping, schema and ownership checks must wait until execution installs the CRDs.")
 		}
 		for _, crd := range v2.CRDObjects() {
 			r.sections["crds"] += "---\n" + string(crd.File.Data) + "\n"
@@ -242,6 +263,9 @@ func (s *Service) Prepare(ctx context.Context, req PrepareRequest) (Review, erro
 	if proposed == nil {
 		return Review{}, model.Fail("failed", "Helm returned no preview.")
 	}
+	if err := validateStoredSize(proposed); err != nil {
+		return Review{}, err
+	}
 	if req.Action != "uninstall" {
 		r.sections["manifest"] = proposed.Manifest
 	}
@@ -250,6 +274,10 @@ func (s *Service) Prepare(ctx context.Context, req PrepareRequest) (Review, erro
 			r.ChartName, r.ChartVersion = proposed.Chart.Metadata.Name, proposed.Chart.Metadata.Version
 		}
 		if proposed.Chart != nil {
+			r.declared, err = declaredCRDs(proposed.Chart)
+			if err != nil {
+				return Review{}, err
+			}
 			for _, crd := range proposed.Chart.CRDObjects() {
 				r.sections["crds"] += "---\n" + string(crd.File.Data) + "\n"
 			}
@@ -284,7 +312,17 @@ func (s *Service) Prepare(ctx context.Context, req PrepareRequest) (Review, erro
 	return r.Review, nil
 }
 
-func previewRelease(ctx context.Context, cfg *action.Configuration, req PrepareRequest, ch chart.Charter, values map[string]any) (*stored.Release, error) {
+func previewRelease(ctx context.Context, cfg *action.Configuration, req PrepareRequest, ch chart.Charter, values map[string]any) (result *stored.Release, resultErr error) {
+	v2, ok := ch.(*chartv2.Chart)
+	if !ok {
+		return nil, model.Fail("unsupported", "This chart format is not supported by Helm actions.")
+	}
+	finish := boundedActionRender(ctx, cfg, v2)
+	defer func() {
+		if err := finish(); err != nil {
+			resultErr = err
+		}
+	}()
 	if req.Action == "install" {
 		install := action.NewInstall(cfg)
 		install.ReleaseName, install.Namespace = req.Target.ReleaseName, req.Target.Namespace
@@ -310,11 +348,8 @@ func reviewContent(r *reviewData) error {
 		return model.Fail("capacity", "Rendered manifests, hooks and CRDs exceed 8 MiB.")
 	}
 	resources := []map[string]string{}
-	for _, section := range []string{"manifest", "hooks", "crds"} {
+	for _, section := range []string{"manifest", "hooks", "crds", "currentManifest"} {
 		text := r.sections[section]
-		if r.Action == "uninstall" && section == "manifest" {
-			text = r.sections["currentManifest"]
-		}
 		decoder := yaml.NewDecoder(strings.NewReader(text))
 		for {
 			var document yaml.Node
@@ -333,7 +368,33 @@ func reviewContent(r *reviewData) error {
 			}
 		}
 	}
-	identities, _ := yaml.Marshal(resources)
+	proposed := map[string]bool{}
+	for _, item := range resources {
+		if err := r.scopeIdentity(item); err != nil {
+			return err
+		}
+		if item["section"] == "manifest" {
+			proposed[identityKey(item)] = true
+		}
+	}
+	impact := make([]map[string]string, 0, len(resources))
+	for _, item := range resources {
+		item["effect"] = "proposed"
+		if item["section"] == "currentManifest" {
+			if proposed[identityKey(item)] {
+				continue
+			}
+			item["effect"] = "removed"
+			if item["keep"] == "keep" {
+				item["effect"] = "retained by keep policy"
+			}
+		}
+		impact = append(impact, item)
+	}
+	if len(impact) > 1000 {
+		return model.Fail("capacity", "Review exceeds 1,000 resource identities.")
+	}
+	identities, _ := yaml.Marshal(impact)
 	r.sections["resources"] = string(identities)
 	for name := range r.sections {
 		r.Sections = append(r.Sections, name)
@@ -369,7 +430,7 @@ func collectIdentities(node *yaml.Node, section string, resources *[]map[string]
 		return nil
 	}
 	*resources = append(*resources, map[string]string{"apiVersion": object.APIVersion, "kind": object.Kind, "name": object.Metadata.Name, "namespace": object.Metadata.Namespace, "section": section, "keep": object.Metadata.Annotations["helm.sh/resource-policy"]})
-	if len(*resources) > 1000 {
+	if len(*resources) > 2000 {
 		return model.Fail("capacity", "Review exceeds 1,000 resource identities.")
 	}
 	return nil

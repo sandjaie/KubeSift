@@ -24,8 +24,10 @@ import (
 	"github.com/sandjaie/KubeSift/internal/model"
 	"github.com/sandjaie/KubeSift/internal/preferences"
 	"go.yaml.in/yaml/v3"
+	"oras.land/oras-go/v2/errdef"
 	"oras.land/oras-go/v2/registry/remote"
 	"oras.land/oras-go/v2/registry/remote/auth"
+	"oras.land/oras-go/v2/registry/remote/errcode"
 )
 
 const indexLimit = 10 << 20
@@ -221,9 +223,21 @@ func sourceError(ctx context.Context, err error) error {
 	if ctx.Err() != nil {
 		return model.Fail("cancelled", "Chart resolution cancelled or timed out.")
 	}
+	if errors.Is(err, errdef.ErrNotFound) {
+		return model.Fail("not_found", "The requested chart version or digest was not found.")
+	}
 	var cert *tls.CertificateVerificationError
 	if errors.As(err, &cert) {
 		return model.Fail("tls", "Chart source certificate verification failed. Select the correct trusted CA.")
+	}
+	var response *errcode.ErrorResponse
+	if errors.As(err, &response) {
+		switch response.StatusCode {
+		case http.StatusUnauthorized, http.StatusForbidden:
+			return model.Fail("authentication", "The chart source rejected authentication. Renew credentials externally and retry.")
+		case http.StatusNotFound:
+			return model.Fail("not_found", "The requested chart version or digest was not found.")
+		}
 	}
 	// SDK/HTTP errors can include URLs, credentials or response bodies.
 	return model.Fail("unavailable", "Chart source request failed. Check its address, TLS configuration and credentials.")

@@ -19,7 +19,7 @@ import (
 	"github.com/sandjaie/KubeSift/internal/model"
 )
 
-const expandedLimit = 8 << 20
+const ExpandedLimit = 8 << 20
 
 type decodeBudget struct{ remaining int64 }
 
@@ -60,7 +60,7 @@ func (b *decodeBudget) decode(ctx context.Context, text string) ([]byte, error) 
 		defer gzipReader.Close()
 		reader = gzipReader
 	}
-	limit := min(b.remaining, expandedLimit)
+	limit := min(b.remaining, ExpandedLimit)
 	raw, err := io.ReadAll(io.LimitReader(cancelReader{ctx, reader}, limit+1))
 	b.remaining = max(0, b.remaining-int64(len(raw)))
 	if int64(len(raw)) > limit {

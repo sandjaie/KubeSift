@@ -26,7 +26,15 @@ func Run(assets fs.FS) error {
 	var timer *time.Timer
 	closing := false
 	restored := false
-	app := application.New(application.Options{Name: "KubeSift", Description: "Cluster workspace", Services: []application.Service{application.NewService(service), application.NewService(prefs), application.NewService(explorerService)}, Assets: application.AssetOptions{Handler: application.AssetFileServerFS(assets)}, Mac: application.MacOptions{ApplicationShouldTerminateAfterLastWindowClosed: true}, OnShutdown: func() {
+	guard := &quitGuard{active: func() bool {
+		for _, result := range explorerService.ListHelmResults() {
+			if result.State == "running" {
+				return true
+			}
+		}
+		return false
+	}}
+	app := application.New(application.Options{Name: "KubeSift", Description: "Cluster workspace", Services: []application.Service{application.NewService(service), application.NewService(prefs), application.NewService(explorerService)}, Assets: application.AssetOptions{Handler: application.AssetFileServerFS(assets)}, Mac: application.MacOptions{ApplicationShouldTerminateAfterLastWindowClosed: true}, ShouldQuit: guard.shouldQuit, OnShutdown: func() {
 		lock.Lock()
 		closing = true
 		if timer != nil {
@@ -34,8 +42,20 @@ func Run(assets fs.FS) error {
 		}
 		lock.Unlock()
 	}})
+	guard.quit = app.Quit
+	guard.warn = func(confirm, cancel func()) {
+		dialog := app.Dialog.Warning().SetTitle("Stop Helm operations and quit?").SetMessage("Helm operations are still running. Quitting cancels local work, but submitted changes and hooks may remain. Refresh release history before recovery.")
+		dialog.AddButton("Keep working").SetAsDefault().SetAsCancel().OnClick(cancel)
+		dialog.AddButton("Stop operations and quit").OnClick(confirm)
+		dialog.Show()
+	}
 	service.setEmitter(func(event model.Event) { app.Event.Emit("session", event) })
 	window := app.Window.NewWithOptions(application.WebviewWindowOptions{Title: "KubeSift", Width: 1440, Height: 900, URL: "/"})
+	window.RegisterHook(events.Common.WindowClosing, func(event *application.WindowEvent) {
+		if !guard.shouldQuit() {
+			event.Cancel()
+		}
+	})
 	workAreas := func() []preferences.Rect {
 		screens := app.Screen.GetAll()
 		areas := []preferences.Rect{}

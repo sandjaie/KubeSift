@@ -30,16 +30,33 @@ import (
 )
 
 type operationTransport struct {
-	ctx      context.Context
-	next     http.RoundTripper
-	readOnly bool
-	origin   string
-	writes   atomic.Bool
+	ctx       context.Context
+	next      http.RoundTripper
+	readOnly  bool
+	origin    string
+	writes    atomic.Bool
+	ambiguous atomic.Bool
 }
 
 type ownedBody struct {
 	io.ReadCloser
-	done func()
+	done      func()
+	ambiguous *atomic.Bool
+}
+
+func (t *operationTransport) outcome(err error) error {
+	if t.ambiguous.Load() {
+		return model.Fail("unknown_outcome", "A Kubernetes write response was lost. Refresh release history before any recovery.")
+	}
+	return err
+}
+
+func (b *ownedBody) Read(p []byte) (int, error) {
+	n, err := b.ReadCloser.Read(p)
+	if err != nil && err != io.EOF && b.ambiguous != nil {
+		b.ambiguous.Store(true)
+	}
+	return n, err
 }
 
 func (b *ownedBody) Close() error {
@@ -67,10 +84,17 @@ func (t *operationTransport) RoundTrip(req *http.Request) (*http.Response, error
 	}
 	res, err := t.next.RoundTrip(req.Clone(ctx))
 	if err != nil {
+		if mutating {
+			t.ambiguous.Store(true)
+		}
 		done()
 		return nil, err
 	}
-	res.Body = &ownedBody{ReadCloser: res.Body, done: done}
+	body := &ownedBody{ReadCloser: res.Body, done: done}
+	if mutating {
+		body.ambiguous = &t.ambiguous
+	}
+	res.Body = body
 	return res, nil
 }
 
@@ -87,6 +111,13 @@ func (g *nativeGetter) ToDiscoveryClient() (discovery.CachedDiscoveryInterface, 
 	return g.discovery, nil
 }
 func (g *nativeGetter) ToRESTMapper() (meta.RESTMapper, error) {
+	if g.discovery == nil {
+		client, err := discovery.NewDiscoveryClientForConfig(g.config)
+		if err != nil {
+			return nil, err
+		}
+		g.discovery = memory.NewMemCacheClient(client)
+	}
 	return restmapper.NewDeferredDiscoveryRESTMapper(g.discovery), nil
 }
 func (g *nativeGetter) ToRawKubeConfigLoader() clientcmd.ClientConfig {

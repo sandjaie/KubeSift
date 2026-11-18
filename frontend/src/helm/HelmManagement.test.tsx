@@ -125,6 +125,22 @@ test("failed preparation announces an error and cannot confirm", async () => {
   expect(host.querySelector('[role="alert"]')?.textContent).toContain("Synthetic forbidden");
   expect(button("Confirm upgrade")).toBeUndefined();
 });
+test.each(["Reset to chart defaults", "Import values file"])("%s owns values after a delayed initial read", async (label) => {
+  let resolve!: (text: string) => void;
+  bridge.loadUpgradeValues.mockReturnValue({
+    promise: new Promise<string>((done) => {
+      resolve = done;
+    }),
+    cancel: vi.fn(),
+  });
+  bridge.importHelmValues.mockResolvedValue("message: imported\n");
+  await render();
+  await act(async () => button(label).click());
+  await act(async () => resolve("message: old\n"));
+  expect(host.querySelector<HTMLTextAreaElement>('textarea[aria-label="Override values"]')!.value).toBe(
+    label === "Import values file" ? "message: imported\n" : "{}\n",
+  );
+});
 test("navigation revokes a late preview and does not revive confirmation", async () => {
   let resolve!: (value: typeof response) => void;
   bridge.prepareHelmReview.mockReturnValue({

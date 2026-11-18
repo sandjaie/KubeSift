@@ -20,6 +20,7 @@ import { NamespaceControl } from "./workspace/NamespaceControl";
 import { HelmWorkspace } from "./helm/HelmWorkspace";
 import { useHelm } from "./helm/useHelm";
 import { HelmActionDialog } from "./helm/HelmActionDialog";
+import { helmManagementAPI } from "./helm/managementApi";
 import { HelmOperationResults, useHelmOperationResults } from "./helm/HelmOperationResults";
 import type { HelmAction } from "./helm/managementState";
 import type { Target as HelmTarget } from "../bindings/internal/helmmanager/models";
@@ -244,7 +245,7 @@ export default function App() {
     setPage("workspace");
     void controller.connect(entry);
   }
-  const [closeTarget, setCloseTarget] = useState<{ key: string; entries: string[] } | null>(null);
+  const [closeTarget, setCloseTarget] = useState<{ key: string; entries: string[]; reconnect: boolean } | null>(null);
   function close(key: string) {
     if (editor?.tab === key && !editor.submitting) {
       setEditor({ ...editor, suspended: false, closing: true });
@@ -252,33 +253,38 @@ export default function App() {
     }
     closeTab(key);
   }
-  function completeTabClose(key: string) {
+  function completeTabClose(key: string, reconnect = false) {
     void Promise.all([logs.store.closeTab(key), interactive.store.closeTab(key)])
       .then(() => {
         workloads.close(key);
         helm.closeTab(key);
         leaveHelm(key);
-        return controller.cancel(key);
+        return reconnect ? controller.retry(key) : controller.cancel(key);
       })
       .catch(() => setStartupError("Could not close the tab’s sessions. Retry cleanup."));
   }
-  function closeTab(key: string) {
+  function closeTab(key: string, reconnect = false) {
     const sessions = interactive.entries.filter((entry) => entry.tab === key);
     const labels = [
       ...logs.sessions.filter((entry) => entry.tab === key).map((entry) => `Logs · ${entry.request.resource.name} · ${entry.status}`),
       ...sessions.map((entry) => `${entry.kind === "terminal" ? "Terminal" : "Forward"} · ${entry.target.resource.name} · ${entry.state}`),
     ];
     const ref = state.tabs[key]?.view?.ref;
-    for (const result of helmResults.results) {
-      if (result.state === "running" && ref && sameConnection(result.target.connection, ref))
-        labels.push(
-          `Helm ${result.action} · ${result.target.namespace}/${result.target.releaseName} · cancellation requested on close; partial changes may remain`,
-        );
-    }
     const pending = interactive.store.countTab(key) - sessions.length;
     if (pending > 0) labels.push(`${pending} session start${pending === 1 ? "" : "s"} in progress`);
-    if (labels.length) setCloseTarget({ key, entries: labels });
-    else completeTabClose(key);
+    void helmManagementAPI.ListHelmResults().then(
+      (results) => {
+        for (const result of results ?? []) {
+          if (result.state === "running" && ref && sameConnection(result.target.connection, ref))
+            labels.push(
+              `Helm ${result.action} · ${result.target.namespace}/${result.target.releaseName} · cancellation requested; partial changes may remain`,
+            );
+        }
+        if (labels.length) setCloseTarget({ key, entries: labels, reconnect });
+        else completeTabClose(key, reconnect);
+      },
+      () => setStartupError("Could not check active Helm operations. Retry closing or reconnecting the tab."),
+    );
   }
   useEffect(() => {
     interactive.store.syncConnections((tab, ref) => {
@@ -541,7 +547,7 @@ export default function App() {
             <ConnectionControls
               key={`connection-${state.active}`}
               tab={active}
-              onRetry={() => void controller.retry(state.active!)}
+              onRetry={() => closeTab(state.active!, true)}
               onCancel={() => close(state.active!)}
               onReview={() => {
                 setTrustTarget(active.entry);
@@ -613,7 +619,7 @@ export default function App() {
                 onConnect={(entry) => {
                   setPage("workspace");
                   const key = JSON.stringify([entry.sourceId, entry.context]);
-                  if (state.tabs[key]) void controller.retry(key);
+                  if (state.tabs[key]) closeTab(key, true);
                   else void controller.connect(entry);
                 }}
               />
@@ -790,8 +796,11 @@ export default function App() {
         onSelect={setDockSession}
       />
       {closeTarget && (
-        <Modal title="Close cluster tab?" onCancel={() => setCloseTarget(null)}>
-          <p>Close {state.tabs[closeTarget.key]?.entry.context} and these sessions?</p>
+        <Modal title={closeTarget.reconnect ? "Reconnect cluster?" : "Close cluster tab?"} onCancel={() => setCloseTarget(null)}>
+          <p>
+            {closeTarget.reconnect ? "Reconnect" : "Close"} {state.tabs[closeTarget.key]?.entry.context} and stop these sessions and
+            operations?
+          </p>
           <ul>
             {closeTarget.entries.map((entry, index) => (
               <li key={index}>{entry}</li>
@@ -802,10 +811,10 @@ export default function App() {
             onClick={() => {
               const key = closeTarget.key;
               setCloseTarget(null);
-              completeTabClose(key);
+              completeTabClose(key, closeTarget.reconnect);
             }}
           >
-            Close tab and sessions
+            {closeTarget.reconnect ? "Stop work and reconnect" : "Close tab and sessions"}
           </button>
         </Modal>
       )}

@@ -4,6 +4,7 @@ go 1.26.0
 
 require (
 	github.com/opencontainers/image-spec v1.1.1
+	github.com/tetratelabs/wazero v1.12.0
 	github.com/wailsapp/wails/v3 v3.1.0
 	go.yaml.in/yaml/v3 v3.0.5
 	helm.sh/helm/v4 v4.3.1
@@ -112,7 +113,6 @@ require (
 	github.com/spf13/cobra v1.10.2 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/tetratelabs/wabin v0.0.0-20230304001439-f6f874872834 // indirect
-	github.com/tetratelabs/wazero v1.12.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xlab/treeprint v1.2.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.11.0 // indirect

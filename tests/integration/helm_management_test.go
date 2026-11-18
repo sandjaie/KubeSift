@@ -274,8 +274,11 @@ func TestHelmManagement(t *testing.T) {
 				driver = "configmap"
 			}
 			target := helmmanager.Target{Connection: ref, Namespace: ns, Driver: driver, ReleaseName: "same-name"}
-			req := helmmanager.PrepareRequest{Action: "install", Target: target, ChartID: local(), ValuesYAML: "marker: one\n"}
+			req := helmmanager.PrepareRequest{Action: "install", Target: target, ChartID: local(), ValuesYAML: "marker: one\ncustomResource: true\n"}
 			review := prepare(req)
+			if !strings.Contains(strings.Join(review.Warnings, "\n"), "Unverified new CRD kind") {
+				t.Fatal("first install did not explain deferred custom-resource verification")
+			}
 			for _, section := range []string{"hooks", "crds", "resources"} {
 				part, err := service.ReadReview(ctx, review.Token, section, 0)
 				if err != nil || part.Text == "" {

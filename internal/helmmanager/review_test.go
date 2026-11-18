@@ -9,8 +9,18 @@ package helmmanager
 import (
 	"bytes"
 	"context"
+	"github.com/sandjaie/KubeSift/internal/helmrender"
+	"github.com/sandjaie/KubeSift/internal/helmrender/wire"
+	"helm.sh/helm/v4/pkg/action"
+	"helm.sh/helm/v4/pkg/chart/common"
 	chartutil "helm.sh/helm/v4/pkg/chart/common/util"
 	chartv2 "helm.sh/helm/v4/pkg/chart/v2"
+	"helm.sh/helm/v4/pkg/kube/fake"
+	stored "helm.sh/helm/v4/pkg/release/v1"
+	"helm.sh/helm/v4/pkg/storage"
+	"helm.sh/helm/v4/pkg/storage/driver"
+	"io"
+	"k8s.io/client-go/rest"
 	"log"
 	"log/slog"
 	"net/http"
@@ -19,7 +29,51 @@ import (
 	"time"
 )
 
+func TestBothActionRendersAreBounded(t *testing.T) {
+	raw := archive(t, map[string]string{
+		"demo/Chart.yaml":        "apiVersion: v2\nname: demo\nversion: 1.0.0\n",
+		"demo/templates/cm.yaml": "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: demo\ndata:\n  value: {{ repeat 9437184 \"x\" | quote }}\n",
+	})
+	for _, preview := range []bool{true, false} {
+		cfg := &action.Configuration{KubeClient: &fake.PrintingKubeClient{Out: io.Discard}, Releases: storage.Init(driver.NewMemory()), Capabilities: common.DefaultCapabilities.Copy(), RESTClientGetter: &nativeGetter{config: &rest.Config{Host: "https://unused.invalid"}, namespace: "owned"}}
+		cfg.SetLogger(slog.DiscardHandler)
+		req := PrepareRequest{Action: "install", Target: Target{Namespace: "owned", ReleaseName: "demo"}, Options: Options{TimeoutSeconds: 60}}
+		ch, err := loadChart(context.Background(), raw)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if preview {
+			_, err = previewRelease(context.Background(), cfg, req, ch, map[string]any{})
+		} else {
+			err = invokeAction(context.Background(), cfg, &reviewData{Review: Review{Action: "install", Target: req.Target, Options: req.Options}, request: req, raw: raw})
+		}
+		if err == nil {
+			t.Errorf("preview=%v accepted oversized render", preview)
+		}
+	}
+}
+
+func TestManagementStorageOutputBudget(t *testing.T) {
+	ch, err := loadChart(context.Background(), tinyChart(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	rel := &stored.Release{Name: "demo", Namespace: "owned", Version: 1, Info: &stored.Info{Status: "deployed"}, Chart: ch.(*chartv2.Chart), Manifest: "kind: ConfigMap\n"}
+	rel.Chart.Files = []*common.File{{Name: "large.txt", Data: []byte(strings.Repeat("x", 7<<20))}}
+	d := &managementStorage{Driver: driver.NewMemory()}
+	if err := validateStoredSize(rel); err == nil {
+		t.Fatal("oversized proposed release passed preflight")
+	}
+	if err := d.Create("demo", rel); err == nil {
+		t.Fatal("oversized release reached storage")
+	}
+	if err := d.Update("demo", rel); err == nil {
+		t.Fatal("oversized release update reached storage")
+	}
+}
+
 func TestHelmReview(t *testing.T) {
+	warmRenderer(t)
 	t.Run("native namespace never falls back to default", func(t *testing.T) {
 		getter := &nativeGetter{namespace: "reviewed-namespace"}
 		namespace, _, err := getter.ToRawKubeConfigLoader().Namespace()
@@ -119,6 +173,19 @@ func TestHelmReview(t *testing.T) {
 	})
 }
 
+func warmRenderer(t *testing.T) {
+	t.Helper()
+	ch, err := loadChart(context.Background(), tinyChart(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Compile trusted code before timing action cancellation; -race instrumentation makes compilation much slower.
+	_, err = helmrender.Render(context.Background(), wire.Request{Chart: wire.Capture(ch.(*chartv2.Chart)), Values: common.Values{"message": "warm"}, Release: map[string]any{"Name": "warm", "Namespace": "owned"}, Capabilities: common.DefaultCapabilities.Copy()}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestReviseHelmReviewTransfersChart(t *testing.T) {
 	s := NewService(nil)
 	defer s.Close()
@@ -141,4 +208,39 @@ func TestReviseHelmReviewTransfersChart(t *testing.T) {
 		t.Fatal("chart transfer lost its draft reservation")
 	}
 	s.Discard(chart.ID)
+}
+
+func TestBoundedActionPreservesDependenciesAndStoredChart(t *testing.T) {
+	raw := archive(t, map[string]string{
+		"demo/Chart.yaml":                          "apiVersion: v2\nname: demo\nversion: 1.0.0\ndependencies:\n- name: child\n  version: 1.0.0\n  alias: renamed\n- name: disabled\n  version: 1.0.0\n  condition: disabled.enabled\n",
+		"demo/values.yaml":                         "renamed:\n  message: inherited\ndisabled:\n  enabled: false\n",
+		"demo/templates/cm.yaml":                   "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: {{ include \"child.name\" . }}\ndata:\n  value: {{ .Subcharts.renamed.Values.message | quote }}\n",
+		"demo/charts/disabled/Chart.yaml":          "apiVersion: v2\nname: disabled\nversion: 1.0.0\n",
+		"demo/charts/disabled/templates/fail.yaml": `{{ fail "disabled dependency rendered" }}`,
+		"demo/templates/NOTES.txt":                 "Installed {{ .Release.Name }} in {{ .Release.Namespace }}",
+		"demo/charts/child/Chart.yaml":             "apiVersion: v2\nname: child\nversion: 1.0.0\n",
+		"demo/charts/child/templates/_helpers.tpl": "{{ define \"child.name\" }}child-name{{ end }}",
+		"demo/charts/child/templates/cm.yaml":      "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: child\ndata:\n  value: {{ .Values.message | quote }}\n",
+	})
+	cfg := &action.Configuration{KubeClient: &fake.PrintingKubeClient{Out: io.Discard}, Releases: storage.Init(driver.NewMemory()), Capabilities: common.DefaultCapabilities.Copy(), RESTClientGetter: &nativeGetter{config: &rest.Config{Host: "https://unused.invalid"}, namespace: "owned"}}
+	cfg.SetLogger(slog.DiscardHandler)
+	r := &reviewData{Review: Review{Action: "install", Target: Target{Namespace: "owned", ReleaseName: "demo"}, Options: Options{TimeoutSeconds: 60}}, raw: raw}
+	if err := invokeAction(context.Background(), cfg, r); err != nil {
+		t.Fatal(err)
+	}
+	storedRelease, err := cfg.Releases.Last("demo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	rel := storedRelease.(*stored.Release)
+	if !strings.Contains(rel.Manifest, "child-name") || strings.Count(rel.Manifest, "inherited") != 2 || rel.Info.Notes != "Installed demo in owned" || len(rel.Chart.Dependencies()) != 1 {
+		t.Fatalf("SDK semantics changed: %s %q", rel.Manifest, rel.Info.Notes)
+	}
+	for _, ch := range []*chartv2.Chart{rel.Chart, rel.Chart.Dependencies()[0]} {
+		for _, file := range ch.Templates {
+			if strings.Contains(string(file.Data), "kubesiftBoundedRender") {
+				t.Fatal("temporary adapter template leaked into stored release")
+			}
+		}
+	}
 }

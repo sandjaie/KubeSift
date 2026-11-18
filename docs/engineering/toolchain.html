@@ -77,8 +77,10 @@
 wails3 task build
 scripts/check.sh</code></pre>
       <p>
-        The build generates the desktop bindings and frontend bundle. For the macOS packaging command and launch instructions, see the
-        <a href="../../README.md">README</a>. Local packages are ad-hoc signed.
+        The build generates the desktop bindings, frontend bundle and isolated Helm renderer. Both build and check tasks compile
+        <code>internal/helmrender/worker.wasm</code> from the pinned SDK using Go's WASI target; the generated asset is ignored by Git.
+        Before running raw Go test/build commands in a fresh checkout, run <code>sh scripts/build-helm-renderer.sh</code>. For the macOS
+        packaging command and launch instructions, see the <a href="../../README.md">README</a>. Local packages are ad-hoc signed.
       </p>
       <h2 id="cluster-tools">Local cluster tools</h2>
       <p>

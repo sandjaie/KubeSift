@@ -20,6 +20,7 @@ import (
 )
 
 func TestHelmExecution(t *testing.T) {
+	warmRenderer(t)
 	t.Run("SDK action cancellation", testActionCancellation)
 	t.Run("stale heads and rollback records", func(t *testing.T) { testReviewFixture(t, true) })
 	t.Run("background SDK HTTP is cancelled", func(t *testing.T) {

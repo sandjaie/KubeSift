@@ -148,7 +148,7 @@ func testReviewFixture(t *testing.T, checkExecution bool) {
 			if checkExecution {
 				recordsMu.Lock()
 				if verb == "install" {
-					rel := &stored.Release{Name: "demo", Namespace: "owned", Version: 1, Info: &stored.Info{Status: "deployed"}}
+					rel := &stored.Release{Name: "demo", Namespace: "owned", Version: 1, Info: &stored.Info{Status: "deployed"}, Chart: chart.(*chartv2.Chart)}
 					encoded, _ := json.Marshal(rel)
 					records = append(records, core.ConfigMap{TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "ConfigMap"}, ObjectMeta: metav1.ObjectMeta{Name: "sh.helm.release.v1.demo.v1", Namespace: "owned", UID: "appeared", ResourceVersion: "1", Labels: map[string]string{"owner": "helm", "name": "demo", "version": "1"}}, Data: map[string]string{"release": base64.StdEncoding.EncodeToString(encoded)}})
 				} else if verb == "rollback" {

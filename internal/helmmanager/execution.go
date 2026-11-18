@@ -16,6 +16,7 @@ import (
 	"github.com/sandjaie/KubeSift/internal/helmreader"
 	"github.com/sandjaie/KubeSift/internal/model"
 	"helm.sh/helm/v4/pkg/action"
+	chartv2 "helm.sh/helm/v4/pkg/chart/v2"
 	helmkube "helm.sh/helm/v4/pkg/kube"
 )
 
@@ -88,7 +89,7 @@ func (s *Service) Execute(token string) (Result, error) {
 				problem = &model.Problem{Code: "failed", Message: "Helm action failed."}
 			}
 			e.result.Problem = problem
-			if wrote && (ctx.Err() != nil || problem.Code == "timeout" || problem.Code == "unreachable") {
+			if wrote && (ctx.Err() != nil || problem.Code == "timeout" || problem.Code == "unreachable" || problem.Code == "unknown_outcome") {
 				e.result.State, e.result.Stage = "unknown", "Outcome uncertain; refresh release history before any recovery"
 			}
 		}
@@ -166,7 +167,7 @@ func (s *Service) performAction(ctx context.Context, r *reviewData) (*helmreader
 		e.result.Stage = "Running reviewed Helm action"
 	}
 	s.mu.Unlock()
-	err = invokeAction(ctx, cfg.sdk, r)
+	err = cfg.transport.outcome(invokeAction(ctx, cfg.sdk, r))
 	wrote := cfg.transport.writes.Load()
 	var observed *helmreader.ReleaseSummary
 	if ctx.Err() == nil {
@@ -192,7 +193,7 @@ func (s *Service) performAction(ctx context.Context, r *reviewData) (*helmreader
 	return observed, wrote, err
 }
 
-func invokeAction(ctx context.Context, cfg *action.Configuration, r *reviewData) error {
+func invokeAction(ctx context.Context, cfg *action.Configuration, r *reviewData) (resultErr error) {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
@@ -207,6 +208,16 @@ func invokeAction(ctx context.Context, cfg *action.Configuration, r *reviewData)
 		if err != nil {
 			return err
 		}
+		v2, ok := ch.(*chartv2.Chart)
+		if !ok {
+			return model.Fail("unsupported", "This chart format is not supported by Helm actions.")
+		}
+		finish := boundedActionRender(ctx, cfg, v2)
+		defer func() {
+			if err := finish(); err != nil {
+				resultErr = err
+			}
+		}()
 		values, err := reviewValues(r.request.ValuesYAML)
 		if err != nil {
 			return err

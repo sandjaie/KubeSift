@@ -194,6 +194,13 @@
         cluster, namespace, driver and release target across navigation; report partial failures and cancellation without claiming atomicity
         or automatic recovery. Local packages, HTTPS repositories and OCI registries resolve to native chart snapshots before confirmation.
       </p>
+      <p>
+        Install and upgrade rendering use the pinned SDK engine in a bundled WebAssembly worker, hosted by the existing wazero dependency.
+        Fixed native adapter templates pass SDK-coalesced values and selected dependencies into the worker; original chart templates are
+        restored before release storage. The worker has bounded memory and context termination, with live lookup mediated by the captured
+        native transport. Build and check tasks compile the worker from source. Its trusted compiled code is reused within the app session;
+        each chart invocation owns separate memory. No Helm CLI or external worker process is shipped.
+      </p>
     </main>
   </body>
 </html>

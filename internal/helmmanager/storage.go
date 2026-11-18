@@ -8,16 +8,45 @@ package helmmanager
 
 import (
 	"context"
+	"encoding/json"
 	"log/slog"
 
 	"github.com/sandjaie/KubeSift/internal/helmreader"
 	"github.com/sandjaie/KubeSift/internal/model"
+	"helm.sh/helm/v4/pkg/release"
 	"helm.sh/helm/v4/pkg/storage/driver"
 	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	typed "k8s.io/client-go/kubernetes/typed/core/v1"
 )
+
+type managementStorage struct{ driver.Driver }
+
+func validateStoredSize(rel release.Releaser) error {
+	encoded, err := json.Marshal(rel)
+	if err != nil {
+		return model.Fail("invalid_response", "Helm release cannot be serialized safely.")
+	}
+	if len(encoded) > helmreader.ExpandedLimit {
+		return model.Fail("capacity", "The complete stored Helm release exceeds 8 MiB, including chart files and values.")
+	}
+	return nil
+}
+
+func (d *managementStorage) Create(key string, rel release.Releaser) error {
+	if err := validateStoredSize(rel); err != nil {
+		return err
+	}
+	return d.Driver.Create(key, rel)
+}
+
+func (d *managementStorage) Update(key string, rel release.Releaser) error {
+	if err := validateStoredSize(rel); err != nil {
+		return err
+	}
+	return d.Driver.Update(key, rel)
+}
 
 type boundedSecrets struct {
 	typed.SecretInterface
@@ -111,5 +140,5 @@ func newStorageDriver(ctx context.Context, client kubernetes.Interface, target T
 		d = driver.NewSecrets(boundedSecrets{client.CoreV1().Secrets(target.Namespace), ctx})
 	}
 	d.(interface{ SetLogger(slog.Handler) }).SetLogger(slog.DiscardHandler)
-	return d
+	return &managementStorage{Driver: d}
 }

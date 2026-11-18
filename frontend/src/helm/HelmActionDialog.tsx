@@ -72,6 +72,7 @@ export function HelmActionDialog({
   const chartID = useRef("");
   const active = useRef(true);
   const cancelledRead = useRef<(() => void) | undefined>();
+  const cancelInitialValues = useRef<(() => void) | undefined>();
   const source = sources.find((item) => item.id === sourceID);
 
   useLayoutEffect(() => {
@@ -113,6 +114,10 @@ export function HelmActionDialog({
     if (action !== "upgrade" || !valid) return;
     let current = true;
     const read = loadUpgradeValues(target);
+    cancelInitialValues.current = () => {
+      current = false;
+      read.cancel();
+    };
     void read.promise.then(
       (text) => {
         if (current) {
@@ -406,6 +411,7 @@ export function HelmActionDialog({
                 <div className="button-row">
                   <button
                     onClick={() => {
+                      cancelInitialValues.current?.();
                       setValues("{}\n");
                       setValuesReady(true);
                     }}
@@ -414,6 +420,7 @@ export function HelmActionDialog({
                   </button>
                   <button
                     onClick={() => {
+                      cancelInitialValues.current?.();
                       setBusy(true);
                       void importHelmValues()
                         .then(
