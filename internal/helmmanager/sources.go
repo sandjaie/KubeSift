@@ -70,6 +70,14 @@ func (s *Service) invalidateSourceLocked(id string) {
 		old.cancel()
 	}
 	delete(s.indexes, id)
+	for token, r := range s.reviews {
+		if r.source == id {
+			if r.cancel != nil {
+				r.cancel()
+			}
+			delete(s.reviews, token)
+		}
+	}
 	for key, c := range s.charts {
 		if c.source == id {
 			delete(s.charts, key)

@@ -50,11 +50,28 @@ type Service struct {
 	indexes          map[string]indexData
 	closed           bool
 	sourceGeneration uint64
+	reviews          map[string]*reviewData
+	configure        func(context.Context, Target, bool) (*configuration, error)
 }
 
 func NewService(connections *connection.Manager) *Service {
+	suppressHelmLogs()
 	ctx, cancel := context.WithCancel(context.Background())
-	s := &Service{connections: connections, ctx: ctx, cancel: cancel, sources: map[string]sourceData{}, charts: map[string]*chartData{}, indexes: map[string]indexData{}}
+	s := &Service{connections: connections, ctx: ctx, cancel: cancel, sources: map[string]sourceData{}, charts: map[string]*chartData{}, indexes: map[string]indexData{}, reviews: map[string]*reviewData{}}
+	if connections != nil {
+		connections.AddCleanup(func(ref model.ConnectionRef) {
+			s.mu.Lock()
+			defer s.mu.Unlock()
+			for id, r := range s.reviews {
+				if r.Target.Connection == ref {
+					if r.cancel != nil {
+						r.cancel()
+					}
+					delete(s.reviews, id)
+				}
+			}
+		})
+	}
 	s.wg.Add(1)
 	go func() {
 		defer s.wg.Done()
@@ -75,6 +92,14 @@ func NewService(connections *connection.Manager) *Service {
 }
 func (s *Service) expireLocked() {
 	now := time.Now()
+	for id, r := range s.reviews {
+		if now.After(r.ExpiresAt) {
+			if r := s.reviews[id]; r != nil && r.cancel != nil {
+				r.cancel()
+			}
+			delete(s.reviews, id)
+		}
+	}
 	for id, c := range s.charts {
 		if now.After(c.ExpiresAt) {
 			delete(s.charts, id)
@@ -93,6 +118,7 @@ func (s *Service) Close() {
 	s.sources = map[string]sourceData{}
 	s.charts = map[string]*chartData{}
 	s.indexes = map[string]indexData{}
+	s.reviews = map[string]*reviewData{}
 	s.mu.Unlock()
 	s.wg.Wait()
 }
@@ -113,14 +139,22 @@ func (s *Service) reserve(source string, generation uint64) (*chartData, error) 
 	if s.closed {
 		return nil, model.Fail("cancelled", "Helm manager is closed.")
 	}
-	if len(s.charts) >= 4 {
+	if len(s.charts)+len(s.reviews) >= 4 {
 		return nil, model.Fail("capacity", "Four Helm drafts are already retained. Close a draft first.")
 	}
 	c := &chartData{ChartSnapshot: ChartSnapshot{ID: model.ID(), ExpiresAt: time.Now().Add(reviewTTL)}, source: source, generation: generation}
 	s.charts[c.ID] = c
 	return c, nil
 }
-func (s *Service) Discard(id string) { s.mu.Lock(); defer s.mu.Unlock(); delete(s.charts, id) }
+func (s *Service) Discard(id string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	delete(s.charts, id)
+	if r := s.reviews[id]; r != nil && r.cancel != nil {
+		r.cancel()
+	}
+	delete(s.reviews, id)
+}
 func (s *Service) ImportChart(path string) (string, error) {
 	if filepath.Ext(path) != ".tgz" {
 		return "", model.Fail("invalid", "Choose a packaged .tgz chart.")

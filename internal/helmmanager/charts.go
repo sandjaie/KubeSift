@@ -12,6 +12,7 @@ import (
 	"compress/gzip"
 	"context"
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"io"
 	"path"
@@ -126,6 +127,15 @@ func completeDependencies(c chart.Charter) error {
 	if err != nil {
 		return model.Fail("unsupported", "Unsupported chart format.")
 	}
+	if len(a.Schema()) > 0 {
+		var schema any
+		if err := json.Unmarshal(a.Schema(), &schema); err != nil {
+			return model.Fail("invalid", "Chart schema is invalid JSON.")
+		}
+		if err := localSchema(schema, 0); err != nil {
+			return err
+		}
+	}
 	present := map[string]bool{}
 	for _, dep := range a.Dependencies() {
 		da, err := chart.NewAccessor(dep)
@@ -149,3 +159,43 @@ func completeDependencies(c chart.Charter) error {
 	return nil
 }
 func chartHash(raw []byte) string { return fmt.Sprintf("sha256:%x", sha256.Sum256(raw)) }
+
+// Helm's schema loader otherwise opens arbitrary files and unowned HTTP clients.
+func localSchema(value any, depth int) error {
+	if depth > 32 {
+		return model.Fail("capacity", "Chart schema nesting exceeds 32 levels.")
+	}
+	switch node := value.(type) {
+	case map[string]any:
+		for key, child := range node {
+			if key == "$schema" {
+				known := map[string]bool{
+					"http://json-schema.org/draft-04/schema#":      true,
+					"http://json-schema.org/draft-06/schema#":      true,
+					"http://json-schema.org/draft-07/schema#":      true,
+					"https://json-schema.org/draft/2019-09/schema": true,
+					"https://json-schema.org/draft/2020-12/schema": true,
+				}
+				uri, _ := child.(string)
+				if !known[uri] {
+					return model.Fail("unsupported", "Use a standard bundled JSON Schema dialect.")
+				}
+			}
+			if key == "$ref" || key == "$dynamicRef" || key == "$recursiveRef" || key == "$id" || key == "id" {
+				if ref, ok := child.(string); ok && ref != "" && !strings.HasPrefix(ref, "#") {
+					return model.Fail("unsupported", "Chart schemas must be self-contained; external file and network references are not supported.")
+				}
+			}
+			if err := localSchema(child, depth+1); err != nil {
+				return err
+			}
+		}
+	case []any:
+		for _, child := range node {
+			if err := localSchema(child, depth+1); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
