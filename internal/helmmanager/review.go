@@ -24,6 +24,7 @@ import (
 	"helm.sh/helm/v4/pkg/action"
 	"helm.sh/helm/v4/pkg/chart"
 	chartv2 "helm.sh/helm/v4/pkg/chart/v2"
+	helmkube "helm.sh/helm/v4/pkg/kube"
 	stored "helm.sh/helm/v4/pkg/release/v1"
 )
 
@@ -231,6 +232,8 @@ func (s *Service) Prepare(ctx context.Context, req PrepareRequest) (Review, erro
 	case "uninstall":
 		uninstall := action.NewUninstall(cfg.sdk)
 		uninstall.DryRun = true
+		uninstall.WaitStrategy = helmkube.StatusWatcherStrategy
+		uninstall.WaitOptions = []helmkube.WaitOption{helmkube.WithWaitContext(ctx)}
 		if _, err := uninstall.Run(req.Target.ReleaseName); err != nil {
 			return Review{}, safeHelmError(ctx, err)
 		}

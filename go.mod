@@ -26,7 +26,7 @@ require (
 	github.com/lib/pq v1.12.3 // indirect
 	github.com/rubenv/sql-migrate v1.8.1 // indirect
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.3 // indirect
-	k8s.io/apiextensions-apiserver v0.37.1 // indirect
+	k8s.io/apiextensions-apiserver v0.37.1
 )
 
 require (

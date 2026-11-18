@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Phase 1E.2 Helm management validation · KubeSift</title>
+    <link rel="stylesheet" href="../../assets/planning.css" />
+    <script src="../../assets/theme.js"></script>
+  </head>
+  <body>
+    <aside class="rail">
+      <a class="skip" href="#content">Skip to content</a
+      ><a class="mark" href="../../index.html"><span class="mark-name">KubeSift</span><span class="mark-sub">Planning</span></a>
+      <h2>Index</h2>
+      <a href="../../index.html">Planning index</a>
+      <h2>Product</h2>
+      <a href="../../product/requirements.html">Requirements</a><a href="../../product/feature-matrix.html">Capabilities</a>
+      <h2>Architecture</h2>
+      <a href="../../architecture/overview.html">Overview</a><a href="../../architecture/decisions.html">Decisions</a>
+      <h2>Safeguards</h2>
+      <a href="../../security/security-model.html">Security and AI</a>
+      <h2>Delivery</h2>
+      <a href="../../roadmap/roadmap.html">Roadmap</a><a href="../../ux/workflows.html">UX workflows</a
+      ><a href="../../ux/mocks/index.html">Mockups</a>
+      <h2>Engineering</h2>
+      <a href="../../engineering/engineering.html">Playbook</a><a href="../../engineering/local-development.html">Local development</a
+      ><a href="../../engineering/toolchain.html">Toolchain</a
+      ><a href="../../engineering/kubernetes-development.html">Kubernetes references</a>
+      <h2>Superpowers</h2>
+      <a href="../../superpowers/specs/2026-11-05-kubesift-design.md">Design specification</a
+      ><a href="../../superpowers/plans/README.html">Plans</a
+      ><a href="../../superpowers/validation/index.html" aria-current="page">Validation</a
+      ><a href="../../superpowers/evidence/index.html">Evidence</a>
+    </aside>
+
+    <header>
+      <a href="../../index.html">KubeSift / Planning</a>
+      <h1>Phase 1E.2 Helm management validation</h1>
+    </header>
+    <main id="content">
+      <p>
+        Agent verification on 18 November 2026, Dubai time. Implemented from develop <code>0ba4d2d</code> (containing <code>10ed221</code>)
+        on <code>feature/phase-1e2-helm-management</code>. See the
+        <a href="../specs/2026-11-17-phase-1e2-helm-management-design.md">approved specification</a> and
+        <a href="../plans/2026-11-17-phase-1e2-helm-management.md">six-task plan</a>. Independent review and publication are pending; no
+        release was requested.
+      </p>
+      <h2>Environment and supported coverage</h2>
+      <p>
+        macOS 26.7.1 on arm64, Go 1.27.3, Node 25.9.0, Helm SDK 4.3.1, Kubernetes API/client-go 0.37.1 and kind Kubernetes 1.37.0. Helm
+        3.19.0 (<code>3d8990f</code>) was used only to seed compatibility records. The shipped app uses the SDK, not a Helm executable.
+      </p>
+      <p>
+        Native management covers install, replacement-values upgrade, retained-revision rollback and uninstall with Secret or ConfigMap
+        release storage. Sources are native-selected packaged charts, HTTPS index repositories and exact OCI tags/digests. Credentials
+        remain in native session memory; TLS CA and client certificate/key references are nonsecret persisted metadata. No ambient registry
+        credentials, credential helpers, plugins, post-renderers or dependency downloads are used.
+      </p>
+      <h2>Automated and live results</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Check</th>
+            <th>Actual result</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>go test -race ./internal/helmmanager</code></td>
+            <td>Passed after live-discovered corrections.</td>
+          </tr>
+          <tr>
+            <td><code>wails3 task bindings</code>, <code>npm run build</code>, <code>wails3 task package</code></td>
+            <td>Passed. Native bundle is <code>bin/kubesift.app</code>, ad-hoc signed.</td>
+          </tr>
+          <tr>
+            <td><code>scripts/check.sh</code></td>
+            <td>
+              Passed source descriptions, document links, gofmt, Go tests/vet, binding normalization, 120 frontend tests in 33 files, ESLint
+              and TypeScript.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <code>KUBESIFT_HELM_INTEGRATION=1 go test -tags=integration ./tests/integration -run '^TestHelmManagement$' -count=1 -v</code>
+            </td>
+            <td>Passed in 54.204 seconds, with explicit isolated kubeconfigs and the pinned Helm 3 fixture binary.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        The one live suite used only <code>kind-dev-local-a</code> and <code>kind-dev-local-b</code>, newly created owned namespaces and the
+        labelled <code>fixtures.management.kubesift.test</code> CRD. It verified local install, authenticated HTTPS upgrade, rollback,
+        uninstall, authenticated OCI digest install, retained resources, an installed custom resource, Helm 3 record upgrade/uninstall in
+        both storage drivers, denied writes, failing hooks, and cancellation during install, rollback and uninstall. Cancelled workers
+        terminated and reported uncertain outcomes. Simultaneous identical namespace/release names retained different markers on the two
+        clusters. Namespace and CRD deletion were polled to confirmed absence.
+      </p>
+      <p>
+        Focused native tests additionally cover source bounds, custom CA/mTLS, cross-origin credential stripping, no downgrade or ambient
+        credentials, schema restrictions, read-only preview transport, current-head and historical-record identity checks, duplicate
+        execution, two-worker and per-release limits, expiry, chunked payloads, cancellation and payload-safe logging. Mounted frontend
+        tests cover edited values, prepare failure, stale responses, one confirmation and retained results across navigation.
+      </p>
+      <h2>Packaged desktop observations</h2>
+      <p>
+        Agent-operated native macOS checks used the packaged Wails application, not a browser substitute. The existing Helm list/detail
+        layout, Settings surfaces, dialogs and themes were preserved.
+      </p>
+      <ul>
+        <li>
+          Saved a private HTTPS source with a CA selected through the native picker; metadata survived restart. Supplied synthetic session
+          credentials and resolved version 1.1.0 through the authenticated repository.
+        </li>
+        <li>
+          Installed local version 1.0.0 with explicit namespace creation, upgraded to 1.1.0 with edited replacement values and a custom
+          resource, rolled back revision 2 to revision 1 (creating revision 3), and uninstalled while explicitly retaining history. Native
+          results showed deployed/uninstalled revisions and exact context/namespace/release/storage labels.
+        </li>
+        <li>
+          Reviewed values and manifest differences, hooks, CRDs, retention warnings and namespace impact. Cancel received initial focus;
+          keyboard input and selection worked. Confirmation stayed unavailable while preparation was incomplete.
+        </li>
+        <li>
+          Opened a current ConfigMap from retained Helm resource evidence and used Back to release. Settings navigation preserved an active
+          waiting hook; cancellation showed “Outcome unknown” and a refresh-before-recovery warning.
+        </li>
+        <li>
+          Dark upgrade and light uninstall/result views were observed. No Helm process was present during native operations, and the
+          synthetic password was absent from app files and its captured log.
+        </li>
+      </ul>
+      <p>
+        The failing-hook install showed an explicit failed result and observed failed revision; cancellation retained its distinct uncertain
+        result. The temporary source was forgotten and removed, the app exited, and the loopback server stopped. The desktop namespace and
+        labelled CRD were deleted and both approved clusters were checked for fixture absence. Independent review is pending. These agent
+        observations are not a claim of personal user UAT; no duplicate user checklist is required.
+      </p>
+      <p>
+        <a href="../evidence/phase-1e2/README.md">Curated native screenshots</a> show the dark upgrade review, light uninstall review, and
+        failure/cancellation outcomes.
+      </p>
+      <h2>Corrections found by verification</h2>
+      <p>
+        The first live run exposed a namespace fallback in the SDK's raw-config loader: release storage was correctly scoped but resource
+        creation fell back to default. An explicit namespace override fixes the common loader; a focused regression failed before and passed
+        after the fix. The exact synthetic misplaced ConfigMaps were ownership-checked and removed from both clusters. Live reruns verified
+        resources in the requested namespaces. A second live failure exposed the SDK's required wait strategy during uninstall dry-run;
+        preview now supplies the owned wait context and strategy. The final suite and package include both corrections.
+      </p>
+      <p>
+        Fixture-only corrections refreshed the superseded revision's resource version before rollback and started Docker before the live
+        run. Neither failed attempt is counted as passing evidence.
+      </p>
+      <h2>Limits and unrun environments</h2>
+      <p>
+        The local authenticated OCI fixture does not establish compatibility with every cloud registry or OAuth provider. No cloud cluster,
+        Windows/Linux package, notarization or release publication was tested. Charts must include dependencies and self-contained standard
+        JSON Schema; values reject aliases and excessive nesting. Content hashes identify pinned bytes, not publishers. Helm preview cannot
+        promise later admission, hook, lookup or time/random outcomes; partial effects can remain after failures and cancellation.
+        Rendered-output limits are enforced after the SDK returns its rendered content, not as a hard memory sandbox around arbitrary
+        template execution.
+      </p>
+      <p>
+        Detailed operational logs and screenshots are archived in ignored
+        <code>.superpowers/sdd/2026-11-17-phase-1e2-helm-management/</code>. The concise checkpoint and plan link this report; the roadmap
+        does not track execution progress.
+      </p>
+    </main>
+  </body>
+</html>

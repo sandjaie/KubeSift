@@ -20,6 +20,13 @@ import (
 )
 
 func TestHelmReview(t *testing.T) {
+	t.Run("native namespace never falls back to default", func(t *testing.T) {
+		getter := &nativeGetter{namespace: "reviewed-namespace"}
+		namespace, _, err := getter.ToRawKubeConfigLoader().Namespace()
+		if err != nil || namespace != "reviewed-namespace" {
+			t.Fatalf("captured namespace was not usable: %q %v", namespace, err)
+		}
+	})
 	t.Run("action previews", testReviewActions)
 	t.Run("application diagnostics remain usable", func(t *testing.T) {
 		s := NewService(nil)

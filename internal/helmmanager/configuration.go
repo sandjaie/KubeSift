@@ -91,7 +91,7 @@ func (g *nativeGetter) ToRESTMapper() (meta.RESTMapper, error) {
 }
 func (g *nativeGetter) ToRawKubeConfigLoader() clientcmd.ClientConfig {
 	config := clientapi.Config{CurrentContext: "owned", Contexts: map[string]*clientapi.Context{"owned": {Namespace: g.namespace}}}
-	return clientcmd.NewNonInteractiveClientConfig(config, "owned", &clientcmd.ConfigOverrides{}, nil)
+	return clientcmd.NewNonInteractiveClientConfig(config, "owned", &clientcmd.ConfigOverrides{Context: clientapi.Context{Namespace: g.namespace}}, nil)
 }
 
 type configuration struct {
