@@ -111,3 +111,27 @@ func TestHelmReview(t *testing.T) {
 		}
 	})
 }
+
+func TestReviseHelmReviewTransfersChart(t *testing.T) {
+	s := NewService(nil)
+	defer s.Close()
+	raw := tinyChart(t)
+	r := &reviewData{Review: Review{Token: "review", ChartName: "demo", ChartVersion: "1.0.0", Digest: chartHash(raw), ExpiresAt: time.Now().Add(time.Minute)}, raw: raw}
+	s.reviews[r.Token] = r
+	for range 3 {
+		if _, err := s.reserve("", 0); err != nil {
+			t.Fatal(err)
+		}
+	}
+	chart, err := s.ReviseReview(r.Token)
+	if err != nil || chart.Digest != r.Digest {
+		t.Fatalf("chart transfer failed: %v", err)
+	}
+	if _, err := s.Execute(r.Token); err == nil {
+		t.Fatal("old confirmation survived editing")
+	}
+	if _, err := s.reserve("", 0); err == nil {
+		t.Fatal("chart transfer lost its draft reservation")
+	}
+	s.Discard(chart.ID)
+}

@@ -8,10 +8,10 @@ Updated 2026-11-18. Current integration branch is `develop`.
 
 ## Phase 1E.2 · Native Helm release management
 
-- [Specification](../../docs/superpowers/specs/2026-11-17-phase-1e2-helm-management-design.md) and [six-task plan](../../docs/superpowers/plans/2026-11-17-phase-1e2-helm-management.md) prepared from `8ec0327` for separate implementation, as requested. No application code or dependencies changed.
-- All four release actions and local/HTTPS/OCI sources are included, with private session credentials, existing UI, one review/confirmation, minimal tests and agent desktop verification.
-- Fresh specification builder check found no important unanswered questions. Plan self-review maps scope and five main failure cases to the six tasks. Runtime SDK behavior remains implementation validation work.
-- Start `feature/phase-1e2-helm-management` from updated develop using Superpowers executing-plans. Current metrics remains Phase 1E.3.
+- Implementing the approved [specification](../../docs/superpowers/specs/2026-11-17-phase-1e2-helm-management-design.md) and [six-task plan](../../docs/superpowers/plans/2026-11-17-phase-1e2-helm-management.md) in the existing checkout on `feature/phase-1e2-helm-management`, from updated develop `0ba4d2d` (contains `10ed221`).
+- Tasks 1–4 committed as `d281390`, `edc7844`, `980599d` and `f7870cc`: bounded sources, immutable review, native execution/cancellation and desktop source settings. Native package checks, manager race checks, binding generation and TypeScript checks passed. The temporary dependency-fetch failure recovered on the repository binding task.
+- Task 5 action dialog/results is in progress. Live kind integration, packaged desktop verification, validation report, whole-PR review and merge remain outstanding. Do not treat native unit tests as cluster or desktop evidence.
+- Only kind-dev-local-a/b are authorized for cluster verification. No release or Phase 1E.3 work.
 
 ## Phase 1E.1 · Native Helm release inspection
 

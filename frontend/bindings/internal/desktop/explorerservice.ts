@@ -447,6 +447,10 @@ export function ReviewHelper(source: string, snapshot: string, name: string): $C
   return $Call.ByID(2230528976, source, snapshot, name);
 }
 
+export function ReviseHelmReview(token: string): $CancellablePromise<helmmanager$0.ChartSnapshot> {
+  return $Call.ByID(157756156, token);
+}
+
 export function RevokeApply(token: string): $CancellablePromise<void> {
   return $Call.ByID(2987491866, token);
 }

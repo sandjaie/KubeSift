@@ -65,11 +65,11 @@ Implementer may consolidate small files or split a growing file, but must preser
 
 **Consumes:** connection-independent source metadata and native file handles. **Produces:** immutable ChartSnapshot and bounded ChartPage, session credential methods.
 
-- [ ] Add table-driven `TestChartSources`: local packaged chart, authenticated HTTPS index/download and OCI digest resolution; assert exact versions/hashes, no ambient helper call, no Authorization on unrelated redirect and rejection of TLS downgrade. Include expired token, custom CA/client certificate, archive traversal/symlink/embedded expansion and index/entry limit cases in this one group.
-- [ ] Run `go test ./internal/helmmanager -run TestChartSources -count=1`; establish failing behavior before implementation.
-- [ ] Inspect pinned SDK getters/registry/loader APIs. Implement native source CRUD and in-memory credential injection, immutable chart acquisition and pre-decode bounds. Do not load default Helm/Docker credential stores or persist passwords. Keep preferences migration compatible with existing settings; credentials are write-only to frontend. Expose native pickers with restricted purpose and handle lifetime.
-- [ ] Implement bounded HTTPS index filtering/pages and exact OCI version/digest requests, deadline cleanup and missing-dependency errors. Show provenance honestly; require dependencies packaged, and preserve fetched bytes until consumed/discarded/expired. Expire idle source/chart snapshots and clean owned temporary artifacts.
-- [ ] Run `go test ./internal/helmmanager ./internal/preferences ./internal/desktop`; expect pass. Commit `feat: phase1e2-task1 resolve Helm chart sources`.
+- [x] Add table-driven `TestChartSources`: local packaged chart, authenticated HTTPS index/download and OCI digest resolution; assert exact versions/hashes, no ambient helper call, no Authorization on unrelated redirect and rejection of TLS downgrade. Include expired token, custom CA/client certificate, archive traversal/symlink/embedded expansion and index/entry limit cases in this one group.
+- [x] Run `go test ./internal/helmmanager -run TestChartSources -count=1`; establish failing behavior before implementation.
+- [x] Inspect pinned SDK getters/registry/loader APIs. Implement native source CRUD and in-memory credential injection, immutable chart acquisition and pre-decode bounds. Do not load default Helm/Docker credential stores or persist passwords. Keep preferences migration compatible with existing settings; credentials are write-only to frontend. Expose native pickers with restricted purpose and handle lifetime.
+- [x] Implement bounded HTTPS index filtering/pages and exact OCI version/digest requests, deadline cleanup and missing-dependency errors. Show provenance honestly; require dependencies packaged, and preserve fetched bytes until consumed/discarded/expired. Expire idle source/chart snapshots and clean owned temporary artifacts.
+- [x] Run `go test ./internal/helmmanager ./internal/preferences ./internal/desktop`; expect pass. Commit `feat: phase1e2-task1 resolve Helm chart sources`.
 
 ## Task 2 — Prepare an honest Helm review
 
@@ -77,12 +77,12 @@ Implementer may consolidate small files or split a growing file, but must preser
 
 **Consumes:** task 1 chart handles, connection.Manager owned configuration, existing release evidence. **Produces:** Prepare/ReadReview/Discard and native tokens.
 
-- [ ] Add `TestHelmReview` covering four actions: preparation sends zero mutating Kubernetes calls and runs no hooks; values overrides replace the old override mapping; rollback/uninstall use current head plus selected history correctly; hook/CRD/keep-policy impact is visible; invalid schema/Forbidden stop preparation. Verify 2 MiB chunking, 8 MiB cap and expired/changed inputs revoke reviews. Include a lookup/time-dependent chart proving the preview is not advertised as immutable output.
-- [ ] Run `go test ./internal/helmmanager -run TestHelmReview -count=1`; confirm failures.
-- [ ] Build SDK Configuration from the captured connection without reading global kubeconfig. Make separate read-only preparation and writable execution configurations. Bind discovery/storage/HTTP requests to request context, bounds and credential helper trust. Reuse safe release decoding; never feed unchecked SDK storage history into unbounded decompression.
-- [ ] Implement action-specific preparation, Helm dry-run paths and stored evidence diff. Capture current head/absence and rollback record identity; reject pending state or incomplete release scans. No trial write permissions. Represent dry-run limitations explicitly, especially hooks, CRDs, lookup and server admission; reject unexpected mutation attempts at the native transport boundary.
-- [ ] Save immutable charts/values/options under a 5-minute token, enforce atomic draft capacity and section chunk reads, clear payloads on expiry/discard. Keep the user-facing review metadata small; do not silently omit large effects. Chart resolve-to-review transfer retains its reservation instead of leaking a second slot.
-- [ ] Run `go test ./internal/helmmanager ./internal/helmreader`; expect pass. Commit `feat: phase1e2-task2 prepare Helm operation reviews`.
+- [x] Add `TestHelmReview` covering four actions: preparation sends zero mutating Kubernetes calls and runs no hooks; values overrides replace the old override mapping; rollback/uninstall use current head plus selected history correctly; hook/CRD/keep-policy impact is visible; invalid schema/Forbidden stop preparation. Verify 2 MiB chunking, 8 MiB cap and expired/changed inputs revoke reviews. Include a lookup/time-dependent chart proving the preview is not advertised as immutable output.
+- [x] Run `go test ./internal/helmmanager -run TestHelmReview -count=1`; confirm failures.
+- [x] Build SDK Configuration from the captured connection without reading global kubeconfig. Make separate read-only preparation and writable execution configurations. Bind discovery/storage/HTTP requests to request context, bounds and credential helper trust. Reuse safe release decoding; never feed unchecked SDK storage history into unbounded decompression.
+- [x] Implement action-specific preparation, Helm dry-run paths and stored evidence diff. Capture current head/absence and rollback record identity; reject pending state or incomplete release scans. No trial write permissions. Represent dry-run limitations explicitly, especially hooks, CRDs, lookup and server admission; reject unexpected mutation attempts at the native transport boundary.
+- [x] Save immutable charts/values/options under a 5-minute token, enforce atomic draft capacity and section chunk reads, clear payloads on expiry/discard. Keep the user-facing review metadata small; do not silently omit large effects. Chart resolve-to-review transfer retains its reservation instead of leaking a second slot.
+- [x] Run `go test ./internal/helmmanager ./internal/helmreader`; expect pass. Commit `feat: phase1e2-task2 prepare Helm operation reviews`.
 
 ## Task 3 — Execute all four actions with bounded lifecycle
 
@@ -90,12 +90,12 @@ Implementer may consolidate small files or split a growing file, but must preser
 
 **Consumes:** immutable review token from task 2. **Produces:** Execute/Cancel/ListResults and termination cleanup.
 
-- [ ] Add `TestHelmExecution` with a controllable SDK/client seam: duplicate Execute returns one ID and one mutation; stale head/rollback record or appeared install release fails before writes; same release is serialized, two-operation cap holds. Exercise a late transport failure and cancellation of both RunWithContext and Run actions; assert lock/temp cleanup occurs only when worker terminates and failure/unknown never claims rollback.
-- [ ] Run `go test ./internal/helmmanager -run TestHelmExecution -count=1`; establish failures.
-- [ ] Implement prompt Execute dispatch to native workers, exact option mapping and no automatic retries/recovery. Revalidate native connection/head before starting, preserve token idempotence and serialize by release key. Respect API/SDK errors without app-specific role gates. Create namespace only for the explicitly reviewed install option.
-- [ ] Apply full context/deadline plumbing to SDK storage, API clients, watches/waiters and hook waits, including rollback/uninstall Run. Do not let SDK background contexts outlive the operation. If SDK cancellation needs an adapter, implement the smallest adapter and test it, not a goroutine timeout that abandons work.
-- [ ] Capture metadata-only results, bounded latest-observation refresh and real partial/unknown status. Polling/refresh is read-only. Retain active work across UI navigation; cancel on native disconnect/shutdown and preserve results for the session. No automatic pending-record deletion. Refresh inspection snapshots after any submitted operation, including failures that may have effects.
-- [ ] Run `go test ./internal/helmmanager ./internal/helmreader` and `go test -race ./internal/helmmanager`; expect pass. Commit `feat: phase1e2-task3 execute reviewed Helm actions`.
+- [x] Add `TestHelmExecution` with a controllable SDK/client seam: duplicate Execute returns one ID and one mutation; stale head/rollback record or appeared install release fails before writes; same release is serialized, two-operation cap holds. Exercise a late transport failure and cancellation of both RunWithContext and Run actions; assert lock/temp cleanup occurs only when worker terminates and failure/unknown never claims rollback.
+- [x] Run `go test ./internal/helmmanager -run TestHelmExecution -count=1`; establish failures.
+- [x] Implement prompt Execute dispatch to native workers, exact option mapping and no automatic retries/recovery. Revalidate native connection/head before starting, preserve token idempotence and serialize by release key. Respect API/SDK errors without app-specific role gates. Create namespace only for the explicitly reviewed install option.
+- [x] Apply full context/deadline plumbing to SDK storage, API clients, watches/waiters and hook waits, including rollback/uninstall Run. Do not let SDK background contexts outlive the operation. If SDK cancellation needs an adapter, implement the smallest adapter and test it, not a goroutine timeout that abandons work.
+- [x] Capture metadata-only results, bounded latest-observation refresh and real partial/unknown status. Polling/refresh is read-only. Retain active work across UI navigation; cancel on native disconnect/shutdown and preserve results for the session. No automatic pending-record deletion. Refresh inspection snapshots after any submitted operation, including failures that may have effects.
+- [x] Run `go test ./internal/helmmanager ./internal/helmreader` and `go test -race ./internal/helmmanager`; expect pass. Commit `feat: phase1e2-task3 execute reviewed Helm actions`.
 
 ## Task 4 — Connect the desktop bridge and source settings
 
@@ -103,10 +103,10 @@ Implementer may consolidate small files or split a growing file, but must preser
 
 **Consumes:** tasks 1–3 native service methods. **Produces:** generated management API and source settings in current Settings screen.
 
-- [ ] Register native manager construction/shutdown and connection cleanup without replacing reader/session cleanup. Expose cancellable resolution/preparation/read endpoints and immediate Execute/Cancel/status endpoints; do not put long execution under the 30-second workload read wrapper. Add one focused bridge test for native input validation and explicit connection routing.
-- [ ] Implement Helm sources settings with named HTTPS/OCI sources, custom CA/client-cert selectors and session-only username/password/token controls. Clear password inputs after submission and never refill from native responses; source deletion/Forget clears credentials and revokes affected unresolved drafts. Show that session credentials expire on app exit.
-- [ ] Generate bindings with `wails3 task bindings`; add a typed frontend API adapter following helm/api.ts request cancellation. Keep source metadata in existing preferences; no credential-bearing localStorage or debug output.
-- [ ] Run `go test ./internal/desktop ./internal/preferences` and `npm run typecheck`; expect pass. Commit `feat: phase1e2-task4 connect Helm management settings`.
+- [x] Register native manager construction/shutdown and connection cleanup without replacing reader/session cleanup. Expose cancellable resolution/preparation/read endpoints and immediate Execute/Cancel/status endpoints; do not put long execution under the 30-second workload read wrapper. Add one focused bridge test for native input validation and explicit connection routing.
+- [x] Implement Helm sources settings with named HTTPS/OCI sources, custom CA/client-cert selectors and session-only username/password/token controls. Clear password inputs after submission and never refill from native responses; source deletion/Forget clears credentials and revokes affected unresolved drafts. Show that session credentials expire on app exit.
+- [x] Generate bindings with `wails3 task bindings`; add a typed frontend API adapter following helm/api.ts request cancellation. Keep source metadata in existing preferences; no credential-bearing localStorage or debug output.
+- [x] Run `go test ./internal/desktop ./internal/preferences` and `npm run typecheck`; expect pass. Commit `feat: phase1e2-task4 connect Helm management settings`.
 
 ## Task 5 — Add actions to the existing Helm UI
 
@@ -114,12 +114,12 @@ Implementer may consolidate small files or split a growing file, but must preser
 
 **Consumes:** task 4 generated API. **Produces:** complete Prepare → Review → Confirm → Result journey and scoped refresh.
 
-- [ ] Add one mounted `HelmManagement.test.tsx` workflow with small variants: edit upgrade values then review, failed prepare, double confirm, active-tab/namespace change with late response, and ongoing operation status after navigation. Assert one native execution, fixed labels and no stale confirmation. Include keyboard focus and error announcement assertions instead of snapshots for every component.
-- [ ] Run `npm test --workspace frontend -- src/helm/HelmManagement.test.tsx`; establish failures.
-- [ ] Add Install plus selected release Upgrade/Rollback/Uninstall actions. Implement source/version selection, values mapping/file import and reviewed settings. Historical selection stays inspection evidence; upgrade/uninstall identify current head. Default options exactly follow the spec; no arbitrary flag controls.
-- [ ] Reuse current diff/editor controls for values/manifests and show hook/CRD/namespace impact with accurate dry-run labels. Fetch bounded review sections; disable confirmation during incomplete/failed preparation. One explicit action-specific confirmation suffices; no repeated Secret approvals or extra typed-name gate.
-- [ ] Display running/terminal Helm results alongside existing operation results using shared visual conventions, with fixed target, cancel and Refresh release/history. Do not coerce Helm targets into kube.ResourceRef; keep a small Helm result component if adapting the generic type would require a broad rewrite. Confirm once before disconnecting/closing a tab with active Helm work. No automatic repeat execution on remount/reconnect.
-- [ ] Run targeted Vitest, `npm run lint`, `npm run typecheck`; expect pass. Commit `feat: phase1e2-task5 add Helm management workspace actions`.
+- [x] Add one mounted `HelmManagement.test.tsx` workflow with small variants: edit upgrade values then review, failed prepare, double confirm, active-tab/namespace change with late response, and ongoing operation status after navigation. Assert one native execution, fixed labels and no stale confirmation. Include keyboard focus and error announcement assertions instead of snapshots for every component.
+- [x] Run `npm test --workspace frontend -- src/helm/HelmManagement.test.tsx`; establish failures.
+- [x] Add Install plus selected release Upgrade/Rollback/Uninstall actions. Implement source/version selection, values mapping/file import and reviewed settings. Historical selection stays inspection evidence; upgrade/uninstall identify current head. Default options exactly follow the spec; no arbitrary flag controls.
+- [x] Reuse current diff/editor controls for values/manifests and show hook/CRD/namespace impact with accurate dry-run labels. Fetch bounded review sections; disable confirmation during incomplete/failed preparation. One explicit action-specific confirmation suffices; no repeated Secret approvals or extra typed-name gate.
+- [x] Display running/terminal Helm results alongside existing operation results using shared visual conventions, with fixed target, cancel and Refresh release/history. Do not coerce Helm targets into kube.ResourceRef; keep a small Helm result component if adapting the generic type would require a broad rewrite. Confirm once before disconnecting/closing a tab with active Helm work. No automatic repeat execution on remount/reconnect.
+- [x] Run targeted Vitest, `npm run lint`, `npm run typecheck`; expect pass. Commit `feat: phase1e2-task5 add Helm management workspace actions`.
 
 ## Task 6 — Verify, document and deliver
 

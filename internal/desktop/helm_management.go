@@ -215,3 +215,7 @@ func (s *ExplorerService) CancelHelmAction(id string) error { return s.core.helm
 func (s *ExplorerService) ListHelmResults() []helmmanager.Result {
 	return s.core.helmManagement.ListResults()
 }
+
+func (s *ExplorerService) ReviseHelmReview(token string) (helmmanager.ChartSnapshot, error) {
+	return s.core.helmManagement.ReviseReview(token)
+}

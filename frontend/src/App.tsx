@@ -19,6 +19,11 @@ import { ClusterTabs } from "./workspace/ClusterTabs";
 import { NamespaceControl } from "./workspace/NamespaceControl";
 import { HelmWorkspace } from "./helm/HelmWorkspace";
 import { useHelm } from "./helm/useHelm";
+import { HelmActionDialog } from "./helm/HelmActionDialog";
+import { HelmOperationResults, useHelmOperationResults } from "./helm/HelmOperationResults";
+import type { HelmAction } from "./helm/managementState";
+import type { Target as HelmTarget } from "../bindings/internal/helmmanager/models";
+import type { RecordRef } from "../bindings/internal/helmreader/models";
 import { Workspace } from "./workspace/Workspace";
 import { CommandPalette } from "./workspace/CommandPalette";
 import { commandForKey } from "./workspace/commands";
@@ -171,6 +176,54 @@ export default function App() {
     setEditor({ ...editor, suspended: false });
   }
   const [resultsOpen, setResultsOpen] = useState(false);
+  const helmResults = useHelmOperationResults();
+  const [helmAction, setHelmAction] = useState<{
+    id: string;
+    tab: string;
+    action: HelmAction;
+    target: HelmTarget;
+    context: string;
+    revision?: RecordRef;
+  }>();
+  const [openingHelmResult, setOpeningHelmResult] = useState<{ tab: string; target: HelmTarget }>();
+  const helmActionValid =
+    !!helmAction &&
+    helmAction.tab === state.active &&
+    page === "workspace" &&
+    showingHelm &&
+    !!helmConnection &&
+    sameConnection(helmAction.target.connection, helmConnection) &&
+    helmAction.target.namespace === helmNamespace &&
+    helmAction.target.driver === helm.driver;
+  useEffect(() => {
+    if (helmAction && !helmActionValid) setHelmAction(undefined);
+  }, [helmActionValid]);
+  useEffect(() => {
+    if (
+      !openingHelmResult ||
+      !helm.ready ||
+      state.active !== openingHelmResult.tab ||
+      helmNamespace !== openingHelmResult.target.namespace ||
+      !helmConnection ||
+      !sameConnection(helmConnection, openingHelmResult.target.connection)
+    )
+      return;
+    helm.selectRelease(openingHelmResult.target.releaseName, openingHelmResult.target.driver === "configmap" ? "configmap" : "secret");
+    setOpeningHelmResult(undefined);
+  }, [openingHelmResult, helm.ready, state.active, helmNamespace, helmConnection]);
+  const findHelmTab = (target: HelmTarget) =>
+    Object.entries(state.tabs).find(([, tab]) => tab.view?.ref && sameConnection(tab.view.ref, target.connection))?.[0];
+  function openHelmResult(target: HelmTarget) {
+    const tab = findHelmTab(target);
+    if (!tab) return;
+    controller.commit({ type: "focus", key: tab });
+    setPage("workspace");
+    setHelmDestinations((old) => ({ ...old, [tab]: { mode: "helm", source: target.namespace } }));
+    setOpeningHelmResult({ tab, target });
+    void controller.selectNamespace(tab, target.namespace);
+    setResultsOpen(false);
+  }
+
   const [openingOperationTarget, setOpeningOperationTarget] = useState<{
     ref: ResourceRef;
     tab: string;
@@ -215,6 +268,13 @@ export default function App() {
       ...logs.sessions.filter((entry) => entry.tab === key).map((entry) => `Logs · ${entry.request.resource.name} · ${entry.status}`),
       ...sessions.map((entry) => `${entry.kind === "terminal" ? "Terminal" : "Forward"} · ${entry.target.resource.name} · ${entry.state}`),
     ];
+    const ref = state.tabs[key]?.view?.ref;
+    for (const result of helmResults.results) {
+      if (result.state === "running" && ref && sameConnection(result.target.connection, ref))
+        labels.push(
+          `Helm ${result.action} · ${result.target.namespace}/${result.target.releaseName} · cancellation requested on close; partial changes may remain`,
+        );
+    }
     const pending = interactive.store.countTab(key) - sessions.length;
     if (pending > 0) labels.push(`${pending} session start${pending === 1 ? "" : "s"} in progress`);
     if (labels.length) setCloseTarget({ key, entries: labels });
@@ -307,11 +367,16 @@ export default function App() {
         <button
           onClick={() => {
             operationResults.refresh();
+            helmResults.refresh();
             setResultsOpen(true);
           }}
         >
           Operation results
-          {operationResults.pending ? " · Running" : operationResults.results.length ? ` (${operationResults.results.length})` : ""}
+          {operationResults.pending || helmResults.pending || helmResults.results.some((result) => result.state === "running")
+            ? " · Running"
+            : operationResults.results.length + helmResults.results.length
+              ? ` (${operationResults.results.length + helmResults.results.length})`
+              : ""}
         </button>
         <button
           aria-pressed={page === "settings"}
@@ -402,6 +467,22 @@ export default function App() {
           }}
         />
       )}
+      {helmAction && (
+        <HelmActionDialog
+          key={helmAction.id}
+          action={helmAction.action}
+          target={helmAction.target}
+          contextLabel={helmAction.context}
+          revision={helmAction.revision}
+          valid={helmActionValid}
+          onClose={() => setHelmAction(undefined)}
+          onConfirm={(token) => {
+            void helmResults.submit(token);
+            setHelmAction(undefined);
+            setResultsOpen(true);
+          }}
+        />
+      )}
       {resultsOpen && (
         <OperationResults
           results={operationResults.results}
@@ -418,7 +499,17 @@ export default function App() {
             setPage("workspace");
             setOpeningOperationTarget({ ref, tab, created });
           }}
-        />
+        >
+          <HelmOperationResults
+            results={helmResults.results}
+            pending={helmResults.pending}
+            error={helmResults.error}
+            onRefresh={helmResults.refresh}
+            onCancel={(id) => void helmResults.cancel(id)}
+            canOpen={(target) => !!findHelmTab(target)}
+            onTarget={openHelmResult}
+          />
+        </OperationResults>
       )}
       <div className="identity-bar compact-identity">
         {page === "workspace" && active ? (
@@ -556,6 +647,23 @@ export default function App() {
                   (showingHelm && (
                     <HelmWorkspace
                       helm={helm}
+                      canManage={!!helmConnection}
+                      onAction={(action, revision) => {
+                        if (!state.active || !helmConnection) return;
+                        setHelmAction({
+                          id: crypto.randomUUID(),
+                          tab: state.active,
+                          action,
+                          target: {
+                            connection: helmConnection,
+                            namespace: helmNamespace,
+                            driver: helm.driver,
+                            releaseName: revision?.releaseName ?? "",
+                          },
+                          context: active.entry.context,
+                          revision,
+                        });
+                      }}
                       namespace={helmNamespace}
                       widthPercent={preferences.detailWidthPercent}
                       heightPercent={preferences.detailHeightPercent}

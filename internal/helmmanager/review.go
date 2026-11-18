@@ -408,3 +408,18 @@ func safeHelmError(ctx context.Context, err error) error {
 	}
 	return model.Fail("failed", "Helm could not complete this step. Check chart schema, resource compatibility and permissions; inspect the release for partial effects.")
 }
+
+// ReviseReview revokes confirmation while preserving the same pinned chart for editing.
+func (s *Service) ReviseReview(token string) (ChartSnapshot, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.expireLocked()
+	r := s.reviews[token]
+	if r == nil || r.cancel != nil || len(r.raw) == 0 {
+		return ChartSnapshot{}, model.Fail("stale_target", "This chart review is no longer available for editing.")
+	}
+	c := &chartData{ChartSnapshot: ChartSnapshot{ID: model.ID(), Name: r.ChartName, Version: r.ChartVersion, Digest: r.Digest, ExpiresAt: time.Now().Add(reviewTTL)}, raw: r.raw, source: r.source, generation: s.sources[r.source].generation}
+	delete(s.reviews, token)
+	s.charts[c.ID] = c
+	return c.ChartSnapshot, nil
+}
