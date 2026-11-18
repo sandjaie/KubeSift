@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <title>KubeSift</title>
+  <desc>A white segmented cube on a charcoal rounded square.</desc>
+  <rect x="64" y="64" width="896" height="896" rx="208" fill="#101113"/>
+  <g fill="none" stroke="#ffffff" stroke-width="80" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M352 360 L512 264 L672 360"/>
+    <path d="M280 488 L280 648 L440 744"/>
+    <path d="M744 488 L744 648 L584 744"/>
+    <path d="M512 400 L512 544 M408 608 L512 544 L616 608"/>
+  </g>
+</svg>
