@@ -38,7 +38,12 @@
         change. The existing executable was repackaged, not rebuilt; this does not establish new runtime behavior, signing/notarization or
         release readiness. No trademark/similarity search was performed.
       </p>
-      <p>Independent review and merge references are recorded in the implementation PR.</p>
+      <p>
+        Independent reviewer /root/icon_review reviewed the full candidate 7aa8270b2649a10b530f0f43514370b98bda4028 against
+        develop/merge-base 10ed221a1ad6f3e274df62c757cb6b72f60b3a28: no findings, no blocking findings. The reviewer independently checked
+        plist/shell syntax, whitespace, packaged icon equality and strict signature verification. Repeated generation also reproduced
+        identical PNG/ICNS bytes. The implementation PR records final merge and documentation follow-up coverage.
+      </p>
     </main>
   </body>
 </html>
