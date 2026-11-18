@@ -16,6 +16,10 @@ import (
 type workloadRead struct{ cancel context.CancelFunc }
 
 func (s *ExplorerService) beginWorkloadRead(id string) (context.Context, func(), error) {
+	return s.beginNativeRead(id, 30*time.Second)
+}
+
+func (s *ExplorerService) beginNativeRead(id string, timeout time.Duration) (context.Context, func(), error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if id == "" || len(id) > 128 {
@@ -27,7 +31,11 @@ func (s *ExplorerService) beginWorkloadRead(id string) (context.Context, func(),
 	if s.reads[id] != nil || len(s.reads) >= 16 {
 		return nil, nil, model.Fail("busy", "Too many active workload reads")
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	parent := context.Background()
+	if s.core != nil {
+		parent = s.core.ctx
+	}
+	ctx, cancel := context.WithTimeout(parent, timeout)
 	entry := &workloadRead{cancel: cancel}
 	s.reads[id] = entry
 	done := func() {

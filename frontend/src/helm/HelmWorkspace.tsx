@@ -5,7 +5,8 @@ Responsibilities: Select storage, filter the bounded inventory, page and select 
 Important: Records show stored status for the selected storage driver.
 */
 import { useState } from "react";
-import type { CurrentResource } from "../../bindings/internal/helmreader/models";
+import type { HelmAction } from "./managementState";
+import type { CurrentResource, RecordRef } from "../../bindings/internal/helmreader/models";
 import { ResourceSplit } from "../workspace/ResourceSplit";
 import { evidenceTime } from "../workspace/ResourceOverview";
 import { ReleaseDetail } from "./ReleaseDetail";
@@ -15,6 +16,8 @@ export function HelmWorkspace({
   helm,
   namespace,
   onOpen,
+  onAction,
+  canManage,
   widthPercent,
   heightPercent,
   onResize,
@@ -23,6 +26,8 @@ export function HelmWorkspace({
   helm: HelmController;
   namespace: string;
   onOpen: (resource: CurrentResource) => void;
+  onAction: (action: HelmAction, record?: RecordRef) => void;
+  canManage: boolean;
   widthPercent: number;
   heightPercent: number;
   onResize: (axis: "x" | "y", value: number) => void;
@@ -35,6 +40,9 @@ export function HelmWorkspace({
       <section className="list-pane">
         <div className="pane-heading">
           <h2>Helm releases</h2>
+          <button disabled={!canManage || !namespace} onClick={() => onAction("install")}>
+            Install
+          </button>
           <span className="muted">Namespace: {namespace}</span>
           <button disabled={helm.loadingList} onClick={helm.refresh}>
             ↻ Refresh
@@ -111,7 +119,7 @@ export function HelmWorkspace({
         {helm.list && <p className="table-hint">Name ordering applies to this page. Captured {evidenceTime(helm.list.fetchedAt)}.</p>}
       </section>
       <section className="detail-pane">
-        <ReleaseDetail helm={helm} onOpen={onOpen} />
+        <ReleaseDetail helm={helm} onOpen={onOpen} onAction={onAction} canManage={canManage} />
       </section>
     </ResourceSplit>
   );

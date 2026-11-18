@@ -23,14 +23,15 @@ type Rect struct {
 	Height int `json:"height"`
 }
 type Preferences struct {
-	Version             int    `json:"version"`
-	Appearance          string `json:"appearance"`
-	Window              *Rect  `json:"window"`
-	NavigationWidth     int    `json:"navigationWidth"`
-	AIWidth             int    `json:"aiWidth"`
-	DockHeight          int    `json:"dockHeight"`
-	DetailWidthPercent  int    `json:"detailWidthPercent"`
-	DetailHeightPercent int    `json:"detailHeightPercent"`
+	HelmSources         []HelmSource `json:"helmSources,omitempty"`
+	Version             int          `json:"version"`
+	Appearance          string       `json:"appearance"`
+	Window              *Rect        `json:"window"`
+	NavigationWidth     int          `json:"navigationWidth"`
+	AIWidth             int          `json:"aiWidth"`
+	DockHeight          int          `json:"dockHeight"`
+	DetailWidthPercent  int          `json:"detailWidthPercent"`
+	DetailHeightPercent int          `json:"detailHeightPercent"`
 }
 
 func Default() Preferences {
@@ -40,6 +41,19 @@ func Default() Preferences {
 	}
 }
 func Validate(p Preferences) error {
+	if len(p.HelmSources) > 32 {
+		return errors.New("at most 32 Helm sources may be saved")
+	}
+	seen := map[string]bool{}
+	for _, source := range p.HelmSources {
+		if seen[source.ID] {
+			return errors.New("duplicate Helm source ID")
+		}
+		seen[source.ID] = true
+		if err := ValidateHelmSource(source); err != nil {
+			return err
+		}
+	}
 	if p.Version != 2 {
 		return errors.New("unsupported preferences version")
 	}
@@ -116,6 +130,9 @@ func Save(path string, p Preferences) error {
 	data, err := json.MarshalIndent(p, "", "  ")
 	if err != nil {
 		return err
+	}
+	if len(data) > 65536 {
+		return errors.New("preferences exceed 64 KiB")
 	}
 	if err = os.MkdirAll(filepath.Dir(path), 0700); err != nil {
 		return err
@@ -208,6 +225,17 @@ func validateObject(d *json.Decoder) error {
 		}
 		if bytes.Equal(raw, []byte("null")) && key != "window" {
 			return errors.New("null preferences field")
+		}
+		if key == "helmSources" {
+			var sources []json.RawMessage
+			if err := json.Unmarshal(raw, &sources); err != nil {
+				return err
+			}
+			for _, source := range sources {
+				if err := validateObject(json.NewDecoder(bytes.NewReader(source))); err != nil {
+					return err
+				}
+			}
 		}
 		if key == "window" && !bytes.Equal(raw, []byte("null")) {
 			if err = validateObject(json.NewDecoder(bytes.NewReader(raw))); err != nil {

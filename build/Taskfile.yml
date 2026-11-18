@@ -8,6 +8,7 @@ vars:
 tasks:
   bindings:
     cmds:
+      - sh scripts/build-helm-renderer.sh
       - go mod tidy
       - node scripts/generate-bindings.mjs
   frontend:

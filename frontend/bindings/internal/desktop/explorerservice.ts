@@ -16,6 +16,9 @@ import { Call as $Call, CancellablePromise as $CancellablePromise } from "@wails
 import * as explorer$0 from "../explorer/models.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
+import * as helmmanager$0 from "../helmmanager/models.js";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
 import * as helmreader$0 from "../helmreader/models.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
@@ -43,6 +46,10 @@ export function ApproveHelper(source: string, snapshot: string, name: string, re
 
 export function CancelAttempt(id: string): $CancellablePromise<void> {
   return $Call.ByID(3929228331, id);
+}
+
+export function CancelHelmAction(id: string): $CancellablePromise<void> {
+  return $Call.ByID(2977303616, id);
 }
 
 export function CancelWorkloadRead(id: string): $CancellablePromise<void> {
@@ -77,6 +84,14 @@ export function ClosePodLogs(ref: model$0.SessionRef): $CancellablePromise<void>
   return $Call.ByID(1080239256, ref);
 }
 
+export function DeleteHelmSource(id: string): $CancellablePromise<void> {
+  return $Call.ByID(3135201910, id);
+}
+
+export function DiscardHelmDraft(id: string): $CancellablePromise<void> {
+  return $Call.ByID(1745682353, id);
+}
+
 export function Disconnect(ref: model$0.ConnectionRef): $CancellablePromise<void> {
   return $Call.ByID(2590980822, ref);
 }
@@ -97,6 +112,10 @@ export function ExecuteEdit(token: string): $CancellablePromise<operation$0.Oper
   return $Call.ByID(3369609671, token);
 }
 
+export function ExecuteHelmAction(token: string): $CancellablePromise<helmmanager$0.Result> {
+  return $Call.ByID(1892671381, token);
+}
+
 export function ExecuteRestart(token: string, acknowledgement: string): $CancellablePromise<operation$0.OperationResult> {
   return $Call.ByID(346194450, token, acknowledgement);
 }
@@ -107,6 +126,10 @@ export function ExecuteRollback(token: string): $CancellablePromise<operation$0.
 
 export function ExecuteScale(token: string, acknowledgement: string): $CancellablePromise<operation$0.ScaleResult> {
   return $Call.ByID(2364239635, token, acknowledgement);
+}
+
+export function ForgetHelmCredentials(id: string): $CancellablePromise<void> {
+  return $Call.ByID(2975642757, id);
 }
 
 export function GetAttempt(id: string): $CancellablePromise<explorer$0.ConnectionView> {
@@ -129,8 +152,20 @@ export function InspectCreateName(id: string, operationID: string): $Cancellable
   return $Call.ByID(3510075343, id, operationID);
 }
 
+export function ListHelmCharts(id: string, source: string, filter: string, cursor: string): $CancellablePromise<helmmanager$0.ChartPage> {
+  return $Call.ByID(2869005361, id, source, filter, cursor);
+}
+
 export function ListHelmReleases(id: string, req: helmreader$0.ListRequest): $CancellablePromise<helmreader$0.ReleasePage> {
   return $Call.ByID(2995418634, id, req);
+}
+
+export function ListHelmResults(): $CancellablePromise<helmmanager$0.Result[] | null> {
+  return $Call.ByID(3002296542);
+}
+
+export function ListHelmSources(): $CancellablePromise<helmmanager$0.Source[] | null> {
+  return $Call.ByID(1137531714);
 }
 
 export function ListOperationResults(): $CancellablePromise<operation$0.OperationResult[] | null> {
@@ -173,6 +208,18 @@ export function OpenTerminal(id: string, req: kube$0.TerminalRequest): $Cancella
   return $Call.ByID(1368815228, id, req);
 }
 
+export function PickHelmChart(): $CancellablePromise<string> {
+  return $Call.ByID(4158308415);
+}
+
+export function PickHelmTLSFile(kind: string): $CancellablePromise<string> {
+  return $Call.ByID(3560718592, kind);
+}
+
+export function PickHelmValues(): $CancellablePromise<string> {
+  return $Call.ByID(281375615);
+}
+
 export function PrepareApply(id: string, req: operation$0.ApplyRequest): $CancellablePromise<operation$0.ApplyReview> {
   return $Call.ByID(840447417, id, req);
 }
@@ -187,6 +234,10 @@ export function PrepareDelete(id: string, req: operation$0.DeleteRequest): $Canc
 
 export function PrepareEdit(id: string, req: operation$0.EditRequest): $CancellablePromise<operation$0.EditPreview> {
   return $Call.ByID(501560475, id, req);
+}
+
+export function PrepareHelmAction(id: string, request: helmmanager$0.PrepareRequest): $CancellablePromise<helmmanager$0.Review> {
+  return $Call.ByID(623280817, id, request);
 }
 
 export function PrepareRestart(id: string, req: operation$0.RestartRequest): $CancellablePromise<operation$0.RestartPreview> {
@@ -265,8 +316,21 @@ export function ReadHelmHistory(id: string, req: helmreader$0.HistoryRequest): $
   return $Call.ByID(201707108, id, req);
 }
 
+export function ReadHelmReview(
+  id: string,
+  token: string,
+  section: string,
+  offset: number,
+): $CancellablePromise<helmmanager$0.ReviewSection> {
+  return $Call.ByID(1364300504, id, token, section, offset);
+}
+
 export function ReadHelmSection(id: string, req: helmreader$0.DetailRequest): $CancellablePromise<helmreader$0.ReleaseSection> {
   return $Call.ByID(2057919075, id, req);
+}
+
+export function ReadHelmValues(handle: string, offset: number): $CancellablePromise<helmmanager$0.ReviewSection> {
+  return $Call.ByID(1976228650, handle, offset);
 }
 
 export function ReadNetworking(id: string, req: kube$0.PageRequest): $CancellablePromise<kube$0.NetworkPage> {
@@ -361,6 +425,10 @@ export function ResolveEventTarget(id: string, req: kube$0.EventTargetRequest): 
   return $Call.ByID(530657353, id, req);
 }
 
+export function ResolveHelmChart(id: string, request: helmmanager$0.ChartRequest): $CancellablePromise<helmmanager$0.ChartSnapshot> {
+  return $Call.ByID(3776960228, id, request);
+}
+
 export function ResolveNetworkReference(
   id: string,
   req: kube$0.NetworkReferenceRequest,
@@ -377,6 +445,10 @@ export function ResolveStorageReference(
 
 export function ReviewHelper(source: string, snapshot: string, name: string): $CancellablePromise<trust$0.PreviewRecord> {
   return $Call.ByID(2230528976, source, snapshot, name);
+}
+
+export function ReviseHelmReview(token: string): $CancellablePromise<helmmanager$0.ChartSnapshot> {
+  return $Call.ByID(157756156, token);
 }
 
 export function RevokeApply(token: string): $CancellablePromise<void> {
@@ -409,6 +481,14 @@ export function RevokeRollback(token: string): $CancellablePromise<void> {
 
 export function RevokeScale(token: string): $CancellablePromise<void> {
   return $Call.ByID(222831752, token);
+}
+
+export function SaveHelmSource(source: helmmanager$0.Source): $CancellablePromise<void> {
+  return $Call.ByID(3701413000, source);
+}
+
+export function SetHelmCredentials(id: string, credentials: helmmanager$0.SourceCredentials): $CancellablePromise<void> {
+  return $Call.ByID(2771571542, id, credentials);
 }
 
 export function SetLabel(source: string, name: string, label: string): $CancellablePromise<void> {

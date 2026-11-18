@@ -12,6 +12,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -21,6 +22,21 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
+
+func TestManagementRejectsIncompleteRecords(t *testing.T) {
+	meta := metav1.ObjectMeta{Name: "sh.helm.release.v1.demo.v1", Namespace: "owned", UID: "original", ResourceVersion: "9", Labels: map[string]string{"owner": "helm", "name": "demo", "version": "1"}}
+	for _, body := range []string{
+		`"info":null,"chart":{"metadata":{"name":"demo","version":"1.0.0"}}`,
+		`"info":{"status":"deployed"},"chart":null`,
+		`"info":{"status":"deployed"},"chart":{"metadata":{"name":"demo","version":"1.0.0"}},"hooks":[null]`,
+		`"info":{"status":"deployed"},"chart":{"metadata":{"name":"demo","version":"1.0.0"},"templates":[null]}`,
+	} {
+		payload := base64.StdEncoding.EncodeToString([]byte(`{"name":"demo","namespace":"owned","version":1,` + body + `}`))
+		if err := VerifyPayload(context.Background(), meta, payload); err == nil {
+			t.Errorf("accepted incomplete management record: %s", body)
+		}
+	}
+}
 
 func TestBoundedStorage(t *testing.T) {
 	ref := RecordRef{Scope: Scope{Namespace: "owned", Driver: "configmap", ReleaseName: "demo"}, Revision: "1", RecordName: "sh.helm.release.v1.demo.v1", UID: "original", ResourceVersion: "9"}

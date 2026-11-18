@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}
+data:
+  marker: {{ .Values.marker | quote }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-keep
+  annotations:
+    helm.sh/resource-policy: keep
+data:
+  marker: retained-fixture
+{{- if .Values.customResource }}
+---
+apiVersion: management.kubesift.test/v1
+kind: Fixture
+metadata:
+  name: {{ .Release.Name }}
+spec:
+  marker: {{ .Values.marker | quote }}
+{{- end }}

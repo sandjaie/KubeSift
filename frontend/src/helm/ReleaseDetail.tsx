@@ -4,14 +4,25 @@ Used by: HelmWorkspace.
 Responsibilities: Keep history selection separate from current resource navigation and render stored content inertly.
 Important: Stored text is rendered without markup execution.
 */
-import type { CurrentResource } from "../../bindings/internal/helmreader/models";
+import { helmActionLabels, type HelmAction } from "./managementState";
+import type { CurrentResource, RecordRef } from "../../bindings/internal/helmreader/models";
 import { ResourceYaml } from "../workspace/ResourceYaml";
 import { evidenceTime } from "../workspace/ResourceOverview";
 import { PageControls } from "./HelmWorkspace";
 import { sections } from "./state";
 import type { HelmController } from "./useHelm";
 
-export function ReleaseDetail({ helm, onOpen }: { helm: HelmController; onOpen: (value: CurrentResource) => void }) {
+export function ReleaseDetail({
+  helm,
+  onOpen,
+  onAction,
+  canManage,
+}: {
+  helm: HelmController;
+  onOpen: (value: CurrentResource) => void;
+  onAction: (action: HelmAction, record?: RecordRef) => void;
+  canManage: boolean;
+}) {
   const record = helm.revision;
   if (!record)
     return (
@@ -26,6 +37,13 @@ export function ReleaseDetail({ helm, onOpen }: { helm: HelmController; onOpen: 
   return (
     <div className="compact-pod-detail">
       <h2>{record.releaseName}</h2>
+      <div className="button-row">
+        {(["upgrade", "rollback", "uninstall"] as const).map((action) => (
+          <button key={action} disabled={!canManage} onClick={() => onAction(action, record)}>
+            {helmActionLabels[action]}
+          </button>
+        ))}
+      </div>
       <p className="detail-identity">
         Revision {record.revision} · {record.namespace} · {record.driver === "secret" ? "Secret" : "ConfigMap"} storage
       </p>

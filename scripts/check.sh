@@ -4,6 +4,7 @@ cd "$(dirname "$0")/.."
 python3 scripts/source-descriptions.py check
 python3 scripts/check-docs.py
 test -z "$(gofmt -l cmd internal tests)"
+sh scripts/build-helm-renderer.sh
 go test ./...
 go vet ./...
 node --test scripts/normalize-bindings.test.mjs

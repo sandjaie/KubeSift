@@ -45,6 +45,7 @@ func (s *PreferencesService) SetPreferences(p preferences.Preferences) error {
 		return err
 	}
 	p.Window = s.value.Window
+	p.HelmSources = s.value.HelmSources
 	if err := preferences.Save(s.path, p); err != nil {
 		return err
 	}

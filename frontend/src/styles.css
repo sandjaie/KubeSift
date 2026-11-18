@@ -1881,3 +1881,44 @@ textarea::placeholder {
 .session-start button {
   justify-self: start;
 }
+
+/* Helm source controls reuse the existing settings surfaces and tokens. */
+.helm-source-fields {
+  display: grid;
+  gap: 12px;
+  margin: 16px 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.helm-source-fields label {
+  display: grid;
+  gap: 6px;
+}
+.helm-source-fields input,
+.helm-source-fields select {
+  width: 100%;
+}
+
+/* Helm action forms retain the shared modal, editor and evidence surfaces. */
+.helm-action-fields {
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--line);
+  margin: 12px 0;
+  padding: 12px;
+}
+.helm-action-fields > label {
+  display: block;
+}
+.helm-action-fields input:not([type="checkbox"]),
+.helm-action-fields select {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+}
+.helm-action-fields .edit-source {
+  width: 100%;
+  min-height: 180px;
+  max-height: 40vh;
+}

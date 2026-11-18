@@ -153,6 +153,8 @@ export function useHelm(tab: string, connection: ConnectionRef | undefined, name
   }
 
   return {
+    ready: !!current,
+    selectRelease: (name: string, driver: Driver) => reload(name, driver),
     driver,
     filter: current?.filter ?? "",
     name: current?.name ?? "",

@@ -145,6 +145,13 @@
         passwords or review payloads. Use trusted TLS, bounded chart decoding and no ambient plugins or executable credential helpers for
         chart sources. Hooks and prior writes can survive cancellation; report outcomes honestly and do not retry mutations automatically.
       </p>
+      <p>
+        Chart templates execute in a bundled WebAssembly build of the pinned Helm SDK engine. Each invocation has a 256 MiB linear-memory
+        maximum, operation-context termination and no filesystem, network or process capability. Native code mediates read-only lookup
+        through the captured Kubernetes transport. The 8 MiB rendered-content and stored-release checks remain separate bounds; the
+        renderer's memory cap is not a claim about total application RSS. Compiled trusted code is shared, while chart memory is discarded
+        with each invocation.
+      </p>
       <h2 id="helm-inspection">Helm inspection boundary</h2>
       <p>
         Entering the <a href="../superpowers/specs/2026-11-17-phase-1e1-helm-inspection-design.md">1E.1 Helm view</a> intentionally reads

@@ -18,10 +18,13 @@ import (
 )
 
 type ExplorerService struct {
-	mu          sync.Mutex
-	core        *Service
-	coordinator *explorer.Coordinator
-	reads       map[string]*workloadRead
+	mu                sync.Mutex
+	core              *Service
+	coordinator       *explorer.Coordinator
+	reads             map[string]*workloadRead
+	prefs             *PreferencesService
+	helmSourcesLoaded bool
+	helmTLS           map[string]bool
 }
 
 func newExplorerService(core *Service) *ExplorerService { return &ExplorerService{core: core} }
@@ -197,6 +200,10 @@ func (s *ExplorerService) ResetSources() error {
 func (s *ExplorerService) ServiceShutdown() error {
 	s.mu.Lock()
 	c := s.coordinator
+	for _, read := range s.reads {
+		read.cancel()
+	}
+	s.reads = nil
 	s.mu.Unlock()
 	if c != nil {
 		c.Close()

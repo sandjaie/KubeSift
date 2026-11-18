@@ -4,7 +4,7 @@ Used by: The app header and result dialog.
 Responsibilities: Recover native results and distinguish acceptance, rejection, staleness and uncertainty.
 Important: Refreshing results or targets never calls Execute.
 */
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { message } from "../connections/api";
 import { Modal } from "../ui/ReviewDialog";
 import { isResourceKind, type ResourceRef } from "../workloads/model";
@@ -131,7 +131,9 @@ export function OperationResults({
   onRefresh,
   onTarget,
   canOpen,
+  children,
 }: {
+  children?: ReactNode;
   results: OperationResult[];
   pending: number;
   error: string;
@@ -226,6 +228,7 @@ export function OperationResults({
           )}
         </section>
       ))}
+      {children}
     </Modal>
   );
 }

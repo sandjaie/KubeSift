@@ -44,7 +44,8 @@ export function ConnectionControls({
         ref={disclosure}
         className="connection-disclosure"
         onBlur={(event) => {
-          if (!event.currentTarget.contains(event.relatedTarget)) event.currentTarget.open = false;
+          // WebKit pointer clicks can blur the summary without assigning a new focus target.
+          if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget)) event.currentTarget.open = false;
         }}
         onKeyDown={(event) => {
           if (event.key === "Escape") {
