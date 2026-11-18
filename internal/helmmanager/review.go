@@ -380,7 +380,10 @@ func (s *Service) ReadReview(ctx context.Context, token, section string, offset 
 	if r == nil || r.cancel != nil || ctx.Err() != nil || !r.offsets[section][offset] {
 		return ReviewSection{}, model.Fail("stale_target", "Review or section cursor is unavailable. Prepare again.")
 	}
-	text := r.sections[section]
+	return sectionChunk(r.sections[section], offset, r.offsets[section])
+}
+
+func sectionChunk(text string, offset int, issued map[int]bool) (ReviewSection, error) {
 	end := min(offset+(256<<10), len(text))
 	for end < len(text) && !utf8.RuneStart(text[end]) {
 		end--
@@ -390,7 +393,7 @@ func (s *Service) ReadReview(ctx context.Context, token, section string, offset 
 	if err != nil || len(encoded) > 2<<20 {
 		return ReviewSection{}, model.Fail("capacity", "Review chunk exceeds the bridge limit.")
 	}
-	r.offsets[section][end] = true
+	issued[end] = true
 	return out, nil
 }
 

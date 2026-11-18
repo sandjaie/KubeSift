@@ -10,6 +10,7 @@ import { useConnections } from "./connections/useConnections";
 import { ClusterList } from "./connections/ClusterList";
 import { ConnectionControls } from "./connections/ConnectionControls";
 import type { CatalogEntry } from "./connections/api";
+import { HelmSourcesSettings } from "./settings/HelmSourcesSettings";
 import { SettingsPage } from "./settings/SettingsPage";
 import { SourcesSettings } from "./settings/SourcesSettings";
 import { TrustSettings } from "./settings/TrustSettings";
@@ -513,6 +514,7 @@ export default function App() {
               onReset={() => persist(defaultPreferences())}
             >
               <SourcesSettings controller={controller} />
+              <HelmSourcesSettings />
               <TrustSettings
                 key={trustTarget ? JSON.stringify([trustTarget.sourceId, trustTarget.context]) : "general"}
                 controller={controller}

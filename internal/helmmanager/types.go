@@ -9,18 +9,12 @@ package helmmanager
 import (
 	"github.com/sandjaie/KubeSift/internal/helmreader"
 	"github.com/sandjaie/KubeSift/internal/model"
+	"github.com/sandjaie/KubeSift/internal/preferences"
 	"time"
 )
 
-type Source struct {
-	ID       string `json:"id"`
-	Name     string `json:"name"`
-	Kind     string `json:"kind"`
-	URL      string `json:"url"`
-	CAFile   string `json:"caFile"`
-	CertFile string `json:"certFile"`
-	KeyFile  string `json:"keyFile"`
-}
+type Source = preferences.HelmSource
+
 type SourceCredentials struct {
 	Username string `json:"username"`
 	Password string `json:"password"`

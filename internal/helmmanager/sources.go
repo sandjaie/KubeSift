@@ -22,6 +22,7 @@ import (
 
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/sandjaie/KubeSift/internal/model"
+	"github.com/sandjaie/KubeSift/internal/preferences"
 	"go.yaml.in/yaml/v3"
 	"oras.land/oras-go/v2/registry/remote"
 	"oras.land/oras-go/v2/registry/remote/auth"
@@ -30,26 +31,15 @@ import (
 const indexLimit = 10 << 20
 
 func sourceURL(source Source) (*url.URL, error) {
-	u, err := url.Parse(source.URL)
-	if err != nil || u.Host == "" || u.User != nil || u.RawQuery != "" || u.Fragment != "" || strings.Contains(u.Path, "..") || len(source.URL) > 4096 {
-		return nil, model.Fail("invalid", "Use a source URL without credentials, query or traversal.")
+	if err := preferences.ValidateHelmSource(source); err != nil {
+		return nil, model.Fail("invalid", err.Error())
 	}
-	if (source.Kind == "https" && u.Scheme != "https") || (source.Kind == "oci" && u.Scheme != "oci") || (source.Kind != "https" && source.Kind != "oci") {
-		return nil, model.Fail("invalid", "Choose an HTTPS repository or OCI source.")
-	}
-	return u, nil
+	return url.Parse(source.URL)
 }
+
 func (s *Service) SaveSource(source Source) error {
 	if _, err := sourceURL(source); err != nil {
 		return err
-	}
-	if source.ID == "" || len(source.ID) > 128 || len(source.Name) == 0 || len(source.Name) > 128 || (source.CertFile == "") != (source.KeyFile == "") {
-		return model.Fail("invalid", "Provide a source ID/name and both client certificate and key when used.")
-	}
-	for _, p := range []string{source.CAFile, source.CertFile, source.KeyFile} {
-		if len(p) > 4096 {
-			return model.Fail("capacity", "TLS file path is too long.")
-		}
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()

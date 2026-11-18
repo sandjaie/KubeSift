@@ -21,6 +21,7 @@ func Run(assets fs.FS) error {
 	service := NewService()
 	prefs := newPreferencesService()
 	explorerService := newExplorerService(service)
+	explorerService.prefs = prefs
 	var lock sync.Mutex
 	var timer *time.Timer
 	closing := false

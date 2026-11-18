@@ -23,9 +23,11 @@ import (
 
 type chartData struct {
 	ChartSnapshot
-	raw        []byte
-	source     string
-	generation uint64
+	raw          []byte
+	values       string
+	valueOffsets map[int]bool
+	source       string
+	generation   uint64
 }
 type sourceData struct {
 	ctx         context.Context
