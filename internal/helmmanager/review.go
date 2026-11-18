@@ -169,6 +169,12 @@ func (s *Service) Prepare(ctx context.Context, req PrepareRequest) (Review, erro
 	if previous != nil && previous.Info.Status.IsPending() {
 		return Review{}, model.Fail("conflict", "This release has a pending Helm operation. Resolve it externally before continuing.")
 	}
+	if s.connections != nil {
+		r.ContextName, err = s.connections.ContextName(req.Target.Connection)
+		if err != nil {
+			return Review{}, err
+		}
+	}
 	r.Current = current
 	if previous != nil {
 		r.sections["currentManifest"] = previous.Manifest
@@ -266,6 +272,9 @@ func (s *Service) Prepare(ctx context.Context, req PrepareRequest) (Review, erro
 	defer s.mu.Unlock()
 	if s.reviews[r.Token] != r || ctx.Err() != nil {
 		return Review{}, model.Fail("cancelled", "Review was cancelled or invalidated.")
+	}
+	if len(r.ContextName) > 1024 || len(r.ChartName) > 256 || len(r.ChartVersion) > 256 {
+		return Review{}, model.Fail("capacity", "Release metadata exceeds the review display limit.")
 	}
 	r.cancel = nil
 	complete = true
@@ -391,7 +400,7 @@ func safeHelmError(ctx context.Context, err error) error {
 		return problem
 	}
 	classified := appkube.ClassifyError(ctx, err)
-	if classified.Code == "forbidden" || classified.Code == "auth_required" || ctx.Err() != nil {
+	if classified.Code == "forbidden" || classified.Code == "auth_required" || classified.Code == "unreachable" || classified.Code == "timeout" || ctx.Err() != nil {
 		return classified
 	}
 	return model.Fail("failed", "Helm could not complete this step. Check chart schema, resource compatibility and permissions; inspect the release for partial effects.")

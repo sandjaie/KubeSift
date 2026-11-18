@@ -10,13 +10,16 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/sandjaie/KubeSift/internal/model"
 	"io"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 
@@ -35,7 +38,9 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-func testReviewActions(t *testing.T) {
+func testReviewActions(t *testing.T) { testReviewFixture(t, false) }
+
+func testReviewFixture(t *testing.T, checkExecution bool) {
 	for _, verb := range []string{"install", "upgrade", "rollback", "uninstall"} {
 		t.Run(verb, func(t *testing.T) {
 			raw := archive(t, map[string]string{
@@ -64,9 +69,12 @@ func testReviewActions(t *testing.T) {
 				encoded, _ := json.Marshal(rel)
 				records = append(records, core.ConfigMap{TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "ConfigMap"}, ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: "owned", UID: types.UID(fmt.Sprint(revision)), ResourceVersion: "1", Labels: map[string]string{"owner": "helm", "name": "demo", "version": strconv.Itoa(revision)}}, Data: map[string]string{"release": base64.StdEncoding.EncodeToString(encoded)}})
 			}
+			var recordsMu sync.RWMutex
 			var writes atomic.Int32
 			var denied atomic.Bool
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				recordsMu.RLock()
+				defer recordsMu.RUnlock()
 				w.Header().Set("Content-Type", "application/json")
 				if denied.Load() {
 					w.WriteHeader(403)
@@ -99,13 +107,13 @@ func testReviewActions(t *testing.T) {
 			s := NewService(nil)
 			defer s.Close()
 			s.configure = func(ctx context.Context, _ Target, readonly bool) (*configuration, error) {
-				if !readonly {
+				if !readonly && !checkExecution {
 					t.Fatal("preview requested writable configuration")
 				}
 				cfg := &action.Configuration{KubeClient: &fake.FailingKubeClient{PrintingKubeClient: fake.PrintingKubeClient{Out: io.Discard}, CreateError: fmt.Errorf("unexpected preview create"), UpdateError: fmt.Errorf("unexpected preview update"), DeleteError: fmt.Errorf("unexpected preview delete"), WatchUntilReadyError: fmt.Errorf("unexpected preview hook")}, Releases: storage.Init(memory), Capabilities: common.DefaultCapabilities.Copy(), RESTClientGetter: &nativeGetter{config: &rest.Config{Host: server.URL}, namespace: "owned"}}
 				cfg.SetLogger(slog.DiscardHandler)
 				cfg.Releases.SetLogger(slog.DiscardHandler)
-				return &configuration{sdk: cfg, client: client}, nil
+				return &configuration{sdk: cfg, client: client, transport: &operationTransport{ctx: ctx}}, nil
 			}
 			req := PrepareRequest{Action: verb, Target: target}
 			if verb == "install" || verb == "upgrade" {
@@ -135,6 +143,24 @@ func testReviewActions(t *testing.T) {
 				}
 				if len(s.reviews[review.Token].sections["hooks"]) == 0 || len(s.reviews[review.Token].sections["crds"]) == 0 || !strings.Contains(s.reviews[review.Token].sections["resources"], "keep") {
 					t.Fatal("hook, CRD or keep-policy impact missing")
+				}
+			}
+			if checkExecution {
+				recordsMu.Lock()
+				if verb == "install" {
+					rel := &stored.Release{Name: "demo", Namespace: "owned", Version: 1, Info: &stored.Info{Status: "deployed"}}
+					encoded, _ := json.Marshal(rel)
+					records = append(records, core.ConfigMap{TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "ConfigMap"}, ObjectMeta: metav1.ObjectMeta{Name: "sh.helm.release.v1.demo.v1", Namespace: "owned", UID: "appeared", ResourceVersion: "1", Labels: map[string]string{"owner": "helm", "name": "demo", "version": "1"}}, Data: map[string]string{"release": base64.StdEncoding.EncodeToString(encoded)}})
+				} else if verb == "rollback" {
+					records[0].ResourceVersion = "changed"
+				} else {
+					records[1].ResourceVersion = "changed"
+				}
+				recordsMu.Unlock()
+				_, wrote, err := s.performAction(context.Background(), s.reviews[review.Token])
+				var problem *model.Problem
+				if wrote || !errors.As(err, &problem) || problem.Code != "stale_target" {
+					t.Fatalf("changed record accepted: writes=%v error=%v", wrote, err)
 				}
 			}
 			denied.Store(true)

@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/sandjaie/KubeSift/internal/connection"
+	"github.com/sandjaie/KubeSift/internal/helmreader"
 	"github.com/sandjaie/KubeSift/internal/model"
 	"helm.sh/helm/v4/pkg/chart"
 )
@@ -52,12 +53,18 @@ type Service struct {
 	sourceGeneration uint64
 	reviews          map[string]*reviewData
 	configure        func(context.Context, Target, bool) (*configuration, error)
+	perform          func(context.Context, *reviewData) (*helmreader.ReleaseSummary, bool, error)
+	executions       map[string]*execution
+	tokens           map[string]string
+	locks            map[Target]bool
+	running          int
+	invalidate       func(Target)
 }
 
 func NewService(connections *connection.Manager) *Service {
 	suppressHelmLogs()
 	ctx, cancel := context.WithCancel(context.Background())
-	s := &Service{connections: connections, ctx: ctx, cancel: cancel, sources: map[string]sourceData{}, charts: map[string]*chartData{}, indexes: map[string]indexData{}, reviews: map[string]*reviewData{}}
+	s := &Service{connections: connections, ctx: ctx, cancel: cancel, sources: map[string]sourceData{}, charts: map[string]*chartData{}, indexes: map[string]indexData{}, reviews: map[string]*reviewData{}, executions: map[string]*execution{}, tokens: map[string]string{}, locks: map[Target]bool{}}
 	if connections != nil {
 		connections.AddCleanup(func(ref model.ConnectionRef) {
 			s.mu.Lock()
@@ -156,6 +163,12 @@ func (s *Service) Discard(id string) {
 	delete(s.reviews, id)
 }
 func (s *Service) ImportChart(path string) (string, error) {
+	ctx, done := s.owned(context.Background(), 120*time.Second)
+	defer done()
+	info, err := os.Lstat(path)
+	if err != nil || !info.Mode().IsRegular() {
+		return "", model.Fail("invalid", "Choose a regular packaged chart file.")
+	}
 	if filepath.Ext(path) != ".tgz" {
 		return "", model.Fail("invalid", "Choose a packaged .tgz chart.")
 	}
@@ -171,7 +184,7 @@ func (s *Service) ImportChart(path string) (string, error) {
 	defer f.Close()
 	raw, err := readBounded(f, archiveLimit)
 	if err == nil {
-		err = s.finishChart(s.ctx, c, raw)
+		err = s.finishChart(ctx, c, raw)
 	}
 	if err != nil {
 		s.Discard(c.ID)
@@ -200,6 +213,9 @@ func (s *Service) finishChart(ctx context.Context, c *chartData, raw []byte) err
 	c.raw = raw
 	c.Name = a.Name()
 	c.Version, _ = meta["Version"].(string)
+	if len(c.Name) > 256 || len(c.Version) > 256 {
+		return model.Fail("capacity", "Chart name or version exceeds the display limit.")
+	}
 	c.Digest = chartHash(raw)
 	return nil
 }

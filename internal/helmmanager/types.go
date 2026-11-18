@@ -8,6 +8,7 @@ package helmmanager
 
 import (
 	"github.com/sandjaie/KubeSift/internal/helmreader"
+	"github.com/sandjaie/KubeSift/internal/model"
 	"time"
 )
 
@@ -68,6 +69,7 @@ type PrepareRequest struct {
 }
 
 type Review struct {
+	ContextName  string                `json:"contextName"`
 	Token        string                `json:"token"`
 	Target       Target                `json:"target"`
 	Action       string                `json:"action"`
@@ -87,4 +89,17 @@ type ReviewSection struct {
 	Offset     int    `json:"offset"`
 	NextOffset int    `json:"nextOffset"`
 	Done       bool   `json:"done"`
+}
+
+type Result struct {
+	ID          string                     `json:"id"`
+	Action      string                     `json:"action"`
+	Target      Target                     `json:"target"`
+	ContextName string                     `json:"contextName"`
+	State       string                     `json:"state"`
+	Stage       string                     `json:"stage"`
+	StartedAt   time.Time                  `json:"startedAt"`
+	FinishedAt  *time.Time                 `json:"finishedAt"`
+	Observed    *helmreader.ReleaseSummary `json:"observed"`
+	Problem     *model.Problem             `json:"problem"`
 }
