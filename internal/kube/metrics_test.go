@@ -7,9 +7,14 @@ Important: All samples are synthetic unless the opt-in integration test runs.
 package kube
 
 import (
+	"context"
+	"fmt"
 	core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"net/http"
+	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -104,5 +109,153 @@ func TestMetricsProjection(t *testing.T) {
 	partial.Containers = append(partial.Containers, partial.Containers[0])
 	if _, err := projectMetrics(target, partial, &pod, nil, true, "metrics.k8s.io/v1", now); err == nil {
 		t.Fatal("duplicate counted twice")
+	}
+}
+
+func TestCurrentMetricsReader(t *testing.T) {
+	t.Run("bridge payload bound", func(t *testing.T) {
+		if _, err := boundedMetricsBatch(MetricsBatch{Items: []ResourceUsage{{WindowSeconds: strings.Repeat("x", 2<<20)}}}); err == nil {
+			t.Fatal("accepted oversized bridge result")
+		}
+	})
+
+	t.Run("shared capacity and cancellation", func(t *testing.T) {
+		var active, peak atomic.Int32
+		started := make(chan struct{}, 20)
+		s, ref := workloadServer(t, func(w http.ResponseWriter, r *http.Request) {
+			switch r.URL.Path {
+			case "/apis/metrics.k8s.io":
+				fmt.Fprint(w, `{"versions":[{"groupVersion":"metrics.k8s.io/v1","version":"v1"}]}`)
+			case "/apis/metrics.k8s.io/v1":
+				fmt.Fprint(w, `{"resources":[{"name":"pods","kind":"PodMetrics","namespaced":true,"verbs":["get"]}]}`)
+			default:
+				count := active.Add(1)
+				defer active.Add(-1)
+				for old := peak.Load(); count > old && !peak.CompareAndSwap(old, count); old = peak.Load() {
+				}
+				started <- struct{}{}
+				<-r.Context().Done()
+			}
+		})
+		targets := make([]ResourceRef, 10)
+		for i := range targets {
+			targets[i] = ResourceRef{Connection: ref, APIVersion: "v1", Kind: "Pod", Namespace: "test", Name: fmt.Sprintf("pod-%d", i), UID: fmt.Sprint(i)}
+		}
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		done := make(chan struct{}, 2)
+		for range 2 {
+			go func() {
+				defer func() { done <- struct{}{} }()
+				_, _ = s.ReadCurrentMetrics(ctx, MetricsRequest{Connection: ref, Targets: targets})
+			}()
+		}
+		for range 4 {
+			select {
+			case <-started:
+			case <-time.After(5 * time.Second):
+				t.Fatal("workers did not start")
+			}
+		}
+		_, err := s.ReadCurrentMetrics(ctx, MetricsRequest{Connection: ref, Targets: targets})
+		if p := metricsProblem(ctx, err); p.Code != "busy" {
+			t.Fatalf("expected batch capacity: %v", err)
+		}
+		cancel()
+		for range 2 {
+			select {
+			case <-done:
+			case <-time.After(5 * time.Second):
+				t.Fatal("cancellation did not release batch")
+			}
+		}
+		if peak.Load() > 4 || len(s.metricsWorkers) != 0 || len(s.metricsBatches) != 0 {
+			t.Fatal("capacity leaked", peak.Load())
+		}
+		if _, err = s.ReadCurrentMetrics(context.Background(), MetricsRequest{Connection: ref, Targets: make([]ResourceRef, 101)}); err == nil {
+			t.Fatal("accepted 101 targets")
+		}
+	})
+
+	for _, mode := range []string{"v1", "v1beta1", "absent", "forbidden", "missing", "replacement", "oversize", "unavailable", "sample-forbidden", "before-creation"} {
+		t.Run(mode, func(t *testing.T) {
+			var groupReads atomic.Int32
+			now := time.Now().UTC().Truncate(time.Second)
+			s, ref := workloadServer(t, func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != "GET" {
+					t.Error("metrics wrote data")
+				}
+				w.Header().Set("Content-Type", "application/json")
+				switch r.URL.Path {
+				case "/apis/metrics.k8s.io":
+					groupReads.Add(1)
+					if mode == "absent" {
+						w.WriteHeader(404)
+						return
+					}
+					if mode == "forbidden" {
+						w.WriteHeader(403)
+						return
+					}
+					version := "v1"
+					if mode == "v1beta1" {
+						version = "v1beta1"
+					}
+					fmt.Fprintf(w, `{"name":"metrics.k8s.io","versions":[{"groupVersion":"metrics.k8s.io/%s","version":"%s"}]}`, version, version)
+				case "/apis/metrics.k8s.io/v1", "/apis/metrics.k8s.io/v1beta1":
+					fmt.Fprint(w, `{"resources":[{"name":"pods","kind":"PodMetrics","namespaced":true,"verbs":["get"]},{"name":"nodes","kind":"NodeMetrics","namespaced":false,"verbs":["get"]}]}`)
+				case "/apis/metrics.k8s.io/v1/namespaces/test/pods/sample", "/apis/metrics.k8s.io/v1beta1/namespaces/test/pods/sample":
+					if mode == "unavailable" {
+						w.WriteHeader(503)
+						return
+					}
+					if mode == "sample-forbidden" {
+						w.WriteHeader(403)
+						return
+					}
+					if mode == "missing" {
+						w.WriteHeader(404)
+						return
+					}
+					if mode == "oversize" {
+						fmt.Fprint(w, strings.Repeat("x", 262145))
+						return
+					}
+					fmt.Fprintf(w, `{"apiVersion":"metrics.k8s.io/%s","kind":"PodMetrics","metadata":{"name":"sample","namespace":"test"},"timestamp":%q,"window":"30s","containers":[{"name":"app","usage":{"cpu":"125m","memory":"80Mi"}}]}`, map[bool]string{true: "v1beta1", false: "v1"}[mode == "v1beta1"], now.Format(time.RFC3339))
+				case "/api/v1/namespaces/test/pods/sample":
+					uid := "uid"
+					if mode == "replacement" {
+						uid = "new"
+					}
+					created := now.Add(-time.Hour)
+					if mode == "before-creation" {
+						created = now
+					}
+					fmt.Fprintf(w, `{"apiVersion":"v1","kind":"Pod","metadata":{"name":"sample","namespace":"test","uid":%q,"creationTimestamp":%q},"spec":{"containers":[{"name":"app"}]},"status":{"containerStatuses":[{"name":"app","state":{"running":{}}}]}}`, uid, created.Format(time.RFC3339))
+				default:
+					t.Errorf("unexpected %s", r.URL.Path)
+					w.WriteHeader(404)
+				}
+			})
+			target := ResourceRef{Connection: ref, Kind: "Pod", APIVersion: "v1", Namespace: "test", Name: "sample", UID: "uid"}
+			out, err := s.ReadCurrentMetrics(context.Background(), MetricsRequest{Connection: ref, Targets: []ResourceRef{target}, Detail: &target})
+			if err != nil || len(out.Items) != 1 {
+				t.Fatalf("%+v %v", out, err)
+			}
+			if mode == "v1" || mode == "v1beta1" {
+				if out.Items[0].CPU.Amount == nil || *out.Items[0].CPU.Amount != "125" {
+					t.Fatalf("%+v", out)
+				}
+			} else if out.Items[0].Problem == nil {
+				t.Fatalf("expected classified unavailable sample %+v", out)
+			}
+			if mode == "forbidden" || mode == "absent" {
+				_, _ = s.ReadCurrentMetrics(context.Background(), MetricsRequest{Connection: ref, Targets: []ResourceRef{target}})
+				if groupReads.Load() != 1 {
+					t.Fatal("repeated shared discovery failure", groupReads.Load())
+				}
+			}
+
+		})
 	}
 }
