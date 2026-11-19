@@ -113,6 +113,66 @@ func TestMetricsProjection(t *testing.T) {
 }
 
 func TestCurrentMetricsReader(t *testing.T) {
+	t.Run("cancelled discovery recovers immediately", func(t *testing.T) {
+		var calls atomic.Int32
+		started := make(chan struct{})
+		s, ref := workloadServer(t, func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path == "/apis/metrics.k8s.io" {
+				if calls.Add(1) == 1 {
+					close(started)
+					<-r.Context().Done()
+					return
+				}
+				fmt.Fprint(w, `{"versions":[{"groupVersion":"metrics.k8s.io/v1","version":"v1"}]}`)
+				return
+			}
+			if r.URL.Path != "/apis/metrics.k8s.io/v1" {
+				t.Errorf("unexpected discovery path %s", r.URL.Path)
+			}
+			fmt.Fprint(w, `{"resources":[{"name":"pods","kind":"PodMetrics","namespaced":true,"verbs":["get"]}]}`)
+		})
+		cfg, err := s.connections.RESTConfig(ref)
+		if err != nil {
+			t.Fatal(err)
+		}
+		httpClient, err := BoundedHTTPClient(cfg)
+		if err != nil {
+			t.Fatal(err)
+		}
+		client := metricsClient{httpClient, cfg.Host}
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		first := make(chan *metricsDiscovery, 1)
+		go func() { first <- s.discoverMetrics(ctx, ref, client, false) }()
+		select {
+		case <-started:
+		case <-time.After(5 * time.Second):
+			t.Fatal("discovery did not start")
+		}
+		joined := make(chan struct{})
+		second := make(chan *metricsDiscovery, 1)
+		go func() { close(joined); second <- s.discoverMetrics(context.Background(), ref, client, false) }()
+		<-joined
+		cancel()
+		select {
+		case <-first:
+		case <-time.After(5 * time.Second):
+			t.Fatal("discovery did not cancel")
+		}
+		select {
+		case result := <-second:
+			if result.problem != nil || result.version != "v1" {
+				t.Fatalf("re-entry inherited cancellation: %+v", result)
+			}
+		case <-time.After(5 * time.Second):
+			t.Fatal("re-entry stalled")
+		}
+		cached := s.discoverMetrics(context.Background(), ref, client, false)
+		if cached.problem != nil || calls.Load() != 2 {
+			t.Fatal("healthy discovery was not cached", calls.Load())
+		}
+	})
+
 	t.Run("bridge payload bound", func(t *testing.T) {
 		if _, err := boundedMetricsBatch(MetricsBatch{Items: []ResourceUsage{{WindowSeconds: strings.Repeat("x", 2<<20)}}}); err == nil {
 			t.Fatal("accepted oversized bridge result")

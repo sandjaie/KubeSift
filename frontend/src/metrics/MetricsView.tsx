@@ -37,6 +37,13 @@ export function MetricsCell({ view, metric }: { view?: SampleView; metric: "cpu"
   return (
     <span title={[s.apiVersion, s.problem?.message, view.last, `${age}s old`].filter(Boolean).join(" · ")}>
       {metricText(s[metric].amount, metric)}
+      {s.resource.kind === "Node" && s[metric].amount !== null && (
+        <span className="muted">
+          {" "}
+          ·{" "}
+          {s[metric].allocatablePercent === null ? "Allocatable percentage unavailable" : `${s[metric].allocatablePercent}% of allocatable`}
+        </span>
+      )}
       {s[metric].amount !== null && !complete ? " · Partial subtotal" : ""}
       {view.last ? " · Last sample" : ""}
       {stale ? " · Stale" : ""}
@@ -78,7 +85,8 @@ export function CurrentUsage({ view }: { view?: SampleView }) {
           {s.sampledAt && (
             <>
               <p className="muted">
-                {s.apiVersion} · Sample {new Date(s.sampledAt).toLocaleString()} · {labels(view!).age}s old · Window {s.windowSeconds}s
+                {s.apiVersion} · Sample {new Date(s.sampledAt).toLocaleString()} · {labels(view!).age}s old · Window {s.windowSeconds}s ·
+                Last fetched {new Date(s.fetchedAt).toLocaleString()}
               </p>
               <p className="muted">
                 Configured resources captured {s.configuredAt ? new Date(s.configuredAt).toLocaleString() : "Unknown"}; read separately from

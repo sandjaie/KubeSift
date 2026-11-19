@@ -54,7 +54,7 @@
         polling, native cancellation/re-entry, sample aging, partial and unavailable presentation, transient retention, immediate refresh
         and denial clearing. Full repository checks passed, including go test ./..., go vet ./..., 127 frontend tests in 35 files, lint,
         types, source descriptions, documentation links and binding normalization. Native race checks, wails3 task bindings, npm run build
-        and wails3 task package passed. The final executable SHA-256 was 3384b873cbee014ad8afb1fe083b2ce040e95870c7df6231b8010052c607532a.
+        and wails3 task package passed. The final executable SHA-256 was 35db420651a2b4cfc6efdb43272577a89b2a6e1b43dc764307e0d62bb1f8eaac.
         Existing macOS deployment-target linker warnings remained non-fatal.
       </p>
       <h2>Live local evidence</h2>
@@ -113,6 +113,36 @@
         initiated fresh reads instead of a timer backlog. The initial desktop run found hidden-window sample clearing, which was corrected
         and regression checked. The final lifecycle refinement retains native visibility across pane unmounts, preserves background status
         across occlusion/wake events, and keeps displayed age advancing without polling.
+      </p>
+      <h2>Independent PR review</h2>
+      <p>
+        A fresh <code>/root/phase1e3_pr_review</code> reviewer used the repository code-review skill against the complete 30-file candidate
+        <code>9c86808b9351fb3f0f0d5a86dd6ad4d90fd0a78c</code>, with target/base/merge-base <code>origin/develop</code> at
+        <code>a947d9b7b37bbc9ba93e3e8500d57e3fe6fe6f52</code>. The initial verdict identified two blockers and one minor presentation gap.
+        All three were confirmed against the approved specification and fixed:
+      </p>
+      <ul>
+        <li>
+          <strong>KSF-001 · P2:</strong> Caller-cancelled discovery is discarded; live waiting callers retry instead of inheriting a
+          one-minute cancellation cache. The delayed discovery cancellation/re-entry regression failed before the fix and passed afterward,
+          including race checks.
+        </li>
+        <li>
+          <strong>KSF-002 · P2:</strong> Node cells now show explicitly labelled allocatable percentages, with Pod cells remaining
+          absolute-only. A mounted cell assertion failed before the fix and passed afterward. The rebuilt native desktop showed CPU/memory
+          percentages in the actual Node table.
+        </li>
+        <li>
+          <strong>KSF-003 · P3:</strong> Overview now labels the original sample's last fetch timestamp, including when retaining Last
+          sample. The mounted assertion and rebuilt desktop provenance check passed.
+        </li>
+      </ul>
+      <p>
+        After these fixes, the complete repository checks (127 frontend tests), native reader/projection and race checks, real A/B
+        integration, packaging and targeted native desktop checks passed. The review-fix live sample comparison recorded a Pod at
+        <code>0m / 413696 bytes</code> and Node at <code>628.272614m / 1761210368 bytes</code>; the separately timed desktop showed both
+        labelled allocatable percentages and Last fetched. Targeted follow-up with the same reviewer is pending; this is the follow-up to
+        the one whole-PR review.
       </p>
       <h2>Cleanup, review and delivery</h2>
       <p>

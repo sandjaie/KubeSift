@@ -171,10 +171,22 @@ test("labels partial and Node comparisons and splits selected-first pages sequen
     ...item,
     resource: { ...ref, kind: "Node", namespace: "" },
     containers: null,
+    cpuComplete: true,
     cpu: { ...value, allocatable: "2", allocatablePercent: "150" },
   };
-  await act(async () => root.render(<CurrentUsage view={{ sample: node, now: Date.now() }} />));
+  await act(async () =>
+    root.render(
+      <>
+        <MetricsCell view={{ sample: node, now: Date.now() }} metric="cpu" />
+        <CurrentUsage view={{ sample: node, now: Date.now() }} />
+      </>,
+    ),
+  );
+  expect(host.querySelector("span")!.textContent).toContain("150% of allocatable");
+  expect(host.textContent).toContain("Last fetched");
   expect(host.textContent).toContain("150% of allocatable");
+  await act(async () => root.render(<MetricsCell view={{ sample: { ...node, resource: ref }, now: Date.now() }} metric="cpu" />));
+  expect(host.textContent).not.toContain("% of allocatable");
   function Page() {
     useMetrics({
       connection: ref.connection,

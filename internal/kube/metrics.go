@@ -96,6 +96,9 @@ func (s *Service) discoverMetrics(ctx context.Context, ref model.ConnectionRef, 
 				s.mu.Unlock()
 				select {
 				case <-entry.ready:
+					if entry.until.IsZero() {
+						continue
+					}
 					return entry
 				case <-ctx.Done():
 					return &metricsDiscovery{problem: metricsProblem(ctx, ctx.Err())}
@@ -143,7 +146,11 @@ func (s *Service) discoverMetrics(ctx context.Context, ref model.ConnectionRef, 
 			}
 		}
 		s.mu.Lock()
-		entry.until = time.Now().Add(time.Minute)
+		if ctx.Err() == nil {
+			entry.until = time.Now().Add(time.Minute)
+		} else if s.metrics[ref] == entry {
+			delete(s.metrics, ref)
+		}
 		close(entry.ready)
 		s.mu.Unlock()
 		return entry
