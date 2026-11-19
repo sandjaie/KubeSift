@@ -136,7 +136,13 @@
         reconnect after sleep; writes and commands must not replay automatically. Do not automatically retry a write with an uncertain
         outcome.
       </p>
-      <h2>Metrics</h2>
+      <h2 id="metrics">Metrics</h2>
+      <p>
+        <a href="../superpowers/specs/2026-11-19-phase-1e3-current-metrics-design.md">Phase 1E.3</a> reads discovered Metrics API v1 or
+        v1beta1 for visible Pods and Nodes through existing owned Kubernetes transport. Bounded named reads, UID checks and visible-only
+        polling keep metrics independent of inventory and connection health. Current samples remain ephemeral; the app installs no metrics
+        provider.
+      </p>
       <p>
         Current usage comes from an existing Metrics API. Display CPU units and memory bytes; percentages name their denominator (request,
         limit or node allocatable). Historical charts use a selected existing Prometheus-compatible endpoint with required series. Report

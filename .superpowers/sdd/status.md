@@ -1,6 +1,13 @@
 # KubeSift resumable status
 
-Updated 2026-11-18. Current integration branch is `develop`.
+Updated 2026-11-19. Current integration branch is `develop`.
+
+## Phase 1E.3 · Current CPU and memory metrics
+
+- [Specification](../../docs/superpowers/specs/2026-11-19-phase-1e3-current-metrics-design.md) and [four-task implementation plan](../../docs/superpowers/plans/2026-11-19-phase-1e3-current-metrics.md) prepared from `e6dae08` for separate implementation. No code/dependencies changed or cluster operations performed.
+- Scope: visible Pod/Node usage, per-container comparisons, allocatable Node percentages, sample freshness, partial/unavailable states and bounded Metrics API reads. Current UI and minimal tests preserved; historical metrics remains 1E.4.
+- Fresh specification builder check found no important unanswered questions. Plan self-review maps semantics, transport, UI lifecycle and local validation to four tasks.
+- Start `feature/phase-1e3-current-metrics` from updated develop using Superpowers executing-plans. Development-only provider fixtures are explicitly separate from the shipped app.
 
 ## Application icon
 

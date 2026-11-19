@@ -383,6 +383,15 @@
           supported targets, relationship bounds and no-mutation behavior.
         </li>
       </ul>
+      <h2 id="current-metrics">Resource metrics evidence</h2>
+      <p>
+        The <a href="https://kubernetes.io/docs/tasks/debug/debug-cluster/resource-metrics-pipeline/">resource metrics pipeline</a> defines
+        CPU sampling and memory working set. Check served API versions through discovery; the
+        <a href="https://kubernetes.io/blog/2026/08/27/kubernetes-v1-37-metrics-api-ga/">v1 graduation</a> does not make every provider
+        serve v1. Sample timestamps and windows are separate from fetch time and current resource configuration. The
+        <a href="../superpowers/specs/2026-11-19-phase-1e3-current-metrics-design.md">1E.3 specification</a> owns units, coverage and
+        polling limits.
+      </p>
       <h2 id="testing">Testing and evidence</h2>
       <ul>
         <li>

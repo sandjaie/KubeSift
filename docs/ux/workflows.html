@@ -145,6 +145,14 @@
         automatically unhealthy; unavailable/stale health data must be identified. Alerts require evidence, not a decorative badge. Text and
         icons supplement color.
       </p>
+      <h2 id="current-metrics">Current resource metrics</h2>
+      <p>
+        <a href="../superpowers/specs/2026-11-19-phase-1e3-current-metrics-design.md">Phase 1E.3</a> adds CPU/Memory to existing Pod and
+        Node tables and a Current usage section to Overview. Pod detail compares each container with its configured requests and limits;
+        Node percentages name allocatable as the denominator. Pod totals stay absolute. Show source time/window and distinguish partial,
+        stale, unavailable and zero values. Reuse existing layout, themes and Refresh; failures never block resource operations or imply
+        cluster disconnection.
+      </p>
       <h2 id="helm-inspection">Helm inspection design</h2>
       <p>
         <a href="../superpowers/specs/2026-11-17-phase-1e1-helm-inspection-design.md">1E.1</a> enables the existing Helm sidebar entry using
