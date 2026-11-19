@@ -84,12 +84,12 @@ Native DTOs use camelCase JSON and existing kube.ResourceRef/model.Problem:
 
 **Consumes:** generated ReadCurrentMetrics; existing visible page/selection and connection signals. **Produces:** CPU/memory columns and Current usage panels, one shared polling controller.
 
-- [ ] Add one `metrics.test.tsx` group with fake timers and deferred API responses: page/selection deduplication, no overlapping polls, 15-second completion interval, hidden/inactive cancellation, wake refresh and A→B→late A isolation. Check age changes without a new sample and 60-second error cooldown with immediate manual refresh.
-- [ ] Include mounted presentation assertions for real zero, unavailable, stale, partial subtotal, request/limit/allocatable labels and >100%. Forbidden/replacement clears old values; transient refresh failure retains them only as Last sample. Verify normal resource controls stay enabled when metrics fail.
-- [ ] Run `npm test --workspace frontend -- src/metrics/metrics.test.tsx`; establish failure before implementation.
-- [ ] Implement useMetrics with latest-only state, request epochs/native cancellation and bounded batch splitting. Feed full page targets plus selected detail once; no per-cell requests. Link existing Refresh and visibility/native-window lifecycle signals. Recompute staleness while visible, discard obsolete targets and never queue timer backlogs after sleep.
-- [ ] Extend current Pod/Node tables and Overview with shared cells/detail. Show CPU in m, memory binary units, source/time/window and configured denominator capture time. Only selected Pod detail receives container breakdown. Reuse existing overflow/column conventions, focus and accessible status text; no graph or global settings. Keep CPU/memory display formatting centralized.
-- [ ] Run targeted tests, `npm run lint`, `npm run typecheck` and `npm run build`; expect pass. Commit `feat: phase1e3-task3 show current Pod and Node metrics`.
+- [x] Add one `metrics.test.tsx` group with fake timers and deferred API responses: page/selection deduplication, no overlapping polls, 15-second completion interval, hidden/inactive cancellation, wake refresh and A→B→late A isolation. Check age changes without a new sample and 60-second error cooldown with immediate manual refresh.
+- [x] Include mounted presentation assertions for real zero, unavailable, stale, partial subtotal, request/limit/allocatable labels and >100%. Forbidden/replacement clears old values; transient refresh failure retains them only as Last sample. Verify normal resource controls stay enabled when metrics fail.
+- [x] Run `npm test --workspace frontend -- src/metrics/metrics.test.tsx`; establish failure before implementation.
+- [x] Implement useMetrics with latest-only state, request epochs/native cancellation and bounded batch splitting. Feed full page targets plus selected detail once; no per-cell requests. Link existing Refresh and visibility/native-window lifecycle signals. Recompute staleness while visible, discard obsolete targets and never queue timer backlogs after sleep.
+- [x] Extend current Pod/Node tables and Overview with shared cells/detail. Show CPU in m, memory binary units, source/time/window and configured denominator capture time. Only selected Pod detail receives container breakdown. Reuse existing overflow/column conventions, focus and accessible status text; no graph or global settings. Keep CPU/memory display formatting centralized.
+- [x] Run targeted tests, `npm run lint`, `npm run typecheck` and `npm run build`; expect pass. Commit `feat: phase1e3-task3 show current Pod and Node metrics`.
 
 ## Task 4 — Local validation, documentation and delivery
 

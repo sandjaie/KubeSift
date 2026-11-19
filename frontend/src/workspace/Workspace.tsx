@@ -4,6 +4,7 @@ Used by: App for the active connection tab.
 Responsibilities: Render bounded page controls and preserve tab-owned navigation.
 Important: No synthetic fallback or write action is exposed.
 */
+import { useMetrics, metricsIdentity } from "../metrics/useMetrics";
 import { ResourceSplit } from "./ResourceSplit";
 import { isResourceKind } from "../workloads/model";
 import type { ReactNode } from "react";
@@ -96,6 +97,17 @@ export function Workspace({
   const rows = [...(i.page?.items ?? [])]
     .filter((row) => row.resource.name.toLowerCase().includes(i.filter.toLowerCase()))
     .sort((a, b) => (kind === "Event" ? 0 : a.resource.name.localeCompare(b.resource.name) * (i.sort === "asc" ? 1 : -1)));
+  const metrics = useMetrics({
+    connection: tab.view?.ref ?? null,
+    targets: (i.page?.items ?? []).filter((r) => r.resource.kind === "Pod" || r.resource.kind === "Node").map((r) => r.resource),
+    detail:
+      c.activeSection === "Overview" && (c.selection?.resource.kind === "Pod" || c.selection?.resource.kind === "Node")
+        ? c.selection.resource
+        : null,
+    visible: !helmPane && (kind === "Pod" || kind === "Node") && canReviewOperation,
+    refreshKey: JSON.stringify([i.refresh, i.sectionRefresh]),
+  });
+
   return (
     <div className="workspace live-workspace">
       <div className="explorer">
@@ -226,6 +238,7 @@ export function Workspace({
                   />
                 ) : isClusterKind(kind) ? (
                   <ClusterTable
+                    metrics={metrics.byIdentity}
                     kind={kind}
                     rows={rows as ClusterResourceRow[]}
                     selected={c.selection?.resource.uid ?? null}
@@ -268,6 +281,7 @@ export function Workspace({
                   />
                 ) : (
                   <ResourceTable
+                    metrics={metrics.byIdentity}
                     rows={rows as WorkloadRow[]}
                     kind={kind}
                     selected={c.selection?.resource.uid ?? null}
@@ -289,6 +303,7 @@ export function Workspace({
             <section className="detail-pane">
               {c.selection ? (
                 <ResourceDetail
+                  usage={metrics.byIdentity[metricsIdentity(c.selection.resource)]}
                   controller={c}
                   context={tab.entry.context}
                   stale={stale}

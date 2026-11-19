@@ -4,6 +4,8 @@ Used by: Workspace after explicit resource selection.
 Responsibilities: Keep section failures independent and render cluster fields as inert text.
 Important: Overview configuration is not measured usage and references never fetch Secret values.
 */
+import { CurrentUsage } from "../metrics/MetricsView";
+import type { SampleView } from "../metrics/useMetrics";
 import { useId, useLayoutEffect, useState, type ReactNode } from "react";
 import { ScaleDialog } from "../operations/ScaleDialog";
 import { DeleteDialog } from "../operations/DeleteDialog";
@@ -49,6 +51,7 @@ import { ResourceOverview } from "./ResourceOverview";
 import { isClusterKind } from "../cluster/model";
 import { ClusterOverview } from "../cluster/ClusterOverview";
 export function ResourceDetail({
+  usage,
   controller: c,
   context,
   stale,
@@ -59,6 +62,7 @@ export function ResourceDetail({
   onApply,
   onInteractive,
 }: {
+  usage?: SampleView;
   controller: WorkloadController;
   context: string;
   stale: boolean;
@@ -248,6 +252,7 @@ export function ResourceDetail({
           {state.error} {data ? "Retained section evidence may be stale." : ""}
         </p>
       )}
+      {section === "Overview" && (kind === "Pod" || kind === "Node") && <CurrentUsage view={usage} />}
       {section === "Overview" &&
         data &&
         (isClusterKind(kind) ? (

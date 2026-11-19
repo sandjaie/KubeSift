@@ -18,6 +18,7 @@ import type * as model$0 from "../../../../../internal/model/models.js";
 declare module "@wailsio/runtime" {
   namespace Events {
     interface CustomEvents {
+      "metrics-visibility": boolean;
       session: model$0.Event;
     }
   }
