@@ -4,6 +4,8 @@ Used by: The existing workspace list pane.
 Responsibilities: Show truthful optional counts, phase and container failure reasons.
 Important: Sorting and filtering apply only to this page.
 */
+import { metricColumns } from "../metrics/MetricsView";
+import type { SampleView } from "../metrics/useMetrics";
 import type { WorkloadRow, Kind } from "../workloads/model";
 import type { ReactNode } from "react";
 import { evidenceTime } from "./ResourceOverview";
@@ -70,18 +72,27 @@ const workloadColumns: Record<Kind, Column[]> = {
   ],
 };
 export function ResourceTable({
+  metrics = {},
   rows,
   kind,
   selected,
   onSelect,
 }: {
+  metrics?: Record<string, SampleView>;
   rows: WorkloadRow[];
   kind: Kind;
   selected: string | null;
   onSelect: (row: WorkloadRow) => void;
 }) {
   return (
-    <InventoryTable rows={rows} kind={kind} label={`${kind}s`} selected={selected} onSelect={onSelect} columns={workloadColumns[kind]} />
+    <InventoryTable
+      rows={rows}
+      kind={kind}
+      label={`${kind}s`}
+      selected={selected}
+      onSelect={onSelect}
+      columns={[...workloadColumns[kind], ...(kind === "Pod" ? metricColumns<WorkloadRow>(metrics) : [])]}
+    />
   );
 }
 

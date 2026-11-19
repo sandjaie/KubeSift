@@ -13,10 +13,14 @@ import (
 	"github.com/wailsapp/wails/v3/pkg/events"
 	"io/fs"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
-func init() { application.RegisterEvent[model.Event]("session") }
+func init() {
+	application.RegisterEvent[model.Event]("session")
+	application.RegisterEvent[bool]("metrics-visibility")
+}
 func Run(assets fs.FS) error {
 	service := NewService()
 	prefs := newPreferencesService()
@@ -51,6 +55,24 @@ func Run(assets fs.FS) error {
 	}
 	service.setEmitter(func(event model.Event) { app.Event.Emit("session", event) })
 	window := app.Window.NewWithOptions(application.WebviewWindowOptions{Title: "KubeSift", Width: 1440, Height: 900, URL: "/"})
+	var foreground, awake atomic.Bool
+	foreground.Store(true)
+	awake.Store(true)
+	visibility := func(visible bool) {
+		app.Event.Emit("metrics-visibility", visible && foreground.Load() && awake.Load() && window.IsVisible() && !window.IsMinimised())
+	}
+	for _, event := range []events.WindowEventType{events.Common.WindowHide, events.Common.WindowMinimise} {
+		window.OnWindowEvent(event, func(*application.WindowEvent) { visibility(false) })
+	}
+	for _, event := range []events.WindowEventType{events.Common.WindowShow, events.Common.WindowRestore} {
+		window.OnWindowEvent(event, func(*application.WindowEvent) { visibility(true) })
+	}
+	app.Event.OnApplicationEvent(events.Mac.ApplicationWillResignActive, func(*application.ApplicationEvent) { foreground.Store(false); visibility(false) })
+	app.Event.OnApplicationEvent(events.Mac.ApplicationDidHide, func(*application.ApplicationEvent) { visibility(false) })
+	app.Event.OnApplicationEvent(events.Mac.ApplicationDidBecomeActive, func(*application.ApplicationEvent) { foreground.Store(true); visibility(true) })
+	app.Event.OnApplicationEvent(events.Common.SystemWillSleep, func(*application.ApplicationEvent) { awake.Store(false); visibility(false) })
+	app.Event.OnApplicationEvent(events.Common.SystemDidWake, func(*application.ApplicationEvent) { awake.Store(true); visibility(true) })
+
 	window.RegisterHook(events.Common.WindowClosing, func(event *application.WindowEvent) {
 		if !guard.shouldQuit() {
 			event.Cancel()

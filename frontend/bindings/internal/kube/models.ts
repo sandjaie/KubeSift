@@ -128,6 +128,13 @@ export interface ConfigurationRow {
   objectJSON: string;
 }
 
+export interface ContainerUsage {
+  name: string;
+  category: string;
+  cpu: MetricValue;
+  memory: MetricValue;
+}
+
 export interface ControllerRevisionPage {
   sourceVersion: string;
   currentRevision: string;
@@ -302,6 +309,29 @@ export interface ManifestAddress {
   name: string;
 }
 
+export interface MetricValue {
+  amount: string | null;
+  request: string | null;
+  limit: string | null;
+  allocatable: string | null;
+  requestPercent: string | null;
+  limitPercent: string | null;
+  allocatablePercent: string | null;
+}
+
+export interface MetricsBatch {
+  items: ResourceUsage[] | null;
+  fetchedAt: string;
+  problem: model$0.Problem | null;
+}
+
+export interface MetricsRequest {
+  connection: model$0.ConnectionRef;
+  targets: ResourceRef[] | null;
+  detail: ResourceRef | null;
+  refreshDiscovery: boolean;
+}
+
 export interface NetworkPage {
   items: NetworkRow[] | null;
   page: PageInfo;
@@ -450,6 +480,24 @@ export interface ResourceRef {
   namespace: string;
   name: string;
   uid: string;
+}
+
+export interface ResourceUsage {
+  resource: ResourceRef;
+  apiVersion: string;
+  state: string;
+  sampledAt: string | null;
+  windowSeconds: string;
+  fetchedAt: string;
+  configuredAt: string | null;
+  cpu: MetricValue;
+  memory: MetricValue;
+  cpuComplete: boolean;
+  memoryComplete: boolean;
+  missingContainers: string[] | null;
+  containers: ContainerUsage[] | null;
+  podLevelBudget: boolean;
+  problem: model$0.Problem | null;
 }
 
 export interface RolloutHistoryPage {

@@ -4,6 +4,8 @@ Used by: Cluster and Extensions destinations.
 Responsibilities: Display reported scope, quantities and condition state.
 Important: Missing condition and false values remain distinct.
 */
+import { metricColumns } from "../metrics/MetricsView";
+import type { SampleView } from "../metrics/useMetrics";
 import { InventoryTable } from "../workspace/ResourceTable";
 import { evidenceTime } from "../workspace/ResourceOverview";
 import { clusterLabels, type ClusterKind, type ClusterResourceRow } from "./model";
@@ -37,11 +39,13 @@ const fields: Record<Exclude<ClusterKind, "Event">, [string, (row: Summary) => s
   ],
 };
 export function ClusterTable({
+  metrics = {},
   kind,
   rows,
   selected,
   onSelect,
 }: {
+  metrics?: Record<string, SampleView>;
   kind: Exclude<ClusterKind, "Event">;
   rows: ClusterResourceRow[];
   selected: string | null;
@@ -55,7 +59,10 @@ export function ClusterTable({
       rows={projected}
       selected={selected}
       onSelect={onSelect}
-      columns={fields[kind].map(([label, render]) => ({ label, value: (row) => render(row.summary) }))}
+      columns={[
+        ...fields[kind].map(([label, render]) => ({ label, value: (row: (typeof projected)[number]) => render(row.summary) })),
+        ...(kind === "Node" ? metricColumns<(typeof projected)[number]>(metrics) : []),
+      ]}
     />
   );
 }

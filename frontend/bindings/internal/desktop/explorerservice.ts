@@ -288,6 +288,10 @@ export function ReadCreatedDetail(id: string, operationID: string): $Cancellable
   return $Call.ByID(3536263793, id, operationID);
 }
 
+export function ReadCurrentMetrics(id: string, req: kube$0.MetricsRequest): $CancellablePromise<kube$0.MetricsBatch> {
+  return $Call.ByID(472209286, id, req);
+}
+
 export function ReadEventInventory(id: string, req: kube$0.PageRequest): $CancellablePromise<kube$0.EventInventoryPage> {
   return $Call.ByID(3259958076, id, req);
 }

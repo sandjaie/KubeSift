@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" />
+  <title>Current metrics development fixtures · KubeSift</title>
+  <h1>Current metrics development fixtures</h1>
+  <p>These fixtures are opt-in development tools. The application never installs Metrics Server or requires these scripts.</p>
+  <p>
+    Inspect <code>kubectl --context kind-dev-local-a get --raw /apis/metrics.k8s.io</code> first. Reuse an existing provider. If absent, run
+    <code>scripts/metrics-fixtures.sh setup kind-dev-local-a</code>. The script rejects every pre-existing resource before creating
+    anything, and refuses other contexts. A failed partial setup retains its UID inventory for cleanup. Do not delete that inventory before
+    cleanup.
+  </p>
+  <p>
+    The pinned upstream <a href="https://github.com/kubernetes-sigs/metrics-server/releases/tag/v0.8.1">Metrics Server 0.8.1</a> manifest
+    SHA-256 is <code>4a672c4891902573a3ff753cece5de1bf1f55dd053403dfec39df9d1636b7ff1</code>; the multi-platform image digest is
+    <code>sha256:b2d2efaf5ac3b366ed0f839d2412a2c4279d4fc2a2a733f12c52133faed36c41</code>. Upstream supports Kubernetes 1.31 and later. The
+    added <code>--kubelet-insecure-tls</code> flag is only for disposable kind kubelet certificates; application transport trust is
+    unchanged.
+  </p>
+  <p>
+    Only after confirming the namespace is absent, create
+    <a href="workloads.yaml">synthetic workloads and restricted core-reader RBAC</a> with an explicit approved context. Use the same
+    namespace/name on A and B. Never apply over an existing fixture. Record namespace UID, then export each approved context into a private
+    isolated <code>a.kubeconfig</code> or <code>b.kubeconfig</code>. A token for the fixture service account in
+    <code>a-denied.kubeconfig</code> proves metrics denial alongside a permitted Pod read. Tokens and configs belong only in ignored run
+    evidence. Wait for the provider and Pod readiness before the opt-in check.
+  </p>
+  <p>
+    Run <code>scripts/metrics-fixtures.sh --self-test</code>, then
+    <code
+      >KUBESIFT_METRICS_INTEGRATION=1 KUBESIFT_EXPLORER_CONFIG_DIR=/absolute/private/run go test -tags=integration ./tests/integration -run
+      '^TestCurrentMetrics$' -count=1 -v</code
+    >. This walkthrough expects A to provide metrics and B to demonstrate absence; if B already has a provider, preserve it and adapt the
+    absence check to deterministic coverage instead.
+  </p>
+  <p>
+    Provider cleanup: <code>scripts/metrics-fixtures.sh cleanup kind-dev-local-a</code>. Each deletion uses its recorded UID precondition;
+    replacements and unrelated resources are preserved. Remove only owned workload namespace UIDs separately with Kubernetes DeleteOptions
+    preconditions. The script's ignored inventory survives interruption. Registry/image-loading problems and any explicit local image
+    substitution must be recorded in the <a href="../../../docs/superpowers/validation/phase-1e3.html">phase report</a>, including the
+    upstream binary checksum and actual image identity.
+  </p>
+</html>
