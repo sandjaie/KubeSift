@@ -177,6 +177,46 @@ func TestCurrentMetricsReader(t *testing.T) {
 		}
 	})
 
+	t.Run("connection close cancels pending read", func(t *testing.T) {
+		started := make(chan struct{})
+		s, ref := workloadServer(t, func(w http.ResponseWriter, r *http.Request) {
+			switch r.URL.Path {
+			case "/apis/metrics.k8s.io":
+				fmt.Fprint(w, `{"versions":[{"groupVersion":"metrics.k8s.io/v1","version":"v1"}]}`)
+			case "/apis/metrics.k8s.io/v1":
+				fmt.Fprint(w, `{"resources":[{"name":"pods","kind":"PodMetrics","namespaced":true,"verbs":["get"]}]}`)
+			default:
+				close(started)
+				<-r.Context().Done()
+			}
+		})
+		target := ResourceRef{Connection: ref, APIVersion: "v1", Kind: "Pod", Namespace: "test", Name: "sample", UID: "uid"}
+		done := make(chan error, 1)
+		go func() {
+			_, err := s.ReadCurrentMetrics(context.Background(), MetricsRequest{Connection: ref, Targets: []ResourceRef{target}})
+			done <- err
+		}()
+		select {
+		case <-started:
+		case <-time.After(5 * time.Second):
+			t.Fatal("pending metric read did not start")
+		}
+		if err := s.connections.Close(ref); err != nil {
+			t.Fatal(err)
+		}
+		select {
+		case err := <-done:
+			if err == nil {
+				t.Fatal("closed connection returned evidence")
+			}
+		case <-time.After(5 * time.Second):
+			t.Fatal("connection close did not cancel read")
+		}
+		if len(s.metricsWorkers) != 0 || len(s.metricsBatches) != 0 {
+			t.Fatal("connection close leaked capacity")
+		}
+	})
+
 	for _, mode := range []string{"v1", "v1beta1", "absent", "forbidden", "missing", "replacement", "oversize", "unavailable", "sample-forbidden", "before-creation"} {
 		t.Run(mode, func(t *testing.T) {
 			var groupReads atomic.Int32

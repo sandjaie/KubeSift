@@ -7,7 +7,7 @@ Updated 2026-11-19. Current integration branch is `develop`.
 - Implemented tasks 1–3 of the [approved four-task plan](../../docs/superpowers/plans/2026-11-19-phase-1e3-current-metrics.md) from `a947d9b` in the existing checkout on `feature/phase-1e3-current-metrics`. Current Pod/Node usage, explicit container comparisons, bounded named Metrics API reads and visible polling preserve existing resource controls and UI.
 - Repository checks (127 frontend tests), native race checks, normalized bindings, build/package, live A/B checks and agent desktop verification passed. Owned workload/identity/provider fixtures were removed by UID and all recorded objects verified absent. Private temporary credentials were removed.
 - [Validation report](../../docs/superpowers/validation/phase-1e3.html) records real samples, the explicit pinned-binary development image substitution after registry failures, native background cancellation and verification limits. Physical machine sleep/resume and a separately captured in-flight desktop disconnect cancellation are not claimed.
-- Task 4 documentation, one independent whole-PR review and authorized ready PR/merge into develop remain. No release or historical metrics work.
+- Task 4 implementation/validation documentation is complete; one independent whole-PR review and authorized ready PR/merge into develop remain. No release or historical metrics work.
 
 ## Application icon
 
