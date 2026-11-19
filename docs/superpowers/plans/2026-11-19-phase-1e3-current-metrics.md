@@ -59,11 +59,11 @@ Native DTOs use camelCase JSON and existing kube.ResourceRef/model.Problem:
 
 **Consumes:** bounded parsed sample plus current typed Pod/Node. **Produces:** ResourceUsage projection used by task 2.
 
-- [ ] Add `TestMetricsProjection` table: CPU `125000000n` → `125` millicores; memory `80Mi` → `83886080` bytes; request `500m` → 25%; absent/zero denominator → nil; usage above request → >100 without clamp. Include tiny CPU, invalid/negative quantities and large exact sums.
-- [ ] Add variants in the same group for per-metric missing values, multi-container sum, missing running container, completed init, running sidecar/ephemeral, duplicate/unknown container name, Pod-level budgets and Node missing allocatable. Assert partial totals remain labelled and no Pod percentage is manufactured.
-- [ ] Run `go test ./internal/kube -run TestMetricsProjection -count=1`; establish failing behavior before implementation.
-- [ ] Implement decimal quantity arithmetic with existing apimachinery/decimal support, nullable DTO values and per-container classification. Validate sample timestamp/window and supply pure clock-controlled stale classification; preserve source time/config capture separately. Percent formatting may round for display, but arithmetic must precede rounding.
-- [ ] Run the targeted group and `go test ./internal/kube`; expect pass. Commit `feat: phase1e3-task1 define current metrics semantics`.
+- [x] Add `TestMetricsProjection` table: CPU `125000000n` → `125` millicores; memory `80Mi` → `83886080` bytes; request `500m` → 25%; absent/zero denominator → nil; usage above request → >100 without clamp. Include tiny CPU, invalid/negative quantities and large exact sums.
+- [x] Add variants in the same group for per-metric missing values, multi-container sum, missing running container, completed init, running sidecar/ephemeral, duplicate/unknown container name, Pod-level budgets and Node missing allocatable. Assert partial totals remain labelled and no Pod percentage is manufactured.
+- [x] Run `go test ./internal/kube -run TestMetricsProjection -count=1`; establish failing behavior before implementation.
+- [x] Implement decimal quantity arithmetic with existing apimachinery/decimal support, nullable DTO values and per-container classification. Validate sample timestamp/window and supply pure clock-controlled stale classification; preserve source time/config capture separately. Percent formatting may round for display, but arithmetic must precede rounding.
+- [x] Run the targeted group and `go test ./internal/kube`; expect pass. Commit `feat: phase1e3-task1 define current metrics semantics`.
 
 ## Task 2 — Bounded native reads and bridge
 
