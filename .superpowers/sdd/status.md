@@ -4,10 +4,10 @@ Updated 2026-11-19. Current integration branch is `develop`.
 
 ## Phase 1E.3 · Current CPU and memory metrics
 
-- Implemented tasks 1–3 of the [approved four-task plan](../../docs/superpowers/plans/2026-11-19-phase-1e3-current-metrics.md) from `a947d9b` in the existing checkout on `feature/phase-1e3-current-metrics`. Current Pod/Node usage, explicit container comparisons, bounded named Metrics API reads and visible polling preserve existing resource controls and UI.
-- Repository checks (127 frontend tests), native race checks, normalized bindings, build/package, live A/B checks and agent desktop verification passed. Owned workload/identity/provider fixtures were removed by UID and all recorded objects verified absent. Private temporary credentials were removed.
-- [Validation report](../../docs/superpowers/validation/phase-1e3.html) records real samples, the explicit pinned-binary development image substitution after registry failures, native background cancellation and verification limits. Physical machine sleep/resume and a separately captured in-flight desktop disconnect cancellation are not claimed.
-- Task 4 implementation/validation documentation is complete. The independent whole-PR review found KSF-001–003; all are fixed with regression, repository, race, live and packaged rechecks. The same reviewer’s targeted follow-up and authorized ready PR/merge into develop remain. No release or historical metrics work.
+- [PR #27](https://github.com/sandjaie/KubeSift/pull/27) squash-merged into `develop` as `84a12f9` on 2026-11-19. All four tasks of the [approved plan](../../docs/superpowers/plans/2026-11-19-phase-1e3-current-metrics.md) are complete from baseline `a947d9b`, using the existing checkout and requested feature branch.
+- Current Pod/Node CPU and memory, exact quantities, container request/limit and Node allocatable comparisons, UID-bound reads and visible polling preserve the existing UI and independent resource controls. The app installs no provider. Repository checks (127 frontend tests), native race checks, normalized bindings, live A/B integration and packaged agent desktop verification passed.
+- The fresh whole-PR review found KSF-001–003. All were fixed, verified and cleared by the same reviewer’s targeted follow-up at final PR head `d84c97d`. Both fixture runs were cleaned by recorded UIDs and verified absent; temporary private credentials were removed.
+- [Actual results and limitations](../../docs/superpowers/validation/phase-1e3.html) include the pinned-binary development fixture substitution after registry failures. Physical machine sleep/resume, other operating systems and a separately captured in-flight desktop disconnect cancellation are not claimed; native connection-close cancellation has deterministic HTTP coverage. **Phase 1E.3 is complete for its specified scope.** No release or historical metrics implementation.
 
 ## Application icon
 

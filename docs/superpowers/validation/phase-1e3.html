@@ -41,8 +41,9 @@
       <p>
         Implementation from <code>a947d9b</code> on <code>feature/phase-1e3-current-metrics</code>, 19 November 2026. See the
         <a href="../specs/2026-11-19-phase-1e3-current-metrics-design.md">approved design</a> and
-        <a href="../plans/2026-11-19-phase-1e3-current-metrics.md">four-task plan</a>. Delivery and independent review are pending while
-        this report is prepared.
+        <a href="../plans/2026-11-19-phase-1e3-current-metrics.md">four-task plan</a>. All four tasks are complete.
+        <a href="https://github.com/sandjaie/KubeSift/pull/27">PR #27</a> squash-merged into <code>develop</code> as
+        <code>84a12f9b8a83e3327d445ea3c90003b4e640a186</code> on 19 November 2026.
       </p>
       <h2>Automated evidence</h2>
       <p>
@@ -141,8 +142,10 @@
         After these fixes, the complete repository checks (127 frontend tests), native reader/projection and race checks, real A/B
         integration, packaging and targeted native desktop checks passed. The review-fix live sample comparison recorded a Pod at
         <code>0m / 413696 bytes</code> and Node at <code>628.272614m / 1761210368 bytes</code>; the separately timed desktop showed both
-        labelled allocatable percentages and Last fetched. Targeted follow-up with the same reviewer is pending; this is the follow-up to
-        the one whole-PR review.
+        labelled allocatable percentages and Last fetched. The same reviewer verified the complete six-file fix delta and affected callers
+        at <code>d84c97d580244b682e94f13d19df8beecc79d7f3</code>, independently reran the native projection/reader and four frontend tests,
+        inspected final evidence and returned no blocking findings or new findings. This targeted follow-up completes the one whole-PR
+        review.
       </p>
       <h2>Cleanup, review and delivery</h2>
       <p>
@@ -150,8 +153,10 @@
         and cleared resource evidence; a separately captured pending-request disconnect cancellation was not observed, so the native
         cancellation/capacity test supplies that in-flight check. All recorded provider objects, including cluster RBAC/APIService, and both
         owned workload namespaces were deleted with UID preconditions and independently verified absent. The local recording proxy stopped
-        and temporary private credentials were removed. Independent whole-PR review and merge are pending. Detailed command outputs,
-        temporary recorder, private configurations, operational evidence and progress live only under ignored
+        and temporary private credentials were removed. The ready PR was verified mergeable with no unresolved remote reviews or threads.
+        Feature-to-develop CI is intentionally not configured; required local checks and independent review passed. PR #27 then
+        squash-merged the exact reviewed head into develop. Phase 1E.3 is complete for its approved scope. Detailed command outputs,
+        temporary recorder source, ownership evidence and progress remain only under ignored
         <code>.superpowers/sdd/2026-11-19-phase-1e3-current-metrics/</code>.
       </p>
       <h2>Limits</h2>

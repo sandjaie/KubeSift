@@ -103,8 +103,7 @@ Native DTOs use camelCase JSON and existing kube.ResourceRef/model.Problem:
 - [x] Run `KUBESIFT_METRICS_INTEGRATION=1 go test -tags=integration ./tests/integration -run '^TestCurrentMetrics$' -count=1 -v`, `wails3 task bindings`, `npm run build`, `scripts/check.sh`, `go test -race ./internal/kube` and `wails3 task package`. Record real failures/skips, not inferred success.
 - [x] Agent-run packaged walkthrough: Pods/Nodes, selected container breakdown, both themes and window sizes, Refresh, tab/namespace changes, no-API/Forbidden states and non-metrics actions still usable. Check actual native request cancellation on hide/disconnect/wake; do not claim JavaScript timer tests alone prove WebKit lifecycle behavior. Compare kubectl top with allowance for different sample timestamps/rounding.
 - [x] Clean owned workload/identity/provider fixtures; preserve pre-existing providers. Record actual server/provider/API version, commands, screenshots, cleanup and gaps in one validation report. Update tracked checkpoint/plan only from verified work; keep detailed logs ignored. Commit `test: phase1e3-task4 validate current resource metrics`.
-- [ ] Run one independent whole-PR review using the repository review skill, fix blockers and do targeted rechecks. Push a ready PR and finish the authorized merge into develop. No release/main merge or Phase 1E.4 implementation.
-
+- [x] Run one independent whole-PR review using the repository review skill, fix blockers and do targeted rechecks. Push a ready PR and finish the authorized merge into develop. No release/main merge or Phase 1E.4 implementation.
 
 ## Self-review and separate-session handoff
 
