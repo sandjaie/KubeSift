@@ -26,6 +26,7 @@ const bridge = vi.hoisted(() => ({
   executeRestart: vi.fn(),
   executeCreate: vi.fn(),
   executeScale: vi.fn(),
+  executeNode: vi.fn(),
   listOperationResults: vi.fn(),
   readWorkloads: vi.fn(),
   readResource: vi.fn(),
@@ -187,3 +188,21 @@ test.each(["inventory first", "acceptance first", "explicit selection", "lost re
     expect(controller.selection).toBeNull();
   },
 );
+
+test.each(["completed", "partial", "unknown"])("a terminal Node %s refreshes its target once after background polling", async (state) => {
+  const finished = { ...accepted, action: "node", state, resource: { ...resource, kind: "Node", apiVersion: "v1", namespace: "" } };
+  bridge.listOperationResults.mockResolvedValue([{ ...finished, state: "executing", finishedAt: null }]);
+  const onFinish = vi.fn();
+  let operations!: ReturnType<typeof useOperationResults>;
+  function ResultsController() {
+    operations = useOperationResults(onFinish);
+    return null;
+  }
+  await act(async () => root.render(<ResultsController />));
+  expect(onFinish).not.toHaveBeenCalled();
+  bridge.listOperationResults.mockResolvedValue([finished]);
+  await act(async () => operations.refresh());
+  await act(async () => operations.refresh());
+  expect(onFinish).toHaveBeenCalledTimes(1);
+  expect(onFinish).toHaveBeenCalledWith(finished);
+});

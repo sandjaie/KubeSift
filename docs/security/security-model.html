@@ -176,6 +176,12 @@
         revision-source identities to the reviewed patch, reuse shared operation locks and never replay uncertain writes. Restoring a
         template does not restore referenced Secret/configuration values, change strategy or authorize automatic Pod deletion.
       </p>
+      <h2 id="node-administration">Node administration</h2>
+      <p>
+        Node scheduling changes bind the reviewed UID and resourceVersion. Drain inventories Pods across namespaces and evicts only verified
+        candidates through policy/v1 with preconditions. Cancellation stops further dispatch. A separate review returns the Node to service.
+        <a href="../superpowers/specs/2026-11-22-phase-1e5-node-administration-design.md">Safeguards and limits</a>.
+      </p>
       <h2 id="reviewed-yaml-editing">Reviewed YAML editing</h2>
       <p>
         The <a href="../superpowers/specs/2026-11-16-phase-1d4-reviewed-yaml-editing-design.md">1D.4 design</a> uses the user's existing

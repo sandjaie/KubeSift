@@ -6,6 +6,7 @@ Important: Confirm forwards only the token and any acknowledgement required by t
 */
 import { readRequest, workloadAPI } from "../workloads/api";
 import type {
+  NodeRequest,
   ApplyRequest,
   CreateRequest,
   DeleteRequest,
@@ -19,6 +20,7 @@ import type { ConnectionRef } from "../bridge";
 import type { EditTarget, ManifestAddress } from "../../bindings/internal/kube/models";
 export type { EditTarget, ManifestAddress } from "../../bindings/internal/kube/models";
 export type {
+  NodePreview,
   ApplyDraft,
   ApplyReview,
   CreateDraft,
@@ -41,7 +43,13 @@ export type CreatedResourceOpening =
   | { target: ManifestAddress; operationID: string; action?: "apply" }
   | { target: ManifestAddress; action: "helm"; source: OpenResourceRequest };
 
-export type OperationAction = "scale" | "restart" | "delete" | "edit" | "rollback" | "create" | "apply";
+export const prepareNode = (r: NodeRequest) => readRequest((id) => workloadAPI.PrepareNodeAction(id, r));
+export const revokeNode = (token: string) => {
+  if (token) void workloadAPI.RevokeNodeReview(token).catch(() => {});
+};
+export const executeNode = workloadAPI.ExecuteNodeAction;
+export const cancelDrain = workloadAPI.CancelDrain;
+export type OperationAction = "node" | "scale" | "restart" | "delete" | "edit" | "rollback" | "create" | "apply";
 export const prepareScale = (request: ScaleRequest) => readRequest((id) => workloadAPI.PrepareScale(id, request));
 export const executeScale = workloadAPI.ExecuteScale;
 export const listScaleResults = workloadAPI.ListScaleResults;

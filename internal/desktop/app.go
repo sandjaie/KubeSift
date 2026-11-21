@@ -31,6 +31,11 @@ func Run(assets fs.FS) error {
 	closing := false
 	restored := false
 	guard := &quitGuard{active: func() bool {
+		for _, r := range explorerService.ListOperationResults() {
+			if r.Node != nil && r.FinishedAt == nil {
+				return true
+			}
+		}
 		for _, result := range explorerService.ListHelmResults() {
 			if result.State == "running" {
 				return true
@@ -48,7 +53,7 @@ func Run(assets fs.FS) error {
 	}})
 	guard.quit = app.Quit
 	guard.warn = func(confirm, cancel func()) {
-		dialog := app.Dialog.Warning().SetTitle("Stop Helm operations and quit?").SetMessage("Helm operations are still running. Quitting cancels local work, but submitted changes and hooks may remain. Refresh release history before recovery.")
+		dialog := app.Dialog.Warning().SetTitle("Stop active operations and quit?").SetMessage("Quitting stops local work. Submitted Helm changes and hooks, Node scheduling changes and admitted Pod evictions may remain.")
 		dialog.AddButton("Keep working").SetAsDefault().SetAsCancel().OnClick(cancel)
 		dialog.AddButton("Stop operations and quit").OnClick(confirm)
 		dialog.Show()

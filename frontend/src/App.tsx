@@ -46,7 +46,7 @@ import { CreateDialog } from "./operations/CreateDialog";
 import { ApplyResponseDialog } from "./operations/ApplyDialog";
 import { applyEditorHidden, settleApplyEditor } from "./operations/applyState";
 import { EditDialog } from "./operations/EditDialog";
-import { closeApply, closeEdit, type CreatedResourceOpening } from "./operations/api";
+import { listOperationResults, closeApply, closeEdit, type CreatedResourceOpening } from "./operations/api";
 import { OperationResults, useOperationResults } from "./operations/OperationResults";
 import "./styles.css";
 export default function App() {
@@ -165,7 +165,7 @@ export default function App() {
   const originConnection =
     origin?.view?.state === "connected" || origin?.view?.state === "restricted" ? (origin.view.ref ?? undefined) : undefined;
   const operationResults = useOperationResults((result) => {
-    if (result.state !== "accepted") return;
+    if (result.state !== "accepted" && !(result.action === "node" && result.state !== "executing")) return;
     workloads.refreshOperationTarget(result.resource, result.action === "delete");
   });
   function resumeEditor() {
@@ -272,8 +272,11 @@ export default function App() {
     const ref = state.tabs[key]?.view?.ref;
     const pending = interactive.store.countTab(key) - sessions.length;
     if (pending > 0) labels.push(`${pending} session start${pending === 1 ? "" : "s"} in progress`);
-    void helmManagementAPI.ListHelmResults().then(
-      (results) => {
+    void Promise.all([helmManagementAPI.ListHelmResults(), listOperationResults()]).then(
+      ([results, operations]) => {
+        for (const r of operations ?? [])
+          if (r.node && !r.finishedAt && ref && sameConnection(r.resource.connection, ref))
+            labels.push(r.node.action + " · " + r.resource.name + " · cancellation stops future work; submitted changes may remain");
         for (const result of results ?? []) {
           if (result.state === "running" && ref && sameConnection(result.target.connection, ref))
             labels.push(
@@ -283,7 +286,7 @@ export default function App() {
         if (labels.length) setCloseTarget({ key, entries: labels, reconnect });
         else completeTabClose(key, reconnect);
       },
-      () => setStartupError("Could not check active Helm operations. Retry closing or reconnecting the tab."),
+      () => setStartupError("Could not check active operations. Retry closing or reconnecting the tab."),
     );
   }
   useEffect(() => {

@@ -32,6 +32,7 @@ export interface ApplyDraft {
  * ApplyExecution is returned to the submitting editor only, never from history.
  */
 export interface ApplyExecution {
+  node?: NodeProgress | null;
   action: string;
   cluster: string;
   operationID: string;
@@ -195,7 +196,49 @@ export interface EditRequest {
   yaml: string;
 }
 
+export interface NodePod {
+  namespace: string;
+  name: string;
+  uid: string;
+  state: string;
+  reason: string;
+}
+
+export interface NodePreview {
+  environment: string;
+  typed: boolean;
+  resource: kube$0.ResourceRef;
+  sourceVersion: string;
+  action: string;
+  waitPreset: number;
+  cluster: string;
+  cordoned: boolean;
+  rows: NodePod[] | null;
+  counts: { [_ in string]?: number } | null;
+  noChange: boolean;
+  token: string;
+  expiresAt: string;
+}
+
+export interface NodeProgress {
+  detailsExpired: boolean;
+  action: string;
+  cordoned: boolean | null;
+  rows?: NodePod[] | null;
+  counts: { [_ in string]?: number } | null;
+  reason: string;
+  updatedAt: string;
+}
+
+export interface NodeRequest {
+  resource: kube$0.ResourceRef;
+  sourceVersion: string;
+  action: string;
+  waitPreset: number;
+}
+
 export interface OperationResult {
+  node?: NodeProgress | null;
   action: string;
   cluster: string;
   operationID: string;
