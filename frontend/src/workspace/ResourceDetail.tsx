@@ -8,6 +8,7 @@ import { HistoricalUsage } from "../metrics/HistoricalUsage";
 import { CurrentUsage } from "../metrics/MetricsView";
 import type { SampleView } from "../metrics/useMetrics";
 import { useId, useLayoutEffect, useState, type ReactNode } from "react";
+import { NodeActionDialog, type NodeAction, nodeLabel } from "../operations/NodeActionDialog";
 import { ScaleDialog } from "../operations/ScaleDialog";
 import { DeleteDialog } from "../operations/DeleteDialog";
 import { deleteUnavailable } from "../operations/deleteState";
@@ -105,6 +106,26 @@ export function ResourceDetail({
     section === "Overview" && canReviewOperation && !state?.loading && !state?.error && (kind === "Pod" || kind === "Service")
       ? (data as Detail | undefined)
       : undefined;
+  const nodeSource =
+    kind === "Node" &&
+    section === "Overview" &&
+    !stale &&
+    canReviewOperation &&
+    !state?.loading &&
+    !state?.error &&
+    !!(data as Detail)?.resourceVersion &&
+    (data as Detail).resource.name === row?.resource.name &&
+    (data as Detail).resource.uid === row?.resource.uid &&
+    (data as Detail).resource.connection.id === row?.resource.connection.id &&
+    (data as Detail).resource.connection.generation === row?.resource.connection.generation
+      ? (data as Detail)
+      : undefined;
+  const nodeKey = nodeSource
+    ? JSON.stringify([nodeSource.resource, nodeSource.resourceVersion, c.inventory.refresh, c.inventory.sectionRefresh])
+    : "";
+  const [nodeReview, setNodeReview] = useState<{ action: NodeAction; key: string }>();
+  useLayoutEffect(() => setNodeReview(undefined), [nodeKey]);
+  const scheduling = object(overviewObject(nodeSource).spec).unschedulable === true ? "uncordon" : "cordon";
   const groupedActions = kind === "Deployment" || kind === "Pod";
   const podOverview = c.sections.Overview;
   const terminalTarget =
@@ -129,6 +150,34 @@ export function ResourceDetail({
       <div className="pane-heading">
         <h2>{row.resource.name}</h2>
         <div className="scale-actions">
+          {nodeSource && (
+            <select
+              aria-label="Node actions"
+              value=""
+              onChange={(e) => {
+                const action = e.target.value;
+                if (action === scheduling || action === "drain") setNodeReview({ action, key: nodeKey });
+              }}
+            >
+              <option value="" disabled>
+                Actions
+              </option>
+              <option value={scheduling}>{nodeLabel[scheduling]}…</option>
+              <option value="drain">Drain…</option>
+            </select>
+          )}
+          {nodeSource && nodeReview?.key === nodeKey && (
+            <NodeActionDialog
+              action={nodeReview.action}
+              source={nodeSource}
+              cluster={context}
+              onDismiss={() => setNodeReview(undefined)}
+              onExecute={(token, ack) => {
+                setNodeReview(undefined);
+                onOperation("node", token, ack);
+              }}
+            />
+          )}
           {groupedActions && source && (
             <select
               aria-label={kind + " actions"}

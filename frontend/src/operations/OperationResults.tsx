@@ -9,6 +9,9 @@ import { message } from "../connections/api";
 import { Modal } from "../ui/ReviewDialog";
 import { isResourceKind, type ResourceRef } from "../workloads/model";
 import {
+  executeNode,
+  cancelDrain,
+  getOperationResult,
   checkDeleteTarget,
   executeCreate,
   executeApply,
@@ -29,6 +32,7 @@ import {
 import { rollbackAcceptedText } from "./rollbackState";
 
 const submissions = {
+  node: executeNode,
   apply: executeApply,
   create: executeCreate,
   delete: executeDelete,
@@ -155,8 +159,9 @@ export function OperationResults({
       {results.map((row) => (
         <section key={row.operationID} className="scale-result">
           <h3>
-            {actionLabel[row.action] ?? row.action} · {outcomes[row.state] ?? row.state}
+            {row.node?.action ?? actionLabel[row.action] ?? row.action} · {outcomes[row.state] ?? row.state}
           </h3>
+          {row.node && <NodeResult row={row} />}
           <p className="frozen-target">
             {row.cluster} / {row.resource.namespace || "Cluster scope"} / {row.resource.kind} / {row.resource.name}
           </p>
@@ -294,6 +299,70 @@ function TargetCheck({ operationID, canCheck, create = false }: { operationID: s
           <time dateTime={observation.checkedAt}>{new Date(observation.checkedAt).toLocaleTimeString()}</time>
         </p>
       )}
+    </>
+  );
+}
+
+function NodeResult({ row }: { row: OperationResult }) {
+  const [open, setOpen] = useState(false),
+    [detail, setDetail] = useState<OperationResult>(),
+    [error, setError] = useState("");
+  useEffect(() => {
+    if (!open) return;
+    let active = true;
+    let timer: ReturnType<typeof setTimeout>;
+    async function load() {
+      try {
+        const next = await getOperationResult(row.operationID);
+        if (active) {
+          setDetail(next);
+          setError("");
+          if (!next.finishedAt) timer = setTimeout(load, 1000);
+        }
+      } catch {
+        if (active) setError("Detailed progress is unavailable or expired.");
+      }
+    }
+    void load();
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [open, row.operationID]);
+  const progress = detail?.node ?? row.node;
+  return (
+    <>
+      <p>
+        Observed scheduling: {row.node?.cordoned == null ? "unknown" : row.node.cordoned ? "cordoned" : "uncordoned"}. {row.node?.reason}
+      </p>
+      <p>
+        {Object.entries(row.node?.counts ?? {})
+          .map(([k, v]) => k + " " + v)
+          .join(" · ")}
+      </p>
+      {row.node?.action === "drain" && (
+        <>
+          <button onClick={() => setOpen(!open)} aria-expanded={open}>
+            Pod progress
+          </button>
+          {!row.finishedAt && (
+            <button onClick={() => void cancelDrain(row.operationID).catch(() => setError("Cancellation could not be sent."))}>
+              Cancel drain
+            </button>
+          )}
+          {open && progress?.detailsExpired && <p>Detailed Pod progress expired. Counts remain available.</p>}
+          {open && (
+            <ul>
+              {progress?.rows?.map((r) => (
+                <li key={r.uid}>
+                  {r.namespace}/{r.name} · {r.state} · {r.reason}
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      )}
+      {error && <p role="alert">{error}</p>}
     </>
   );
 }
