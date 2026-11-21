@@ -136,6 +136,12 @@
         truncated certificate before a valid CA. The shared parser now rejects skipped blocks. The regression reproduced the failure before
         the fix and also checks that a valid multi-certificate bundle succeeds.
       </p>
+      <p>
+        The same reviewer cleared KSF-005 at <code>9728a6f</code>. Repository and race checks, package rebuild and signature verification
+        passed after the parser correction. The desktop walkthrough used the preceding paste-enabled package.
+        <a href="https://github.com/sandjaie/KubeSift/pull/30">PR #30</a> squash-merged into develop as <code>ff97e40</code>. The squash
+        commit has the same tree as the reviewed head.
+      </p>
       <h2>Cleanup</h2>
       <p>
         Both dedicated namespaces contained only the expected Pod in the workload inventory. Namespace deletion used server-side UID

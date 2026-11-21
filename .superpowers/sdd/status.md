@@ -4,7 +4,8 @@ Updated 2026-11-22. Current integration branch is `develop`.
 
 ## Phase 1E.4 · Historical metrics
 
-- [Specification](../../docs/superpowers/specs/2026-11-21-phase-1e4-historical-metrics-design.md) and [implementation plan](../../docs/superpowers/plans/2026-11-21-phase-1e4-historical-metrics.md) prepared on develop baseline `8a7f927`. Implementation on `feature/phase-1e4-historical-metrics` includes Pod and Deployment action grouping. Native race checks, build/package and real Prometheus verification on both kind contexts passed. [Validation results](../../docs/superpowers/validation/phase-1e4.html). Fresh whole-PR review completed. KSF-001–003 cleared at `85dd285`. The same reviewer cleared KSF-004 and confirmed all four code findings resolved at `c0197b5`. Both temporary namespaces, local listeners and private fixture credentials were removed. The packaged macOS walkthrough passed on both connections using the public CA paste option. Publication is pending.
+- [PR #30](https://github.com/sandjaie/KubeSift/pull/30) squash-merged into `develop` as `ff97e40` on 2026-11-22 Dubai time. All four [plan tasks](../../docs/superpowers/plans/2026-11-21-phase-1e4-historical-metrics.md) are complete. Pod and Node Overview include on-demand CPU and working-set memory history. Pod and Deployment actions are grouped, and Pod Terminal is beside Logs.
+- The independent reviewer cleared KSF-001 through KSF-005 at `9728a6f`. Repository and race checks, bindings, build, signed packaging, real Prometheus verification on both kind contexts and the packaged macOS walkthrough passed. Temporary fixtures were removed. [Validation evidence and OpenShift contract coverage](../../docs/superpowers/validation/phase-1e4.html).
 
 ## Phase 1E.3 · Current CPU and memory metrics
 
