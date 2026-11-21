@@ -2,6 +2,10 @@
 
 Updated 2026-11-22. Current integration branch is `develop`.
 
+## Phase 1E.5 · Node administration
+
+- [Specification](../../docs/superpowers/specs/2026-11-22-phase-1e5-node-administration-design.md) and [implementation plan](../../docs/superpowers/plans/2026-11-22-phase-1e5-node-administration.md) prepared on develop baseline `8a6b649`. First implementation task is the conditional eviction and disruption-budget proof on isolated synthetic Node fixtures. Implementation and runtime verification are pending.
+
 ## Phase 1E.4 · Historical metrics
 
 - [PR #30](https://github.com/sandjaie/KubeSift/pull/30) squash-merged into `develop` as `ff97e40` on 2026-11-22 Dubai time. All four [plan tasks](../../docs/superpowers/plans/2026-11-21-phase-1e4-historical-metrics.md) are complete. Pod and Node Overview include on-demand CPU and working-set memory history. Pod and Deployment actions are grouped, and Pod Terminal is beside Logs.

@@ -217,6 +217,13 @@
         offers an explicit name check without resubmitting the request. See the
         <a href="../superpowers/validation/phase-1d7.html">verified Create workflows</a>.
       </p>
+      <h2 id="node-administration">Node administration design</h2>
+      <p>
+        From Node detail, open Actions to review Cordon, Uncordon or Drain. Drain review shows Pods across all namespaces, local-data
+        blockers and the time limit. After confirmation, Results shows what left the Node, what remains and whether scheduling is disabled.
+        Cancel stops further work. Returning a cordoned Node to service requires a separate Uncordon review.
+        <a href="../superpowers/specs/2026-11-22-phase-1e5-node-administration-design.md">Phase 1E.5 specification</a>.
+      </p>
       <h2 id="reviewed-deletion">Reviewed workload deletion</h2>
       <p>
         The <a href="../superpowers/specs/2026-11-15-phase-1d3-reviewed-deletion-design.md">Phase 1D.3 specification</a> defines destructive
