@@ -1,6 +1,10 @@
 # KubeSift resumable status
 
-Updated 2026-11-19. Current integration branch is `develop`.
+Updated 2026-11-21. Current integration branch is `develop`.
+
+## Phase 1E.4 · Historical metrics
+
+- [Specification](../../docs/superpowers/specs/2026-11-21-phase-1e4-historical-metrics-design.md) and [implementation plan](../../docs/superpowers/plans/2026-11-21-phase-1e4-historical-metrics.md) prepared on develop baseline `8a7f927`. Implementation and runtime verification are pending in a separate chat.
 
 ## Phase 1E.3 · Current CPU and memory metrics
 
