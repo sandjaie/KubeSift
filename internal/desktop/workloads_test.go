@@ -53,3 +53,16 @@ func TestHistoryReservationCancellation(t *testing.T) {
 		t.Fatal("read started after cancellation")
 	}
 }
+
+func TestHistoryReservationShutdown(t *testing.T) {
+	for range 100 {
+		s := &ExplorerService{}
+		done := make(chan struct{})
+		go func() { defer close(done); _ = s.ServiceShutdown() }()
+		id, err := s.PrepareHistoricalMetrics()
+		<-done
+		if err == nil {
+			_ = s.CancelWorkloadRead(id)
+		}
+	}
+}

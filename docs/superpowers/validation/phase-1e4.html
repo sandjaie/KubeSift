@@ -108,7 +108,20 @@
       </ul>
       <p>
         The post-fix race suite, normalized bindings, build, signed package and two-context integration passed. The last integration run
-        returned 91 evaluations per Pod metric and 121 per Node metric.
+        returned 98 evaluations per Pod metric and 121 per Node metric.
+      </p>
+      <p>
+        The same reviewer cleared KSF-001 through KSF-003 at <code>85dd285</code> and found KSF-004 (P2): shutdown could clear the read
+        registry between registration and assignment. The adapter now checks that the reservation still exists under lock. The concurrent
+        shutdown test passed under the race detector. The final repository check passed all 132 frontend tests as well as Go tests and vet,
+        source descriptions, documentation links, lint and type checking.
+      </p>
+      <h2>Cleanup</h2>
+      <p>
+        Both dedicated namespaces contained only the expected Pod in the workload inventory. Namespace deletion used server-side UID
+        preconditions from creation. Both explicit contexts confirmed deletion. The task-owned gateway, Prometheus, anonymous desktop test
+        listener and verification processes stopped. Their loopback ports were closed and the private fixture directory, TSDB, credentials
+        and temporary package copies were removed.
       </p>
     </main>
   </body>

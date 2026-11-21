@@ -52,9 +52,10 @@ func TestHistoricalMetricsRead(t *testing.T) {
 	for _, scenario := range []string{"project", "node", "node-project", "young", "unconfigured", "gone", "wrong-uid", "deny-before", "deny-after", "changed", "provider-denied", "missing-cpu", "ambiguous", "oversize", "slow-replace", "busy"} {
 		t.Run(scenario, func(t *testing.T) {
 			var gets, calls atomic.Int32
-			created := time.Now().UTC().Add(-time.Hour).Truncate(time.Second)
+			now := time.Date(2026, 11, 21, 13, 42, 17, 0, time.UTC)
+			created := now.Add(-time.Hour)
 			if scenario == "young" {
-				created = time.Now().UTC()
+				created = now
 			}
 			node := strings.HasPrefix(scenario, "node")
 			s, ref := workloadServer(t, func(w http.ResponseWriter, r *http.Request) {
@@ -160,7 +161,7 @@ func TestHistoricalMetricsRead(t *testing.T) {
 				}
 				done := make(chan error, n)
 				for range n {
-					go func() { _, err := s.ReadHistoricalMetrics(context.Background(), r); done <- err }()
+					go func() { _, err := s.readHistoricalMetrics(context.Background(), r, now); done <- err }()
 					select {
 					case <-started:
 					case <-time.After(3 * time.Second):
@@ -168,7 +169,7 @@ func TestHistoricalMetricsRead(t *testing.T) {
 					}
 				}
 				if n == 2 {
-					if _, err := s.ReadHistoricalMetrics(context.Background(), r); err == nil {
+					if _, err := s.readHistoricalMetrics(context.Background(), r, now); err == nil {
 						t.Fatal("queued excess work")
 					}
 				}
@@ -190,7 +191,7 @@ func TestHistoricalMetricsRead(t *testing.T) {
 				}
 				return
 			}
-			out, err := s.ReadHistoricalMetrics(context.Background(), r)
+			out, err := s.readHistoricalMetrics(context.Background(), r, now)
 			switch scenario {
 			case "gone":
 				if err == nil || !strings.Contains(err.Error(), "stale_target") || calls.Load() != 0 {
@@ -209,7 +210,7 @@ func TestHistoricalMetricsRead(t *testing.T) {
 					t.Fatal(out, err)
 				}
 			default:
-				if err != nil || calls.Load() != 2 || gets.Load() != 2 || out.EffectiveStart < created.Unix()+300 || out.EffectiveStart%30 != 0 {
+				if err != nil || calls.Load() != 2 || gets.Load() != 2 || out.EffectiveStart < created.Unix()+300 || out.End != now.Unix()/30*30 || out.EffectiveStart%30 != 0 {
 					t.Fatal(out, err)
 				}
 				want := "available"

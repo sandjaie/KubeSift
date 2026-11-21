@@ -94,6 +94,10 @@ func (s *Service) historyIdentity(ctx context.Context, r HistoryRequest) (time.T
 	return m.CreationTimestamp.Time, nil
 }
 func (s *Service) ReadHistoricalMetrics(ctx context.Context, r HistoryRequest) (HistoricalMetrics, error) {
+	return s.readHistoricalMetrics(ctx, r, time.Now().UTC())
+}
+
+func (s *Service) readHistoricalMetrics(ctx context.Context, r HistoryRequest, now time.Time) (HistoricalMetrics, error) {
 	var empty HistoricalMetrics
 	t := r.Resource
 	if validResource(t) != nil || t.APIVersion != "v1" || (t.Kind != "Node" && t.Kind != "Pod") || (t.Kind == "Node" && (t.Namespace != "" || r.Container != "")) || (t.Kind == "Pod" && (r.Container == "" || t.Namespace == "")) {
@@ -122,7 +126,6 @@ func (s *Service) ReadHistoricalMetrics(ctx context.Context, r HistoryRequest) (
 	defer cancel()
 	stop := context.AfterFunc(h.ctx, cancel)
 	defer stop()
-	now := time.Now().UTC()
 	step := preset[1]
 	end := now.Unix() / step * step
 	created, err := s.historyIdentity(ctx, r)

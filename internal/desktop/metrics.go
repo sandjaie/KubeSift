@@ -55,7 +55,13 @@ func (s *ExplorerService) PrepareHistoricalMetrics() (string, error) {
 		return "", err
 	}
 	s.mu.Lock()
-	s.reads[id].reservedHistory = ctx
+	entry := s.reads[id]
+	if entry == nil {
+		s.mu.Unlock()
+		done()
+		return "", model.Fail("cancelled", "History registration was cancelled.")
+	}
+	entry.reservedHistory = ctx
 	s.mu.Unlock()
 	context.AfterFunc(ctx, done)
 	return id, nil

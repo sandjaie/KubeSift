@@ -4,7 +4,7 @@ Updated 2026-11-21. Current integration branch is `develop`.
 
 ## Phase 1E.4 · Historical metrics
 
-- [Specification](../../docs/superpowers/specs/2026-11-21-phase-1e4-historical-metrics-design.md) and [implementation plan](../../docs/superpowers/plans/2026-11-21-phase-1e4-historical-metrics.md) prepared on develop baseline `8a7f927`. Implementation on `feature/phase-1e4-historical-metrics` includes Pod and Deployment action grouping. Native race checks, build/package and real Prometheus verification on both kind contexts passed. [Validation results and open desktop gate](../../docs/superpowers/validation/phase-1e4.html). Review and merge pending.
+- [Specification](../../docs/superpowers/specs/2026-11-21-phase-1e4-historical-metrics-design.md) and [implementation plan](../../docs/superpowers/plans/2026-11-21-phase-1e4-historical-metrics.md) prepared on develop baseline `8a7f927`. Implementation on `feature/phase-1e4-historical-metrics` includes Pod and Deployment action grouping. Native race checks, build/package and real Prometheus verification on both kind contexts passed. [Validation results and open desktop gate](../../docs/superpowers/validation/phase-1e4.html). Fresh whole-PR review completed. KSF-001–003 cleared at `85dd285`. Follow-up KSF-004 corrected and race-tested. Both temporary namespaces, local listeners and private fixture credentials were removed. Successful packaged chart journeys and publication remain pending.
 
 ## Phase 1E.3 · Current CPU and memory metrics
 

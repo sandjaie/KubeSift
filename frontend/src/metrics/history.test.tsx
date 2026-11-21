@@ -150,3 +150,44 @@ test("collapse during native registration releases the reservation without query
   expect(api.ReadHistoricalMetrics).not.toHaveBeenCalled();
   await act(async () => root.unmount());
 });
+
+test("confirms source scope before reading and clears the bearer on submission", async () => {
+  const host = document.createElement("div"),
+    root = createRoot(host);
+  const resource = { connection: { id: "b", generation: 1 }, kind: "Pod", apiVersion: "v1", namespace: "test", name: "pod", uid: "uid" };
+  api.HistorySource.mockResolvedValue({ origin: "", revision: "empty" });
+  api.SetHistorySource.mockResolvedValue({
+    origin: "https://fixture.test",
+    revision: "new",
+    mode: "cluster",
+    cluster: "b",
+    authenticated: true,
+  });
+  api.ReadHistoricalMetrics.mockClear();
+  api.ReadHistoricalMetrics.mockImplementation(() => new Promise(() => {}));
+  await act(async () => root.render(<HistoricalUsage resource={resource} connection="B" containers={["app"]} />));
+  await act(async () => host.querySelector("button")!.click());
+  const origin = host.querySelector<HTMLInputElement>('[type="url"]')!,
+    scope = host.querySelectorAll("select")[1];
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(origin, "https://fixture.test");
+    origin.dispatchEvent(new Event("input", { bubbles: true }));
+    scope.value = "shared";
+    scope.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  host.querySelector<HTMLInputElement>('[name="cluster"]')!.value = "b";
+  const token = host.querySelector<HTMLInputElement>('[name="token"]')!;
+  token.value = "synthetic";
+  expect(api.ReadHistoricalMetrics).not.toHaveBeenCalled();
+  await act(async () => {
+    host.querySelector("form")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+  });
+  expect(api.SetHistorySource).toHaveBeenCalledWith(
+    resource.connection,
+    "empty",
+    expect.objectContaining({ origin: "https://fixture.test", cluster: "b", bearer: "synthetic" }),
+  );
+  expect(token.value).toBe("");
+  expect(api.ReadHistoricalMetrics).toHaveBeenCalledTimes(1);
+  await act(async () => root.unmount());
+});
