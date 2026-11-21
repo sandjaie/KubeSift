@@ -49,7 +49,7 @@ func TestHistoricalMetricsMatrix(t *testing.T) {
 }
 
 func TestHistoricalMetricsRead(t *testing.T) {
-	for _, scenario := range []string{"project", "node", "node-project", "young", "unconfigured", "wrong-uid", "deny-before", "deny-after", "changed", "provider-denied", "missing-cpu", "ambiguous", "oversize", "slow-replace", "busy"} {
+	for _, scenario := range []string{"project", "node", "node-project", "young", "unconfigured", "gone", "wrong-uid", "deny-before", "deny-after", "changed", "provider-denied", "missing-cpu", "ambiguous", "oversize", "slow-replace", "busy"} {
 		t.Run(scenario, func(t *testing.T) {
 			var gets, calls atomic.Int32
 			created := time.Now().UTC().Add(-time.Hour).Truncate(time.Second)
@@ -59,6 +59,10 @@ func TestHistoricalMetricsRead(t *testing.T) {
 			node := strings.HasPrefix(scenario, "node")
 			s, ref := workloadServer(t, func(w http.ResponseWriter, r *http.Request) {
 				i := gets.Add(1)
+				if scenario == "gone" {
+					w.WriteHeader(404)
+					return
+				}
 				if scenario == "deny-before" || scenario == "deny-after" && i == 2 {
 					w.WriteHeader(403)
 					return
@@ -119,7 +123,7 @@ func TestHistoricalMetricsRead(t *testing.T) {
 				if scenario == "missing-cpu" && i == 1 {
 					series = ""
 				}
-				if scenario == "ambiguous" {
+				if scenario == "ambiguous" && q.Get("dedup") == "false" {
 					series += "," + series + "," + series
 				}
 				fmt.Fprintf(w, `{"status":"success","data":{"resultType":"matrix","result":[%s]}}`, series)
@@ -188,6 +192,10 @@ func TestHistoricalMetricsRead(t *testing.T) {
 			}
 			out, err := s.ReadHistoricalMetrics(context.Background(), r)
 			switch scenario {
+			case "gone":
+				if err == nil || !strings.Contains(err.Error(), "stale_target") || calls.Load() != 0 {
+					t.Fatal("object loss not classified", err)
+				}
 			case "unconfigured", "node-project", "deny-before", "wrong-uid":
 				if err == nil || calls.Load() != 0 {
 					t.Fatal("unexpected dispatch")

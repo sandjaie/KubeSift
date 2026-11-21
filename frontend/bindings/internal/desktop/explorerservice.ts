@@ -252,6 +252,13 @@ export function PrepareHelmAction(id: string, request: helmmanager$0.PrepareRequ
   return $Call.ByID(623280817, id, request);
 }
 
+/**
+ * Reserve before dispatch so a cancellation cannot overtake registration.
+ */
+export function PrepareHistoricalMetrics(): $CancellablePromise<string> {
+  return $Call.ByID(3552509396);
+}
+
 export function PrepareRestart(id: string, req: operation$0.RestartRequest): $CancellablePromise<operation$0.RestartPreview> {
   return $Call.ByID(1109198430, id, req);
 }

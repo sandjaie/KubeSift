@@ -204,18 +204,26 @@ function HistoryRead({
     [error, setError] = useState("");
   useLayoutEffect(() => {
     let alive = true;
-    const read = readRequest((id) => api.ReadHistoricalMetrics(id, { resource, sourceID: source.revision, container, preset }));
-    read.promise.then(
-      (v) => {
-        if (alive) setResult(v);
-      },
-      (e) => {
+    let reservation: string | undefined;
+    const cancel = (id: string) => void api.CancelWorkloadRead(id).catch(() => {});
+    async function load() {
+      try {
+        const id = await api.PrepareHistoricalMetrics();
+        if (!alive) {
+          cancel(id);
+          return;
+        }
+        reservation = id;
+        const data = await api.ReadHistoricalMetrics(id, { resource, sourceID: source.revision, container, preset });
+        if (alive) setResult(data);
+      } catch (e) {
         if (alive) setError(message(e));
-      },
-    );
+      }
+    }
+    void load();
     return () => {
       alive = false;
-      read.cancel();
+      if (reservation) cancel(reservation);
     };
   }, [resource, source.revision, container, preset]);
   if (error) return <p role="alert">{error}</p>;

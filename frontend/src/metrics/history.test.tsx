@@ -11,6 +11,7 @@ import { expect, test, vi } from "vitest";
 import type { HistoricalMetrics } from "../../bindings/internal/kube/models";
 import { HistoricalUsage } from "./HistoricalUsage";
 const api = vi.hoisted(() => ({
+  PrepareHistoricalMetrics: vi.fn(async () => crypto.randomUUID()),
   SetHistorySource: vi.fn(),
   HistorySource: vi.fn(),
   ReadHistoricalMetrics: vi.fn(),
@@ -122,5 +123,30 @@ test("hiding cancels the read, preserves settings and resumes with a fresh read"
   expect(host.textContent).toContain("Replace source");
   await act(async () => visibility.notify!(true));
   expect(api.ReadHistoricalMetrics).toHaveBeenCalledTimes(2);
+  await act(async () => root.unmount());
+});
+
+test("collapse during native registration releases the reservation without querying", async () => {
+  let ready!: (id: ReturnType<typeof crypto.randomUUID>) => void;
+  api.PrepareHistoricalMetrics.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        ready = resolve;
+      }),
+  );
+  api.ReadHistoricalMetrics.mockClear();
+  api.CancelWorkloadRead.mockClear();
+  api.HistorySource.mockResolvedValue({ origin: "https://fixture.test", revision: "r1", mode: "cluster", cluster: "a" });
+  const host = document.createElement("div"),
+    root = createRoot(host);
+  const resource = { connection: { id: "a", generation: 1 }, kind: "Node", apiVersion: "v1", namespace: "", name: "node", uid: "uid" };
+  await act(async () => root.render(<HistoricalUsage resource={resource} connection="A" containers={[]} />));
+  const toggle = host.querySelector("button")!;
+  await act(async () => toggle.click());
+  await act(async () => toggle.click());
+  const id = crypto.randomUUID();
+  await act(async () => ready(id));
+  expect(api.CancelWorkloadRead).toHaveBeenCalledWith(id);
+  expect(api.ReadHistoricalMetrics).not.toHaveBeenCalled();
   await act(async () => root.unmount());
 });

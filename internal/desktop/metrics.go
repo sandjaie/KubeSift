@@ -7,6 +7,7 @@ Important: This endpoint reads metrics and never provisions a provider.
 package desktop
 
 import (
+	"context"
 	"github.com/sandjaie/KubeSift/internal/kube"
 	"github.com/sandjaie/KubeSift/internal/model"
 )
@@ -46,12 +47,30 @@ func (s *ExplorerService) SuggestHistorySource(id string, ref model.ConnectionRe
 	return s.core.kube.SuggestHistorySource(ctx, ref)
 }
 
-func (s *ExplorerService) ReadHistoricalMetrics(id string, r kube.HistoryRequest) (kube.HistoricalMetrics, error) {
+// Reserve before dispatch so a cancellation cannot overtake registration.
+func (s *ExplorerService) PrepareHistoricalMetrics() (string, error) {
+	id := model.ID()
 	ctx, done, err := s.beginWorkloadRead(id)
 	if err != nil {
-		return kube.HistoricalMetrics{}, err
+		return "", err
 	}
-	defer done()
+	s.mu.Lock()
+	s.reads[id].reservedHistory = ctx
+	s.mu.Unlock()
+	context.AfterFunc(ctx, done)
+	return id, nil
+}
+func (s *ExplorerService) ReadHistoricalMetrics(id string, r kube.HistoryRequest) (kube.HistoricalMetrics, error) {
+	s.mu.Lock()
+	entry := s.reads[id]
+	if entry == nil || entry.reservedHistory == nil {
+		s.mu.Unlock()
+		return kube.HistoricalMetrics{}, model.Fail("cancelled", "History read was cancelled or expired.")
+	}
+	ctx := entry.reservedHistory
+	entry.reservedHistory = nil
+	s.mu.Unlock()
+	defer entry.cancel()
 	return s.core.kube.ReadHistoricalMetrics(ctx, r)
 }
 

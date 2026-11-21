@@ -13,7 +13,10 @@ import (
 	"time"
 )
 
-type workloadRead struct{ cancel context.CancelFunc }
+type workloadRead struct {
+	cancel          context.CancelFunc
+	reservedHistory context.Context
+}
 
 func (s *ExplorerService) beginWorkloadRead(id string) (context.Context, func(), error) {
 	return s.beginNativeRead(id, 30*time.Second)

@@ -72,6 +72,9 @@ func (s *Service) historyIdentity(ctx context.Context, r HistoryRequest) (time.T
 		path = "/api/v1/namespaces/" + url.PathEscape(t.Namespace) + "/pods/" + url.PathEscape(t.Name)
 	}
 	if err := (metricsClient{client, cfg.Host}).get(ctx, path, 16<<20, &obj); err != nil {
+		if errors.Is(err, metricsHTTP(http.StatusNotFound)) {
+			return time.Time{}, model.Fail("stale_target", "The selected resource no longer exists.")
+		}
 		return time.Time{}, metricsProblem(ctx, err)
 	}
 	m := obj.Metadata
@@ -180,7 +183,7 @@ func (h *historySource) query(ctx context.Context, r HistoryRequest, b Historica
 		match = append(match, `cpu=~"total|"`)
 		expression = "rate(container_cpu_usage_seconds_total{" + strings.Join(match, ",") + "}[5m])"
 	}
-	q := url.Values{"query": {expression}, "start": {fmt.Sprint(b.EffectiveStart)}, "end": {fmt.Sprint(b.End)}, "step": {fmt.Sprint(b.Step)}, "limit": {"2"}, "timeout": {"10s"}}
+	q := url.Values{"query": {expression}, "start": {fmt.Sprint(b.EffectiveStart)}, "end": {fmt.Sprint(b.End)}, "step": {fmt.Sprint(b.Step)}, "dedup": {"false"}, "limit": {"2"}, "timeout": {"10s"}}
 	if h.view.Mode == "project" {
 		q.Set("namespace", r.Resource.Namespace)
 	}

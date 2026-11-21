@@ -12,6 +12,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"github.com/sandjaie/KubeSift/internal/model"
 	"io"
 	"k8s.io/apimachinery/pkg/util/validation"
@@ -189,6 +190,9 @@ func (s *Service) SuggestHistorySource(ctx context.Context, ref model.Connection
 	}
 	err = (metricsClient{client, cfg.Host}).get(ctx, "/apis/route.openshift.io/v1/namespaces/openshift-monitoring/routes/thanos-querier", 1<<20, &route)
 	if err != nil {
+		if errors.Is(err, metricsHTTP(http.StatusNotFound)) {
+			return "", model.Fail("unavailable", "The monitoring Route was not found. Enter an HTTPS origin manually.")
+		}
 		return "", metricsProblem(ctx, err)
 	}
 	if len(validation.IsDNS1123Subdomain(route.Spec.Host)) == 0 && (route.Spec.TLS.Termination == "reencrypt" || route.Spec.TLS.Termination == "edge" || route.Spec.TLS.Termination == "passthrough") {

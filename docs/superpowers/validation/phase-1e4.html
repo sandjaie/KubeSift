@@ -86,6 +86,30 @@
         switch, both appearances, narrow layout and disconnect still need native confirmation. Automated reader and mounted UI evidence is
         recorded separately. The ready PR and merge gates remain open.
       </p>
+      <h2>Whole-PR review</h2>
+      <p>
+        The fresh repository reviewer <code>/root/phase1e4_review</code> inspected all 27 changed files from merge base
+        <code>a0be7c8</code> through <code>2c7cd42</code>. Three blocking findings were reproduced before correction.
+      </p>
+      <ul>
+        <li>
+          KSF-001 (P1). Both queries now explicitly disable Thanos replica deduplication. The contract fixture returns separate replicas
+          only when that parameter is present.
+        </li>
+        <li>
+          KSF-002 (P2). A missing named resource clears history with a stale-target error. A missing monitoring Route reports discovery
+          unavailability and allows manual entry.
+        </li>
+        <li>
+          KSF-003 (P2). Native registration now returns a bounded, expiring reservation before a provider read can start. Unmount before
+          registration acknowledgment releases it without dispatch. Consuming a cancelled reservation fails. Desktop and mounted UI
+          regressions exercise both orderings.
+        </li>
+      </ul>
+      <p>
+        The post-fix race suite, normalized bindings, build, signed package and two-context integration passed. The last integration run
+        returned 91 evaluations per Pod metric and 121 per Node metric.
+      </p>
     </main>
   </body>
 </html>

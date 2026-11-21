@@ -146,6 +146,8 @@ func TestHistorySourceRouteUnavailable(t *testing.T) {
 			})
 			if origin, err := s.SuggestHistorySource(context.Background(), ref); err == nil || origin != "" {
 				t.Fatal("suggested unusable Route")
+			} else if code == 404 && !strings.Contains(err.Error(), "Route") {
+				t.Fatal("wrong discovery diagnosis", err)
 			}
 		})
 	}
