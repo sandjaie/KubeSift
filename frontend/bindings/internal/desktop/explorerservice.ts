@@ -60,6 +60,10 @@ export function CheckDeleteTarget(id: string, operationID: string): $Cancellable
   return $Call.ByID(1495043394, id, operationID);
 }
 
+export function ClearHistorySource(ref: model$0.ConnectionRef, revision: string): $CancellablePromise<kube$0.HistorySource> {
+  return $Call.ByID(1911248038, ref, revision);
+}
+
 export function CloseApply(draftID: string): $CancellablePromise<void> {
   return $Call.ByID(3515762964, draftID);
 }
@@ -148,6 +152,10 @@ export function GetScaleResult(operationID: string): $CancellablePromise<operati
   return $Call.ByID(2478111667, operationID);
 }
 
+export function HistorySource(ref: model$0.ConnectionRef): $CancellablePromise<kube$0.HistorySource> {
+  return $Call.ByID(2491756889, ref);
+}
+
 export function InspectCreateName(id: string, operationID: string): $CancellablePromise<operation$0.CreateObservation> {
   return $Call.ByID(3510075343, id, operationID);
 }
@@ -218,6 +226,10 @@ export function PickHelmTLSFile(kind: string): $CancellablePromise<string> {
 
 export function PickHelmValues(): $CancellablePromise<string> {
   return $Call.ByID(281375615);
+}
+
+export function PickHistoryCA(): $CancellablePromise<string> {
+  return $Call.ByID(3763363967);
 }
 
 export function PrepareApply(id: string, req: operation$0.ApplyRequest): $CancellablePromise<operation$0.ApplyReview> {
@@ -335,6 +347,10 @@ export function ReadHelmSection(id: string, req: helmreader$0.DetailRequest): $C
 
 export function ReadHelmValues(handle: string, offset: number): $CancellablePromise<helmmanager$0.ReviewSection> {
   return $Call.ByID(1976228650, handle, offset);
+}
+
+export function ReadHistoricalMetrics(id: string, r: kube$0.HistoryRequest): $CancellablePromise<kube$0.HistoricalMetrics> {
+  return $Call.ByID(1297345641, id, r);
 }
 
 export function ReadNetworking(id: string, req: kube$0.PageRequest): $CancellablePromise<kube$0.NetworkPage> {
@@ -495,6 +511,14 @@ export function SetHelmCredentials(id: string, credentials: helmmanager$0.Source
   return $Call.ByID(2771571542, id, credentials);
 }
 
+export function SetHistorySource(
+  ref: model$0.ConnectionRef,
+  revision: string,
+  c: kube$0.HistoryConfig,
+): $CancellablePromise<kube$0.HistorySource> {
+  return $Call.ByID(2878221233, ref, revision, c);
+}
+
 export function SetLabel(source: string, name: string, label: string): $CancellablePromise<void> {
   return $Call.ByID(880655730, source, name, label);
 }
@@ -513,6 +537,10 @@ export function StartConnection(req: explorer$0.ConnectRequest): $CancellablePro
 
 export function StopInteractive(ref: model$0.SessionRef): $CancellablePromise<void> {
   return $Call.ByID(2434231096, ref);
+}
+
+export function SuggestHistorySource(id: string, ref: model$0.ConnectionRef): $CancellablePromise<string> {
+  return $Call.ByID(4144048867, id, ref);
 }
 
 export function TrustedHelpers(): $CancellablePromise<trust$0.Entry[] | null> {

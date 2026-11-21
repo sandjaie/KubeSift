@@ -272,6 +272,55 @@ export interface GenericResourceRow {
   createdAt: string | null;
 }
 
+export interface HistoricalMetrics {
+  sourceID: string;
+  resource: ResourceRef;
+  container: string;
+  start: number;
+  effectiveStart: number;
+  end: number;
+  step: number;
+  cpuWindow: number;
+  fetchedAt: number;
+  cpu: HistoryMetric;
+  memory: HistoryMetric;
+}
+
+export interface HistoryConfig {
+  origin: string;
+  mode: string;
+  singleCluster: boolean;
+  cluster: string;
+  caFile: string;
+  bearer: string;
+}
+
+export interface HistoryMetric {
+  state: string;
+  points: HistoryPoint[] | null;
+  qualified: boolean;
+}
+
+export interface HistoryPoint {
+  time: number;
+  value: number;
+}
+
+export interface HistoryRequest {
+  resource: ResourceRef;
+  sourceID: string;
+  preset: string;
+  container: string;
+}
+
+export interface HistorySource {
+  revision: string;
+  origin: string;
+  mode: string;
+  cluster: string;
+  authenticated: boolean;
+}
+
 export interface InteractiveEntry {
   session: model$0.SessionRef;
   kind: string;

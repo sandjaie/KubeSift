@@ -24,6 +24,7 @@ type ExplorerService struct {
 	reads             map[string]*workloadRead
 	prefs             *PreferencesService
 	helmSourcesLoaded bool
+	historyCA         string
 	helmTLS           map[string]bool
 }
 
