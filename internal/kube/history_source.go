@@ -32,6 +32,7 @@ type HistoryConfig struct {
 	SingleCluster bool   `json:"singleCluster"`
 	Cluster       string `json:"cluster"`
 	CAFile        string `json:"caFile"`
+	CAPEM         string `json:"caPEM"`
 	Bearer        string `json:"bearer"`
 }
 type HistorySource struct {
@@ -76,24 +77,30 @@ func historyOrigin(raw string) (string, error) {
 	}
 	return "https://" + strings.ToLower(u.Host), nil
 }
-func historyTLS(path string) (*tls.Config, error) {
+func historyTLS(path, certificate string) (*tls.Config, error) {
 	cfg := &tls.Config{MinVersion: tls.VersionTLS12}
-	if path == "" {
+	if path == "" && certificate == "" {
 		return cfg, nil
 	}
-	bad := model.Fail("tls", "Select a valid PEM CA certificate file of at most 1 MiB.")
-	info, err := os.Stat(path)
-	if err != nil || !info.Mode().IsRegular() || info.Size() > 1<<20 {
+	bad := model.Fail("tls", "Choose one valid PEM CA certificate source of at most 1 MiB.")
+	if len(certificate) > 1<<20 || (path != "" && certificate != "") {
 		return nil, bad
 	}
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, bad
-	}
-	defer f.Close()
-	b, err := io.ReadAll(io.LimitReader(f, (1<<20)+1))
-	if err != nil || len(b) > 1<<20 {
-		return nil, bad
+	b := []byte(certificate)
+	if path != "" {
+		info, err := os.Stat(path)
+		if err != nil || !info.Mode().IsRegular() || info.Size() > 1<<20 {
+			return nil, bad
+		}
+		f, err := os.Open(path)
+		if err != nil {
+			return nil, bad
+		}
+		defer f.Close()
+		b, err = io.ReadAll(io.LimitReader(f, (1<<20)+1))
+		if err != nil || len(b) > 1<<20 {
+			return nil, bad
+		}
 	}
 	roots := x509.NewCertPool()
 	for b = bytes.TrimSpace(b); len(b) > 0; b = bytes.TrimSpace(b) {
@@ -136,7 +143,7 @@ func (s *Service) SetHistorySource(ref model.ConnectionRef, revision string, c H
 	if (c.Mode != "cluster" && c.Mode != "project") || c.SingleCluster != (c.Cluster == "") || len(c.Cluster) > 256 || strings.TrimSpace(c.Cluster) != c.Cluster || strings.IndexFunc(c.Cluster, unicode.IsControl) >= 0 || len(c.Bearer) > 16384 || strings.IndexFunc(c.Bearer, func(r rune) bool { return r < 33 || r > 126 }) >= 0 {
 		return HistorySource{}, model.Fail("invalid", "Check source mode, cluster binding and bearer credential.")
 	}
-	cfg, err := historyTLS(c.CAFile)
+	cfg, err := historyTLS(c.CAFile, c.CAPEM)
 	if err != nil {
 		return HistorySource{}, err
 	}

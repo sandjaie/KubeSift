@@ -152,3 +152,25 @@ func TestHistorySourceRouteUnavailable(t *testing.T) {
 		})
 	}
 }
+
+func TestHistorySourcePastedCA(t *testing.T) {
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusNoContent) }))
+	defer server.Close()
+	cert := string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: server.Certificate().Raw}))
+	cfg, err := historyTLS("", cert)
+	if err != nil {
+		t.Fatal(err)
+	}
+	client := http.Client{Transport: &http.Transport{TLSClientConfig: cfg}}
+	defer client.CloseIdleConnections()
+	resp, err := client.Get(server.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	for _, bad := range []struct{ path, pem string }{{"selected.pem", cert}, {"", strings.Repeat("x", 1<<20+1)}, {"", " "}, {"", cert + "private data"}} {
+		if _, err := historyTLS(bad.path, bad.pem); err == nil {
+			t.Fatal("invalid trust input accepted")
+		}
+	}
+}

@@ -292,6 +292,7 @@ export interface HistoryConfig {
   singleCluster: boolean;
   cluster: string;
   caFile: string;
+  caPEM: string;
   bearer: string;
 }
 

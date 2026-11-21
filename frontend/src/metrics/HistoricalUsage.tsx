@@ -92,6 +92,7 @@ function Chart({ name, metric, result, cpu }: { name: string; metric: HistoryMet
 function SourceForm({ resource, source, changed }: { resource: ResourceRef; source: HistorySource; changed: (s: HistorySource) => void }) {
   const [origin, setOrigin] = useState(""),
     [ca, setCA] = useState(""),
+    [pasteCA, setPasteCA] = useState(false),
     [scope, setScope] = useState(""),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
@@ -109,7 +110,8 @@ function SourceForm({ resource, source, changed }: { resource: ResourceRef; sour
       changed(
         await api.SetHistorySource(resource.connection, source.revision, {
           origin,
-          caFile: ca,
+          caFile: pasteCA ? "" : ca,
+          caPEM: pasteCA ? String(data.get("caPEM") ?? "") : "",
           mode: String(data.get("mode")),
           singleCluster: scope === "single",
           cluster: scope === "shared" ? String(data.get("cluster")) : "",
@@ -170,19 +172,39 @@ function SourceForm({ resource, source, changed }: { resource: ResourceRef; sour
         <label>
           Optional provider bearer <input key={origin} name="token" type="password" autoComplete="off" />
         </label>
-        <button
-          type="button"
-          onClick={async () => {
-            try {
-              setCA(await api.PickHistoryCA());
-            } catch (e) {
-              setError(message(e));
-            }
-          }}
-        >
-          Select private CA…
-        </button>
-        {ca && <span>{ca.split("/").pop()}</span>}
+        <label>
+          <input
+            type="checkbox"
+            checked={pasteCA}
+            onChange={(e) => {
+              setPasteCA(e.target.checked);
+              setCA("");
+            }}
+          />{" "}
+          Paste CA certificate
+        </label>
+        {pasteCA ? (
+          <label>
+            Public CA certificate (PEM)
+            <textarea name="caPEM" rows={4} maxLength={1048576} required spellCheck={false} autoCapitalize="none" />
+          </label>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  setCA(await api.PickHistoryCA());
+                } catch (e) {
+                  setError(message(e));
+                }
+              }}
+            >
+              Select private CA…
+            </button>
+            {ca && <span>{ca.split("/").pop()}</span>}
+          </>
+        )}
         <button type="submit">Confirm source</button>
       </fieldset>
       {error && <p role="alert">{error}</p>}

@@ -80,11 +80,22 @@
         executed for these controls.
       </p>
       <p>
-        The walkthrough exposed the source form disappearing on loss of window focus. The change preserves configuration controls while
-        cancelling the chart read. On the rebuilt package, macOS accessibility repeatedly timed out after selecting the fixture CA,
-        including after restarting the private task instance. Successful packaged chart display, changing chart controls, cross-connection
-        switch, both appearances, narrow layout and disconnect still need native confirmation. Automated reader and mounted UI evidence is
-        recorded separately. The ready PR and merge gates remain open.
+        The rebuilt package preserved source controls on focus loss. The native CA picker timed out under macOS accessibility. The November
+        22 walkthrough completed using the source form’s paste option. The app rejected a malformed CA and accepted the fixture’s public PEM
+        with hostname verification. A local anonymous HTTPS gateway forwarded the synthetic queries to the bearer-protected fixture. System
+        trust was unchanged.
+      </p>
+      <p>
+        On A, Node Overview showed 800 mCPU and 128 MiB. The Pod app container showed 200 mCPU and 32 MiB, and the sidecar showed 600 mCPU
+        and 96 MiB. Keyboard selection changed the range from 1h (30-second steps) to 6h (120-second steps). The accessible CPU table
+        identified a gap. Both charts appeared in light and dark appearances in the half-width window. On B, the same-name Pod initially had
+        no source. After separate confirmation it showed 400 mCPU and 64 MiB. Returning to A and refreshing restored its values and updated
+        the fetch time. Closing both connections showed 0 open contexts.
+      </p>
+      <p>
+        Collapsing history during a delayed provider request cleared the charts and left Current usage visible. The gateway observed the
+        in-flight read. Transport cancellation is verified by deterministic tests. The final two-context integration run returned two
+        evaluations per Pod metric and 121 per Node metric. The repository checks and native race tests passed on the paste change.
       </p>
       <h2>Whole-PR review</h2>
       <p>
@@ -117,8 +128,8 @@
         source descriptions, documentation links, lint and type checking.
       </p>
       <p>
-        The targeted follow-up through <code>c0197b5</code> cleared KSF-004 and confirmed all four code findings resolved. The independent
-        verification verdict keeps the packaged macOS walkthrough gate open.
+        The targeted follow-up through <code>c0197b5</code> cleared KSF-004 and confirmed all four code findings resolved. The packaged
+        walkthrough above subsequently closed the outstanding desktop gate.
       </p>
       <h2>Cleanup</h2>
       <p>

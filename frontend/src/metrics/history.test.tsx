@@ -178,6 +178,8 @@ test("confirms source scope before reading and clears the bearer on submission",
   host.querySelector<HTMLInputElement>('[name="cluster"]')!.value = "b";
   const token = host.querySelector<HTMLInputElement>('[name="token"]')!;
   token.value = "synthetic";
+  await act(async () => host.querySelector<HTMLInputElement>('[type="checkbox"]')!.click());
+  host.querySelector<HTMLTextAreaElement>('[name="caPEM"]')!.value = "fixture public CA";
   expect(api.ReadHistoricalMetrics).not.toHaveBeenCalled();
   await act(async () => {
     host.querySelector("form")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
@@ -185,7 +187,7 @@ test("confirms source scope before reading and clears the bearer on submission",
   expect(api.SetHistorySource).toHaveBeenCalledWith(
     resource.connection,
     "empty",
-    expect.objectContaining({ origin: "https://fixture.test", cluster: "b", bearer: "synthetic" }),
+    expect.objectContaining({ origin: "https://fixture.test", cluster: "b", bearer: "synthetic", caFile: "", caPEM: "fixture public CA" }),
   );
   expect(token.value).toBe("");
   expect(api.ReadHistoricalMetrics).toHaveBeenCalledTimes(1);
