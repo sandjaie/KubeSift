@@ -29,12 +29,14 @@ type Service struct {
 	metrics        map[model.ConnectionRef]*metricsDiscovery
 	metricsBatches chan struct{}
 	metricsWorkers chan struct{}
+	history        map[model.ConnectionRef]*historySource
+	historyReads   chan struct{}
 	cursorKey      string
 }
 
 func NewService(c *connection.Manager, s *session.Manager) *Service {
 	s.SetValidate(func(t model.Target) error { return c.Validate(t.Connection) })
-	service := &Service{connections: c, sessions: s, terminals: map[string]*terminal{}, productLogs: map[string]model.SessionRef{}, interactive: map[string]model.SessionRef{}, discovery: map[model.ConnectionRef]*discoveryCache{}, metrics: make(map[model.ConnectionRef]*metricsDiscovery), metricsBatches: make(chan struct{}, 2), metricsWorkers: make(chan struct{}, 4), cursorKey: model.ID()}
+	service := &Service{connections: c, sessions: s, terminals: map[string]*terminal{}, productLogs: map[string]model.SessionRef{}, interactive: map[string]model.SessionRef{}, discovery: map[model.ConnectionRef]*discoveryCache{}, metrics: make(map[model.ConnectionRef]*metricsDiscovery), metricsBatches: make(chan struct{}, 2), metricsWorkers: make(chan struct{}, 4), history: make(map[model.ConnectionRef]*historySource), historyReads: make(chan struct{}, 2), cursorKey: model.ID()}
 	c.AddCleanup(service.closeConnection)
 	return service
 }
