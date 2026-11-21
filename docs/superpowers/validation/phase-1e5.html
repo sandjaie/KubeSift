@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Phase 1E.5 Node administration and Phase 1E exit · KubeSift</title>
+    <link rel="stylesheet" href="../../assets/planning.css" />
+    <script src="../../assets/theme.js"></script>
+  </head>
+  <body>
+    <aside class="rail">
+      <a class="skip" href="#content">Skip to content</a
+      ><a class="mark" href="../../index.html"><span class="mark-name">KubeSift</span><span class="mark-sub">Planning</span></a>
+      <h2>Index</h2>
+      <a href="../../index.html">Planning index</a>
+      <h2>Product</h2>
+      <a href="../../product/requirements.html">Requirements</a><a href="../../product/feature-matrix.html">Capabilities</a>
+      <h2>Architecture</h2>
+      <a href="../../architecture/overview.html">Overview</a><a href="../../architecture/decisions.html">Decisions</a>
+      <h2>Safeguards</h2>
+      <a href="../../security/security-model.html">Security and AI</a>
+      <h2>Delivery</h2>
+      <a href="../../roadmap/roadmap.html">Roadmap</a><a href="../../ux/workflows.html">UX workflows</a
+      ><a href="../../ux/mocks/index.html">Mockups</a>
+      <h2>Engineering</h2>
+      <a href="../../engineering/engineering.html">Playbook</a><a href="../../engineering/local-development.html">Local development</a
+      ><a href="../../engineering/toolchain.html">Toolchain</a
+      ><a href="../../engineering/kubernetes-development.html">Kubernetes references</a>
+      <h2>Superpowers</h2>
+      <a href="../../superpowers/specs/2026-11-05-kubesift-design.md">Design specification</a
+      ><a href="../../superpowers/plans/README.html">Plans</a
+      ><a href="../../superpowers/validation/index.html" aria-current="page">Validation</a
+      ><a href="../../superpowers/evidence/index.html">Evidence</a>
+    </aside>
+
+    <header>
+      <a href="../../index.html">KubeSift / Planning</a>
+      <h1>Phase 1E.5 Node administration and Phase 1E exit</h1>
+    </header>
+
+    <main id="content">
+      <h2>API proof before implementation</h2>
+      <p>
+        The <a href="../plans/2026-11-22-phase-1e5-node-administration.md">five-task plan</a> started from planning commit
+        <code>4154a67</code>. Both named contexts, <code>kind-dev-local-a</code> and <code>kind-dev-local-b</code>, reported Kubernetes
+        v1.37.0. Each proof created a tainted synthetic Node with its own UID and a StatefulSet pinned to that Node. A fixture service
+        account could patch only the named synthetic Node and could request eviction only in its private namespace.
+      </p>
+      <p>
+        Stale Node UID and resourceVersion tests rejected scheduling patches. Valid conditional patches changed and restored scheduling.
+        Evictions with stale Pod UID or version left the Pod intact. A StatefulSet recreated the same Pod name with a new UID, and a request
+        carrying the original UID failed. The fixture set the replacement Running and Ready and waited for the PDB controller to observe one
+        healthy Pod and zero allowed disruptions. The API returned a budget-specific 429. Relaxing the budget allowed the conditional
+        request.
+      </p>
+      <h2>Product operation and desktop evidence</h2>
+      <p>
+        Both contexts passed the opt-in protocol and administration tests. A reviewed Cordon and separate Uncordon changed the expected
+        field. An unmanaged Pod blocked the entire drain before cordon. A budget rejection after cordon appeared in the retained progress
+        and cancellation preserved the cordon. Replaying confirmation returned the original operation ID. In a fresh review after budget
+        removal, eviction admission and subsequent Terminating state were observed separately.
+      </p>
+      <p>
+        The synthetic Nodes have no kubelet. After observing Terminating, the integration fixture removed its own StatefulSet and Pod with
+        UID preconditions. The worker then observed the reviewed UID gone and verified final inventory. Empty synthetic Nodes completed
+        independent drains without fixture-assisted disappearance. These tests establish API behavior and operator evidence. They do not
+        establish kubelet shutdown or replacement workload readiness.
+      </p>
+      <p>
+        The signed arm64 macOS app ran with the restricted kubeconfigs. On A, the blocked review showed the cross-namespace impact, one
+        unmanaged Pod and an uncordoned Node. Dismissing the review made no scheduling change. Cordon and a separate Uncordon each produced
+        an observed result. In the compact light window, the typed Drain confirmation remained disabled until the Node name matched. After
+        cordon the result showed the protected Pod waiting for its disruption budget. Switching to B, reopening Results and cancelling A’s
+        drain retained its Pod name, blocked count and observed cordon.
+      </p>
+      <p>
+        In dark appearance an empty Node on B showed zero assigned Pods, completed drain and remained cordoned. Separate Uncordon reviews
+        restored the synthetic Nodes. Current usage and Historical usage remained in Node Overview. The walkthrough used the keyboard action
+        selector, restored System appearance and ended with zero open contexts.
+      </p>
+      <h2>Automated coverage and cleanup</h2>
+      <p>
+        Native tests cover paginated and incomplete inventory, ownership and temporary storage, conditional writes, review replay,
+        authorization, canonical locks, worker limits, retry and stop decisions, external uncordon, replacement, late arrivals, disconnect
+        and shutdown. Scripted transports provide fault evidence. Mounted frontend tests cover typed consent, discarded settings, blocked
+        inventory and a late review after changing connections. Repository checks include source descriptions, documentation links, Go tests
+        and vet, bindings normalization tests, frontend tests, lint and type checking. The native operation and desktop race suites, Wails
+        bindings, production frontend build and packaged signature verification passed.
+      </p>
+      <p>
+        Administrative setup and teardown ran separately from product credentials. Cleanup used recorded identities. The final cluster
+        inventories contained only the original control-plane Nodes and no fixture namespaces or cluster RBAC. The original host Node UIDs
+        and scheduling states were checked on both contexts. The desktop test process finished and its private kubeconfigs and package copy
+        were removed.
+      </p>
+      <h2>Phase 1E exit audit</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Increment</th>
+            <th>Verified exit evidence</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><a href="../plans/2026-11-17-phase-1e1-helm-inspection.md">Helm inspection plan</a></td>
+            <td>
+              Dedicated fixtures verified release list, history, values, manifests, hooks and current-resource links.
+              <a href="phase-1e1.html">Validation evidence</a>.
+            </td>
+          </tr>
+          <tr>
+            <td><a href="../plans/2026-11-17-phase-1e2-helm-management.md">Helm management plan</a></td>
+            <td>
+              Dedicated local releases exercised install, upgrade, rollback and uninstall with reviewed hooks and namespace and cluster
+              impact. <a href="phase-1e2.html">Validation evidence</a>.
+            </td>
+          </tr>
+          <tr>
+            <td><a href="../plans/2026-11-19-phase-1e3-current-metrics.md">Current metrics plan</a></td>
+            <td>
+              Pod and Node CPU and memory, denominators and unavailable states were verified on the two local contexts.
+              <a href="phase-1e3.html">Validation evidence</a>.
+            </td>
+          </tr>
+          <tr>
+            <td><a href="../plans/2026-11-21-phase-1e4-historical-metrics.md">Historical metrics plan</a></td>
+            <td>
+              Real Prometheus and the packaged app verified source identity, time ranges and missing-series behavior. OpenShift Route and
+              project tenancy have HTTP contract coverage only. <a href="phase-1e4.html">Validation evidence</a>.
+            </td>
+          </tr>
+          <tr>
+            <td><a href="../plans/2026-11-22-phase-1e5-node-administration.md">Node administration plan</a></td>
+            <td>
+              Real budget denial, retained remaining work, cancellation and verified cordon state were exercised on isolated fixtures.
+              <a href="phase-1e5.html">Validation evidence</a>.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        The five increments satisfy the <a href="../../roadmap/roadmap.html#phase-1e">Phase 1E product exit criteria</a> within the recorded
+        coverage. Publication status is tracked in the checkpoint.
+      </p>
+    </main>
+  </body>
+</html>

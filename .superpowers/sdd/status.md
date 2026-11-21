@@ -4,7 +4,7 @@ Updated 2026-11-22. Current integration branch is `develop`.
 
 ## Phase 1E.5 · Node administration
 
-- [Specification](../../docs/superpowers/specs/2026-11-22-phase-1e5-node-administration-design.md) and [implementation plan](../../docs/superpowers/plans/2026-11-22-phase-1e5-node-administration.md) prepared on develop baseline `8a6b649`. First implementation task is the conditional eviction and disruption-budget proof on isolated synthetic Node fixtures. Implementation and runtime verification are pending.
+- [Specification](../../docs/superpowers/specs/2026-11-22-phase-1e5-node-administration-design.md) and [implementation plan](../../docs/superpowers/plans/2026-11-22-phase-1e5-node-administration.md) prepared on develop baseline `8a6b649`. Implementation and packaged verification completed on the feature branch. Both Kubernetes v1.37.0 fixtures passed conditional eviction, PDB enforcement and cancellation checks. [Phase evidence and five-increment exit audit](../../docs/superpowers/validation/phase-1e5.html). Independent review and publication pending.
 
 ## Phase 1E.4 · Historical metrics
 
