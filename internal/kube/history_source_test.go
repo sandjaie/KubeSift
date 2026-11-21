@@ -168,7 +168,13 @@ func TestHistorySourcePastedCA(t *testing.T) {
 		t.Fatal(err)
 	}
 	resp.Body.Close()
-	for _, bad := range []struct{ path, pem string }{{"selected.pem", cert}, {"", strings.Repeat("x", 1<<20+1)}, {"", " "}, {"", cert + "private data"}} {
+	if _, err := historyTLS("", cert+cert); err != nil {
+		t.Fatal("valid CA bundle rejected", err)
+	}
+	for _, bad := range []struct{ path, pem string }{
+		{"selected.pem", cert}, {"", strings.Repeat("x", 1<<20+1)}, {"", " "}, {"", cert + "private data"},
+		{"", "-----BEGIN CERTIFICATE-----\ntruncated\n" + cert},
+	} {
 		if _, err := historyTLS(bad.path, bad.pem); err == nil {
 			t.Fatal("invalid trust input accepted")
 		}

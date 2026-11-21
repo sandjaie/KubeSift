@@ -108,7 +108,9 @@ func historyTLS(path, certificate string) (*tls.Config, error) {
 			return nil, bad
 		}
 		block, rest := pem.Decode(b)
-		if block == nil || block.Type != "CERTIFICATE" {
+		// Decode can skip a malformed prefix before a valid certificate.
+		consumed := b[:len(b)-len(rest)]
+		if block == nil || block.Type != "CERTIFICATE" || bytes.Count(consumed, []byte("-----BEGIN ")) != 1 {
 			return nil, bad
 		}
 		cert, err := x509.ParseCertificate(block.Bytes)

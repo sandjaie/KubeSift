@@ -118,8 +118,8 @@
         </li>
       </ul>
       <p>
-        The post-fix race suite, normalized bindings, build, signed package and two-context integration passed. The last integration run
-        returned 98 evaluations per Pod metric and 121 per Node metric.
+        The post-fix race suite, normalized bindings, build, signed package and two-context integration passed. The earlier pre-paste
+        integration run returned 98 evaluations per Pod metric and 121 per Node metric.
       </p>
       <p>
         The same reviewer cleared KSF-001 through KSF-003 at <code>85dd285</code> and found KSF-004 (P2): shutdown could clear the read
@@ -130,6 +130,11 @@
       <p>
         The targeted follow-up through <code>c0197b5</code> cleared KSF-004 and confirmed all four code findings resolved. The packaged
         walkthrough above subsequently closed the outstanding desktop gate.
+      </p>
+      <p>
+        At <code>699dd3b</code> the reviewer accepted the packaged evidence and identified KSF-005 (P2). Go's PEM decoder could skip a
+        truncated certificate before a valid CA. The shared parser now rejects skipped blocks. The regression reproduced the failure before
+        the fix and also checks that a valid multi-certificate bundle succeeds.
       </p>
       <h2>Cleanup</h2>
       <p>
