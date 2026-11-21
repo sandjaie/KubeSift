@@ -6,7 +6,10 @@ Important: No native window or cluster is needed.
 */
 package desktop
 
-import "testing"
+import (
+	"github.com/sandjaie/KubeSift/internal/kube"
+	"testing"
+)
 
 func TestWorkloadReadCancellation(t *testing.T) {
 	s := &ExplorerService{}
@@ -34,5 +37,32 @@ func TestWorkloadReadCancellation(t *testing.T) {
 	doneA()
 	if len(s.reads) != 2 {
 		t.Fatal("old completion removed a different request")
+	}
+}
+
+func TestHistoryReservationCancellation(t *testing.T) {
+	s := &ExplorerService{}
+	id, err := s.PrepareHistoricalMetrics()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = s.CancelWorkloadRead(id); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = s.ReadHistoricalMetrics(id, kube.HistoryRequest{}); err == nil {
+		t.Fatal("read started after cancellation")
+	}
+}
+
+func TestHistoryReservationShutdown(t *testing.T) {
+	for range 100 {
+		s := &ExplorerService{}
+		done := make(chan struct{})
+		go func() { defer close(done); _ = s.ServiceShutdown() }()
+		id, err := s.PrepareHistoricalMetrics()
+		<-done
+		if err == nil {
+			_ = s.CancelWorkloadRead(id)
+		}
 	}
 }

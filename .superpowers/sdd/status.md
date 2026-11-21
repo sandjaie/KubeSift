@@ -1,10 +1,10 @@
 # KubeSift resumable status
 
-Updated 2026-11-21. Current integration branch is `develop`.
+Updated 2026-11-22. Current integration branch is `develop`.
 
 ## Phase 1E.4 · Historical metrics
 
-- [Specification](../../docs/superpowers/specs/2026-11-21-phase-1e4-historical-metrics-design.md) and [implementation plan](../../docs/superpowers/plans/2026-11-21-phase-1e4-historical-metrics.md) prepared on develop baseline `8a7f927`. Implementation and runtime verification are pending in a separate chat.
+- [Specification](../../docs/superpowers/specs/2026-11-21-phase-1e4-historical-metrics-design.md) and [implementation plan](../../docs/superpowers/plans/2026-11-21-phase-1e4-historical-metrics.md) prepared on develop baseline `8a7f927`. Implementation on `feature/phase-1e4-historical-metrics` includes Pod and Deployment action grouping. Native race checks, build/package and real Prometheus verification on both kind contexts passed. [Validation results](../../docs/superpowers/validation/phase-1e4.html). Fresh whole-PR review completed. KSF-001–003 cleared at `85dd285`. The same reviewer cleared KSF-004 and confirmed all four code findings resolved at `c0197b5`. Both temporary namespaces, local listeners and private fixture credentials were removed. The packaged macOS walkthrough passed on both connections using the public CA paste option. Publication is pending.
 
 ## Phase 1E.3 · Current CPU and memory metrics
 

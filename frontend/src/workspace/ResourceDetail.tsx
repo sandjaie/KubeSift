@@ -4,6 +4,7 @@ Used by: Workspace after explicit resource selection.
 Responsibilities: Keep section failures independent and render cluster fields as inert text.
 Important: Overview configuration is not measured usage and references never fetch Secret values.
 */
+import { HistoricalUsage } from "../metrics/HistoricalUsage";
 import { CurrentUsage } from "../metrics/MetricsView";
 import type { SampleView } from "../metrics/useMetrics";
 import { useId, useLayoutEffect, useState, type ReactNode } from "react";
@@ -47,7 +48,7 @@ import { ResourceEvents } from "./ResourceEvents";
 import { DeploymentPods } from "./DeploymentPods";
 import { RelatedJobs } from "./RelatedJobs";
 import { ReplicaSetList } from "./ReplicaSetList";
-import { ResourceOverview } from "./ResourceOverview";
+import { ResourceOverview, object, list, overviewObject } from "./ResourceOverview";
 import { isClusterKind } from "../cluster/model";
 import { ClusterOverview } from "../cluster/ClusterOverview";
 export function ResourceDetail({
@@ -104,6 +105,12 @@ export function ResourceDetail({
     section === "Overview" && canReviewOperation && !state?.loading && !state?.error && (kind === "Pod" || kind === "Service")
       ? (data as Detail | undefined)
       : undefined;
+  const groupedActions = kind === "Deployment" || kind === "Pod";
+  const podOverview = c.sections.Overview;
+  const terminalTarget =
+    kind === "Pod" && canReviewOperation && !podOverview?.error && !podOverview?.loading
+      ? (podOverview?.data as Detail | undefined)
+      : undefined;
   const restartReason = source && supportsRestart ? restartUnavailable(source) : "";
   const deleteReason = source ? deleteUnavailable(source) : "";
   useLayoutEffect(() => {
@@ -122,7 +129,33 @@ export function ResourceDetail({
       <div className="pane-heading">
         <h2>{row.resource.name}</h2>
         <div className="scale-actions">
-          {supportsScale && sourceKey && (
+          {groupedActions && source && (
+            <select
+              aria-label={kind + " actions"}
+              value=""
+              onChange={(event) => {
+                const action = event.target.value;
+                event.currentTarget.focus();
+                if (action === "forward" && interactiveCapture) onInteractive?.("forward", interactiveCapture);
+                if (action === "scale" || action === "restart" || action === "delete") setReview({ action, key: sourceKey });
+              }}
+            >
+              <option value="" disabled>
+                Actions
+              </option>
+              {supportsScale && <option value="scale">Scale…</option>}
+              {supportsRestart && (
+                <option value="restart" disabled={!!restartReason}>
+                  Restart…
+                </option>
+              )}
+              {onInteractive && interactiveCapture && <option value="forward">Port forward…</option>}
+              <option value="delete" disabled={!!deleteReason || deletionAccepted}>
+                Delete…
+              </option>
+            </select>
+          )}
+          {!groupedActions && supportsScale && sourceKey && (
             <button
               onClick={(event) => {
                 event.currentTarget.focus();
@@ -132,7 +165,7 @@ export function ResourceDetail({
               Scale…
             </button>
           )}
-          {source && supportsRestart && (
+          {!groupedActions && source && supportsRestart && (
             <button
               disabled={!!restartReason}
               aria-describedby={restartReason ? restartReasonID : undefined}
@@ -144,7 +177,7 @@ export function ResourceDetail({
               Restart…
             </button>
           )}
-          {source && (
+          {!groupedActions && source && (
             <button
               className="danger"
               disabled={!!deleteReason || deletionAccepted}
@@ -157,11 +190,8 @@ export function ResourceDetail({
               Delete…
             </button>
           )}
-          {onInteractive && interactiveCapture && (
-            <>
-              {kind === "Pod" && <button onClick={() => onInteractive("terminal", interactiveCapture)}>Terminal…</button>}
-              <button onClick={() => onInteractive("forward", interactiveCapture)}>Port forward…</button>
-            </>
+          {kind === "Service" && onInteractive && interactiveCapture && (
+            <button onClick={() => onInteractive("forward", interactiveCapture)}>Port forward…</button>
           )}
           {section !== "Logs" && (
             <button onClick={c.refreshSection} disabled={state?.loading}>
@@ -239,12 +269,19 @@ export function ResourceDetail({
         </div>
       )}
       {stale && <p className="warning">Retained evidence — connection status is stale.</p>}
-      <div className="detail-tabs" role="tablist">
-        {tabs.map((tab) => (
-          <button key={tab} role="tab" aria-selected={tab === section} onClick={() => c.selectSection(tab)}>
-            {tab}
+      <div className="detail-tabs">
+        <div className="resource-section-tabs" role="tablist">
+          {tabs.map((tab) => (
+            <button key={tab} role="tab" aria-selected={tab === section} onClick={() => c.selectSection(tab)}>
+              {tab}
+            </button>
+          ))}
+        </div>
+        {kind === "Pod" && onInteractive && (
+          <button disabled={!terminalTarget} onClick={() => terminalTarget && onInteractive("terminal", terminalTarget)}>
+            Terminal
           </button>
-        ))}
+        )}
       </div>
       {state?.loading && <p>Loading {section}…</p>}
       {state?.error && (
@@ -253,6 +290,19 @@ export function ResourceDetail({
         </p>
       )}
       {section === "Overview" && (kind === "Pod" || kind === "Node") && <CurrentUsage view={usage} />}
+      {section === "Overview" && canReviewOperation && !state?.error && data && (kind === "Pod" || kind === "Node") && (
+        <HistoricalUsage
+          key={JSON.stringify(row.resource)}
+          resource={row.resource}
+          connection={context}
+          containers={["containers", "initContainers", "ephemeralContainers"].flatMap((k) =>
+            list(object(overviewObject(data as Detail).spec)[k])
+              .map((v) => object(v).name)
+              .filter((n): n is string => typeof n === "string"),
+          )}
+        />
+      )}
+
       {section === "Overview" &&
         data &&
         (isClusterKind(kind) ? (

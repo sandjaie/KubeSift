@@ -27,3 +27,5 @@ Legacy summaries omit full specs. Investigation reads use a separate cap on loca
 ## Interactive sessions
 
 `interactive.go` owns pending terminal and port-forward slots and verifies the exact Pod identity before a stream starts. `terminal.go` and `forward.go` use the pinned SPDY protocols, with one cancellable HTTP upgrade per session. Session lifetime, backpressure, and cancellation live in [`session`](../session/README.md). This package verifies the Kubernetes target and opens the stream.
+
+`history_source.go` owns the selected HTTPS origin, its optional CA and bearer, and its cancellation context for one connection generation. The named OpenShift Route read suggests a host. Only an explicit source change configures a provider.

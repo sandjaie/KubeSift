@@ -1,0 +1,21 @@
+# Exercise the history gauge's five-minute window on the Prometheus engine.
+evaluation_interval: 30s
+tests:
+  - interval: 30s
+    input_series:
+      - series: 'container_memory_working_set_bytes{node="test",id="/"}'
+        values: '0 4096 _ _ _ _ _ _ _ _ _ _ _'
+    promql_expr_test:
+      - expr: 'last_over_time(container_memory_working_set_bytes{node="test",id="/"}[5m])'
+        eval_time: 0m
+        exp_samples:
+          - labels: 'container_memory_working_set_bytes{node="test",id="/"}'
+            value: 0
+      - expr: 'last_over_time(container_memory_working_set_bytes{node="test",id="/"}[5m])'
+        eval_time: 5m
+        exp_samples:
+          - labels: 'container_memory_working_set_bytes{node="test",id="/"}'
+            value: 4096
+      - expr: 'last_over_time(container_memory_working_set_bytes{node="test",id="/"}[5m])'
+        eval_time: 5m30s
+        exp_samples: []

@@ -196,6 +196,10 @@ func (s *Service) closeConnection(ref model.ConnectionRef) {
 	defer s.mu.Unlock()
 	delete(s.discovery, ref)
 	delete(s.metrics, ref)
+	if h := s.history[ref]; h != nil {
+		h.close()
+		delete(s.history, ref)
+	}
 	for id, entry := range s.productLogs {
 		if entry.Connection == ref {
 			delete(s.productLogs, id)

@@ -156,7 +156,8 @@
       <h2 id="historical-metrics">Historical usage design</h2>
       <p>
         In Pod and Node Overview, expand Historical usage below Current usage. Select and confirm a source for the connection, then choose a
-        range and, for Pods, a container. Show CPU and memory charts with source, coverage, gaps and accessible values. The
+        range and, for Pods, a container. For private trust, choose a CA file or paste the public PEM certificate. Show CPU and memory
+        charts with source, coverage, gaps and accessible values. The
         <a href="../superpowers/specs/2026-11-21-phase-1e4-historical-metrics-design.md">Phase 1E.4 specification</a> defines the controls
         and evidence states.
       </p>
@@ -333,10 +334,11 @@
         selected. Destructive actions still require confirmation.
       </p>
       <p>
-        Resource detail offers Overview, Events, Logs and YAML where applicable, with Terminal and Port forward actions in Overview. In
-        Phase 2, Evidence links captured sources to the investigation. Full resource identity remains available even when table cells
-        truncate. Log failures may use a red vertical gutter alongside the relevant line, with textual severity. Previous-container logs do
-        not enable follow.
+        Resource detail offers Overview, Events, Logs and YAML where applicable, with Terminal beside the Pod section tabs. Pod Overview
+        groups Port forward and Delete in Actions. Deployment Overview groups Scale, Restart and Delete in Actions. Refresh section stays
+        separate. Choosing a command opens its existing setup or review. In Phase 2, Evidence links captured sources to the investigation.
+        Full resource identity remains available even when table cells truncate. Log failures may use a red vertical gutter alongside the
+        relevant line, with textual severity. Previous-container logs do not enable follow.
       </p>
       <h2>Log lifetime</h2>
       <p>

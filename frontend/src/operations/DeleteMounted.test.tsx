@@ -104,7 +104,13 @@ test("a mounted review cancels and revokes late tokens on captured source change
     const pending = deferred<DeletePreview>();
     const cancel = vi.fn();
     bridge.prepareDelete.mockReturnValueOnce({ promise: pending.promise, cancel });
-    await click("Delete…");
+    const menu = host.querySelector<HTMLSelectElement>('select[aria-label="Deployment actions"]');
+    expect(menu).not.toBeNull();
+    expect([...menu!.options].map((option) => option.text)).toEqual(["Actions", "Scale…", "Restart…", "Delete…"]);
+    await act(async () => {
+      menu!.value = "delete";
+      menu!.dispatchEvent(new Event("change", { bubbles: true }));
+    });
     await click("Review deletion");
     expect(host.querySelector("dialog")).not.toBeNull();
     await act(async () => render(capture, tab, refresh));
