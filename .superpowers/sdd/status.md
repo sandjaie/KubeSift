@@ -2,6 +2,10 @@
 
 Updated 2026-11-22. Current integration branch is `develop`.
 
+## Phase 1F.1 · OpenShift Projects
+
+- [Specification](../../docs/superpowers/specs/2026-11-22-phase-1f1-openshift-projects-design.md) and [implementation plan](../../docs/superpowers/plans/2026-11-22-phase-1f1-openshift-projects.md) prepared on develop baseline `6cd1d19`. Implementation is pending. OCP 4.21 is the proposed live validation target; a context and disposable lifecycle scope require separate authorization.
+
 ## Phase 1E.5 · Node administration
 
 - [PR #31](https://github.com/sandjaie/KubeSift/pull/31) squash-merged into `develop` as `cd0a585` on 2026-11-22 Dubai time. All five [plan tasks](../../docs/superpowers/plans/2026-11-22-phase-1e5-node-administration.md) are complete. The squash tree matches the reviewed head `d76b332`.
