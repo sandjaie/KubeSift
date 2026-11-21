@@ -4,6 +4,7 @@ Used by: Workspace after explicit resource selection.
 Responsibilities: Keep section failures independent and render cluster fields as inert text.
 Important: Overview configuration is not measured usage and references never fetch Secret values.
 */
+import { HistoricalUsage } from "../metrics/HistoricalUsage";
 import { CurrentUsage } from "../metrics/MetricsView";
 import type { SampleView } from "../metrics/useMetrics";
 import { useId, useLayoutEffect, useState, type ReactNode } from "react";
@@ -47,7 +48,7 @@ import { ResourceEvents } from "./ResourceEvents";
 import { DeploymentPods } from "./DeploymentPods";
 import { RelatedJobs } from "./RelatedJobs";
 import { ReplicaSetList } from "./ReplicaSetList";
-import { ResourceOverview } from "./ResourceOverview";
+import { ResourceOverview, object, list, overviewObject } from "./ResourceOverview";
 import { isClusterKind } from "../cluster/model";
 import { ClusterOverview } from "../cluster/ClusterOverview";
 export function ResourceDetail({
@@ -253,6 +254,19 @@ export function ResourceDetail({
         </p>
       )}
       {section === "Overview" && (kind === "Pod" || kind === "Node") && <CurrentUsage view={usage} />}
+      {section === "Overview" && canReviewOperation && !state?.error && data && (kind === "Pod" || kind === "Node") && (
+        <HistoricalUsage
+          key={JSON.stringify(row.resource)}
+          resource={row.resource}
+          connection={context}
+          containers={["containers", "initContainers", "ephemeralContainers"].flatMap((k) =>
+            list(object(overviewObject(data as Detail).spec)[k])
+              .map((v) => object(v).name)
+              .filter((n): n is string => typeof n === "string"),
+          )}
+        />
+      )}
+
       {section === "Overview" &&
         data &&
         (isClusterKind(kind) ? (
