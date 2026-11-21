@@ -48,6 +48,10 @@ export function CancelAttempt(id: string): $CancellablePromise<void> {
   return $Call.ByID(3929228331, id);
 }
 
+export function CancelDrain(id: string): $CancellablePromise<void> {
+  return $Call.ByID(4117160596, id);
+}
+
 export function CancelHelmAction(id: string): $CancellablePromise<void> {
   return $Call.ByID(2977303616, id);
 }
@@ -118,6 +122,10 @@ export function ExecuteEdit(token: string): $CancellablePromise<operation$0.Oper
 
 export function ExecuteHelmAction(token: string): $CancellablePromise<helmmanager$0.Result> {
   return $Call.ByID(1892671381, token);
+}
+
+export function ExecuteNodeAction(token: string, ack: string): $CancellablePromise<operation$0.OperationResult> {
+  return $Call.ByID(322149129, token, ack);
 }
 
 export function ExecuteRestart(token: string, acknowledgement: string): $CancellablePromise<operation$0.OperationResult> {
@@ -257,6 +265,10 @@ export function PrepareHelmAction(id: string, request: helmmanager$0.PrepareRequ
  */
 export function PrepareHistoricalMetrics(): $CancellablePromise<string> {
   return $Call.ByID(3552509396);
+}
+
+export function PrepareNodeAction(id: string, req: operation$0.NodeRequest): $CancellablePromise<operation$0.NodePreview> {
+  return $Call.ByID(1087383469, id, req);
 }
 
 export function PrepareRestart(id: string, req: operation$0.RestartRequest): $CancellablePromise<operation$0.RestartPreview> {
@@ -496,6 +508,10 @@ export function RevokeEdit(token: string): $CancellablePromise<void> {
 
 export function RevokeHelper(fp: string): $CancellablePromise<void> {
   return $Call.ByID(2437089190, fp);
+}
+
+export function RevokeNodeReview(token: string): $CancellablePromise<void> {
+  return $Call.ByID(2705877094, token);
 }
 
 export function RevokeRestart(token: string): $CancellablePromise<void> {

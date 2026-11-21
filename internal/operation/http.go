@@ -11,9 +11,12 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"math"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/sandjaie/KubeSift/internal/connection"
@@ -99,6 +102,8 @@ func (c operationClient) observeCreate(ctx context.Context, path string, metadat
 const applyManager = "kubesift-apply"
 
 type requestOptions struct {
+	query                url.Values
+	eviction             *evictionRejection
 	notFound             *operationStatus
 	edit                 *editFeedback
 	create, metadataOnly bool
@@ -115,7 +120,10 @@ func (c operationClient) sendRequest(ctx context.Context, method, path string, d
 	addr := *c.base
 	addr.Path = strings.TrimRight(addr.Path, "/") + path
 	addr.RawPath, addr.RawQuery, addr.Fragment = "", "", ""
-	query := url.Values{}
+	query := options.query
+	if query == nil {
+		query = url.Values{}
+	}
 	if dry {
 		query.Set("dryRun", "All")
 	}
@@ -159,6 +167,29 @@ func (c operationClient) sendRequest(ctx context.Context, method, path string, d
 		(options.create && resp.StatusCode != http.StatusCreated) ||
 		(options.apply && resp.StatusCode != http.StatusOK) ||
 		(method == http.MethodDelete && resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusAccepted) {
+		if options.eviction != nil && resp.StatusCode == 429 {
+			var status struct {
+				Message string
+				Details struct {
+					RetryAfterSeconds int
+					Causes            []struct{ Reason string }
+				}
+			}
+			if json.NewDecoder(resp.Body).Decode(&status) == nil {
+				options.eviction.budget = strings.Contains(strings.ToLower(status.Message), "disruption budget")
+				options.eviction.delay = status.Details.RetryAfterSeconds
+			}
+			value := resp.Header.Get("Retry-After")
+			delay, parseErr := strconv.Atoi(value)
+			if parseErr != nil {
+				if date, e := http.ParseTime(value); e == nil {
+					delay = int(math.Ceil(time.Until(date).Seconds()))
+				}
+			}
+			if delay > options.eviction.delay {
+				options.eviction.delay = delay
+			}
+		}
 		if notFound := options.notFound; notFound != nil && resp.StatusCode == http.StatusNotFound {
 			response, err := io.ReadAll(resp.Body)
 			var status operationStatus

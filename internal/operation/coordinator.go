@@ -8,6 +8,8 @@ package operation
 
 import (
 	"context"
+	"maps"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -21,6 +23,7 @@ const reviewTTL = 5 * time.Minute
 const operationDeadline = 30 * time.Second
 
 type OperationResult struct {
+	Node        *NodeProgress       `json:"node,omitempty"`
 	Action      string              `json:"action"`
 	Cluster     string              `json:"cluster"`
 	OperationID string              `json:"operationID"`
@@ -48,6 +51,8 @@ func operationKey(result OperationResult) kube.ResourceRef {
 		key.APIVersion, key.Kind = result.Apply.Target.Group, result.Apply.Target.Resource
 	} else if result.Edit != nil {
 		key.APIVersion, key.Kind = result.Edit.Group, result.Edit.Resource
+	} else if result.Node != nil {
+		key.APIVersion, key.Kind = "", "nodes"
 	} else if _, plural := deleteTarget(result.Resource); plural != "" {
 		group, _, grouped := strings.Cut(key.APIVersion, "/")
 		if !grouped {
@@ -84,11 +89,14 @@ type pendingReview struct {
 }
 
 type operationRecord struct {
+	ctx    context.Context
+	cancel context.CancelFunc
 	token  string
 	result OperationResult
 }
 
 type Coordinator struct {
+	nodeWorkers sync.WaitGroup
 	mu          sync.Mutex
 	connections *connection.Manager
 	now         func() time.Time
@@ -190,6 +198,8 @@ func (s *Coordinator) begin(action, token, acknowledgement string) (*pendingRevi
 		err = model.Fail("acknowledgement", "The workload name did not match. Prepare a new review.")
 	case s.ctx.Err() != nil:
 		err = model.Fail("cancelled", "Operation service is closed")
+	case review.result.Node != nil && review.result.Node.Action == "drain" && s.drainLimit(review.result.Resource.Connection):
+		err = model.Fail("busy", "A drain is already active on this connection or two drains are running")
 	case len(s.active) >= 4 || s.active[operationKey(review.result)]:
 		err = model.Fail("busy", "An operation is already in progress or the execution limit was reached")
 	}
@@ -207,7 +217,13 @@ func (s *Coordinator) begin(action, token, acknowledgement string) (*pendingRevi
 	result.OperationID, result.StartedAt, result.State = model.ID(), now, "executing"
 	s.active[operationKey(result)] = true
 	s.byToken[token] = result.OperationID
-	s.results[result.OperationID] = &operationRecord{token: token, result: copyOperationResult(result)}
+	record := &operationRecord{token: token, result: copyOperationResult(result)}
+	if result.Node != nil {
+		p := review.payload.(NodePreview)
+		record.ctx, record.cancel = context.WithTimeout(s.ctx, time.Duration(p.WaitPreset)*time.Minute)
+		s.nodeWorkers.Add(1)
+	}
+	s.results[result.OperationID] = record
 	s.order = append(s.order, result.OperationID)
 	return &review, result, nil
 }
@@ -233,6 +249,16 @@ func (s *Coordinator) revoke(action, token string) {
 }
 
 func copyOperationResult(result OperationResult) OperationResult {
+	if result.Node != nil {
+		v := *result.Node
+		v.Rows = slices.Clone(v.Rows)
+		v.Counts = maps.Clone(v.Counts)
+		if v.Cordoned != nil {
+			x := *v.Cordoned
+			v.Cordoned = &x
+		}
+		result.Node = &v
+	}
 	if result.Problem != nil {
 		value := *result.Problem
 		result.Problem = &value
@@ -279,6 +305,7 @@ func copyOperationResult(result OperationResult) OperationResult {
 func (s *Coordinator) GetOperationResult(id string) (OperationResult, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	s.prune(s.now())
 	if record := s.results[id]; record != nil {
 		return copyOperationResult(record.result), nil
 	}
@@ -291,7 +318,13 @@ func (s *Coordinator) ListOperationResults() []OperationResult {
 	s.prune(s.now())
 	results := make([]OperationResult, 0, len(s.order))
 	for i := len(s.order) - 1; i >= 0; i-- {
-		results = append(results, copyOperationResult(s.results[s.order[i]].result))
+		r := s.results[s.order[i]].result
+		if r.Node != nil {
+			summary := *r.Node
+			summary.Rows = nil
+			r.Node = &summary
+		}
+		results = append(results, copyOperationResult(r))
 	}
 	return results
 }
@@ -311,6 +344,10 @@ func (s *Coordinator) prune(now time.Time) {
 		result := s.results[id].result
 		if result.FinishedAt != nil && !now.Before(result.FinishedAt.Add(10*time.Minute)) {
 			delete(s.byToken, token)
+			if result.Node != nil && len(result.Node.Rows) > 0 {
+				result.Node.Rows = nil
+				result.Node.DetailsExpired = true
+			}
 		}
 	}
 	// Preserve active records and only drop the earliest completed operation.
@@ -377,6 +414,11 @@ func (s *Coordinator) scheduleExpiry(now time.Time) {
 func (s *Coordinator) CloseConnection(ref model.ConnectionRef) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	for _, record := range s.results {
+		if record.result.Resource.Connection == ref && record.cancel != nil {
+			record.cancel()
+		}
+	}
 	for id, draft := range s.captures {
 		if draft.connection == ref {
 			s.dropDraft(id)
@@ -389,6 +431,7 @@ func (s *Coordinator) CloseConnection(ref model.ConnectionRef) {
 	}
 }
 func (s *Coordinator) Close() {
+	defer s.nodeWorkers.Wait()
 	s.stop()
 	s.mu.Lock()
 	defer s.mu.Unlock()

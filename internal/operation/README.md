@@ -14,6 +14,8 @@ Delete reviews one supported workload, then sends a conditional `DeleteOptions` 
 
 Rollback verifies retained ReplicaSet or ControllerRevision ownership and reads the captured workload. It dry-runs a conditional replacement of only the Pod template. Confirm checks the source and the parent again, then sends that same reviewed patch once.
 
+Node reviews use the same coordinator and canonical Node lock. Drain inventories all namespaces, verifies owners and storage, and waits for each admitted Pod UID to disappear. A connection close or explicit cancellation stops the worker. Results retain scheduling state and bounded Pod progress.
+
 ## YAML actions
 
 Edit captures one discovered object and reviews a conditional patch with a Kubernetes dry-run. The baseline and the patch stay in memory. They do not enter operation history. Drafts share the coordinator's limits and expiry. Retained edit results include the route, the identity, and the outcome.
