@@ -109,9 +109,17 @@
       <p>
         The same reviewer cleared all five findings at <code>d76b332</code>. The final repository check passed 137 frontend tests. Native
         race tests, the post-fix two-context integration, bindings, production build and signed package verification passed. The full
-        interactive walkthrough preceded independent review. The final rebuilt package launched, but the Mac was locked during the
-        additional interactive pass. The automatic target refresh received mounted coverage. Both sets of desktop fixtures and private
-        credentials were removed.
+        interactive walkthrough preceded independent review. The targeted KSF-005 recheck passed on the final signed package after the Mac
+        was unlocked.
+      </p>
+      <p>
+        The tested executable matched the reviewed build byte for byte (SHA-256
+        <code>e5a58c9d695860c52aaf1dd8d685323bfdd717fa2dfa96552e9d3c825ce4cd4a</code>), and the bundle passed strict signature verification.
+        With Auto-refresh off, Node Actions on <code>kind-dev-local-b</code> offered Cordon for the empty synthetic Node
+        <code>kubesift-node-proof-qw8sw</code>. Results reported Cordon completed and scheduling cordoned. Dismissing Results and reopening
+        Actions on the same selected Node led directly to Uncordon, without a manual refresh, reselection or tab switch. A separate Uncordon
+        review restored scheduling. The fixture test passed, including host identity and scheduling checks on both contexts. Both synthetic
+        Nodes, their namespaces and cluster RBAC were verified absent. The private kubeconfigs and package copy were removed.
       </p>
       <p>
         <a href="https://github.com/sandjaie/KubeSift/pull/31">PR #31</a> squash-merged into develop as <code>cd0a585</code>. Its tree

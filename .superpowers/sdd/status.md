@@ -5,7 +5,7 @@ Updated 2026-11-22. Current integration branch is `develop`.
 ## Phase 1E.5 · Node administration
 
 - [PR #31](https://github.com/sandjaie/KubeSift/pull/31) squash-merged into `develop` as `cd0a585` on 2026-11-22 Dubai time. All five [plan tasks](../../docs/superpowers/plans/2026-11-22-phase-1e5-node-administration.md) are complete. The squash tree matches the reviewed head `d76b332`.
-- Both explicit kind v1.37.0 API servers proved conditional eviction and PDB enforcement on synthetic Nodes. Repository checks (137 frontend tests), race, bindings, build, packaging and the packaged walkthrough passed. Fixture cleanup and original host scheduling were verified. The independent reviewer cleared KSF-001–005. The locked desktop prevented an extra interactive pass on the final rebuild.
+- Both explicit kind v1.37.0 API servers proved conditional eviction and PDB enforcement on synthetic Nodes. Repository checks (137 frontend tests), race, bindings, build, packaging and the packaged walkthrough passed. Fixture cleanup and original host scheduling were verified. The independent reviewer cleared KSF-001–005. A subsequent signed-package check confirmed Cordon changed the selected Node’s menu to Uncordon with Auto-refresh off and no manual refresh.
 - [Validation and five-increment exit audit](../../docs/superpowers/validation/phase-1e5.html). **Phase 1E is complete for its specified scope.** OpenShift monitoring has contract coverage. The synthetic Nodes provided API evidence without a live kubelet.
 
 ## Phase 1E.4 · Historical metrics
