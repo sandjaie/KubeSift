@@ -43,3 +43,7 @@ Show host, connection, target/container, range with timezone, step, CPU rate win
 - Independent provider and Kubernetes denials, name reuse, same names on two connections, credential replacement and a late response can never reveal obsolete history. A forged history request cannot send a provider token elsewhere.
 - Valid zero, gaps, stale coverage, partial results and duplicate series remain distinguishable. Node evidence requires a node-labelled root series. Prove CPU counter reset handling and gauge semantics on a real Prometheus query engine.
 - Use synthetic evidence and the approved kind contexts. Validate the Red Hat route/tenancy HTTP contract with deterministic tests; describe live OpenShift coverage only if separately authorized and actually performed. Verify cancellation and access controls with the packaged desktop app and record actual limitations. See the [implementation plan](../plans/2026-11-21-phase-1e4-historical-metrics.md).
+
+## Pod and Deployment detail controls
+
+The approved companion refinement groups Pod Port forward and Delete, and Deployment Scale, Restart and Delete, under Actions in Overview. Refresh section stays separate. Terminal beside the Pod sections opens the existing session setup. The [workspace workflows](../../ux/workflows.html#interactive-sessions) own the arrangement. Existing identity, eligibility and confirmation checks apply.

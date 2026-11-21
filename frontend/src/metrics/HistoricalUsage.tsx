@@ -164,7 +164,7 @@ function SourceForm({ resource, source, changed }: { resource: ResourceRef; sour
         </label>
         {scope === "shared" && (
           <label>
-            Exact cluster label <input name="cluster" required />
+            Exact cluster label <input name="cluster" autoCapitalize="none" autoCorrect="off" spellCheck={false} required />
           </label>
         )}
         <label>
@@ -234,7 +234,7 @@ function HistoryRead({
     </>
   );
 }
-function Panel({ resource: target, containers, connection }: Target) {
+function Panel({ resource: target, containers, connection, visible }: Target & { visible: boolean }) {
   const [resource] = useState(target);
   const [source, setSource] = useState<HistorySource>(),
     [error, setError] = useState(""),
@@ -324,7 +324,8 @@ function Panel({ resource: target, containers, connection }: Target) {
               </select>
             </label>
             <button onClick={() => setRefresh((v) => v + 1)}>Refresh history</button>
-            {(container || resource.kind === "Node") && (
+            {!visible && <p role="status">History paused while the window is inactive.</p>}
+            {visible && (container || resource.kind === "Node") && (
               <HistoryRead
                 key={JSON.stringify([source.revision, container, range, refresh])}
                 resource={resource}
@@ -356,7 +357,7 @@ export function HistoricalUsage(props: Target) {
       <button aria-expanded={open} onClick={() => setOpen(!open)}>
         Historical usage
       </button>
-      {open && native && visible && <Panel key={JSON.stringify(props.resource)} {...props} />}
+      {open && <Panel key={JSON.stringify(props.resource)} {...props} visible={native && visible} />}
     </section>
   );
 }

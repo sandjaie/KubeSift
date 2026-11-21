@@ -105,6 +105,12 @@ export function ResourceDetail({
     section === "Overview" && canReviewOperation && !state?.loading && !state?.error && (kind === "Pod" || kind === "Service")
       ? (data as Detail | undefined)
       : undefined;
+  const groupedActions = kind === "Deployment" || kind === "Pod";
+  const podOverview = c.sections.Overview;
+  const terminalTarget =
+    kind === "Pod" && canReviewOperation && !podOverview?.error && !podOverview?.loading
+      ? (podOverview?.data as Detail | undefined)
+      : undefined;
   const restartReason = source && supportsRestart ? restartUnavailable(source) : "";
   const deleteReason = source ? deleteUnavailable(source) : "";
   useLayoutEffect(() => {
@@ -123,7 +129,33 @@ export function ResourceDetail({
       <div className="pane-heading">
         <h2>{row.resource.name}</h2>
         <div className="scale-actions">
-          {supportsScale && sourceKey && (
+          {groupedActions && source && (
+            <select
+              aria-label={kind + " actions"}
+              value=""
+              onChange={(event) => {
+                const action = event.target.value;
+                event.currentTarget.focus();
+                if (action === "forward" && interactiveCapture) onInteractive?.("forward", interactiveCapture);
+                if (action === "scale" || action === "restart" || action === "delete") setReview({ action, key: sourceKey });
+              }}
+            >
+              <option value="" disabled>
+                Actions
+              </option>
+              {supportsScale && <option value="scale">Scale…</option>}
+              {supportsRestart && (
+                <option value="restart" disabled={!!restartReason}>
+                  Restart…
+                </option>
+              )}
+              {onInteractive && interactiveCapture && <option value="forward">Port forward…</option>}
+              <option value="delete" disabled={!!deleteReason || deletionAccepted}>
+                Delete…
+              </option>
+            </select>
+          )}
+          {!groupedActions && supportsScale && sourceKey && (
             <button
               onClick={(event) => {
                 event.currentTarget.focus();
@@ -133,7 +165,7 @@ export function ResourceDetail({
               Scale…
             </button>
           )}
-          {source && supportsRestart && (
+          {!groupedActions && source && supportsRestart && (
             <button
               disabled={!!restartReason}
               aria-describedby={restartReason ? restartReasonID : undefined}
@@ -145,7 +177,7 @@ export function ResourceDetail({
               Restart…
             </button>
           )}
-          {source && (
+          {!groupedActions && source && (
             <button
               className="danger"
               disabled={!!deleteReason || deletionAccepted}
@@ -158,11 +190,8 @@ export function ResourceDetail({
               Delete…
             </button>
           )}
-          {onInteractive && interactiveCapture && (
-            <>
-              {kind === "Pod" && <button onClick={() => onInteractive("terminal", interactiveCapture)}>Terminal…</button>}
-              <button onClick={() => onInteractive("forward", interactiveCapture)}>Port forward…</button>
-            </>
+          {kind === "Service" && onInteractive && interactiveCapture && (
+            <button onClick={() => onInteractive("forward", interactiveCapture)}>Port forward…</button>
           )}
           {section !== "Logs" && (
             <button onClick={c.refreshSection} disabled={state?.loading}>
@@ -240,12 +269,19 @@ export function ResourceDetail({
         </div>
       )}
       {stale && <p className="warning">Retained evidence — connection status is stale.</p>}
-      <div className="detail-tabs" role="tablist">
-        {tabs.map((tab) => (
-          <button key={tab} role="tab" aria-selected={tab === section} onClick={() => c.selectSection(tab)}>
-            {tab}
+      <div className="detail-tabs">
+        <div className="resource-section-tabs" role="tablist">
+          {tabs.map((tab) => (
+            <button key={tab} role="tab" aria-selected={tab === section} onClick={() => c.selectSection(tab)}>
+              {tab}
+            </button>
+          ))}
+        </div>
+        {kind === "Pod" && onInteractive && (
+          <button disabled={!terminalTarget} onClick={() => terminalTarget && onInteractive("terminal", terminalTarget)}>
+            Terminal
           </button>
-        ))}
+        )}
       </div>
       {state?.loading && <p>Loading {section}…</p>}
       {state?.error && (

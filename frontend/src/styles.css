@@ -1922,3 +1922,26 @@ textarea::placeholder {
   min-height: 180px;
   max-height: 40vh;
 }
+
+.resource-section-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: inherit;
+}
+.historical-usage {
+  padding: 8px 12px;
+  overflow-wrap: anywhere;
+}
+.historical-usage fieldset {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.historical-usage input,
+.historical-usage select {
+  max-width: 100%;
+}
+.historical-usage details {
+  max-height: 16rem;
+  overflow: auto;
+}

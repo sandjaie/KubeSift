@@ -17,8 +17,10 @@ const api = vi.hoisted(() => ({
   CancelWorkloadRead: vi.fn(async () => {}),
 }));
 vi.mock("../../bindings/internal/desktop", () => ({ ExplorerService: api }));
+const visibility = vi.hoisted(() => ({ notify: undefined as ((v: boolean) => void) | undefined }));
 vi.mock("./api", () => ({
   onVisibility: (fn: (v: boolean) => void) => {
+    visibility.notify = fn;
     fn(true);
     return () => {};
   },
@@ -101,5 +103,24 @@ test("clears late chart results on container, replacement and identity changes",
   api.HistorySource.mockResolvedValue({ ...source, origin: "", revision: "" });
   await render("b");
   expect(host.textContent).toContain("No history source configured");
+  await act(async () => root.unmount());
+});
+
+test("hiding cancels the read, preserves settings and resumes with a fresh read", async () => {
+  api.ReadHistoricalMetrics.mockClear();
+  api.CancelWorkloadRead.mockClear();
+  const host = document.createElement("div"),
+    root = createRoot(host);
+  const resource = { connection: { id: "a", generation: 1 }, kind: "Node", apiVersion: "v1", namespace: "", name: "test-node", uid: "uid" };
+  api.HistorySource.mockResolvedValue({ origin: "https://fixture.test", revision: "r1", mode: "cluster", cluster: "a" });
+  api.ReadHistoricalMetrics.mockImplementation(() => new Promise(() => {}));
+  await act(async () => root.render(<HistoricalUsage resource={resource} connection="A" containers={[]} />));
+  await act(async () => host.querySelector("button")!.click());
+  await act(async () => visibility.notify!(false));
+  expect(api.CancelWorkloadRead).toHaveBeenCalledTimes(1);
+  expect(host.textContent).toContain("paused");
+  expect(host.textContent).toContain("Replace source");
+  await act(async () => visibility.notify!(true));
+  expect(api.ReadHistoricalMetrics).toHaveBeenCalledTimes(2);
   await act(async () => root.unmount());
 });

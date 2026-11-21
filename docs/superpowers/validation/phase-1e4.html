@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Phase 1E.4 historical metrics validation · KubeSift</title>
+    <link rel="stylesheet" href="../../assets/planning.css" />
+    <script src="../../assets/theme.js"></script>
+  </head>
+  <body>
+    <aside class="rail">
+      <a class="skip" href="#content">Skip to content</a
+      ><a class="mark" href="../../index.html"><span class="mark-name">KubeSift</span><span class="mark-sub">Planning</span></a>
+      <h2>Index</h2>
+      <a href="../../index.html">Planning index</a>
+      <h2>Product</h2>
+      <a href="../../product/requirements.html">Requirements</a><a href="../../product/feature-matrix.html">Capabilities</a>
+      <h2>Architecture</h2>
+      <a href="../../architecture/overview.html">Overview</a><a href="../../architecture/decisions.html">Decisions</a>
+      <h2>Safeguards</h2>
+      <a href="../../security/security-model.html">Security and AI</a>
+      <h2>Delivery</h2>
+      <a href="../../roadmap/roadmap.html">Roadmap</a><a href="../../ux/workflows.html">UX workflows</a
+      ><a href="../../ux/mocks/index.html">Mockups</a>
+      <h2>Engineering</h2>
+      <a href="../../engineering/engineering.html">Playbook</a><a href="../../engineering/local-development.html">Local development</a
+      ><a href="../../engineering/toolchain.html">Toolchain</a
+      ><a href="../../engineering/kubernetes-development.html">Kubernetes references</a>
+      <h2>Superpowers</h2>
+      <a href="../../superpowers/specs/2026-11-05-kubesift-design.md">Design specification</a
+      ><a href="../../superpowers/plans/README.html">Plans</a
+      ><a href="../../superpowers/validation/index.html" aria-current="page">Validation</a
+      ><a href="../../superpowers/evidence/index.html">Evidence</a>
+    </aside>
+
+    <header>
+      <a href="../../index.html">KubeSift / Planning</a>
+      <h1>Phase 1E.4 historical metrics validation</h1>
+    </header>
+    <main id="content">
+      <p>
+        Candidate based on <code>a0be7c8</code> in the existing checkout. The
+        <a href="../plans/2026-11-21-phase-1e4-historical-metrics.md">implementation plan</a> and
+        <a href="../specs/2026-11-21-phase-1e4-historical-metrics-design.md">design</a> define the acceptance criteria.
+      </p>
+      <h2>Native and frontend checks</h2>
+      <p>
+        Bindings generation, frontend build, macOS packaging and ad-hoc signature verification passed on arm64 macOS 27.0.1. The repository
+        checks and Go race suite passed. Native TLS tests cover private CA scope, hostname rejection, stale edits, replacement, redirected
+        requests and cancellation. Reader tests check named access before and after provider I/O, object replacement, two-read capacity,
+        malformed matrices, missing CPU, real zero, grid order, body limits and ambiguity. Mounted React tests exercise cancellation,
+        refresh failure, delayed results and source replacement.
+      </p>
+      <h2>Real Prometheus and Kubernetes results</h2>
+      <p>
+        Prometheus and promtool 3.5.0 ran locally from the darwin-arm64 archive checked against its published SHA-256. The process queried
+        an isolated synthetic TSDB. No cluster monitoring installation or scrape was used. The TLS gateway used a private ephemeral bearer.
+        Only <code>kind-dev-local-a</code> and <code>kind-dev-local-b</code> were used.
+      </p>
+      <p>
+        The integration test passed for same-name, distinct-UID Pods and each real control-plane Node. The rerun returned 41 evaluations per
+        Pod metric and 121 per Node metric. Complete five-minute CPU windows returned 200 and 400 mCPU for the app containers and 800 and
+        1,600 mCPU for root cgroups. The counter reset every eight samples. Working sets were 32, 64, 128 and 256 MiB respectively. The
+        initial test incorrectly expected a full-window rate during series warm-up. The corrected assertion starts after five minutes of
+        counter input. Shared-source cluster selection, absent series and duplicate series were exercised against the real engine. The
+        promtool lookback fixture separately verified zero, a carried 4,096-byte gauge and its disappearance at the five-minute boundary.
+      </p>
+      <h2>OpenShift coverage</h2>
+      <p>
+        Deterministic HTTP contracts exercised the exact named Route GET, admission and TLS requirements, denied or absent Routes, and the
+        selected Pod namespace parameter on a project endpoint. Project-mode Node requests ended before provider access. The live test
+        backend was generic Prometheus. No live OpenShift verification was performed.
+      </p>
+      <h2>Packaged macOS walkthrough</h2>
+      <p>
+        The packaged application showed the synthetic Pod, separate Current usage, the unconfigured history disclosure, source form and
+        private CA picker. Confirming an anonymous source against the bearer-required gateway produced a provider-denied state. Pod Overview
+        showed Actions and a separate Refresh section control, with Terminal beside Logs. Deployment Overview showed Actions and Refresh
+        section. The mounted Deployment test checks its three options and enters the normal deletion review. No workload mutation was
+        executed for these controls.
+      </p>
+      <p>
+        The walkthrough exposed the source form disappearing on loss of window focus. The change preserves configuration controls while
+        cancelling the chart read. On the rebuilt package, macOS accessibility repeatedly timed out after selecting the fixture CA,
+        including after restarting the private task instance. Successful packaged chart display, changing chart controls, cross-connection
+        switch, both appearances, narrow layout and disconnect still need native confirmation. Automated reader and mounted UI evidence is
+        recorded separately. The ready PR and merge gates remain open.
+      </p>
+    </main>
+  </body>
+</html>
