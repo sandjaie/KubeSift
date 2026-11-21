@@ -4,7 +4,7 @@ Updated 2026-11-22. Current integration branch is `develop`.
 
 ## Phase 1F.1 · OpenShift Projects
 
-- [Specification](../../docs/superpowers/specs/2026-11-22-phase-1f1-openshift-projects-design.md) and [implementation plan](../../docs/superpowers/plans/2026-11-22-phase-1f1-openshift-projects.md) prepared on develop baseline `6cd1d19`. Implementation is pending. OCP 4.21 is the proposed live validation target; a context and disposable lifecycle scope require separate authorization.
+- [Specification](../../docs/superpowers/specs/2026-11-22-phase-1f1-openshift-projects-design.md) and [implementation plan](../../docs/superpowers/plans/2026-11-22-phase-1f1-openshift-projects.md) prepared on develop baseline `6cd1d19`. Implementation on `feature/phase-1f1-openshift-projects` from `4cc1602`. [Validation evidence](../../docs/superpowers/validation/phase-1f1.html) covers deterministic contracts, both kind contexts and the packaged desktop. Live OCP 4.21 acceptance and merge remain pending.
 
 ## Phase 1E.5 · Node administration
 

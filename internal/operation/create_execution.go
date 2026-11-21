@@ -81,7 +81,7 @@ func (s *CreateService) ReadCreatedDetail(ctx context.Context, id string) (kube.
 
 func (s *CreateService) InspectCreateName(ctx context.Context, id string) (CreateObservation, error) {
 	result, err := s.coordinator.GetOperationResult(id)
-	if err != nil || result.Create == nil || result.Action != "create" || result.FinishedAt == nil ||
+	if err != nil || result.Create == nil || (result.Action != "create" && result.Action != "request-project") || result.FinishedAt == nil ||
 		(result.State != "accepted" && result.State != "unknown") {
 		return CreateObservation{}, model.Fail("not_found", "The accepted or uncertain create result is unavailable")
 	}
@@ -121,6 +121,8 @@ func (s *CreateService) InspectCreateName(ctx context.Context, id string) (Creat
 	case err != nil || uid == "" || len(uid) > 128 || version == "" || len(version) > 128:
 		obs.State = "unavailable"
 		obs.Problem = &model.Problem{Code: "unavailable", Message: "Could not read the name on its original connection and API"}
+	case result.Action == "request-project" && result.Resource.UID != "" && result.Resource.UID == uid:
+		obs.State = "verified"
 	case result.Resource.UID != "" && result.Resource.UID != uid:
 		obs.State = "replaced"
 	default:

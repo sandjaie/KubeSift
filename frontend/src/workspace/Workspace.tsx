@@ -50,6 +50,8 @@ export function Workspace({
   onCreate,
   onInteractive,
   operationResults,
+  projectsPane,
+  onProjects,
   helmPane,
   onHelm,
   onResourceDestination,
@@ -71,6 +73,8 @@ export function Workspace({
   onApply?: (target: EditTarget) => void;
   onInteractive?: (kind: "terminal" | "forward", data: CapturedDetail) => void;
   operationResults: OperationResult[];
+  projectsPane?: ReactNode;
+  onProjects?: () => void;
   helmPane?: ReactNode;
   onHelm: () => void;
   onResourceDestination: () => void;
@@ -115,11 +119,13 @@ export function Workspace({
           <>
             <div className="navigation-host">
               <ResourceNavigation
-                kind={helmPane ? "Helm" : kind}
+                projects={!!onProjects}
+                kind={projectsPane ? "Project" : helmPane ? "Helm" : kind}
                 collapsedGroups={collapsedResourceGroups}
                 onToggleGroup={onToggleResourceGroup}
                 onSelect={(k) => {
-                  if (k === "Helm") onHelm();
+                  if (k === "Project") onProjects?.();
+                  else if (k === "Helm") onHelm();
                   else if (isResourceKind(k)) {
                     onResourceDestination();
                     c.selectKind(k);
@@ -137,7 +143,9 @@ export function Workspace({
             />
           </>
         )}
-        {helmPane ? (
+        {projectsPane ? (
+          projectsPane
+        ) : helmPane ? (
           helmPane
         ) : kind === "APIResources" ? (
           tab.view?.ref && (

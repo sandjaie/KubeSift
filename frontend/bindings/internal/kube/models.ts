@@ -45,6 +45,7 @@ export interface APIResourceDescriptor {
   list: boolean;
   get: boolean;
   patch: boolean;
+  delete: boolean;
   create: boolean;
   mode: string;
   reason: string;
@@ -426,6 +427,51 @@ export interface PodSummary {
   containers: string[] | null;
   marker: string;
   annotation: string;
+}
+
+export interface Project {
+  resource: ResourceRef;
+  version: string;
+  displayName: string;
+  description: string;
+  truncated: boolean;
+  phase: string;
+  createdAt: string;
+  deletingAt: string;
+}
+
+export interface ProjectAccess {
+  pods: string;
+  quotas: string;
+  delete: string;
+  observedAt: string;
+}
+
+export interface ProjectCapabilities {
+  projects: boolean;
+  list: boolean;
+  get: boolean;
+  delete: boolean;
+  request: boolean;
+  checkRequest: boolean;
+}
+
+export interface ProjectPage {
+  items: Project[] | null;
+  next: string;
+  partial: boolean;
+  observedAt: string;
+}
+
+export interface ProjectQuota {
+  name: string;
+  hard: { [_ in string]?: string } | null;
+  used: { [_ in string]?: string } | null;
+}
+
+export interface ProjectQuotaPage {
+  items: ProjectQuota[] | null;
+  next: string;
 }
 
 export interface RelatedJobPage {

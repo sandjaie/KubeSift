@@ -19,6 +19,7 @@ const descriptor = {
   get: true,
   patch: true,
   create: true,
+  delete: false,
 };
 const catalog = { resources: [descriptor], epoch: "e", fetchedAt: "" };
 test("CRD intents require a canonical group, plural, kind and scope match", () => {

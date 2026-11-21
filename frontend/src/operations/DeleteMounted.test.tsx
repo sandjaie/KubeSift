@@ -27,6 +27,7 @@ const bridge = vi.hoisted(() => ({
   executeCreate: vi.fn(),
   executeScale: vi.fn(),
   executeNode: vi.fn(),
+  executeProjectRequest: vi.fn(),
   listOperationResults: vi.fn(),
   readWorkloads: vi.fn(),
   readResource: vi.fn(),

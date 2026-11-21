@@ -60,57 +60,60 @@ export const destinations = [
       ["APIService", clusterLabels.APIService, true],
       ["APIResources", "API resources", true],
       ["Helm", "Helm", true],
-      ["OpenShift", "OpenShift", false],
     ],
   },
 ] as const;
 export function ResourceNavigation({
   kind,
   onSelect,
+  projects = false,
   collapsedGroups,
   onToggleGroup,
 }: {
   kind: string;
   onSelect: (kind: string, available: boolean) => void;
+  projects?: boolean;
   collapsedGroups: readonly string[];
   onToggleGroup: (group: string) => void;
 }) {
   const id = useId();
   return (
     <nav className="resource-nav" aria-label="Resources">
-      {destinations.map(({ group, items }, index) => {
-        const expanded = !collapsedGroups.includes(group);
-        const listID = `${id}-${index}`;
-        return (
-          <section key={group}>
-            <h3>
-              <button
-                type="button"
-                aria-expanded={expanded}
-                aria-controls={listID}
-                data-current={!expanded && items.some(([key]) => kind === key) ? true : undefined}
-                onClick={() => onToggleGroup(group)}
-              >
-                <span aria-hidden="true" className="nav-chevron" />
-                {group}
-              </button>
-            </h3>
-            <div id={listID} hidden={!expanded}>
-              {items.map(([key, label, available]) => (
-                <button key={key} disabled={!available} aria-pressed={kind === key} onClick={() => onSelect(key, available)}>
-                  <ResourceIcon kind={key} />
-                  {label}
-                  {!available && (
-                    <span className="future" title="Not available yet">
-                      Soon
-                    </span>
-                  )}
+      {[...destinations, ...(projects ? [{ group: "OpenShift", items: [["Project", "Projects", true] as const] }] : [])].map(
+        ({ group, items }, index) => {
+          const expanded = !collapsedGroups.includes(group);
+          const listID = `${id}-${index}`;
+          return (
+            <section key={group}>
+              <h3>
+                <button
+                  type="button"
+                  aria-expanded={expanded}
+                  aria-controls={listID}
+                  data-current={!expanded && items.some(([key]) => kind === key) ? true : undefined}
+                  onClick={() => onToggleGroup(group)}
+                >
+                  <span aria-hidden="true" className="nav-chevron" />
+                  {group}
                 </button>
-              ))}
-            </div>
-          </section>
-        );
-      })}
+              </h3>
+              <div id={listID} hidden={!expanded}>
+                {items.map(([key, label, available]) => (
+                  <button key={key} disabled={!available} aria-pressed={kind === key} onClick={() => onSelect(key, available)}>
+                    <ResourceIcon kind={key} />
+                    {label}
+                    {!available && (
+                      <span className="future" title="Not available yet">
+                        Soon
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </section>
+          );
+        },
+      )}
     </nav>
   );
 }

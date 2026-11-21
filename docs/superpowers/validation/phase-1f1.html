@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OpenShift Projects validation · KubeSift</title>
+    <link rel="stylesheet" href="../../assets/planning.css" />
+    <script src="../../assets/theme.js"></script>
+  </head>
+  <body>
+    <aside class="rail">
+      <a class="skip" href="#content">Skip to content</a
+      ><a class="mark" href="../../index.html"><span class="mark-name">KubeSift</span><span class="mark-sub">Planning</span></a>
+      <h2>Index</h2>
+      <a href="../../index.html">Planning index</a>
+      <h2>Product</h2>
+      <a href="../../product/requirements.html">Requirements</a><a href="../../product/feature-matrix.html">Capabilities</a>
+      <h2>Architecture</h2>
+      <a href="../../architecture/overview.html">Overview</a><a href="../../architecture/decisions.html">Decisions</a>
+      <h2>Safeguards</h2>
+      <a href="../../security/security-model.html">Security and AI</a>
+      <h2>Delivery</h2>
+      <a href="../../roadmap/roadmap.html">Roadmap</a><a href="../../ux/workflows.html">UX workflows</a
+      ><a href="../../ux/mocks/index.html">Mockups</a>
+      <h2>Engineering</h2>
+      <a href="../../engineering/engineering.html">Playbook</a><a href="../../engineering/local-development.html">Local development</a
+      ><a href="../../engineering/toolchain.html">Toolchain</a
+      ><a href="../../engineering/kubernetes-development.html">Kubernetes references</a>
+      <h2>Superpowers</h2>
+      <a href="../../superpowers/specs/2026-11-05-kubesift-design.md">Design specification</a
+      ><a href="../../superpowers/plans/README.html">Plans</a
+      ><a href="../../superpowers/validation/index.html" aria-current="page">Validation</a
+      ><a href="../../superpowers/evidence/index.html">Evidence</a>
+    </aside>
+
+    <header>
+      <a href="index.html">KubeSift / Validation</a>
+      <h1>Phase 1F.1 · OpenShift Projects</h1>
+    </header>
+    <main id="content">
+      <p>Feature branch based on planning commit <code>4cc1602</code>. OCP 4.21 acceptance remains open.</p>
+      <h2>Native and desktop evidence</h2>
+      <p>
+        Each approved kind API server returned seven core Namespaces and no OpenShift Projects capability. The opt-in integration read
+        through the production service with explicit kind-dev-local-a and kind-dev-local-b connections.
+      </p>
+      <p>
+        Loopback tests cover empty, 130-item and 501-item responses, list denial with named GET, mismatched UIDs, exact quota quantities and
+        independently scoped personal access. Before the generic YAML guard, preparing a ProjectRequest sent one POST. The corrected
+        regression requires zero. Dedicated request tests cover revoked and production-labelled tokens, duplicate confirmation, 403, 409 and
+        500 responses and named readback. Conditional deletion tests inspect the UID and version in both DELETE bodies, typed
+        acknowledgement and version drift before execution.
+      </p>
+      <p>
+        Mounted React tests exercise explicit lookup, inspection without scope changes, typed deletion, cancellation, two tabs using the
+        same name, same-name UID binding and failed transitions. The frontend suite passed 139 tests. Wails bindings, production build and
+        ad-hoc signed package were generated. The repository check and native race commands are recorded in the plan ledger.
+      </p>
+      <p>
+        The packaged macOS app connected to the TLS loopback fixture with Namespace and Pod lists denied. The Project header labelled the
+        configured namespace unverified. Named lookup showed team-a and its UID. Quotas showed two Pods used of twelve. Personal checks
+        reported denied, allowed and allowed. For team-b the quota request was denied and access results were unknown. Use project and
+        keyboard entry both landed on scoped Pods with the expected denial. Command search reopened Projects. Request review showed the
+        captured cluster and template warning and was cancelled. Deletion review showed the original UID/version and disabled confirmation
+        until the typed name matched. Light and dark appearance were exercised and System was restored. Narrow-window verification remains
+        open.
+      </p>
+      <h2>Live acceptance outstanding</h2>
+      <p>
+        No OCP context, identity, disposable name scope or cleanup authority was provided. Live acceptance requires restricted visibility
+        and named selection without Namespace list, real quota and SSAR evidence with independent denials, a single confirmed request and
+        observable template effects, a dry-run preserving the original nonterminating UID, rejection of stale preconditions on a disposable
+        replacement, and confirmed deletion observed as termination or absence. Record the server build, identity roles and actual cleanup,
+        including a separately authorized verifier if read access is lost.
+      </p>
+      <p><a href="../plans/2026-11-22-phase-1f1-openshift-projects.md">Implementation plan</a></p>
+    </main>
+  </body>
+</html>

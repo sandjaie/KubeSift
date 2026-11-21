@@ -103,3 +103,25 @@ func fixtureCreateService(t *testing.T, base *ScaleService) *CreateService {
 	t.Cleanup(sessions.Close)
 	return NewCreateService(base.connections, kube.NewService(base.connections, sessions), base.coordinator)
 }
+
+func TestProjectRequestYAMLReviewNeverPosts(t *testing.T) {
+	var posts atomic.Int32
+	base, req := scaleServer(t, func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if r.Method == "POST" {
+			posts.Add(1)
+			w.WriteHeader(500)
+			return
+		}
+		fmt.Fprint(w, `{"kind":"APIResourceList","groupVersion":"project.openshift.io/v1","resources":[{"name":"projectrequests","kind":"ProjectRequest","namespaced":false,"verbs":["create"]}]}`)
+	})
+	s := fixtureCreateService(t, base)
+	d, e := s.OpenCreate(context.Background(), req.Resource.Connection, "")
+	if e != nil {
+		t.Fatal(e)
+	}
+	_, e = s.PrepareCreate(context.Background(), CreateRequest{DraftID: d.ID, YAML: "apiVersion: project.openshift.io/v1\nkind: ProjectRequest\nmetadata: {name: example}"})
+	if e == nil || posts.Load() != 0 {
+		t.Fatalf("review sent %d POSTs: %v", posts.Load(), e)
+	}
+}

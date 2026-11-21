@@ -32,6 +32,7 @@ type APIResourceDescriptor struct {
 	List       bool   `json:"list"`
 	Get        bool   `json:"get"`
 	Patch      bool   `json:"patch"`
+	Delete     bool   `json:"delete"`
 	Create     bool   `json:"create"`
 	Mode       string `json:"mode"`
 	Reason     string `json:"reason"`

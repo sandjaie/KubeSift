@@ -47,6 +47,11 @@ type deleteReview struct {
 func deleteTarget(ref kube.ResourceRef) (string, string) {
 	var api, plural string
 	switch ref.Kind {
+	case "Project":
+		if ref.APIVersion == kube.ProjectVersion && ref.Namespace == "" && len(validation.IsDNS1123Label(ref.Name)) == 0 && ref.UID != "" && len(ref.UID) <= 128 {
+			return "/apis/" + kube.ProjectVersion + "/projects/" + ref.Name, "projects"
+		}
+		return "", ""
 	case "Pod":
 		api, plural = "v1", "pods"
 	case "ReplicationController":
@@ -106,6 +111,12 @@ func (c operationClient) inspectDelete(ctx context.Context, path string, ref kub
 	}
 	if !parent.matches(ref, version) || parent.Metadata.Deletion != nil {
 		return DeleteImpact{}, model.Fail("stale_target", "Workload changed or is terminating. Refresh and review again.")
+	}
+	if ref.Kind == "Project" {
+		var state struct{ Status struct{ Phase string } }
+		if json.Unmarshal(raw, &state) != nil || state.Status.Phase == "Terminating" {
+			return DeleteImpact{}, model.Fail("stale_target", "Project is terminating; refresh and select again")
+		}
 	}
 	return projectDeleteImpact(raw, ref.Kind)
 }

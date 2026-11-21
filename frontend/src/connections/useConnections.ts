@@ -11,11 +11,13 @@ import { initialConnections, reduceConnections, tabKey, type ConnectionsAction }
 export function useConnections() {
   const [state, setState] = useState(initialConnections);
   const current = useRef(state);
+  const selection = useRef(0);
   const serial = useRef(0);
   const attempts = useRef(createAttemptQueue());
   const sourceEpoch = useRef(0);
   const mounted = useRef(true);
   const commit = useCallback((a: ConnectionsAction) => {
+    if (["focus", "open", "close", "namespace"].includes(a.type)) selection.current++;
     current.current = reduceConnections(current.current, a);
     if (mounted.current) setState(current.current);
   }, []);
@@ -36,6 +38,14 @@ export function useConnections() {
         try {
           const view = await api.GetAttempt(t.attemptId);
           commit({ type: "snapshot", key, epoch: t.epoch, view });
+          if (t.projectUID && !t.projectUnavailable && view.ref && key === current.current.active) {
+            try {
+              const p = await api.ReadProject(crypto.randomUUID(), view.ref, t.namespace, t.projectUID);
+              if (p.phase !== "Active" || p.deletingAt) throw new Error("Project is no longer active.");
+            } catch (e) {
+              commit({ type: "projectLost", key, epoch: t.epoch, uid: t.projectUID, error: message(e) });
+            }
+          }
         } catch {
           commit({ type: "pollFailed", key, attemptId: t.attemptId });
         }
@@ -125,9 +135,29 @@ export function useConnections() {
       }
     }
   }
-  async function selectNamespace(key: string, namespace: string) {
+  async function selectNamespace(key: string, namespace: string, project?: { uid: string; valid: () => boolean }) {
     const t = current.current.tabs[key];
-    if (!t?.view?.ref || t.namespace === namespace) return;
+    if (!t?.view?.ref) return false;
+    if (project) {
+      const n = ++selection.current;
+      const ref = t.view.ref;
+      const valid = () =>
+        project.valid() && current.current.active === key && current.current.tabs[key]?.request === t.request && selection.current === n;
+      try {
+        const verified = await api.ReadProject(crypto.randomUUID(), ref, namespace, project.uid);
+        if (!valid()) return false;
+        if (verified.phase !== "Active" || verified.deletingAt) throw new Error("Choose an active Project.");
+        const view = await api.SetWorkloadNamespace(ref, namespace);
+        if (!valid()) return false;
+        commit({ type: "namespace", key, namespace, projectUID: verified.resource.uid });
+        commit({ type: "snapshot", key, epoch: current.current.tabs[key].epoch, view });
+        return true;
+      } catch (e) {
+        if (valid()) commit({ type: "failure", key, request: t.request, error: message(e) });
+        return false;
+      }
+    }
+    if (t.namespace === namespace && !t.projectUID) return false;
     commit({ type: "namespace", key, namespace });
     const epoch = current.current.tabs[key].epoch;
     try {

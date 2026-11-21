@@ -17,7 +17,8 @@ export type ConnectionsAction =
   | { type: "snapshot"; key: string; epoch: number; view: ConnectionView }
   | { type: "failure"; key: string; request: number; error: string }
   | { type: "pollFailed"; key: string; attemptId: string }
-  | { type: "namespace"; key: string; namespace: string }
+  | { type: "namespace"; key: string; namespace: string; projectUID?: string }
+  | { type: "projectLost"; key: string; uid: string; epoch: number; error: string }
   | { type: "filter"; key: string; filter: string }
   | { type: "select"; key: string; uid: string | null };
 export const tabKey = (entry: Pick<CatalogEntry, "sourceId" | "context">) => JSON.stringify([entry.sourceId, entry.context]);
@@ -111,9 +112,15 @@ export function reduceConnections(s: ConnectionsState, a: ConnectionsAction): Co
         ...t,
         epoch: t.epoch + 1,
         namespace: a.namespace,
+        projectUID: a.projectUID,
+        projectUnavailable: false,
         selected: null,
         view: t.view ? { ...t.view, namespace: a.namespace, pods: [], podLoading: true, podProblem: null } : null,
       };
+      break;
+    case "projectLost":
+      if (t.epoch !== a.epoch || t.projectUID !== a.uid) return s;
+      next = { ...t, epoch: t.epoch + 1, projectUnavailable: true, selected: null, error: a.error };
       break;
     case "filter":
       next = { ...t, filter: a.filter };

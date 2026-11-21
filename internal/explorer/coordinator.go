@@ -267,7 +267,7 @@ func (c *Coordinator) run(w *work) {
 			}
 			delay = 30 * time.Second
 		}
-		if mode != "namespaces" && ns == w.view.Namespace {
+		if mode != "namespaces" && mode != "projects" && ns == w.view.Namespace {
 			w.view.Pods = result.Pods
 			w.view.PodProblem = result.PodProblem
 		}

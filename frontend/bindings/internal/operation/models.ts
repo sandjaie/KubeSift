@@ -266,6 +266,20 @@ export interface Preview {
   expiresAt: string;
 }
 
+export interface ProjectFields {
+  name: string;
+  displayName: string;
+  description: string;
+}
+
+export interface ProjectRequestPreview {
+  cluster: string;
+  typed: boolean;
+  fields: ProjectFields;
+  token: string;
+  expiresAt: string;
+}
+
 export interface RestartImpact {
   strategy: string;
   strategyDefault: boolean;
