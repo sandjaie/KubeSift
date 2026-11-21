@@ -165,7 +165,7 @@ export default function App() {
   const originConnection =
     origin?.view?.state === "connected" || origin?.view?.state === "restricted" ? (origin.view.ref ?? undefined) : undefined;
   const operationResults = useOperationResults((result) => {
-    if (result.state !== "accepted") return;
+    if (result.state !== "accepted" && !(result.action === "node" && result.state !== "executing")) return;
     workloads.refreshOperationTarget(result.resource, result.action === "delete");
   });
   function resumeEditor() {

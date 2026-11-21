@@ -61,7 +61,7 @@ export function useOperationResults(onResult: (result: Pick<OperationResult, "re
   onFinish.current = onResult;
   const reportAcceptedMutation = useCallback((result: OperationResult) => {
     const seen = acceptedMutations.current;
-    if (result.state !== "accepted" || seen.has(result.operationID)) return;
+    if ((result.action === "node" ? !result.finishedAt : result.state !== "accepted") || seen.has(result.operationID)) return;
     seen.add(result.operationID);
     if (seen.size > 128) {
       const oldest = seen.values().next().value;
@@ -76,7 +76,13 @@ export function useOperationResults(onResult: (result: Pick<OperationResult, "re
         if (request !== query.current) return;
         const next = rows ?? [];
         for (const row of next) {
-          if (row.action === "delete" || row.action === "edit" || row.action === "rollback" || row.action === "apply")
+          if (
+            row.action === "node" ||
+            row.action === "delete" ||
+            row.action === "edit" ||
+            row.action === "rollback" ||
+            row.action === "apply"
+          )
             reportAcceptedMutation(row);
         }
         setResults(next);

@@ -105,8 +105,15 @@ func (s *Coordinator) runNode(ctx context.Context, p NodePreview, r *OperationRe
 	}
 	if p.Action == "drain" {
 		fresh, e := c.inventory(ctx, n.Name)
+		if ctx.Err() != nil {
+			return interruption(ctx)
+		}
 		if e != nil {
 			return "blocked", "Cannot repeat complete Pod inventory"
+		}
+		c.checkPodAccess(ctx, fresh)
+		if ctx.Err() != nil {
+			return interruption(ctx)
 		}
 		byUID := map[string]NodePod{}
 		for _, row := range p.Rows {
@@ -139,8 +146,12 @@ func (s *Coordinator) runNode(ctx context.Context, p NodePreview, r *OperationRe
 			}
 			return "unknown", "Scheduling request outcome is uncertain. Refresh the Node."
 		}
+		r.Node.Cordoned = &want
 	}
 	n, e = c.node(ctx, p.Resource, "")
+	if ctx.Err() != nil {
+		return interruption(ctx)
+	}
 	if e != nil {
 		r.Node.Cordoned = nil
 		return "unknown", "Cannot observe Node scheduling state"
@@ -171,6 +182,9 @@ func (s *Coordinator) runNode(ctx context.Context, p NodePreview, r *OperationRe
 		return "partial", "Final assigned Pod inventory unavailable"
 	}
 	n, e = c.node(ctx, p.Resource, "")
+	if ctx.Err() != nil {
+		return interruption(ctx)
+	}
 	if e != nil {
 		r.Node.Cordoned = nil
 		return "unknown", "Cannot verify final Node identity or scheduling"
@@ -179,17 +193,26 @@ func (s *Coordinator) runNode(ctx context.Context, p NodePreview, r *OperationRe
 	if !n.Spec.Unschedulable {
 		return "partial", "Node was externally uncordoned"
 	}
-	reviewedSkips := map[string]NodePod{}
-	for _, row := range r.Node.Rows {
-		if row.State == "skipped" {
-			reviewedSkips[row.UID] = row
+	byUID := map[string]int{}
+	for i, row := range r.Node.Rows {
+		byUID[row.UID] = i
+	}
+	changed := false
+	for _, row := range rows {
+		i, known := byUID[row.UID]
+		if known && row == r.Node.Rows[i] && row.State == "skipped" {
+			continue
+		}
+		changed = true
+		if known {
+			r.Node.Rows[i].State, r.Node.Rows[i].Reason = "changed", "Final observation differs from the reviewed Pod state"
+		} else {
+			row.State, row.Reason = "unreviewed", "New Pod in final inventory. A fresh review is required."
+			r.Node.Rows = append(r.Node.Rows, row)
 		}
 	}
-	for _, row := range rows {
-		if old, ok := reviewedSkips[row.UID]; !ok || row != old {
-			r.Node.Rows = rows
-			return "partial", "Final inventory contains new or changed Pods. Review remaining work."
-		}
+	if changed {
+		return "partial", "Final inventory contains new or changed Pods. Review remaining work."
 	}
 	return "completed", "Node observed cordoned with only documented skips remaining"
 }
@@ -203,6 +226,9 @@ func (s *Coordinator) drainPod(ctx context.Context, c operationClient, p NodePre
 		var pod core.Pod
 		var missing operationStatus
 		_, e := c.send(ctx, "GET", podPath(*row), false, nil, "", &pod, &missing)
+		if ctx.Err() != nil {
+			return interruption(ctx)
+		}
 		matched := pod.Kind == "Pod" && pod.APIVersion == "v1" && pod.Name == row.Name && pod.Namespace == row.Namespace
 		if (errors.Is(e, operationHTTPStatus(404)) && objectNotFound(missing, row.Name, "", "pods")) || (e == nil && matched && pod.UID != "" && string(pod.UID) != row.UID) {
 			row.State, row.Reason = "gone", "Reviewed UID is gone"
@@ -225,11 +251,17 @@ func (s *Coordinator) drainPod(ctx context.Context, c operationClient, p NodePre
 			continue
 		}
 		checked, e := c.classify(ctx, pod, map[string]bool{})
+		if ctx.Err() != nil {
+			return interruption(ctx)
+		}
 		if e != nil || checked != approved {
 			row.State = "changed"
 			return "partial", "Pod ownership or local storage changed"
 		}
 		n, e := c.node(ctx, p.Resource, "")
+		if ctx.Err() != nil {
+			return interruption(ctx)
+		}
 		if e != nil {
 			r.Node.Cordoned = nil
 			return "partial", "Cannot verify Node before eviction"

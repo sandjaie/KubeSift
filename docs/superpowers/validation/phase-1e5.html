@@ -93,6 +93,19 @@
         and scheduling states were checked on both contexts. The desktop test process finished and its private kubeconfigs and package copy
         were removed.
       </p>
+      <h2>Independent review</h2>
+      <p>
+        The repository reviewer examined the entire change from <code>4154a67</code> to <code>c47506f</code>. KSF-001 (P1) added named Pod
+        GET access checks for candidates and terminating Pods before token issuance and again before cordon. KSF-002 (P1) compares the
+        entire scheduling response with the reviewed Node, allowing the intended field and server bookkeeping. Both regressions failed on
+        the original candidate.
+      </p>
+      <p>
+        KSF-003 (P2) retains reviewed Pod outcomes alongside explicitly unreviewed final arrivals. KSF-004 (P2) distinguishes interrupted
+        reads from blocked work and preserves observed progress. KSF-005 (P2) sends terminal Node results through the scoped detail refresh
+        once, including partial and uncertain results. Regression coverage includes a blocked GET cancelled before eviction, a same-name
+        replacement and repeated result polls.
+      </p>
       <h2>Phase 1E exit audit</h2>
       <table>
         <thead>

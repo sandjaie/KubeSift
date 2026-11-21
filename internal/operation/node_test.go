@@ -136,7 +136,7 @@ func TestDrainExecution(t *testing.T) {
 		mode, state string
 		posts       int32
 	}{
-		{"complete", "completed", 1}, {"same-name replacement", "partial", 1}, {"final new Pod", "partial", 1}, {"lost response", "unknown", 1}, {"forbidden", "partial", 1}, {"conflict", "partial", 1}, {"throttle", "completed", 2}, {"long retry", "timeout", 1}, {"budget cancel", "cancelled", 1}, {"disconnect", "cancelled", 1}, {"shutdown", "cancelled", 1}, {"owner changed", "partial", 0}, {"externally uncordoned", "partial", 0}, {"impact changed", "blocked", 0}, {"denied list", "prepare rejected", 0}, {"already cordoned", "completed", 1},
+		{"complete", "completed", 1}, {"same-name replacement", "partial", 1}, {"final new Pod", "partial", 1}, {"lost response", "unknown", 1}, {"forbidden", "partial", 1}, {"conflict", "partial", 1}, {"throttle", "completed", 2}, {"long retry", "timeout", 1}, {"cancel read", "cancelled", 0}, {"budget cancel", "cancelled", 1}, {"disconnect", "cancelled", 1}, {"shutdown", "cancelled", 1}, {"owner changed", "partial", 0}, {"externally uncordoned", "partial", 0}, {"impact changed", "blocked", 0}, {"denied list", "prepare rejected", 0}, {"no Pod GET", "blocked review", 0}, {"already cordoned", "completed", 1},
 	} {
 		t.Run(tc.mode, func(t *testing.T) {
 			var posts, patches, lists, nodeGets, owners atomic.Int32
@@ -174,6 +174,17 @@ func TestDrainExecution(t *testing.T) {
 				case "/api/v1":
 					fmt.Fprint(w, `{"kind":"APIResourceList","groupVersion":"v1","resources":[{"name":"pods/eviction","group":"policy","version":"v1","kind":"Eviction","verbs":["create"]}]}`)
 				case "/apis/authorization.k8s.io/v1/selfsubjectaccessreviews":
+					var req struct {
+						Spec struct {
+							ResourceAttributes struct{ Name, Namespace, Verb, Resource string }
+						}
+					}
+					_ = json.NewDecoder(r.Body).Decode(&req)
+					attrs := req.Spec.ResourceAttributes
+					if tc.mode == "no Pod GET" && attrs.Name == "pod" && attrs.Namespace == "ns" && attrs.Verb == "get" && attrs.Resource == "pods" {
+						fmt.Fprint(w, `{"kind":"SelfSubjectAccessReview","apiVersion":"authorization.k8s.io/v1","status":{"denied":true}}`)
+						return
+					}
 					fmt.Fprint(w, `{"kind":"SelfSubjectAccessReview","apiVersion":"authorization.k8s.io/v1","status":{"allowed":true}}`)
 				case "/api/v1/pods":
 					if tc.mode == "denied list" {
@@ -200,6 +211,11 @@ func TestDrainExecution(t *testing.T) {
 					}
 					fmt.Fprintf(w, `{"kind":"ReplicaSet","apiVersion":"apps/v1","metadata":{"name":"rs","namespace":"ns","uid":%q}}`, uid)
 				case "/api/v1/namespaces/ns/pods/pod":
+					if tc.mode == "cancel read" {
+						waiting <- struct{}{}
+						<-r.Context().Done()
+						return
+					}
 					if posts.Load() > 0 && (tc.mode != "throttle" || posts.Load() > 1) {
 						if tc.mode == "same-name replacement" {
 							object.UID = "new"
@@ -252,6 +268,12 @@ func TestDrainExecution(t *testing.T) {
 			c := s.coordinator
 			r := kube.ResourceRef{Kind: "Node", APIVersion: "v1", Name: "node", UID: "uid", Connection: base.Resource.Connection}
 			p, e := c.PrepareNodeAction(context.Background(), NodeRequest{r, "7", "drain", 2}, "Development")
+			if tc.state == "blocked review" {
+				if e != nil || p.Token != "" || p.Counts["blocked"] != 1 {
+					t.Fatal("did not block missing named GET")
+				}
+				return
+			}
 			if tc.state == "prepare rejected" {
 				if e == nil {
 					t.Fatal("denied inventory accepted")
@@ -270,7 +292,7 @@ func TestDrainExecution(t *testing.T) {
 				t.Fatal("replay failed")
 			}
 			switch tc.mode {
-			case "budget cancel", "disconnect", "shutdown":
+			case "cancel read", "budget cancel", "disconnect", "shutdown":
 				select {
 				case <-waiting:
 				case <-time.After(3 * time.Second):
@@ -303,6 +325,14 @@ func TestDrainExecution(t *testing.T) {
 			if (tc.mode == "impact changed" || tc.mode == "already cordoned") && patches.Load() != 0 {
 				t.Fatal("unexpected real scheduling patch")
 			}
+			if tc.mode == "final new Pod" || tc.mode == "same-name replacement" {
+				if len(result.Node.Rows) != 2 || result.Node.Counts["gone"] != 1 || result.Node.Counts["unreviewed"] != 1 {
+					t.Fatalf("lost final evidence: %+v", result.Node)
+				}
+			}
+			if tc.mode == "cancel read" && (result.Node.Cordoned == nil || !*result.Node.Cordoned) {
+				t.Fatal("lost observed cordon on read cancellation")
+			}
 			if len(c.ListOperationResults()[0].Node.Rows) != 0 {
 				t.Fatal("list exposed detailed rows")
 			}
@@ -311,7 +341,7 @@ func TestDrainExecution(t *testing.T) {
 }
 
 func TestNodeReviewScheduling(t *testing.T) {
-	for _, mode := range []string{"production", "no-op", "stale version", "wrong UID", "namespace", "wrong version", "access denied", "access unknown", "dry drift", "dry denied", "actual denied", "ambiguous"} {
+	for _, mode := range []string{"production", "no-op", "stale version", "wrong UID", "namespace", "wrong version", "access denied", "access unknown", "dry drift", "metadata drift", "dry denied", "actual denied", "ambiguous"} {
 		t.Run(mode, func(t *testing.T) {
 			var real, dry atomic.Int32
 			s, base := scaleServer(t, func(w http.ResponseWriter, r *http.Request) {
@@ -323,6 +353,7 @@ func TestNodeReviewScheduling(t *testing.T) {
 					}
 					fmt.Fprintf(w, `{"apiVersion":"authorization.k8s.io/v1","kind":"SelfSubjectAccessReview","status":{"allowed":%t,"denied":%t}}`, mode != "access denied", mode == "access denied")
 				case r.URL.Path == "/api/v1/nodes/node":
+					metadata := map[string]any{"name": "node", "uid": "uid", "resourceVersion": "7"}
 					spec := map[string]any{}
 					if mode == "no-op" {
 						spec["unschedulable"] = true
@@ -331,6 +362,9 @@ func TestNodeReviewScheduling(t *testing.T) {
 						spec["unschedulable"] = true
 						if r.URL.Query().Get("dryRun") == "All" {
 							dry.Add(1)
+							if mode == "metadata drift" {
+								metadata["labels"] = map[string]string{"unreviewed": "true"}
+							}
 							if mode == "dry drift" {
 								spec["taints"] = []core.Taint{{Key: "unreviewed", Effect: core.TaintEffectNoSchedule}}
 							}
@@ -350,7 +384,7 @@ func TestNodeReviewScheduling(t *testing.T) {
 							}
 						}
 					}
-					_ = json.NewEncoder(w).Encode(map[string]any{"apiVersion": "v1", "kind": "Node", "metadata": map[string]string{"name": "node", "uid": "uid", "resourceVersion": "7"}, "spec": spec})
+					_ = json.NewEncoder(w).Encode(map[string]any{"apiVersion": "v1", "kind": "Node", "metadata": metadata, "spec": spec})
 				default:
 					t.Error("unexpected path")
 				}

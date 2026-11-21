@@ -7,6 +7,7 @@ Important: Review never evicts or changes persistent scheduling state.
 package operation
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -25,8 +26,35 @@ type evictionRejection struct {
 	delay  int
 }
 
-func (c operationClient) node(ctx context.Context, r kube.ResourceRef, version string) (core.Node, error) {
-	var n core.Node
+type nodeSnapshot struct {
+	core.Node
+	fields map[string]any
+}
+
+func (n *nodeSnapshot) UnmarshalJSON(b []byte) error {
+	if err := json.Unmarshal(b, &n.Node); err != nil {
+		return err
+	}
+	d := json.NewDecoder(bytes.NewReader(b))
+	d.UseNumber()
+	return d.Decode(&n.fields)
+}
+func (n nodeSnapshot) reviewedFields() map[string]any {
+	if spec, ok := n.fields["spec"].(map[string]any); ok {
+		delete(spec, "unschedulable")
+		if len(spec) == 0 {
+			delete(n.fields, "spec")
+		}
+	}
+	if metadata, ok := n.fields["metadata"].(map[string]any); ok {
+		for _, field := range []string{"managedFields", "generation", "resourceVersion"} {
+			delete(metadata, field)
+		}
+	}
+	return n.fields
+}
+func (c operationClient) node(ctx context.Context, r kube.ResourceRef, version string) (nodeSnapshot, error) {
+	var n nodeSnapshot
 	_, e := c.call(ctx, "GET", "/api/v1/nodes/"+r.Name, false, nil, &n)
 	if e != nil {
 		return n, nodeProblem(e)
@@ -36,17 +64,16 @@ func (c operationClient) node(ctx context.Context, r kube.ResourceRef, version s
 	}
 	return n, nil
 }
-func (c operationClient) scheduling(ctx context.Context, n core.Node, want, dry bool) error {
+func (c operationClient) scheduling(ctx context.Context, n nodeSnapshot, want, dry bool) error {
 	patch, e := json.Marshal([]map[string]any{{"op": "test", "path": "/metadata/uid", "value": n.UID}, {"op": "test", "path": "/metadata/resourceVersion", "value": n.ResourceVersion}, {"op": "add", "path": "/spec/unschedulable", "value": want}})
 	if e != nil {
 		return e
 	}
-	var after core.Node
+	var after nodeSnapshot
 	if _, e = c.patch(ctx, "/api/v1/nodes/"+n.Name, dry, patch, &after); e != nil {
 		return e
 	}
-	n.Spec.Unschedulable = want
-	if after.UID != n.UID || after.Name != n.Name || after.ResourceVersion == "" || after.Kind != "Node" || !reflect.DeepEqual(after.Spec, n.Spec) {
+	if after.UID != n.UID || after.Name != n.Name || after.ResourceVersion == "" || after.Kind != "Node" || after.Spec.Unschedulable != want || !reflect.DeepEqual(after.reviewedFields(), n.reviewedFields()) {
 		return model.Fail("invalid_response", "Scheduling response changed beyond the reviewed field")
 	}
 	return nil
@@ -106,18 +133,7 @@ func (s *Coordinator) PrepareNodeAction(ctx context.Context, req NodeRequest, en
 		if e != nil {
 			return p, nodeProblem(e)
 		}
-		access := map[string]string{}
-		for i, row := range p.Rows {
-			if row.State != "candidate" {
-				continue
-			}
-			if access[row.Namespace] == "" {
-				access[row.Namespace] = permissionOf(ctx, c, kube.ResourceRef{APIVersion: "v1", Namespace: row.Namespace}, "pods", "create", "eviction")
-			}
-			if access[row.Namespace] != "allowed" {
-				p.Rows[i].State, p.Rows[i].Reason = "blocked", "Cannot verify eviction permission in this namespace"
-			}
-		}
+		c.checkPodAccess(ctx, p.Rows)
 	}
 	p.Counts = nodeCounts(p.Rows)
 	if p.Counts["blocked"] > 0 {
@@ -149,4 +165,25 @@ func nodeProblem(err error) error {
 		}
 	}
 	return model.Fail("unavailable", "Cannot verify the Node operation with Kubernetes")
+}
+
+func (c operationClient) checkPodAccess(ctx context.Context, rows []NodePod) {
+	access := map[string]string{}
+	for i, row := range rows {
+		if row.State == "candidate" || row.State == "terminating" {
+			if permissionOf(ctx, c, kube.ResourceRef{APIVersion: "v1", Namespace: row.Namespace, Name: row.Name}, "pods", "get", "") != "allowed" {
+				rows[i].State, rows[i].Reason = "blocked", "Cannot verify read access to this Pod"
+				continue
+			}
+		}
+		if row.State != "candidate" {
+			continue
+		}
+		if access[row.Namespace] == "" {
+			access[row.Namespace] = permissionOf(ctx, c, kube.ResourceRef{APIVersion: "v1", Namespace: row.Namespace}, "pods", "create", "eviction")
+		}
+		if access[row.Namespace] != "allowed" {
+			rows[i].State, rows[i].Reason = "blocked", "Cannot verify eviction permission in this namespace"
+		}
+	}
 }
