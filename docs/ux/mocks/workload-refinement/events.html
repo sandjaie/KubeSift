@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>KubeSift · Events preview</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #1a1d21;
+        color: #d1d2d3;
+        font:
+          13px -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+      }
+      button {
+        font: inherit;
+        color: inherit;
+        cursor: pointer;
+      }
+      button:focus-visible,
+      summary:focus-visible {
+        outline: 2px solid #6fc8f0;
+        outline-offset: 3px;
+      }
+      .preview {
+        max-width: 1180px;
+        margin: 36px auto;
+        padding: 0 28px;
+      }
+      .caption {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: #a3a5a8;
+        font-size: 12px;
+        margin-bottom: 16px;
+      }
+      .caption b {
+        font-weight: 500;
+        color: #6fc8f0;
+      }
+      .panel {
+        background: #22252a;
+        border: 1px solid #383a40;
+        border-radius: 6px;
+        overflow: hidden;
+      }
+      header {
+        padding: 22px 24px 0;
+      }
+      .identity {
+        display: flex;
+        align-items: start;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      h1 {
+        font-size: 20px;
+        color: #e8e8e8;
+        margin: 0 0 9px;
+        font-weight: 650;
+        letter-spacing: -0.3px;
+      }
+      .path {
+        color: #a3a5a8;
+        font:
+          12px ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          monospace;
+      }
+      .refresh {
+        background: transparent;
+        border: 1px solid #484a50;
+        border-radius: 5px;
+        padding: 7px 12px;
+      }
+      .tabs {
+        display: flex;
+        gap: 26px;
+        margin-top: 23px;
+        border-bottom: 1px solid #383a40;
+      }
+      .tabs span {
+        padding: 0 1px 12px;
+        color: #a3a5a8;
+      }
+      .tabs .active {
+        color: #6fc8f0;
+        border-bottom: 2px solid #1d9bd1;
+        font-weight: 600;
+      }
+      .toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 24px;
+        gap: 12px;
+      }
+      .filters {
+        display: flex;
+        gap: 3px;
+        background: #1a1d21;
+        padding: 3px;
+        border-radius: 5px;
+        border: 1px solid #383a40;
+      }
+      .filters button {
+        border: 0;
+        background: transparent;
+        padding: 6px 10px;
+        border-radius: 3px;
+        color: #a3a5a8;
+      }
+      .filters button[aria-pressed="true"] {
+        background: #35373b;
+        color: #e8e8e8;
+      }
+      .count {
+        font-size: 11px;
+        margin-left: 7px;
+        color: #a3a5a8;
+      }
+      .filters .warn-count {
+        color: #ecb22e;
+      }
+      .hint {
+        font-size: 12px;
+        color: #a3a5a8;
+      }
+      .table {
+        margin: 0 24px;
+      }
+      .columns,
+      .event summary {
+        display: grid;
+        grid-template-columns: 18px 92px minmax(0, 1fr) 55px 82px;
+        align-items: center;
+        gap: 12px;
+      }
+      .columns {
+        padding: 9px 12px;
+        background: #1e2125;
+        color: #a3a5a8;
+        font-size: 11px;
+        border-block: 1px solid #383a40;
+      }
+      .columns .right {
+        text-align: right;
+      }
+      .event {
+        border-bottom: 1px solid #383a40;
+      }
+      .event summary {
+        list-style: none;
+        padding: 14px 12px;
+        cursor: pointer;
+        min-height: 66px;
+      }
+      .event summary::-webkit-details-marker {
+        display: none;
+      }
+      .event summary:hover {
+        background: #2c2d30;
+      }
+      .chevron {
+        color: #a3a5a8;
+        font-size: 16px;
+      }
+      .event[open] .chevron {
+        transform: rotate(90deg);
+      }
+      .type {
+        font-size: 12px;
+        color: #a3a5a8;
+      }
+      .warning .type {
+        color: #ecb22e;
+      }
+      .reason {
+        font-size: 13px;
+        color: #e8e8e8;
+        font-weight: 600;
+        margin-bottom: 5px;
+      }
+      .message {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: #a3a5a8;
+        font-size: 12px;
+      }
+      .times,
+      .number {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        font-size: 12px;
+      }
+      .times {
+        color: #a3a5a8;
+      }
+      .warning[open] {
+        background: #27272a;
+        box-shadow: inset 2px 0 #ecb22e;
+      }
+      .expanded {
+        padding: 0 22px 18px 146px;
+      }
+      .expanded .label {
+        font-size: 11px;
+        color: #a3a5a8;
+        margin-bottom: 7px;
+      }
+      .full-message {
+        font:
+          12px/1.7 ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          monospace;
+        overflow-wrap: anywhere;
+        color: #e8e8e8;
+        margin: 0 0 18px;
+      }
+      .metadata {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px 38px;
+      }
+      .metadata .value {
+        font-size: 12px;
+      }
+      .footer {
+        padding: 15px 24px 18px;
+        display: flex;
+        justify-content: space-between;
+        gap: 15px;
+        color: #a3a5a8;
+        font-size: 11px;
+      }
+      .note {
+        margin: 20px 0 0;
+        color: #a3a5a8;
+        font-size: 12px;
+        line-height: 1.7;
+      }
+      .note strong {
+        color: #d1d2d3;
+        font-weight: 500;
+      }
+      .notice {
+        font-size: 11px;
+        color: #6fc8f0;
+        min-height: 16px;
+        margin-top: 10px;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      @media (max-width: 700px) {
+        .preview {
+          padding: 0 12px;
+          margin: 18px auto;
+        }
+        .caption {
+          align-items: start;
+          gap: 14px;
+        }
+        .columns,
+        .event summary {
+          grid-template-columns: 12px 72px minmax(0, 1fr) 30px;
+          gap: 8px;
+        }
+        .times {
+          display: none;
+        }
+        .expanded {
+          padding: 0 15px 16px 105px;
+        }
+        .toolbar,
+        header {
+          padding-left: 14px;
+          padding-right: 14px;
+        }
+        .table {
+          margin: 0 14px;
+        }
+        .hint {
+          max-width: 120px;
+          text-align: right;
+        }
+        .footer {
+          flex-direction: column;
+        }
+        .path {
+          font-size: 10px;
+        }
+        .identity {
+          flex-wrap: wrap;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="preview">
+      <div class="caption"><b>KubeSift / Events redesign</b><span>Interactive mockup · Sample data</span></div>
+      <section class="panel" aria-label="Resource events preview">
+        <header>
+          <div class="identity">
+            <div>
+              <h1>web-6b7f6988c7-xrx97</h1>
+              <div class="path">kind-dev-local-b / kubesift-explorer / Pod</div>
+            </div>
+            <button class="refresh" id="refresh">↻ &nbsp; Refresh section</button>
+          </div>
+          <div class="tabs"><span>Overview</span><span>YAML</span><span class="active">Events</span><span>Logs</span></div>
+        </header>
+        <div class="toolbar">
+          <div class="filters" role="group" aria-label="Filter this page">
+            <button id="all" aria-pressed="true">All <span class="count">6</span></button
+            ><button id="warnings" aria-pressed="false">Warnings <span class="count warn-count">1</span></button>
+          </div>
+          <span class="hint" id="shown">6 events on this page</span>
+        </div>
+        <div class="table">
+          <div class="columns">
+            <span></span><span>Type</span><span>Reason / message</span><span class="right">Count</span
+            ><span class="right times">Last seen ↓</span>
+          </div>
+          <div id="rows"></div>
+        </div>
+        <div class="footer">
+          <span>Newest first on this page · Times in GMT+4</span><span>Captured 13 Nov 2026, 21:03:18 · End of results</span>
+        </div>
+      </section>
+      <p class="note">
+        <strong>Try it:</strong> switch to Warnings, or expand an event to read its full message and timestamps. The warning is expanded
+        here to show the detail treatment.
+      </p>
+      <p id="notice" class="notice" role="status"></p>
+    </main>
+    <script>
+      const events = [
+        ["Normal", "Started", "Container started", "20:11:53", "kubelet"],
+        [
+          "Warning",
+          "Unhealthy",
+          'Readiness probe failed: Get "http://10.244.0.11:8080/": dial tcp 10.244.0.11:8080: connect: connection refused',
+          "20:11:53",
+          "kubelet",
+        ],
+        [
+          "Normal",
+          "Pulled",
+          'Successfully pulled image "busybox:1.37.0@sha256:a7dbc319b1438115a207e11930dc4bb3e643dc3ec0bdd694bb36cd8fad289ec" in 1.316s (5.346s including waiting). Image size: 1911395 bytes.',
+          "20:11:52",
+          "kubelet",
+        ],
+        ["Normal", "Created", "Container created", "20:11:52", "kubelet"],
+        [
+          "Normal",
+          "Scheduled",
+          "Successfully assigned kubesift-explorer/web-6b7f6988c7-xrx97 to dev-local-b-control-plane",
+          "20:11:47",
+          "default-scheduler",
+        ],
+        [
+          "Normal",
+          "Pulling",
+          'Pulling image "busybox:1.37.0@sha256:a7dbc319b1438115a207e11930dc4bb3e643dc3ec0bdd694bb36cd8fad289ec"',
+          "20:11:47",
+          "kubelet",
+        ],
+      ];
+      const escape = (s) => s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll('"', "&quot;");
+      document.querySelector("#rows").innerHTML = events
+        .map(
+          ([type, reason, message, time, reporter]) =>
+            `<details class="event ${type === "Warning" ? "warning" : ""}" ${type === "Warning" ? "open" : ""}><summary><span class="chevron" aria-hidden="true">›</span><span class="type">${type === "Warning" ? "⚠ " : ""}${type}</span><div><div class="reason">${reason}</div><div class="message">${escape(message)}</div></div><span class="number">1</span><time class="times">${time}</time></summary><div class="expanded"><div class="label">Message</div><p class="full-message">${escape(message)}</p><div class="metadata"><div><div class="label">Reporter</div><div class="value">${reporter}</div></div><div><div class="label">First seen · GMT+4</div><div class="value">13 Nov 2026, ${time}</div></div><div><div class="label">Last seen · GMT+4</div><div class="value">13 Nov 2026, ${time}</div></div></div></div></details>`,
+        )
+        .join("");
+      for (const id of ["all", "warnings"])
+        document.getElementById(id).onclick = () => {
+          for (const button of document.querySelectorAll(".filters button")) button.setAttribute("aria-pressed", String(button.id === id));
+          for (const row of document.querySelectorAll(".event")) row.hidden = id === "warnings" && !row.classList.contains("warning");
+          document.querySelector("#shown").textContent = id === "warnings" ? "1 of 6 events on this page" : "6 events on this page";
+        };
+      document.querySelector("#refresh").onclick = () =>
+        (document.querySelector("#notice").textContent = "Preview only — sample events are unchanged.");
+    </script>
+  </body>
+</html>

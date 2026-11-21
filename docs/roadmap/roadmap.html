@@ -24,9 +24,11 @@
       ><a href="../ux/mocks/index.html">Mockups</a>
       <h2>Engineering</h2>
       <a href="../engineering/engineering.html">Playbook</a><a href="../engineering/local-development.html">Local development</a
-      ><a href="../engineering/toolchain.html">Toolchain</a>
-      <h2>Working</h2>
-      <a href="../superpowers/validation/phase-1a.html">Phase 1A validation</a>
+      ><a href="../engineering/toolchain.html">Toolchain</a><a href="../engineering/kubernetes-development.html">Kubernetes references</a>
+      <h2>Superpowers</h2>
+      <a href="../superpowers/index.html">Overview</a><a href="../superpowers/specs/index.html">Specs</a
+      ><a href="../superpowers/plans/README.html">Plans</a><a href="../superpowers/validation/index.html">Validation</a
+      ><a href="../superpowers/evidence/index.html">Evidence</a>
     </aside>
     <header>
       <a href="../index.html">KubeSift / Planning</a>
@@ -42,15 +44,11 @@
         Superpowers plans.
       </p>
       <section id="status">
-        <h2>Where we are · 11 November 2026</h2>
+        <h2>Phase sequence and dependencies</h2>
         <p>
-          <strong>Phase 1C.1 merged into develop through PR #3 as 395ef7a after maintainer authorization.</strong>
-          See the <a href="../superpowers/validation/phase-1c1.html">technical report</a> and
-          <a href="../superpowers/validation/phase-1c1-ui-uat.html">UAT checklist</a>. Agent UAT passed 12 core/UI cases; 3 optional cases
-          remain blocked, with their limits retained. Prior <a href="../superpowers/validation/phase-1a.html">architecture</a> and
-          <a href="../superpowers/validation/phase-1b.html">UI foundation</a> qualifications remain.
+          This page records scope, order, dependencies and exit criteria, not implementation progress. See
+          <a href="../status.md">status and evidence</a> for the current checkpoint, task completion and verification results.
         </p>
-        <p>No next increment has begun. Phase 1C.2 requires its own specification and implementation request; no release is authorized.</p>
         <div class="table-scroll">
           <table>
             <tr>
@@ -144,8 +142,8 @@
           </li>
           <li>
             Finish with a durable phase validation report: what works, actual checks, unrun environments, limitations and next-phase
-            prerequisites. Update the capability inventory and this status summary. Do not mark a phase complete merely because code or a
-            plan exists.
+            prerequisites. Update the capability inventory and the <a href="../../.superpowers/sdd/status.md">progress checkpoint</a>. Do
+            not mark a phase complete merely because code or a plan exists.
           </li>
         </ol>
       </section>
@@ -297,6 +295,164 @@
           reusable by operations and AI.
         </p>
       </section>
+      <section id="resource-coverage">
+        <h2>Phase 1C.3b · Networking</h2>
+        <p>
+          Services, EndpointSlices, Ingresses, IngressClasses and NetworkPolicies follow the 1C.3a workload scope. The
+          <a href="../superpowers/specs/2026-11-13-phase-1c3b-networking-design.md">networking specification</a> and
+          <a href="../superpowers/plans/2026-11-13-phase-1c3b-networking.md">implementation plan</a> cover read-only views and references,
+          not connectivity or enforcement proof. Legacy Endpoints, dedicated Gateway API views, Routes and networking writes remain outside
+          this increment. The <a href="../superpowers/validation/phase-1c3b.html">validation report</a> records branch evidence and
+          remaining checks.
+        </p>
+        <h2 id="phase-1c3-sequence">Phase 1C.3c–g sequence</h2>
+        <p>
+          Follow this sequence unless the maintainer changes priority. Consult the progress checkpoint to identify the first unfinished
+          increment; do not ask which area comes next at every handoff. Each increment requires its own specification and explicit
+          implementation request.
+        </p>
+        <ol>
+          <li>
+            <strong>1C.3c — Namespace policy and configuration.</strong> Namespaces, ResourceQuotas, LimitRanges, ConfigMaps and
+            metadata-only Secrets, plus explicit Pod configuration references. Read the
+            <a href="../superpowers/specs/2026-11-14-phase-1c3c-configuration-design.md">specification</a> and
+            <a href="../superpowers/plans/2026-11-14-phase-1c3c-configuration.md">five-task plan</a>. Secret value reveal and Secret YAML
+            require a separate specification.
+          </li>
+          <li>
+            <strong>1C.3d — Storage.</strong> PVCs, PVs, StorageClasses, VolumeAttachments, CSIDrivers and CSINodes; Pod → claim → volume →
+            class evidence. See the <a href="../superpowers/specs/2026-11-14-phase-1c3d-storage-design.md">storage specification</a> and
+            <a href="../superpowers/plans/2026-11-14-phase-1c3d-storage.md">implementation plan</a> for bounded read scope and acceptance.
+          </li>
+          <li>
+            <strong>1C.3e — Access control.</strong> ServiceAccounts, Roles, RoleBindings, ClusterRoles and ClusterRoleBindings; explicit
+            subjects and role references without effective-permission claims. See the
+            <a href="../superpowers/specs/2026-11-14-phase-1c3e-access-control-design.md">access-control specification</a> and
+            <a href="../superpowers/plans/2026-11-14-phase-1c3e-access-control.md">implementation plan</a> for bounded scope and acceptance.
+          </li>
+          <li>
+            <strong>1C.3f — Availability and remaining workload resources.</strong> HPAs, PDBs, ReplicationControllers and
+            ControllerRevisions; scale-target, disruption and revision evidence. See the
+            <a href="../superpowers/specs/2026-11-14-phase-1c3f-availability-design.md">availability specification</a> and
+            <a href="../superpowers/plans/2026-11-14-phase-1c3f-availability.md">implementation plan</a> for bounded scope and acceptance.
+          </li>
+          <li>
+            <strong>1C.3g — Cluster resources and API discovery.</strong> Nodes, Events, PriorityClasses, RuntimeClasses, Leases, CRDs and
+            APIServices; bounded generic installed-API browsing, partial discovery failures and remaining networking coverage such as legacy
+            Endpoints and installed Gateway API kinds. See the
+            <a href="../superpowers/specs/2026-11-14-phase-1c3g-cluster-discovery-design.md"
+              >cluster resources and discovery specification</a
+            >
+            and <a href="../superpowers/plans/2026-11-14-phase-1c3g-cluster-discovery.md">implementation plan</a> for boundaries and
+            acceptance.
+          </li>
+        </ol>
+        <p>
+          Secret reveal remains a separately specified security/UX increment before claiming complete Secret inspection. Snapshot APIs,
+          admission resources and other installed extensions enter through the discovery increment; dedicated editors, writes, metrics, Helm
+          and OpenShift workflows retain their later-phase ownership. Each implementation ends with agent verification and one independent
+          whole-PR review under the engineering workflow, not routine per-task reviews or duplicate manual UAT.
+        </p>
+        <h2>Resource coverage to carry into future specifications</h2>
+        <p>
+          Phase 1C.3a covers StatefulSets, DaemonSets, Jobs and CronJobs. Its
+          <a href="../superpowers/specs/2026-11-13-phase-1c3a-remaining-workloads-design.md">specification</a> and
+          <a href="../superpowers/plans/2026-11-13-phase-1c3a-remaining-workloads.md">implementation plan</a> define bounded scope and
+          acceptance. Phase 1C.2 covers Pod, Deployment and ReplicaSet investigation. Delivery results belong in the
+          <a href="../status.md">status and evidence documents</a>.
+        </p>
+        <p>
+          The following inventory defines coverage obligations across 1C.3 and later increments. Deliver independently useful increments
+          under the <a href="../engineering/engineering.html#agent-verification">agent verification policy</a>. Each kind needs an explicit
+          coverage row for discovery, list/detail, YAML, relationships, events where available, RBAC/error states, applicable operations and
+          verification evidence.
+        </p>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Area</th>
+                <th>Resources and useful relationships</th>
+                <th>Planned ownership</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Namespace policy and configuration</td>
+                <td>
+                  Namespaces, ResourceQuotas, LimitRanges, ConfigMaps and Secrets. Show quota used/hard values, scopes and default/min/max
+                  requests and limits when configured; distinguish missing policy from permission denial. Link workloads to namespace policy
+                  without treating quota allocation as measured CPU/memory usage. Secret reveal follows the security model.
+                </td>
+                <td>1C.3 reads; reviewed edits in 1D.</td>
+              </tr>
+              <tr>
+                <td>Access control</td>
+                <td>
+                  ServiceAccounts, Roles, RoleBindings, ClusterRoles and ClusterRoleBindings. Show subjects, role references and namespace
+                  versus cluster scope. Call this Access control, not a general user-account manager: external human identities are not
+                  ordinary Kubernetes User objects. Role views alone must not claim complete effective permissions.
+                </td>
+                <td>1C.3 reads; permission-changing writes require a separately reviewed 1D action design.</td>
+              </tr>
+              <tr>
+                <td>Storage</td>
+                <td>
+                  PersistentVolumes, PersistentVolumeClaims, StorageClasses, VolumeAttachments, CSIDrivers and CSINodes where served. Follow
+                  Pod volume → PVC → PV → StorageClass relationships and show claim/binding/provisioning evidence. Pod volumes are embedded
+                  configuration, not a standalone Volume API. VolumeSnapshot, VolumeSnapshotContent and VolumeSnapshotClass appear through
+                  installed custom APIs; no CSI or snapshot-controller installation by KubeSift.
+                </td>
+                <td>1C.3 read coverage; destructive storage operations explicitly reviewed in 1D.</td>
+              </tr>
+              <tr>
+                <td>Networking</td>
+                <td>
+                  Services, EndpointSlices, legacy Endpoints if served, Ingresses, IngressClasses and NetworkPolicies. Link service
+                  selectors and endpoint readiness to Pods. Discover Gateway API kinds such as GatewayClass, Gateway, HTTPRoute, GRPCRoute
+                  and ReferenceGrant when installed. Show policy configuration without claiming CNI enforcement or live connectivity proof.
+                </td>
+                <td>1C.3 reads and generic installed APIs; dedicated OpenShift Routes in 1F.</td>
+              </tr>
+              <tr>
+                <td>Remaining workloads and availability</td>
+                <td>
+                  StatefulSets, DaemonSets, Jobs, CronJobs, HorizontalPodAutoscalers, PodDisruptionBudgets and ReplicationControllers when
+                  served. Follow controller ownership, scheduled Job history, scale targets and disruption allowance. Read-only ReplicaSet
+                  investigation belongs to Phase 1C.2. VerticalPodAutoscalers and other extensions use discovery when installed.
+                </td>
+                <td>1C.3 dedicated reads; scale/restart/rollback in 1D; metrics interpretation in 1E.</td>
+              </tr>
+              <tr>
+                <td>Cluster, scheduling and API extension resources</td>
+                <td>
+                  Nodes, cluster-wide namespace inventory, Events, PriorityClasses, RuntimeClasses, Leases, CustomResourceDefinitions and
+                  APIService registrations. Admission webhooks and admission-policy kinds are discoverable when served and authorized.
+                  Generic discovery/list/detail/YAML provides access to additional advertised kinds and custom resources, respecting scope,
+                  supported versions and partial discovery failures.
+                </td>
+                <td>1C.3 browsing/discovery; node cordon/drain in 1E. Dedicated extension editors require separate scope review.</td>
+              </tr>
+              <tr>
+                <td>Helm and OpenShift</td>
+                <td>
+                  Helm release inspection/management and dedicated Routes, Projects, Builds and Operators remain committed Phase 1 scope.
+                  Discover installed OpenShift/operator APIs without assuming they exist on kind. User-initiated installations are distinct
+                  from installing dependencies for KubeSift itself.
+                </td>
+                <td>1E Helm and 1F OpenShift workflows, building on 1C.3 discovery and 1D operation safeguards.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Use the <a href="#phase-1c3-sequence">ordered increments above</a> for the next planning session. Each specification settles
+          navigation grouping, dedicated versus generic views and cross-resource links. Validate served API versions from the target cluster
+          and current official documentation at implementation time. An absent API, forbidden API and empty collection must remain distinct.
+          Do not promise every extension a dedicated editor or every resource a meaningful log view. Keep a reviewed coverage matrix and
+          record deferred gaps before claiming broad coverage.
+        </p>
+      </section>
       <section id="phase-1d">
         <h2>1D · Resource operations and interactive sessions</h2>
         <p>
@@ -320,13 +476,67 @@
             ambiguous write.
           </li>
         </ul>
+        <h3>Increment order</h3>
+        <ol>
+          <li>
+            <strong>1D.1 — Reviewed workload scaling.</strong> Deployment/StatefulSet scaling establishes immutable target review, mandatory
+            server dry-run, conditional single-dispatch writes and explicit uncertain outcomes. See the
+            <a href="../superpowers/specs/2026-11-14-phase-1d1-reviewed-scaling-design.md">specification</a> and
+            <a href="../superpowers/plans/2026-11-14-phase-1d1-reviewed-scaling.md">implementation plan</a>.
+          </li>
+          <li>
+            <strong>1D.2 — Reviewed workload restart.</strong> Deployment, StatefulSet and DaemonSet template annotation changes with
+            controller-strategy eligibility, conditional single-dispatch patches and shared Scale/Restart review/result limits. See the
+            <a href="../superpowers/specs/2026-11-15-phase-1d2-reviewed-restart-design.md">specification</a> and
+            <a href="../superpowers/plans/2026-11-15-phase-1d2-reviewed-restart.md">implementation plan</a>.
+          </li>
+          <li>
+            <strong>1D.3 — Reviewed workload deletion.</strong> Fixed workload kinds, background propagation, server grace defaults,
+            UID/version preconditions and explicit impact/name confirmation. Removal observations remain separate from request acceptance.
+            See the <a href="../superpowers/specs/2026-11-15-phase-1d3-reviewed-deletion-design.md">specification</a> and
+            <a href="../superpowers/plans/2026-11-15-phase-1d3-reviewed-deletion.md">implementation plan</a>.
+          </li>
+          <li>
+            <strong>1D.4 — Reviewed YAML editing.</strong> Conditional patching for existing discovered editable resources, including
+            explicit Secret reveal/edit, intended and server-preview diffs, required dry-run and confirmation. Preserve current UI; keep
+            creation and server-side apply separate. See the
+            <a href="../superpowers/specs/2026-11-16-phase-1d4-reviewed-yaml-editing-design.md">specification</a>.
+          </li>
+          <li>
+            <strong>1D.5 — Workload history and rollback.</strong> Deployment, StatefulSet and DaemonSet retained revisions, template diff,
+            server dry-run and ordinary confirmation. Preserve current strategy and distinguish accepted template changes from rollout
+            completion. See the <a href="../superpowers/specs/2026-11-16-phase-1d5-workload-rollback-design.md">specification</a>. Helm and
+            OpenShift-specific rollback stay with their respective later workflows.
+          </li>
+          <li>
+            <strong>1D.6 — Interactive sessions.</strong> Pod-container terminals and Pod/Service TCP forwarding in the existing Sessions
+            dock, fixed targets, stop/close cleanup and no automatic reconnection. Laptop terminals remain separately scoped. See the
+            <a href="../superpowers/specs/2026-11-16-phase-1d6-interactive-sessions-design.md">specification</a> and
+            <a href="../superpowers/plans/2026-11-16-phase-1d6-interactive-sessions.md">implementation plan</a>.
+          </li>
+          <li>
+            <strong>1D.7 — Named resource creation.</strong> One YAML object, advertised route/scope, server dry-run and ordinary
+            confirmation; named POST cannot overwrite an existing object. See the
+            <a href="../superpowers/specs/2026-11-16-phase-1d-completion-design.md">completion specification</a> and
+            <a href="../superpowers/plans/2026-11-16-phase-1d7-resource-creation.md">creation plan</a>.
+          </li>
+          <li>
+            <strong>1D.8 — Server-side apply and closure.</strong> Apply desired fields to an existing resource with explicit
+            ownership/conflict review, conditional identity/version protection and deliberate takeover when selected. Audit all Phase 1D
+            exit evidence before completion. See the
+            <a href="../superpowers/plans/2026-11-16-phase-1d8-server-side-apply.md">apply and closure plan</a>.
+          </li>
+        </ol>
         <p>
           <strong>Plan decisions:</strong> supported apply/patch semantics, rollback kinds, delete propagation/grace settings, terminal
           command selection and session restore policy. Decide bulk actions explicitly; they are not implied by single-resource actions.
         </p>
         <p>
-          <strong>Exit:</strong> representative local edits/restarts/scales/deletes and rollback work; stale UID/version and permission
-          denial fail safely; streams and forwards stop cleanly; session ownership survives navigation and is resolved on tab/app close.
+          <strong>Exit:</strong> representative named creation, existing-resource server-side apply, edits, restarts, scales, deletes and
+          rollback work; stale UID/version, name collisions, ownership conflicts and permission denial fail safely. Streams and forwards
+          stop cleanly; session ownership survives navigation and is resolved on tab/app close. A consolidated evidence audit has no
+          unresolved committed acceptance blocker. Single-object workflows define this scope; bulk manifests, generated-name creation,
+          local-machine terminals and release readiness are separate.
         </p>
         <p>
           <strong>Artifacts:</strong> operation matrix with permissions and review requirements, approved spec/plan, targeted safety checks
@@ -335,6 +545,40 @@
       </section>
       <section id="phase-1e">
         <h2>1E · Helm, metrics and node administration</h2>
+        <h3 id="phase-1e-sequence">Increment order</h3>
+        <p>
+          Follow this sequence without asking for a new priority choice at each handoff. Each increment receives its own specification,
+          implementation plan and verification; all remain part of Phase 1E scope.
+        </p>
+        <ol>
+          <li>
+            <strong>1E.1 — Helm release inspection.</strong> Native SDK release list/details/history, values, stored manifests, hooks, notes
+            and current-resource links. <a href="../superpowers/specs/2026-11-17-phase-1e1-helm-inspection-design.md">Specification</a> and
+            <a href="../superpowers/plans/2026-11-17-phase-1e1-helm-inspection.md">implementation plan</a>.
+          </li>
+          <li>
+            <strong>1E.2 — Helm management.</strong> User-initiated install, upgrade, rollback and uninstall with chart sources, hooks,
+            namespace/cluster impact and normal review/confirmation. Local packaged charts, HTTPS repositories and OCI registries include
+            private-source authentication.
+            <a href="../superpowers/specs/2026-11-17-phase-1e2-helm-management-design.md">Specification</a> and
+            <a href="../superpowers/plans/2026-11-17-phase-1e2-helm-management.md">implementation plan</a>.
+          </li>
+          <li>
+            <strong>1E.3 — Current metrics.</strong> Pod/node CPU and memory from existing Metrics API, explicit units/denominators,
+            freshness and unavailable states. Existing Pod/Node tables and Overview include per-container detail without a new dashboard. No
+            supporting infrastructure installed by KubeSift.
+            <a href="../superpowers/specs/2026-11-19-phase-1e3-current-metrics-design.md">Specification</a> and
+            <a href="../superpowers/plans/2026-11-19-phase-1e3-current-metrics.md">implementation plan</a>.
+          </li>
+          <li>
+            <strong>1E.4 — Historical metrics.</strong> Existing Prometheus-compatible sources, bounded authorized queries,
+            source/time-range evidence and supported OpenShift monitoring.
+          </li>
+          <li>
+            <strong>1E.5 — Node administration.</strong> Cordon, uncordon and drain with eviction/PDB behavior, progress, cancellation and
+            reviewed disruption settings.
+          </li>
+        </ol>
         <p><strong>Outcome:</strong> administer existing clusters without installing supporting infrastructure for KubeSift.</p>
         <ul>
           <li>

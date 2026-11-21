@@ -5,7 +5,7 @@ Responsibilities: Scope Pod targets, reject stale identities, retain bounded his
 Important: The active tab never selects an event target; counters contain byte totals rather than payload copies.
 */
 import { eventBytes, type ConnectionRef, type SessionRef, type SessionEvent, type Target } from "./bridge";
-import type { PodSummary } from "../bindings/github.com/sandjaie/KubeSift/internal/kube";
+import type { PodSummary } from "../bindings/internal/kube";
 export interface SessionView {
   ref: SessionRef;
   kind: string;

@@ -934,6 +934,229 @@
       "spec": {
         "marker": "MARKER"
       }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Pod",
+      "metadata": {
+        "name": "init-evidence",
+        "labels": {
+          "kubesift.dev/fixture": "explorer-v1"
+        },
+        "namespace": "kubesift-explorer"
+      },
+      "spec": {
+        "automountServiceAccountToken": false,
+        "restartPolicy": "Always",
+        "containers": [
+          {
+            "name": "app",
+            "image": "busybox:1.37.0@sha256:a7dbc319b1438115a207e11930dc4bb3e643dcb3ec0bdd694bb36cd8fad289ec",
+            "command": [
+              "sh",
+              "-c",
+              "while true; do sleep 3600; done"
+            ],
+            "resources": {
+              "requests": {
+                "cpu": "1m",
+                "memory": "8Mi"
+              },
+              "limits": {
+                "cpu": "50m",
+                "memory": "32Mi"
+              }
+            },
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              }
+            }
+          },
+          {
+            "name": "sidecar",
+            "image": "busybox:1.37.0@sha256:a7dbc319b1438115a207e11930dc4bb3e643dcb3ec0bdd694bb36cd8fad289ec",
+            "command": [
+              "sh",
+              "-c",
+              "while true; do sleep 3600; done"
+            ],
+            "resources": {
+              "requests": {
+                "cpu": "1m",
+                "memory": "8Mi"
+              },
+              "limits": {
+                "cpu": "50m",
+                "memory": "32Mi"
+              }
+            },
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              }
+            }
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "prepare",
+            "image": "busybox:1.37.0@sha256:a7dbc319b1438115a207e11930dc4bb3e643dcb3ec0bdd694bb36cd8fad289ec",
+            "command": [
+              "sh",
+              "-c",
+              "echo synthetic-init-complete"
+            ],
+            "resources": {
+              "requests": {
+                "cpu": "1m",
+                "memory": "8Mi"
+              },
+              "limits": {
+                "cpu": "50m",
+                "memory": "32Mi"
+              }
+            },
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Pod",
+      "metadata": {
+        "name": "web-lookalike",
+        "labels": {
+          "kubesift.dev/fixture": "explorer-v1",
+          "app": "web"
+        },
+        "namespace": "kubesift-explorer",
+        "annotations": {
+          "kubesift.dev/marker": "MARKER"
+        }
+      },
+      "spec": {
+        "automountServiceAccountToken": false,
+        "restartPolicy": "Always",
+        "containers": [
+          {
+            "name": "app",
+            "image": "busybox:1.37.0@sha256:a7dbc319b1438115a207e11930dc4bb3e643dcb3ec0bdd694bb36cd8fad289ec",
+            "command": [
+              "sh",
+              "-c",
+              "while true; do sleep 3600; done"
+            ],
+            "resources": {
+              "requests": {
+                "cpu": "1m",
+                "memory": "8Mi"
+              },
+              "limits": {
+                "cpu": "50m",
+                "memory": "32Mi"
+              }
+            },
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "scaled-zero",
+        "labels": {
+          "kubesift.dev/fixture": "explorer-v1"
+        },
+        "namespace": "kubesift-explorer"
+      },
+      "spec": {
+        "replicas": 0,
+        "selector": {
+          "matchLabels": {
+            "app": "scaled-zero"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "kubesift.dev/fixture": "explorer-v1",
+              "app": "scaled-zero"
+            },
+            "annotations": {
+              "kubesift.dev/marker": "MARKER"
+            }
+          },
+          "spec": {
+            "automountServiceAccountToken": false,
+            "restartPolicy": "Always",
+            "containers": [
+              {
+                "name": "app",
+                "image": "busybox:1.37.0@sha256:a7dbc319b1438115a207e11930dc4bb3e643dcb3ec0bdd694bb36cd8fad289ec",
+                "command": [
+                  "sh",
+                  "-c",
+                  "mkdir -p /tmp/www; echo synthetic-MARKER > /tmp/www/index.html; httpd -p 8080 -h /tmp/www; while true; do echo \"synthetic service heartbeat\"; sleep 30; done"
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "1m",
+                    "memory": "8Mi"
+                  },
+                  "limits": {
+                    "cpu": "50m",
+                    "memory": "32Mi"
+                  }
+                },
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "capabilities": {
+                    "drop": [
+                      "ALL"
+                    ]
+                  }
+                },
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/",
+                    "port": 8080
+                  },
+                  "periodSeconds": 10
+                },
+                "ports": [
+                  {
+                    "containerPort": 8080
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
     }
   ]
 }

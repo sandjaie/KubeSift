@@ -11,6 +11,8 @@ import (
 	"context"
 	"github.com/sandjaie/KubeSift/internal/config"
 	"github.com/sandjaie/KubeSift/internal/connection"
+	"github.com/sandjaie/KubeSift/internal/helmmanager"
+	"github.com/sandjaie/KubeSift/internal/helmreader"
 	"github.com/sandjaie/KubeSift/internal/kube"
 	"github.com/sandjaie/KubeSift/internal/model"
 	"github.com/sandjaie/KubeSift/internal/operation"
@@ -25,18 +27,28 @@ import (
 )
 
 type Service struct {
-	mu          sync.Mutex
-	snapshot    *config.Snapshot
-	snapshotID  string
-	connections *connection.Manager
-	auth        *lazyAuth
-	kube        *kube.Service
-	operations  *operation.Service
-	fixtures    map[model.ConnectionRef]FixtureTarget
-	ctx         context.Context
-	cancel      context.CancelFunc
-	sessions    *session.Manager
-	emit        func(model.Event)
+	mu             sync.Mutex
+	snapshot       *config.Snapshot
+	snapshotID     string
+	connections    *connection.Manager
+	auth           *lazyAuth
+	kube           *kube.Service
+	helm           *helmreader.Service
+	helmManagement *helmmanager.Service
+	operations     *operation.Service
+	scale          *operation.ScaleService
+	coordinator    *operation.Coordinator
+	restart        *operation.RestartService
+	deletion       *operation.DeleteService
+	editing        *operation.EditService
+	applying       *operation.ApplyService
+	creation       *operation.CreateService
+	rollback       *operation.RollbackService
+	fixtures       map[model.ConnectionRef]FixtureTarget
+	ctx            context.Context
+	cancel         context.CancelFunc
+	sessions       *session.Manager
+	emit           func(model.Event)
 }
 
 type lazyAuth struct {
@@ -92,9 +104,19 @@ func NewService() *Service {
 	})
 	s.sessions.RequireBridgeAcknowledgements()
 	s.sessions.SetValidate(func(target model.Target) error { return s.connections.Validate(target.Connection) })
-	s.connections.SetCleanup(s.sessions.StopConnection)
 	s.kube = kube.NewService(s.connections, s.sessions)
+	s.helm = helmreader.NewService(s.connections, s.kube)
+	s.helmManagement = helmmanager.NewService(s.connections)
+	s.helmManagement.SetInvalidation(func(target helmmanager.Target) { s.helm.CloseScope(target.Connection, target.Namespace, target.Driver) })
 	s.operations = operation.NewService(s.connections, time.Now)
+	s.coordinator = operation.NewCoordinator(s.connections, time.Now)
+	s.scale = operation.NewScaleService(s.connections, s.coordinator)
+	s.restart = operation.NewRestartService(s.connections, s.coordinator, time.Now)
+	s.deletion = operation.NewDeleteService(s.connections, s.coordinator, time.Now)
+	s.editing = operation.NewEditService(s.connections, s.kube, s.coordinator)
+	s.applying = operation.NewApplyService(s.connections, s.kube, s.coordinator)
+	s.creation = operation.NewCreateService(s.connections, s.kube, s.coordinator)
+	s.rollback = operation.NewRollbackService(s.connections, s.coordinator)
 	s.fixtures = map[model.ConnectionRef]FixtureTarget{}
 	return s
 }
@@ -133,8 +155,10 @@ func (s *Service) CloseConnection(ref model.ConnectionRef) error {
 }
 func (s *Service) ServiceShutdown() error {
 	s.cancel()
+	s.coordinator.Close()
 	s.sessions.Close()
 	s.connections.CloseAll()
+	s.helmManagement.Close()
 	s.mu.Lock()
 	s.fixtures = map[model.ConnectionRef]FixtureTarget{}
 	s.mu.Unlock()

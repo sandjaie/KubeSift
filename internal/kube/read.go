@@ -2,7 +2,7 @@
 Purpose: Read only the Kubernetes resources explicitly requested by a caller.
 Used by: The desktop adapter and local integration scenario.
 Responsibilities: Validate targets, build connection-bound clients and project safe Pod summaries.
-Important: Never send full Pod specs or credential-bearing client configuration across the desktop bridge.
+Important: Legacy summaries omit full specs; investigation reads separately cap local payloads. Credentials stay native.
 */
 package kube
 
@@ -19,16 +19,24 @@ import (
 )
 
 type Service struct {
-	connections *connection.Manager
-	sessions    *session.Manager
-	mu          sync.Mutex
-	terminals   map[string]*terminal
+	connections    *connection.Manager
+	sessions       *session.Manager
+	mu             sync.Mutex
+	terminals      map[string]*terminal
+	productLogs    map[string]model.SessionRef
+	interactive    map[string]model.SessionRef
+	discovery      map[model.ConnectionRef]*discoveryCache
+	metrics        map[model.ConnectionRef]*metricsDiscovery
+	metricsBatches chan struct{}
+	metricsWorkers chan struct{}
+	cursorKey      string
 }
 
 func NewService(c *connection.Manager, s *session.Manager) *Service {
 	s.SetValidate(func(t model.Target) error { return c.Validate(t.Connection) })
-	c.SetCleanup(s.StopConnection)
-	return &Service{connections: c, sessions: s, terminals: map[string]*terminal{}}
+	service := &Service{connections: c, sessions: s, terminals: map[string]*terminal{}, productLogs: map[string]model.SessionRef{}, interactive: map[string]model.SessionRef{}, discovery: map[model.ConnectionRef]*discoveryCache{}, metrics: make(map[model.ConnectionRef]*metricsDiscovery), metricsBatches: make(chan struct{}, 2), metricsWorkers: make(chan struct{}, 4), cursorKey: model.ID()}
+	c.AddCleanup(service.closeConnection)
+	return service
 }
 
 type PodSummary struct {

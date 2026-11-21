@@ -12,7 +12,6 @@ mkdir -p "$app_bundle/Contents/MacOS" "$app_bundle/Contents/Resources"
 cp bin/kubesift "$app_bundle/Contents/MacOS/kubesift"
 cp build/darwin/Info.plist "$app_bundle/Contents/Info.plist"
 cp build/darwin/icons.icns "$app_bundle/Contents/Resources/"
-if [ -f build/darwin/Assets.car ]; then cp build/darwin/Assets.car "$app_bundle/Contents/Resources/"; fi
 cp LICENSE NOTICE "$app_bundle/Contents/Resources/"
 xattr -cr "$app_bundle"
 codesign --force --deep --sign - "$app_bundle"

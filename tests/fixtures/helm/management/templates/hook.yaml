@@ -1,0 +1,30 @@
+{{- if eq .Values.hookMode "benign" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-hook
+  annotations:
+    helm.sh/hook: {{ .Values.hookEvents | quote }}
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+data:
+  marker: benign
+{{- else }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-hook
+  annotations:
+    helm.sh/hook: {{ .Values.hookEvents | quote }}
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: hook
+          image: registry.k8s.io/pause:3.10
+{{- if eq .Values.hookMode "fail" }}
+          command: [/nonexistent-fixture-command]
+{{- end }}
+{{- end }}

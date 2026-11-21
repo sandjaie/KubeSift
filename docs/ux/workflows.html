@@ -11,6 +11,13 @@
     <aside class="rail">
       <a class="skip" href="#content">Skip to content</a
       ><a class="mark" href="../index.html"><span class="mark-name">KubeSift</span><span class="mark-sub">Planning</span></a>
+      <h2 id="app-icon">Application icon</h2>
+      <p>
+        The approved application icon is a white segmented cube with rounded strokes on a solid charcoal rounded square. Preserve this
+        monochrome design without gradients, letters or extra effects. The canonical vector is
+        <a href="../../build/branding/kubesift.svg">build/branding/kubesift.svg</a>; its transparent outer margin is intentional for macOS.
+        This replaces the default Wails application icon without changing workspace navigation or resource icons.
+      </p>
       <h2>Index</h2>
       <a href="../index.html">Planning index</a>
       <h2>Product</h2>
@@ -24,9 +31,11 @@
       ><a href="../ux/mocks/index.html">Mockups</a>
       <h2>Engineering</h2>
       <a href="../engineering/engineering.html">Playbook</a><a href="../engineering/local-development.html">Local development</a
-      ><a href="../engineering/toolchain.html">Toolchain</a>
-      <h2>Working</h2>
-      <a href="../superpowers/validation/phase-1a.html">Phase 1A validation</a>
+      ><a href="../engineering/toolchain.html">Toolchain</a><a href="../engineering/kubernetes-development.html">Kubernetes references</a>
+      <h2>Superpowers</h2>
+      <a href="../superpowers/index.html">Overview</a><a href="../superpowers/specs/index.html">Specs</a
+      ><a href="../superpowers/plans/README.html">Plans</a><a href="../superpowers/validation/index.html">Validation</a
+      ><a href="../superpowers/evidence/index.html">Evidence</a>
     </aside>
     <header>
       <a href="../index.html">KubeSift / Planning</a>
@@ -57,7 +66,8 @@
       <p>
         Use distinct resource icons in left navigation rather than repeated diamonds. Keep text labels and visible selected/focus states.
         Decorative icons are hidden from assistive technology; collapsed entries have tooltips and accessible names. Unexplained dots must
-        not stand for unavailable resource types.
+        not stand for unavailable resource types. Use each section heading to expand or collapse its destinations. Sections start open and
+        retain their state as you switch cluster tabs or hide the sidebar during the current session.
       </p>
       <h3 id="compact-workspace">Compact workspace controls</h3>
       <p>
@@ -70,7 +80,8 @@
         Refresh belongs beside the Pods heading, without a separate toolbar. Column headings stay visible within the scrolling table.
         Single-namespace rows omit repeated namespace subtitles. Phase dots supplement labels: Running blue, Succeeded green, Pending amber,
         Failed red and unknown grey. Keep readiness separate. Selected details use compact label/value rows with context and namespace
-        visible; Identity &amp; source expands selectable UID and full source text.
+        visible. The separate Identity &amp; source disclosure is removed following Phase 1C.2 UAT; object UID and metadata remain available
+        in YAML.
       </p>
       <h3 id="namespace-selector">Searchable namespace selector</h3>
       <p>
@@ -134,6 +145,179 @@
         automatically unhealthy; unavailable/stale health data must be identified. Alerts require evidence, not a decorative badge. Text and
         icons supplement color.
       </p>
+      <h2 id="current-metrics">Current resource metrics</h2>
+      <p>
+        <a href="../superpowers/specs/2026-11-19-phase-1e3-current-metrics-design.md">Phase 1E.3</a> adds CPU/Memory to existing Pod and
+        Node tables and a Current usage section to Overview. Pod detail compares each container with its configured requests and limits;
+        Node percentages name allocatable as the denominator. Pod totals stay absolute. Show source time/window and distinguish partial,
+        stale, unavailable and zero values. Reuse existing layout, themes and Refresh; failures never block resource operations or imply
+        cluster disconnection.
+      </p>
+      <h2 id="helm-inspection">Helm inspection design</h2>
+      <p>
+        <a href="../superpowers/specs/2026-11-17-phase-1e1-helm-inspection-design.md">1E.1</a> enables the existing Helm sidebar entry using
+        the current list/detail layout. Keep cluster/namespace and selected revision visible. Provide release history, values, manifest,
+        hooks, notes and resource references with lazy section reads, explicit storage selection and current copy/search patterns. Helm
+        status is recorded release evidence; links open current Kubernetes resources and do not assert historical identity. No new dashboard
+        or repeated permission prompts.
+      </p>
+      <h2 id="helm-management">Helm management workflow</h2>
+      <p>
+        <a href="../superpowers/specs/2026-11-17-phase-1e2-helm-management-design.md">Phase 1E.2</a> adds Install and selected-release
+        Upgrade, Roll back and Uninstall to the existing Helm workspace. Reuse current dialogs, editors, diffs and result styling for
+        Prepare → Review → Confirm → Result. Keep the fixed target and chart version visible. Show values/manifest changes, hooks, CRDs and
+        namespace impact with preview limitations. Put source addresses, TLS configuration and session credential controls in Settings.
+        Navigation preserves native running work; cancellation and partial failures remain visible, with a release/history refresh action.
+        The <a href="../superpowers/validation/phase-1e2.html">agent validation report</a> records the packaged dark/light workflow and
+        synthetic fixture outcomes.
+      </p>
+      <h2 id="interactive-sessions">Interactive sessions</h2>
+      <p>
+        The <a href="../superpowers/specs/2026-11-16-phase-1d6-interactive-sessions-design.md">1D.6 specification</a> adds terminal and
+        forwarding start controls to existing Pod/Service views and reuses the current Sessions dock. Keep original
+        cluster/namespace/container or backend Pod visible. Settings, themes and navigation preserve sessions; Stop and Close release native
+        work, and tab-close confirms active sessions once. Service forwards show the selected backend Pod and allocated loopback address. No
+        new dashboard or approval wizard is introduced. See the <a href="../superpowers/validation/phase-1d6.html">validation report</a>.
+      </p>
+      <h2 id="workload-rollback">Workload history and rollback</h2>
+      <p>
+        The <a href="../superpowers/specs/2026-11-16-phase-1d5-workload-rollback-design.md">1D.5 specification</a> extends existing workload
+        detail Revisions views with select revision, template diff/dry-run and ordinary Confirm. Preserve current layout and interaction
+        patterns. Show the retained history source and original target; explain partial history and current update strategy. Operation
+        acceptance does not mean all Pods have updated. See the
+        <a href="../superpowers/validation/phase-1d5.html">rollback validation report</a>
+        for the exercised flows.
+      </p>
+      <h2 id="reviewed-yaml-editing">Reviewed YAML editing</h2>
+      <p>
+        The <a href="../superpowers/specs/2026-11-16-phase-1d4-reviewed-yaml-editing-design.md">1D.4 specification</a> adds a common Edit
+        YAML, diff/dry-run review and Confirm flow to existing resource views. Preserve approved layout and interaction conventions. Secrets
+        use the same flow: Edit or Reveal YAML loads authorized content directly, without extra approval or repeated reveal steps.
+        Kubernetes determines permissions and valid changes. Explain unsaved changes, conflicts and server errors without adding a wizard or
+        resource-specific typed confirmations. Keep draft leaves the editor in memory while users navigate to another cluster tab.
+      </p>
+      <h2 id="manifest-workflows">Create and apply manifest workflows</h2>
+      <p>
+        The <a href="../superpowers/specs/2026-11-16-phase-1d-completion-design.md">Phase 1D completion specification</a> keeps Create
+        resource, Edit YAML and Apply configuration distinct. Creation starts from inventory with an explicit target; apply starts from
+        existing-resource YAML with an identity-only desired configuration. Reuse the current editor and single review/confirmation flow,
+        including Secrets. Show server defaults and field-ownership changes; ownership takeover is explicit in the same review, never
+        automatic. No resource-kind approval gates or UI redesign.
+      </p>
+      <p>
+        Create review shows the proposed YAML and the server dry-run response. Open resource uses the accepted identity. An uncertain result
+        offers an explicit name check without resubmitting the request. See the
+        <a href="../superpowers/validation/phase-1d7.html">verified Create workflows</a>.
+      </p>
+      <h2 id="reviewed-deletion">Reviewed workload deletion</h2>
+      <p>
+        The <a href="../superpowers/specs/2026-11-15-phase-1d3-reviewed-deletion-design.md">Phase 1D.3 specification</a> defines destructive
+        workload deletion review with exact typed-name confirmation, owner/cascade/finalizer evidence and fixed Background/server-grace
+        behavior. Operation results distinguish accepted requests from removal observations. Check target never retries deletion or
+        automatically opens a same-name replacement; unavailable API evidence is not absence.
+      </p>
+      <h2 id="reviewed-restart">Reviewed workload restart design</h2>
+      <p>
+        The <a href="../superpowers/specs/2026-11-15-phase-1d2-reviewed-restart-design.md">Phase 1D.2 specification</a> adds Restart beside
+        Scale in supported controller Overview actions. Strategy-aware review shows the immutable target and annotation change; unsupported
+        paused, OnDelete and partitioned cases explain their restriction. Shared Operation results distinguish Scale counts from Restart
+        timestamps without claiming rollout completion. The inspector, YAML, Events and ConfigMap Data remain available. See the
+        <a href="../superpowers/validation/phase-1d2.html">restart validation report</a>.
+      </p>
+      <h2 id="reviewed-scaling">Reviewed workload scaling design</h2>
+      <p>
+        The <a href="../superpowers/specs/2026-11-14-phase-1d1-reviewed-scaling-design.md">Phase 1D.1 specification</a> defines Scale for
+        Deployment and StatefulSet details: captured target, before/after review, mandatory dry-run and deliberate confirmation. Navigation
+        invalidates pending review; dispatched results stay bound to their original target. Accepted does not mean ready, and uncertain
+        outcomes are never retried automatically. Reuse the approved dialogs and appearance rather than adding a new Sessions dock.
+      </p>
+      <h2 id="cluster-discovery">Cluster resources and API discovery design</h2>
+      <p>
+        The <a href="../superpowers/specs/2026-11-14-phase-1c3g-cluster-discovery-design.md">Phase 1C.3g specification</a> defines dedicated
+        infrastructure views and an API resources browser under Extensions. Group/version/resource selection is explicit and lazy; partial
+        discovery errors remain local. Namespace changes retain the destination. Known resources use their dedicated readers, including
+        metadata-only Secrets. Generic objects use captured, bounded Overview and YAML views with no inferred health or operations.
+      </p>
+      <h2 id="availability-investigation">Phase 1C.3f availability investigation</h2>
+      <p>
+        The <a href="../superpowers/specs/2026-11-14-phase-1c3f-availability-design.md">availability specification</a> extends Workloads
+        with HPAs, PDBs, ReplicationControllers and ControllerRevisions. Keep ConfigMaps and Secrets in Workloads. HPA targets and reported
+        metrics are separate; PDB Selected Pods are label matches, not owned children. StatefulSet/DaemonSet Revisions show retained
+        UID-owned history with captured markers, not rollback controls. Preserve lazy rendering, exact validated target captures and Back;
+        stale observations never imply authorization to scale or evict. Delivery evidence belongs in checkpoint and reports.
+      </p>
+      <h2 id="access-control-investigation">Phase 1C.3e access-control investigation</h2>
+      <p>
+        ConfigMaps and Secrets appear under Workloads after CronJobs. Configuration retains ResourceQuotas and LimitRanges. This changes
+        sidebar placement only; resource identities, readers, tabs, namespace/Back behavior and Secret metadata-only safeguards remain
+        unchanged. This supersedes their historical Configuration placement.
+      </p>
+      <p>
+        The <a href="../superpowers/specs/2026-11-14-phase-1c3e-access-control-design.md">access-control specification</a> places
+        ServiceAccounts and the four RBAC kinds in Access control, retaining Namespaces and Nodes under Cluster. Rules and subjects keep
+        their boundaries; binding scope is distinct from a subject's namespace. Explicit Pod/account and binding/role/account links open the
+        validated target capture and retain Back behavior. User/Group identities are inert strings. No effective-permission summary, token
+        controls, permission-changing actions or Secret fetching is offered here. See the
+        <a href="../superpowers/validation/phase-1c3e.html">access-control validation report</a>.
+      </p>
+      <h2 id="storage-investigation">Phase 1C.3d storage investigation</h2>
+      <p>
+        The <a href="../superpowers/specs/2026-11-14-phase-1c3d-storage-design.md">storage specification</a> extends the existing compact
+        inventory and Overview/YAML patterns to six storage kinds, with PVC-only Events. Explicit Pod → claim → volume → class links retain
+        bounded Back and scope restoration. Distinguish name resolution, UID evidence and agreeing binding references; attachment or binding
+        does not establish usable storage. Cluster-scoped lists retain the saved namespace. No mount, provisioner installation, Secret
+        fetching or storage actions are available. See the
+        <a href="../superpowers/validation/phase-1c3d.html">storage validation report</a>.
+      </p>
+      <h2 id="configuration-investigation">Phase 1C.3c namespace policy and configuration</h2>
+      <p>
+        The <a href="../superpowers/specs/2026-11-14-phase-1c3c-configuration-design.md">configuration specification</a> extends existing
+        compact tables with Namespace, ResourceQuota, LimitRange, ConfigMap and metadata-only Secret views. Preserve namespace-kind
+        retention and Back behavior. ConfigMap Data uses escaped text and explicitly labeled base64; quota/limit views show configured and
+        reported evidence without measured-usage or admission claims. Secret Overview exposes only allowlisted identity metadata, with no
+        values, YAML or Events. Pod links resolve only on click. See the
+        <a href="../superpowers/validation/phase-1c3c.html">verification results</a>.
+      </p>
+      <h2 id="networking-investigation">Phase 1C.3b networking investigation</h2>
+      <p>
+        Reuse compact inventories, Overview, YAML and namespaced Events for the
+        <a href="../superpowers/specs/2026-11-13-phase-1c3b-networking-design.md">networking specification</a>. Service EndpointSlices and
+        explicit links connect Ingress → Service → EndpointSlice → Pod using the existing Back history. IngressClasses are visibly
+        cluster-scoped, with the namespace chooser disabled and the previous namespace retained. Keep association, ownership and
+        name-resolution evidence distinct. NetworkPolicy views show configuration without asserting effective connectivity. The
+        <a href="../superpowers/validation/phase-1c3b.html">validation report</a> records agent desktop observations and open checks.
+      </p>
+      <h2 id="remaining-workloads">Phase 1C.3a workload views</h2>
+      <p>
+        StatefulSets, DaemonSets and Jobs reuse Overview, YAML, Events and related Pods; CronJobs use Overview, YAML, Events and Jobs. The
+        <a href="../superpowers/specs/2026-11-13-phase-1c3a-remaining-workloads-design.md">1C.3a specification</a> defines exact inventory
+        columns, controller-specific status semantics and CronJob → Job → Pod navigation. Preserve the approved compact resource layout,
+        literal inputs and bounded Back behavior. Logs remains available on Pod details.
+      </p>
+      <h2 id="workload-refinement">Workload investigation refinement</h2>
+      <p>
+        Pod and Deployment detail use compact evidence tables, structured Overview facts and a larger read-only YAML surface. Workloads
+        includes the read-only ReplicaSets destination. Relationship links and Back validate captured UIDs. Namespace changes preserve the
+        selected workload kind and clear old-scope evidence. Technical search fields preserve literal input, and intentional namespace
+        results remain available. See the
+        <a href="../superpowers/specs/2026-11-13-workload-explorer-refinement-design.md">refinement specification</a>,
+        <a href="mocks/index.html#workload-refinement">approved visual references</a> and
+        <a href="../superpowers/validation/workload-explorer-refinement.html">technical results</a>.
+      </p>
+      <p>
+        Detail toolbars align related controls and wrap for narrower panes. YAML search and its match controls sit together. Show managed
+        fields changes the displayed capture, and the copy icon copies that exact text. A temporary checkmark confirms success. ConfigMap
+        YAML and installed API payloads call out sensitive values before sharing.
+      </p>
+      <p>
+        Overview sections use a compact inspector for nested objects, arrays and annotations. Branch labels and counts identify what opens,
+        and historical data starts collapsed. Long annotation values open as wrapped literal text. Large collections page locally without
+        mounting unopened branches. Events filters count the captured page, whose ordering and capture time appear below the results.
+      </p>
+      <p>
+        ConfigMap Data shows short values inline. Each key has a copy action next to its type and byte count. Long or multiline values open
+        on demand and wrap in a scrollable area. Copy preserves the captured text or base64 exactly, including whitespace and empty values.
+      </p>
       <h2>Resource selection and keyboard behavior</h2>
       <p>
         Arrow keys move table selection. Resource shortcuts operate on the selected resource and its explicit connection/namespace, without
@@ -142,15 +326,16 @@
         selected. Destructive actions still require confirmation.
       </p>
       <p>
-        Resource detail offers Overview, Events, Logs, YAML and Terminal where applicable. In Phase 2, Evidence links captured sources to
-        the investigation. Full resource identity remains available even when table cells truncate. Log failures may use a red vertical
-        gutter alongside the relevant line, with textual severity. Previous-container logs do not enable follow.
+        Resource detail offers Overview, Events, Logs and YAML where applicable, with Terminal and Port forward actions in Overview. In
+        Phase 2, Evidence links captured sources to the investigation. Full resource identity remains available even when table cells
+        truncate. Log failures may use a red vertical gutter alongside the relevant line, with textual severity. Previous-container logs do
+        not enable follow.
       </p>
-      <h2>Sessions dock</h2>
+      <h2>Log lifetime</h2>
       <p>
-        Keep active logs, terminals and port forwards in a persistent bottom dock. Each session identifies cluster, namespace,
-        resource/container, status and stop control. Switching tabs preserves sessions. Dock collapse changes presentation only. Closing a
-        tab with active sessions asks for confirmation, then cancels owned work; it must not silently detach sessions.
+        Phase 1C.2 logs belong to the visible Pod Logs tab. Leaving it stops collection and releases history; returning loads fresh output.
+        Active logs can appear in Sessions while their detail remains visible. Terminals and forwards stay in Sessions until stopped or
+        closed.
       </p>
       <h2>Global AI panel · Phase 2</h2>
       <p>
@@ -177,7 +362,25 @@
         <a href="../security/security-model.html">security model</a>. Describe actual filtering without promising that all sensitive data
         can be detected.
       </p>
+      <h3>Log viewer</h3>
+      <p>
+        Opening Logs immediately shows one live current-container view. Keep container, Current/Previous, initial line count, Follow and
+        Refresh controls. Previous uses a snapshot. Scroll all retained output, hold a stable reading snapshot when scrolling upward, and
+        use Jump to latest to return. Search retained text with previous/next matches. Log rows scroll horizontally; very long lines
+        continue on bounded display rows. Expand to window fills the application window; Restore size or Escape returns without reopening
+        the reader. Remove Open logs, Clear view, Resume and Close. Display the initial line limit, 1 MiB retention bound and actual
+        loss/errors. Rotated server history may be unavailable.
+      </p>
       <h2>Themes and window sizes</h2>
+      <p>
+        At launch, macOS uses the saved display by overlap or the primary display when it is no longer available. Fill compact work areas
+        and center a window capped at 1,600 × 1,020 logical points in larger work areas. Keep ordinary resizing, native zoom and saved pane
+        proportions. Opening a Deployment’s Pods tab automatically advances up to eight empty ownership pages to find Pods; keep bounded
+        Load more Pods only when continuation remains. Do not show internal traversal timestamps or completion labels. Inventory pagination
+        places Previous, the page number and Next in one vertically centered group, with Auto-refresh aligned beside it and wrapping as a
+        whole on narrow panes. Separate these controls from the filter row. Do not display the inventory capture timestamp in the table
+        hint; retain stale-data warnings and detail evidence timestamps.
+      </p>
       <p>
         Appearance lives in Settings, not the workspace header. Default to System; support persistent Light and Dark overrides. System
         tracks OS changes. Theme switching preserves layout, sessions and selection. Dark uses neutral charcoal surfaces with blue

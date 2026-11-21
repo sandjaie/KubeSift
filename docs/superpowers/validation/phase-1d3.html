@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Phase 1D.3 reviewed deletion validation · KubeSift</title>
+    <link rel="stylesheet" href="../../assets/planning.css" />
+    <script src="../../assets/theme.js"></script>
+  </head>
+  <body>
+    <aside class="rail">
+      <a class="skip" href="#content">Skip to content</a
+      ><a class="mark" href="../../index.html"><span class="mark-name">KubeSift</span><span class="mark-sub">Planning</span></a>
+      <h2>Index</h2>
+      <a href="../../index.html">Planning index</a>
+      <h2>Product</h2>
+      <a href="../../product/requirements.html">Requirements</a><a href="../../product/feature-matrix.html">Capabilities</a>
+      <h2>Architecture</h2>
+      <a href="../../architecture/overview.html">Overview</a><a href="../../architecture/decisions.html">Decisions</a>
+      <h2>Safeguards</h2>
+      <a href="../../security/security-model.html">Security and AI</a>
+      <h2>Delivery</h2>
+      <a href="../../roadmap/roadmap.html">Roadmap</a><a href="../../ux/workflows.html">UX workflows</a
+      ><a href="../../ux/mocks/index.html">Mockups</a>
+      <h2>Engineering</h2>
+      <a href="../../engineering/engineering.html">Playbook</a><a href="../../engineering/local-development.html">Local development</a
+      ><a href="../../engineering/toolchain.html">Toolchain</a
+      ><a href="../../engineering/kubernetes-development.html">Kubernetes references</a>
+      <h2>Superpowers</h2>
+      <a href="../../superpowers/specs/2026-11-05-kubesift-design.md">Design specification</a
+      ><a href="../../superpowers/plans/README.html">Plans</a
+      ><a href="../../superpowers/validation/index.html" aria-current="page">Validation</a
+      ><a href="../../superpowers/evidence/index.html">Evidence</a>
+    </aside>
+    <header>
+      <a href="../../index.html">KubeSift / Planning</a>
+      <h1>Phase 1D.3 reviewed deletion validation</h1>
+    </header>
+    <main id="content">
+      <p>
+        The <a href="../specs/2026-11-15-phase-1d3-reviewed-deletion-design.md">specification</a> and
+        <a href="../plans/2026-11-15-phase-1d3-reviewed-deletion.md">implementation plan</a> define the eight workload routes and review
+        safeguards. Verification used the existing checkout from <code>163848f</code> on 16 November 2026.
+      </p>
+      <h2>Automated and API-server evidence</h2>
+      <ul>
+        <li>
+          Repository checks, targeted Go race checks, binding regeneration, production packaging and strict signature verification passed.
+          The final frontend suite ran 96 tests.
+        </li>
+        <li>
+          Synthetic HTTP and race tests exercised exact typed-name confirmation, fixed options, shared action locks and limits, bounded
+          evidence, duplicate confirmation, connection closure after dispatch and uncertain responses. Check target covered all five states,
+          including the distinction between an object-specific and ambiguous 404.
+        </li>
+        <li>
+          On both <code>kind-dev-local-a</code> and <code>kind-dev-local-b</code>, all eight workload routes accepted a valid conditional
+          delete. Dry-run preserved UID, resource version, deletion timestamp and the representative Deployment and CronJob descendants.
+          Background removal subsequently reached those descendants. Get-only permission was denied and a missing permission hint still
+          allowed authorized dry-run. The unsafe StatefulSet policy was blocked in claim-free fixtures.
+        </li>
+        <li>
+          A scoped loopback relay introduced a version change or same-name recreation after the final GET on both API servers. Each server
+          rejected the stale DELETE and preserved the updated or replacement object. A test-owned finalizer held the original Pod in
+          Terminating until fixture cleanup. Operation-bound checks distinguished absence from the replacement UID.
+        </li>
+        <li>
+          Reviewed scaling, reviewed restart and workload investigation passed on both approved contexts. The historical marker integration
+          was outside this validation. Its unit coverage ran with the Go suite.
+        </li>
+      </ul>
+      <h2>Packaged desktop evidence</h2>
+      <ul>
+        <li>
+          The arm64 bundle on macOS 26.7.1 worked with the standalone Pod on A and the Deployment on B. Escape revoked a prepared review and
+          restored focus to Delete. A case mismatch left Confirm disabled. The Pod showed observed grace, its finalizer and the
+          direct-delete PodDisruptionBudget warning. Confirming left it terminating and Check target reported that state.
+        </li>
+        <li>
+          The Deployment showed background cascade impact. A concurrent version change produced a stale result and Check target reported
+          that the original UID was still present. A fresh review was accepted and a separate check reported absence. Native Scale and
+          Restart results were present in the same session alongside Delete results.
+        </li>
+        <li>
+          The final build refused preparation using a get-only fixture role on A. On B, successful deletion preserved the captured inspector
+          and its Back to inventory action when the original left inventory. Readback later reported a different UID. Refreshing the
+          inspector kept the original identity, and the replacement opened only after selecting it in inventory.
+        </li>
+        <li>
+          Verification used Dark and Light, keyboard focus restoration and a 36% detail split. The original appearance and 44% split were
+          restored. The existing YAML search, managed fields, copy action and page-scoped Events controls remained available.
+        </li>
+      </ul>
+      <p>
+        Native walkthroughs exercised Pod and Deployment. The other six routes were checked through the API-server suite. The test-only DOM
+        environment exercised programmatic invalidation independently of the packaged walkthroughs. Other operating systems remain
+        unverified.
+      </p>
+      <h2>Independent review</h2>
+      <p>
+        The independent reviewer <code>deletion_pr_review</code> reviewed candidate
+        <code>44f57f207028287c1cf95d227bf4e1113226e3e6</code> against <code>develop</code> at base and merge base
+        <code>163848f7f636972649d60c195b2834212e2f9c98</code>. The reviewer reported two blocking findings and one mounted test coverage
+        gap.
+      </p>
+      <ul>
+        <li>
+          KSF-001 (P2) was fixed. The inspector holds the submitted identity during inventory refresh. Direct and recovered acceptance use
+          the same result handler. A new selection discards the previous capture. Mounted tests exercise both response orders, explicit
+          replacement selection and recovery after a lost bridge reply.
+        </li>
+        <li>
+          KSF-002 (P2) was fixed. A StatefulSet with missing or null spec now fails before dry-run and before real dispatch. A valid spec
+          with an omitted retention policy still uses the Kubernetes default.
+        </li>
+        <li>
+          A focused mounted suite uses a pinned test-only DOM dependency. It verifies cancellation of pending preparation and revocation of
+          late tokens when refresh, version, UID, namespace, tab or connection generation changes.
+        </li>
+      </ul>
+      <p>
+        The same reviewer rechecked the fixes and affected callers through <code>98d4bc3ab804325705ef3dce160b8014a45da22c</code> and found
+        no remaining blockers. The full repository checks, race suite, two-context deletion integration and production packaging passed
+        after the fixes. The rebuilt package on B again confirmed deletion, observed absence, retained the original inspector and returned
+        to inventory. Both contexts were checked for fixture cleanup.
+      </p>
+      <h2>Integration</h2>
+      <p>
+        <a href="https://github.com/sandjaie/KubeSift/pull/18">PR #18</a> was squash-merged into <code>develop</code> as
+        <code>cc28d2e55e5a47b93f54e2d48edae06efe7dcae6</code> on 16 November 2026. The reviewer cleared the final documentation-only delta
+        from <code>98d4bc3</code>.
+      </p>
+    </main>
+  </body>
+</html>

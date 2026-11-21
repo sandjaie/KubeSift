@@ -39,6 +39,10 @@ export function ClusterList({
         <button onClick={onSettings}>Configure sources</button>
       </div>
       <input
+        spellCheck={false}
+        autoCorrect="off"
+        autoCapitalize="none"
+        autoComplete="off"
         aria-label="Search clusters"
         placeholder="Search contexts, sources or labels…"
         value={query}

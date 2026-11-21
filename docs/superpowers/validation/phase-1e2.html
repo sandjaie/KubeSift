@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Phase 1E.2 Helm management validation · KubeSift</title>
+    <link rel="stylesheet" href="../../assets/planning.css" />
+    <script src="../../assets/theme.js"></script>
+  </head>
+  <body>
+    <aside class="rail">
+      <a class="skip" href="#content">Skip to content</a
+      ><a class="mark" href="../../index.html"><span class="mark-name">KubeSift</span><span class="mark-sub">Planning</span></a>
+      <h2>Index</h2>
+      <a href="../../index.html">Planning index</a>
+      <h2>Product</h2>
+      <a href="../../product/requirements.html">Requirements</a><a href="../../product/feature-matrix.html">Capabilities</a>
+      <h2>Architecture</h2>
+      <a href="../../architecture/overview.html">Overview</a><a href="../../architecture/decisions.html">Decisions</a>
+      <h2>Safeguards</h2>
+      <a href="../../security/security-model.html">Security and AI</a>
+      <h2>Delivery</h2>
+      <a href="../../roadmap/roadmap.html">Roadmap</a><a href="../../ux/workflows.html">UX workflows</a
+      ><a href="../../ux/mocks/index.html">Mockups</a>
+      <h2>Engineering</h2>
+      <a href="../../engineering/engineering.html">Playbook</a><a href="../../engineering/local-development.html">Local development</a
+      ><a href="../../engineering/toolchain.html">Toolchain</a
+      ><a href="../../engineering/kubernetes-development.html">Kubernetes references</a>
+      <h2>Superpowers</h2>
+      <a href="../../superpowers/specs/2026-11-05-kubesift-design.md">Design specification</a
+      ><a href="../../superpowers/plans/README.html">Plans</a
+      ><a href="../../superpowers/validation/index.html" aria-current="page">Validation</a
+      ><a href="../../superpowers/evidence/index.html">Evidence</a>
+    </aside>
+
+    <header>
+      <a href="../../index.html">KubeSift / Planning</a>
+      <h1>Phase 1E.2 Helm management validation</h1>
+    </header>
+    <main id="content">
+      <p>
+        Agent verification on 18 November 2026, Dubai time. Implemented from develop <code>0ba4d2d</code> (containing <code>10ed221</code>)
+        on <code>feature/phase-1e2-helm-management</code>. See the
+        <a href="../specs/2026-11-17-phase-1e2-helm-management-design.md">approved specification</a> and
+        <a href="../plans/2026-11-17-phase-1e2-helm-management.md">six-task plan</a>. Implementation, verification and independent review
+        passed. <a href="https://github.com/sandjaie/KubeSift/pull/26">PR #26</a> squash-merged into develop as
+        <code>5f9e99da8996a8d1caee1fbaa7dc7a7158421c65</code>. No release was performed.
+      </p>
+      <h2>Environment and supported coverage</h2>
+      <p>
+        macOS 26.7.1 on arm64, Go 1.27.3, Node 25.9.0, Helm SDK 4.3.1, Kubernetes API/client-go 0.37.1 and kind Kubernetes 1.37.0. Helm
+        3.19.0 (<code>3d8990f</code>) was used only to seed compatibility records. The shipped app uses the SDK, not a Helm executable.
+      </p>
+      <p>
+        Native management covers install, replacement-values upgrade, retained-revision rollback and uninstall with Secret or ConfigMap
+        release storage. Sources are native-selected packaged charts, HTTPS index repositories and exact OCI tags/digests. Credentials
+        remain in native session memory; TLS CA and client certificate/key references are nonsecret persisted metadata. No ambient registry
+        credentials, credential helpers, plugins, post-renderers or dependency downloads are used.
+      </p>
+      <h2>Automated and live results</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Check</th>
+            <th>Actual result</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>go test -race ./internal/helmmanager ./internal/helmrender</code></td>
+            <td>
+              Passed after review corrections: manager 337.531 seconds and renderer 310.477 seconds under race instrumentation. The final
+              pure collection-codec delta also passed its race-instrumented boundary test (1.856 seconds).
+            </td>
+          </tr>
+          <tr>
+            <td><code>wails3 task bindings</code>, <code>npm run build</code>, <code>wails3 task package</code></td>
+            <td>Passed. Native bundle is <code>bin/kubesift.app</code>, ad-hoc signed.</td>
+          </tr>
+          <tr>
+            <td><code>scripts/check.sh</code></td>
+            <td>
+              Passed source descriptions, document links, gofmt, Go tests/vet, binding normalization, 123 frontend tests in 34 files, ESLint
+              and TypeScript.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <code>KUBESIFT_HELM_INTEGRATION=1 go test -tags=integration ./tests/integration -run '^TestHelmManagement$' -count=1 -v</code>
+            </td>
+            <td>
+              Initial pass in 54.204 seconds; review-correction passes in 97.297, 79.209 and 125.606 seconds, with explicit isolated
+              kubeconfigs and the pinned Helm 3 fixture binary.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        The live suite and its review-correction rerun used only <code>kind-dev-local-a</code> and <code>kind-dev-local-b</code>, newly
+        created owned namespaces and the labelled <code>fixtures.management.kubesift.test</code> CRD. It verified local install,
+        authenticated HTTPS upgrade, rollback, uninstall, authenticated OCI digest install, retained resources, first installation of a CRD
+        and its dependent custom resource together, Helm 3 record upgrade/uninstall in both storage drivers, denied writes, failing hooks,
+        and cancellation during install, rollback and uninstall. Cancelled workers terminated and reported uncertain outcomes. Simultaneous
+        identical namespace/release names retained different markers on the two clusters. Namespace and CRD deletion were polled to
+        confirmed absence.
+      </p>
+      <p>
+        Focused native tests additionally cover source bounds, custom CA/mTLS, cross-origin credential stripping, no downgrade or ambient
+        credentials, schema restrictions, read-only preview transport, current-head and historical-record identity checks, duplicate
+        execution, two-worker and per-release limits, expiry, chunked payloads, cancellation and payload-safe logging. Mounted frontend
+        tests cover edited values, prepare failure, stale responses, one confirmation and retained results across navigation.
+      </p>
+      <h2>Packaged desktop observations</h2>
+      <p>
+        Agent-operated native macOS checks used the packaged Wails application, not a browser substitute. The existing Helm list/detail
+        layout, Settings surfaces, dialogs and themes were preserved.
+      </p>
+      <ul>
+        <li>
+          Saved a private HTTPS source with a CA selected through the native picker; metadata survived restart. Supplied synthetic session
+          credentials and resolved version 1.1.0 through the authenticated repository.
+        </li>
+        <li>
+          Installed local version 1.0.0 with explicit namespace creation, upgraded to 1.1.0 with edited replacement values and a custom
+          resource, rolled back revision 2 to revision 1 (creating revision 3), and uninstalled while explicitly retaining history. Native
+          results showed deployed/uninstalled revisions and exact context/namespace/release/storage labels.
+        </li>
+        <li>
+          Reviewed values and manifest differences, hooks, CRDs, retention warnings and namespace impact. Cancel received initial focus;
+          keyboard input and selection worked. Confirmation stayed unavailable while preparation was incomplete.
+        </li>
+        <li>
+          Opened a current ConfigMap from retained Helm resource evidence and used Back to release. Settings navigation preserved an active
+          waiting hook; cancellation showed “Outcome unknown” and a refresh-before-recovery warning.
+        </li>
+        <li>
+          Dark upgrade and light uninstall/result views were observed. No Helm process was present during native operations, and the
+          synthetic password was absent from app files and its captured log.
+        </li>
+      </ul>
+      <p>
+        The failing-hook install showed an explicit failed result and observed failed revision; cancellation retained its distinct uncertain
+        result. The temporary source was forgotten and removed, the app exited, and the loopback server stopped. The desktop namespace and
+        labelled CRD were deleted and both approved clusters were checked for fixture absence. The independent review and targeted
+        follow-ups cleared all findings. These agent observations are not a claim of personal user UAT; no duplicate user checklist is
+        required.
+      </p>
+      <p>
+        <a href="../evidence/phase-1e2/README.md">Curated native screenshots</a> show the dark upgrade review, light uninstall review, and
+        failure/cancellation outcomes.
+      </p>
+      <p>
+        Review-fix package verification installed a new CRD and its dependent custom resource together, after showing the bounded
+        unverified-kind warning. During a waiting hook, both native Quit and last-window Close displayed the active-operation warning; Keep
+        working preserved the running action, and confirmed Quit exited the process. A WebKit null-target blur initially swallowed Reconnect
+        clicks; a shared control fix passed its failing-then-passing regression. The rebuilt package passed reconnect Cancel (operation
+        preserved) and confirmed reconnect (worker stopped, retained Outcome unknown result). The final app exited normally.
+      </p>
+      <p>
+        Final packaged verification after the Mac was unlocked passed the numeric and resource-identity fixture. Native review preserved the
+        ConfigMap name <code>2026-11-18</code>, then install succeeded with the new CRD and dependent resource. An explicit-context read
+        confirmed <code>first: yes</code> from the integer revision comparison and the exact value <code>9007199254740993</code>. The final
+        application exited normally. Earlier window-access failures were not counted as passing checks.
+      </p>
+      <h2>Corrections found by verification</h2>
+      <p>
+        The first live run exposed a namespace fallback in the SDK's raw-config loader: release storage was correctly scoped but resource
+        creation fell back to default. An explicit namespace override fixes the common loader; a focused regression failed before and passed
+        after the fix. The exact synthetic misplaced ConfigMaps were ownership-checked and removed from both clusters. Live reruns verified
+        resources in the requested namespaces. A second live failure exposed the SDK's required wait strategy during uninstall dry-run;
+        preview now supplies the owned wait context and strategy. The final suite and package include both corrections.
+      </p>
+      <p>
+        Fixture-only corrections refreshed the superseded revision's resource version before rollback and started Docker before the live
+        run. Neither failed attempt is counted as passing evidence.
+      </p>
+      <h2>Independent whole-PR review</h2>
+      <p>
+        Reviewer <code>/root/phase1e2_review</code> (GPT-6.2 Astra, high reasoning, fresh context) reviewed base and merge base
+        <code>0ba4d2d58f2297077d270c9fa4509b1172957925</code> through candidate <code>d740ca76ea3ad759a38813298e5e9072f344bd3f</code>. The
+        initial verdict was blocking, with nine findings and no declined judgments or deferred minors. The implementing agent accepted all
+        nine. The targeted recheck at <code>185c538a02d3029e174836901b1c46c907638605</code> resolved KSF-002 through KSF-009, but found
+        disabled-dependency eligibility in KSF-001 and new numeric-fidelity blocker KSF-010. Hook paths (KSF-011) and lookup error
+        categories (KSF-012) were nonblocking correctness findings; all were accepted. Author corrections passed the native regression
+        suites, final repository checks and both-cluster integration. The recheck at
+        <code>76f1e1fa2a963829fd3f7d4880ecd1785ee5c868</code> cleared KSF-001 and KSF-010–012, then identified KSF-013 (preview resource
+        identity). Its correction passed the targeted race test (3.348 seconds), full repository checks and both-cluster integration. The
+        final targeted recheck at <code>ecc0a3f1e7b239025fdfa5cd37d967494f1934c4</code> cleared KSF-013 with no blocking findings, no new
+        findings and no declined judgments. Prior resolutions for KSF-001–012 stand. The reviewer inspected code and supplied evidence
+        without operating clusters or the desktop; there are no deferred minors.
+      </p>
+      <p>
+        The documentation-only follow-up cleared final PR head <code>e71772cad7de0d1ef91efadf782f46716575e60f</code> with no blocking
+        findings. KSF-014 (P3, stale introductory status) was corrected with this confirmed merge update. Original review plus targeted
+        follow-ups accounts for the full merged head. GitHub reported a clean merge state; feature PRs into develop intentionally have no
+        CI. The squash merge tree was verified identical to the reviewed PR tree before this documentation-only bookkeeping update.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Finding</th>
+            <th>Correction and evidence</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>KSF-001 · P1 · New CRD dependents</td>
+            <td>
+              Only absent kinds declared by packaged CRDs defer server mapping checks in preview. Their identities and unverified status
+              remain visible. Eligibility is evaluated after SDK dependency selection; a disabled CRD provider cannot bypass ordinary
+              mapping checks. The regression and updated both-cluster first-install fixture passed.
+            </td>
+          </tr>
+          <tr>
+            <td>KSF-002 · P1 · Render allocation and deadline</td>
+            <td>
+              The bundled pinned SDK engine runs in a bounded WebAssembly instance for preview and execution, with mediated live lookup.
+              Tests reject oversized output and a 1 GiB allocation and join CPU-bound rendering after cancellation. Dependency aliases,
+              disabled dependencies, notes and original stored chart templates are covered.
+            </td>
+          </tr>
+          <tr>
+            <td>KSF-003 · P1 · Unreadable output records</td>
+            <td>
+              Complete proposed releases and driver Create/Update calls enforce the reader's 8 MiB expansion limit, including highly
+              compressible chart files.
+            </td>
+          </tr>
+          <tr>
+            <td>KSF-004 · P1 · Lost write response</td>
+            <td>
+              The owned transport records ambiguous mutating requests and response-body failures independently of SDK error wrapping. The
+              regression traverses native SDK uninstall and a lost DELETE response.
+            </td>
+          </tr>
+          <tr>
+            <td>KSF-005 · P1 · Incomplete stored evidence</td>
+            <td>
+              Management rejects missing Info/Chart and nil hooks, files and dependencies with a safe corrupt-record result before SDK
+              actions. Tolerant read-only inspection remains unchanged.
+            </td>
+          </tr>
+          <tr>
+            <td>KSF-006 · P2 · Quit and reconnect warnings</td>
+            <td>
+              Native quit and last-window close share a single consent guard; reconnect and tab close read current native operation state.
+              Guard and WebKit-focus regression tests passed. Packaged quit, last-window close and reconnect cancel/proceed checks passed;
+              cancelled actions retained uncertain outcomes.
+            </td>
+          </tr>
+          <tr>
+            <td>KSF-007 · P2 · Delayed override replacement</td>
+            <td>
+              Reset and Import revoke the initial values read. Both mounted delayed-read regressions failed before and passed after the
+              correction.
+            </td>
+          </tr>
+          <tr>
+            <td>KSF-008 · P2 · OCI error categories</td>
+            <td>
+              Typed registry errors distinguish authentication and missing chart versions/digests. Tests exercise a same-origin bearer token
+              exchange and sanitized failure categories.
+            </td>
+          </tr>
+          <tr>
+            <td>KSF-009 · P2 · Removal and scope impact</td>
+            <td>
+              Impact includes removed current resources and keep policy, resolves scope/default namespace through discovery or packaged
+              CRDs, and labels unresolved scope explicitly.
+            </td>
+          </tr>
+          <tr>
+            <td>KSF-010 · P1 · SDK numeric fidelity</td>
+            <td>
+              A private bounded typed protocol preserves concrete scalar types, large integers, timestamps and empty collections. Native SDK
+              and worker outputs match for revision comparison, a large integer, fraction, timestamp, empty list/map and lookup integer.
+            </td>
+          </tr>
+          <tr>
+            <td>KSF-011 · P2 · Hook source paths</td>
+            <td>
+              Each rendered document retains its original source marker; review and persistence restore hook paths before storage. Two
+              distinct hook templates retain their distinct original paths in the SDK action regression.
+            </td>
+          </tr>
+          <tr>
+            <td>KSF-012 · P2 · Lookup diagnostics</td>
+            <td>
+              The first host lookup error survives the worker's consequent template error. A denied lookup retains the sanitized forbidden
+              category.
+            </td>
+          </tr>
+          <tr>
+            <td>KSF-013 · P1 · Preview resource identity</td>
+            <td>
+              With no eligible CRDs, install preview passes the original reader to Helm. When deferring a CR, retained documents keep their
+              original bytes; filtered List children use Kubernetes YAML-to-JSON semantics and exact JSON numbers. Date-named ConfigMaps and
+              a large List integer passed the failing-then-passing regression.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <h2>Limits and unrun environments</h2>
+      <p>
+        The local authenticated OCI fixture does not establish compatibility with every cloud registry or OAuth provider. No cloud cluster,
+        Windows/Linux package, notarization or release publication was tested. Charts must include dependencies and self-contained standard
+        JSON Schema; values reject aliases and excessive nesting. Content hashes identify pinned bytes, not publishers. Helm preview cannot
+        promise later admission, hook, lookup or time/random outcomes; partial effects can remain after failures and cancellation. Both
+        action renders now execute in a 256 MiB WebAssembly instance with operation-context termination, before bounded output enters the
+        host SDK. This is a linear-memory bound, not an application RSS cap. The generated worker adds approximately 76 MiB to the
+        uncompressed package, and trusted-code compilation took about 20 seconds on the first render in ordinary local tests; compiled code
+        is reused for subsequent instances. Race instrumentation makes that one-time compilation substantially slower.
+      </p>
+      <p>
+        Detailed operational logs and screenshots are archived in ignored
+        <code>.superpowers/sdd/2026-11-17-phase-1e2-helm-management/</code>. The concise checkpoint and plan link this report; the roadmap
+        does not track execution progress.
+      </p>
+    </main>
+  </body>
+</html>

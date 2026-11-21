@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Phase 1E.3 current metrics validation · KubeSift</title>
+    <link rel="stylesheet" href="../../assets/planning.css" />
+    <script src="../../assets/theme.js"></script>
+  </head>
+  <body>
+    <aside class="rail">
+      <a class="skip" href="#content">Skip to content</a
+      ><a class="mark" href="../../index.html"><span class="mark-name">KubeSift</span><span class="mark-sub">Planning</span></a>
+      <h2>Index</h2>
+      <a href="../../index.html">Planning index</a>
+      <h2>Product</h2>
+      <a href="../../product/requirements.html">Requirements</a><a href="../../product/feature-matrix.html">Capabilities</a>
+      <h2>Architecture</h2>
+      <a href="../../architecture/overview.html">Overview</a><a href="../../architecture/decisions.html">Decisions</a>
+      <h2>Safeguards</h2>
+      <a href="../../security/security-model.html">Security and AI</a>
+      <h2>Delivery</h2>
+      <a href="../../roadmap/roadmap.html">Roadmap</a><a href="../../ux/workflows.html">UX workflows</a
+      ><a href="../../ux/mocks/index.html">Mockups</a>
+      <h2>Engineering</h2>
+      <a href="../../engineering/engineering.html">Playbook</a><a href="../../engineering/local-development.html">Local development</a
+      ><a href="../../engineering/toolchain.html">Toolchain</a
+      ><a href="../../engineering/kubernetes-development.html">Kubernetes references</a>
+      <h2>Superpowers</h2>
+      <a href="../../superpowers/specs/2026-11-05-kubesift-design.md">Design specification</a
+      ><a href="../../superpowers/plans/README.html">Plans</a
+      ><a href="../../superpowers/validation/index.html" aria-current="page">Validation</a
+      ><a href="../../superpowers/evidence/index.html">Evidence</a>
+    </aside>
+
+    <header>
+      <a href="../../index.html">KubeSift / Planning</a>
+      <h1>Phase 1E.3 current metrics validation</h1>
+    </header>
+    <main id="content">
+      <p>
+        Implementation from <code>a947d9b</code> on <code>feature/phase-1e3-current-metrics</code>, 19 November 2026. See the
+        <a href="../specs/2026-11-19-phase-1e3-current-metrics-design.md">approved design</a> and
+        <a href="../plans/2026-11-19-phase-1e3-current-metrics.md">four-task plan</a>. All four tasks are complete.
+        <a href="https://github.com/sandjaie/KubeSift/pull/27">PR #27</a> squash-merged into <code>develop</code> as
+        <code>84a12f9b8a83e3327d445ea3c90003b4e640a186</code> on 19 November 2026.
+      </p>
+      <h2>Automated evidence</h2>
+      <p>
+        The projection and native reader groups passed after witnessed failing checks. Coverage includes tiny and zero CPU, exact large
+        memory sums, missing values and denominators, above-request usage, running sidecar/ephemeral coverage, completed init exclusion from
+        required coverage, unknown/duplicate containers, Pod budgets, Node allocatable, timestamp/window rejection, UID replacement,
+        v1/v1beta1, missing/denied/unavailable APIs, shared discovery caching, response/container/target/bridge bounds and shared
+        four-worker/two-batch cancellation. Four mounted frontend tests cover latest identity, sequential splitting, completion-based
+        polling, native cancellation/re-entry, sample aging, partial and unavailable presentation, transient retention, immediate refresh
+        and denial clearing. Full repository checks passed, including go test ./..., go vet ./..., 127 frontend tests in 35 files, lint,
+        types, source descriptions, documentation links and binding normalization. Native race checks, wails3 task bindings, npm run build
+        and wails3 task package passed. The final executable SHA-256 was 35db420651a2b4cfc6efdb43272577a89b2a6e1b43dc764307e0d62bb1f8eaac.
+        Existing macOS deployment-target linker warnings remained non-fatal.
+      </p>
+      <h2>Live local evidence</h2>
+      <p>
+        Only <code>kind-dev-local-a</code> and <code>kind-dev-local-b</code> were accessed, each with an explicit context and isolated
+        configuration. Both servers report Kubernetes <code>v1.37.0</code>. Initial discovery found no Metrics API on either. A received an
+        explicit development fixture; B retained its absent-provider state. The shipped application has no provider setup path or extra
+        dependency.
+      </p>
+      <p>
+        The opt-in <code>TestCurrentMetrics</code> passed. A read-only loopback recorder captured the same real sample returned to the
+        native reader; rational comparisons matched Pod and Node CPU/memory exactly. One captured Pod sample was <code>0m</code>,
+        <code>405504</code> bytes at <code>2026-11-19T11:44:57+04:00</code>; a Node sample was <code>260.484068m</code>,
+        <code>1774043136</code> bytes at <code>11:45:14+04:00</code>, served by <code>metrics.k8s.io/v1beta1</code>. Same-name Pods had
+        distinct UIDs on A/B. A namespace-limited synthetic reader could GET the Pod but received metrics Forbidden. B returned
+        unsupported/absent API while ordinary Pod reads succeeded.
+      </p>
+      <p>
+        Independent <code>kubectl --context kind-dev-local-a top</code> output rounded both pause containers to <code>0m / 0Mi</code> and
+        the Node to <code>261m / 1691Mi</code>. These are differently timed, rounded samples; they are not claimed to be simultaneous exact
+        comparisons. Rare malformed/partial/old samples were checked deterministically, not claimed as live provider output.
+      </p>
+      <h2>Development provider provenance</h2>
+      <p>
+        The <a href="../../../tests/fixtures/metrics/README.html">opt-in fixture</a> pins the upstream
+        <a href="https://github.com/kubernetes-sigs/metrics-server/releases/tag/v0.8.1">Metrics Server 0.8.1 release</a> manifest checksum
+        and image digest. The upstream
+        <a href="https://github.com/kubernetes-sigs/metrics-server/blob/master/README.md#compatibility-matrix">compatibility matrix</a>
+        lists Kubernetes 1.31+ for 0.8.x. Fixture guards passed: unsupported context, pre-existing collision and replacement UID cleanup all
+        refuse mutation. Owned resource UIDs, including cluster RBAC and APIService, were recorded before cleanup.
+      </p>
+      <p>
+        The initial provider could not pull the pinned image: kind lacked the registry CA; laptop Docker then received a Zscaler 403 on
+        registry blob downloads, including official regional backing registries. The initial integration run failed while the provider was
+        unready. An explicit local development substitution used the official Linux arm64 release binary, verified against its published
+        SHA-256 <code>0a3a052c44111dd0cc4ee86729d1eb621dd12b064f4dfb92e012d420ef0fd06f</code>, in a non-root scratch image. The loaded image
+        was <code>kubesift-metrics-fixture:v0.8.1-0a3a052c4411</code>, manifest-list digest
+        <code>sha256:3c8a5bdb9b65483799e2769ccf545c42be7c916c419a7397edcb5288d759d380</code>. Only the recorded Deployment was patched, with
+        a UID test. Its <code>--kubelet-insecure-tls</code> flag is fixture-only; application TLS and credential guards were unchanged. The
+        real integration rerun then passed.
+      </p>
+      <h2>Packaged desktop evidence</h2>
+      <p>
+        The agent exercised the packaged arm64 macOS application through native computer use. Pod totals and two container comparisons
+        showed real zero CPU, binary memory and request/limit labels. Node table/Overview showed allocatable comparisons. Light/wide and
+        dark/wide/compact screenshots were observed in the execution chat; compact native half-screen layout used the existing stacked split
+        and wrapping. Refresh, namespace/context changes, Settings return, retained sample staleness, and YAML inspection alongside
+        absent/denied metrics were exercised. B never displayed A's sample. The restricted desktop showed
+        <q>Kubernetes denied this metrics read.</q> while the Pod stayed connected and readable.
+      </p>
+      <p>
+        A temporary authenticated loopback TLS recorder forwarded only GETs to explicit A, with private fixture credentials. Delayed named
+        metrics requests produced real socket cancellation records, including <code>1795075989.480793 → 1795075991.845797</code> on the
+        final package, and earlier <code>1795075040.818844 → 1795075043.484762</code> and
+        <code>1795075079.650176 → 1795075080.266014</code> Unix seconds on background/re-entry. Native hiding stopped requests; re-entry
+        initiated fresh reads instead of a timer backlog. The initial desktop run found hidden-window sample clearing, which was corrected
+        and regression checked. The final lifecycle refinement retains native visibility across pane unmounts, preserves background status
+        across occlusion/wake events, and keeps displayed age advancing without polling.
+      </p>
+      <h2>Independent PR review</h2>
+      <p>
+        A fresh <code>/root/phase1e3_pr_review</code> reviewer used the repository code-review skill against the complete 30-file candidate
+        <code>9c86808b9351fb3f0f0d5a86dd6ad4d90fd0a78c</code>, with target/base/merge-base <code>origin/develop</code> at
+        <code>a947d9b7b37bbc9ba93e3e8500d57e3fe6fe6f52</code>. The initial verdict identified two blockers and one minor presentation gap.
+        All three were confirmed against the approved specification and fixed:
+      </p>
+      <ul>
+        <li>
+          <strong>KSF-001 · P2:</strong> Caller-cancelled discovery is discarded; live waiting callers retry instead of inheriting a
+          one-minute cancellation cache. The delayed discovery cancellation/re-entry regression failed before the fix and passed afterward,
+          including race checks.
+        </li>
+        <li>
+          <strong>KSF-002 · P2:</strong> Node cells now show explicitly labelled allocatable percentages, with Pod cells remaining
+          absolute-only. A mounted cell assertion failed before the fix and passed afterward. The rebuilt native desktop showed CPU/memory
+          percentages in the actual Node table.
+        </li>
+        <li>
+          <strong>KSF-003 · P3:</strong> Overview now labels the original sample's last fetch timestamp, including when retaining Last
+          sample. The mounted assertion and rebuilt desktop provenance check passed.
+        </li>
+      </ul>
+      <p>
+        After these fixes, the complete repository checks (127 frontend tests), native reader/projection and race checks, real A/B
+        integration, packaging and targeted native desktop checks passed. The review-fix live sample comparison recorded a Pod at
+        <code>0m / 413696 bytes</code> and Node at <code>628.272614m / 1761210368 bytes</code>; the separately timed desktop showed both
+        labelled allocatable percentages and Last fetched. The same reviewer verified the complete six-file fix delta and affected callers
+        at <code>d84c97d580244b682e94f13d19df8beecc79d7f3</code>, independently reran the native projection/reader and four frontend tests,
+        inspected final evidence and returned no blocking findings or new findings. This targeted follow-up completes the one whole-PR
+        review.
+      </p>
+      <h2>Cleanup, review and delivery</h2>
+      <p>
+        Final packaged Pod/container recheck and the live integration rerun passed. Closing the connection returned to zero open contexts
+        and cleared resource evidence; a separately captured pending-request disconnect cancellation was not observed, so the native
+        cancellation/capacity test supplies that in-flight check. All recorded provider objects, including cluster RBAC/APIService, and both
+        owned workload namespaces were deleted with UID preconditions and independently verified absent. The local recording proxy stopped
+        and temporary private credentials were removed. The ready PR was verified mergeable with no unresolved remote reviews or threads.
+        Feature-to-develop CI is intentionally not configured; required local checks and independent review passed. PR #27 then
+        squash-merged the exact reviewed head into develop. Phase 1E.3 is complete for its approved scope. Detailed command outputs,
+        temporary recorder source, ownership evidence and progress remain only under ignored
+        <code>.superpowers/sdd/2026-11-19-phase-1e3-current-metrics/</code>.
+      </p>
+      <h2>Limits</h2>
+      <p>
+        Physical machine sleep/resume, a separately captured in-flight desktop disconnect cancellation and other operating systems were not
+        exercised; native re-entry and deterministic wake/cancellation paths were checked. No per-container runtime restart identity is
+        claimed: Kubernetes metrics often omit UID/runtime ID, so the current core UID and sample interval provide the documented name-reuse
+        guard. There are no historical metrics or new graphs. No release was produced.
+      </p>
+    </main>
+  </body>
+</html>

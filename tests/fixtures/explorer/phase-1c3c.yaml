@@ -1,0 +1,102 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kubesift-config-check
+  labels:
+    kubesift.dev/fixture: phase1c3c
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: fixture-quota
+  namespace: kubesift-config-check
+spec:
+  hard:
+    pods: "4"
+    configmaps: "8"
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: fixture-limits
+  namespace: kubesift-config-check
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 10m
+        memory: 8Mi
+      max:
+        cpu: 1
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fixture-config
+  namespace: kubesift-config-check
+data:
+  empty: ""
+  text: |
+    Unicode ☃
+    <script>literal</script>
+binaryData:
+  bytes: AP8=
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: fixture-secret
+  namespace: kubesift-config-check
+  annotations:
+    example.invalid/synthetic: SYNTHETIC-ANNOTATION-SENTINEL
+type: Opaque
+stringData:
+  sample: SYNTHETIC-CONTENT-SENTINEL
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: fixture-config-pod
+  namespace: kubesift-config-check
+spec:
+  automountServiceAccountToken: false
+  containers:
+    - name: main
+      image: registry.k8s.io/pause:3.10
+      resources:
+        requests:
+          cpu: 10m
+          memory: 8Mi
+      env:
+        - name: TEXT
+          valueFrom:
+            configMapKeyRef:
+              name: fixture-config
+              key: text
+      envFrom:
+        - secretRef:
+            name: fixture-secret
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: fixture-config-reader
+  namespace: kubesift-config-check
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: fixture-config-reader
+  namespace: kubesift-config-check
+subjects:
+  - kind: User
+    apiGroup: rbac.authorization.k8s.io
+    name: kubesift-phase1c3c-reader
+roleRef:
+  kind: Role
+  apiGroup: rbac.authorization.k8s.io
+  name: fixture-config-reader

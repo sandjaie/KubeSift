@@ -11,6 +11,9 @@
     <aside class="rail">
       <a class="skip" href="#content">Skip to content</a
       ><a class="mark" href="../../index.html"><span class="mark-name">KubeSift</span><span class="mark-sub">Planning</span></a>
+      <h2>Approved application icon · 18 November 2026</h2>
+      <p><a href="../../../build/branding/kubesift.svg">Canonical segmented-cube SVG</a>, recreated from the user-selected reference.</p>
+      <img src="../../../build/branding/kubesift.svg" alt="KubeSift white segmented cube on charcoal" width="128" height="128" />
       <h2>Index</h2>
       <a href="../../index.html">Planning index</a>
       <h2>Product</h2>
@@ -24,9 +27,12 @@
       ><a href="../../ux/mocks/index.html" aria-current="page">Mockups</a>
       <h2>Engineering</h2>
       <a href="../../engineering/engineering.html">Playbook</a><a href="../../engineering/local-development.html">Local development</a
-      ><a href="../../engineering/toolchain.html">Toolchain</a>
-      <h2>Working</h2>
-      <a href="../../superpowers/validation/phase-1a.html">Phase 1A validation</a>
+      ><a href="../../engineering/toolchain.html">Toolchain</a
+      ><a href="../../engineering/kubernetes-development.html">Kubernetes references</a>
+      <h2>Superpowers</h2>
+      <a href="../../superpowers/specs/2026-11-05-kubesift-design.md">Design specification</a
+      ><a href="../../superpowers/plans/README.html">Plans</a><a href="../../superpowers/validation/index.html">Validation</a
+      ><a href="../../superpowers/evidence/index.html">Evidence</a>
     </aside>
     <header>
       <a href="../workflows.html">KubeSift / UX specification</a>
@@ -37,6 +43,30 @@
       <p>
         The selected layout combines the resource explorer and evidence-based right-side AI panel. AI remains Phase 2. These static
         references guide visual implementation; behavior is owned by the <a href="../workflows.html">UX specification</a>.
+      </p>
+      <p>
+        The 12 November Phase 1C.2 UAT refinement adds desktop-work-area maximization on launch and aligned inventory pagination, and
+        removes the inventory capture timestamp. The <a href="../workflows.html">UX specification</a> owns these changes; earlier captures
+        below predate this refinement.
+      </p>
+      <h2 id="workload-refinement">Accepted workload detail direction · 13 November</h2>
+      <p>
+        The user accepted the following synthetic mockups as the detail redesign direction. They are illustrative, not runtime evidence. The
+        <a href="../../superpowers/specs/2026-11-13-workload-explorer-refinement-design.md">written specification</a> governs behavior, edge
+        states and the additional ReplicaSets scope. Logs is outside these mockups.
+      </p>
+      <ul>
+        <li>
+          <a href="workload-refinement/events.html">Interactive Events mockup</a> and <a href="workload-refinement/events.png">capture</a>.
+        </li>
+        <li>
+          <a href="workload-refinement/resource-tabs.html">Interactive Pod/Deployment Overview, YAML and Pods mockups</a>
+          and <a href="workload-refinement/overview.png">Overview capture</a>. Switch the sample resource to Deployment for its Pods tab.
+        </li>
+      </ul>
+      <p>
+        Search and navigation in these prototypes are illustrative. No cluster access, application implementation or native acceptance is
+        implied.
       </p>
       <h2>Current approved mock · Compact workspace</h2>
       <p>

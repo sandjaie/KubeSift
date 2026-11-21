@@ -125,17 +125,17 @@ export function useConnections() {
       }
     }
   }
-  async function readPods(key: string, namespace: string) {
+  async function selectNamespace(key: string, namespace: string) {
     const t = current.current.tabs[key];
-    if (!t?.view?.ref) return;
+    if (!t?.view?.ref || t.namespace === namespace) return;
     commit({ type: "namespace", key, namespace });
     const epoch = current.current.tabs[key].epoch;
     try {
-      const view = await api.ReadPods(t.view.ref, namespace);
+      const view = await api.SetWorkloadNamespace(t.view.ref, namespace);
       commit({ type: "snapshot", key, epoch, view });
       await poll();
     } catch (e) {
-      commit({ type: "failure", key, request: t.request, error: message(e) });
+      if (current.current.tabs[key]?.epoch === epoch) commit({ type: "failure", key, request: t.request, error: message(e) });
     }
   }
   return {
@@ -149,7 +149,7 @@ export function useConnections() {
     },
     cancel,
     disconnect: cancel,
-    readPods,
+    selectNamespace,
     poll,
   };
 }

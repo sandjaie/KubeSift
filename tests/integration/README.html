@@ -14,4 +14,134 @@
     ./tests/integration -run TestExplorerConnections. Configurations must refer only to the approved loopback clusters; credentials remain
     ignored.
   </p>
+  <p>
+    workloads_test.go exercises read-only workload investigation and Pod log snapshot/follow cleanup. Use KUBESIFT_EXPLORER_INTEGRATION=1
+    and absolute KUBESIFT_EXPLORER_CONFIG_DIR with a.kubeconfig and b.kubeconfig, then go test -tags=integration ./tests/integration -run
+    TestWorkloadInvestigation -count=1. Only kind-dev-local-a/b loopback endpoints are accepted.
+  </p>
+  <p>
+    networking_test.go uses the same isolated A/B files plus restricted.kubeconfig to verify the existing Service, Ingress, NetworkPolicy
+    and controller-generated EndpointSlice fixtures. Run TestNetworkingInvestigation with the same integration tag and opt-in. Restricted
+    credentials must have the fixture pod-reader rights only; requests check reads, with no fixture writes.
+  </p>
+  <p>
+    TestConfigurationInvestigation uses the same explicit A/B kubeconfigs plus configuration-restricted.kubeconfig for the ConfigMap-only
+    identity in the isolated Phase 1C.3c namespace. Use the fixture manifest in the explorer fixture directory.
+  </p>
+  <p>
+    Keep the synthetic scheduled-job CronJob suspended. Before workload validation, create one temporary Job and let it create a Pod in each
+    context using the commands below. The generated Job carries the actual CronJob controller UID. Remove the exact fixture after
+    verification and leave the other fixtures in place.
+  </p>
+  <pre><code>for context in kind-dev-local-a kind-dev-local-b; do
+  kubectl --context "$context" -n kubesift-explorer create job phase1c3a-retained-job \
+    --from=cronjob/scheduled-job --dry-run=client -o json |
+    python3 -c 'import json,sys; j=json.load(sys.stdin); j["metadata"].setdefault("labels", {})["kubesift.dev/fixture"]="phase1c3a-validation"; j["spec"]["activeDeadlineSeconds"]=90; print(json.dumps(j))' |
+    kubectl --context "$context" -n kubesift-explorer create -f - || exit 1
+  kubectl --context "$context" -n kubesift-explorer wait --for=condition=complete \
+    job/phase1c3a-retained-job --timeout=120s || exit 1
+done
+
+# After validation
+for context in kind-dev-local-a kind-dev-local-b; do
+  kubectl --context "$context" -n kubesift-explorer delete jobs \
+    -l 'kubesift.dev/fixture=phase1c3a-validation' \
+    --field-selector metadata.name=phase1c3a-retained-job || exit 1
+done</code></pre>
+  <p>
+    TestStorageInvestigation uses the same explicit A/B files plus storage-restricted.kubeconfig, using the kubesift-phase1c3d-reader
+    identity on A. Create the collision-checked phase-1c3d.yaml fixtures in both contexts before running; the test itself only reads. No CSI
+    resources are required.
+  </p>
+  <p>
+    TestAccessControlInvestigation uses the explicit A/B configurations and access-restricted.kubeconfig on A, with the synthetic
+    fixture-reader ServiceAccount identity. Apply the owned Phase 1C.3e fixture first. The test performs only inventory, detail, Events and
+    explicit reference reads.
+  </p>
+  <p>
+    TestAvailabilityInvestigation uses the same explicit A/B files plus availability-restricted.kubeconfig on A, with the fixture-reader
+    ServiceAccount in kubesift-availability-check. Apply the collision-checked Phase 1C.3f fixture first. The suite only reads and does not
+    require metrics-server.
+  </p>
 </html>
+<p>
+  TestClusterDiscovery uses the same explicit A/B configurations and discovery-restricted.kubeconfig on A. Create the owned
+  <a href="../fixtures/explorer/phase-1c3g.json">Phase 1C.3g fixture</a> with kubectl create on the two approved contexts after checking
+  names are unused. Wait for the two CRDs to be Established, then create a Widget named sample with spec.count 9007199254740993 in each
+  scope. Create discovery-event in kubesift-discovery-check with the actual discovery-pod UID as its regarding reference. Use the synthetic
+  fixture-reader identity for restricted reads. Delete the two owned Widgets before deleting the CRDs and verify the namespace and cluster
+  fixture names are absent afterward.
+</p>
+
+<p>
+  TestReviewedScaling is opt in with <code>KUBESIFT_SCALING_INTEGRATION=1</code> and the same isolated config directory. On the two approved
+  kind contexts create the collision-checked <a href="../fixtures/explorer/phase-1d1.yaml">scaling fixtures</a>, wait for both workloads to
+  settle, and supply <code>a.kubeconfig</code>, <code>b.kubeconfig</code> plus <code>-reader</code> and <code>-writer</code> variants for
+  each. Impersonate the fixture reader and writer users from the manifest. For the writer set impersonated group
+  <code>system:unauthenticated</code> to exercise a denied permission hint with an admissible dry-run. The scoped loopback proxy changes
+  only the owned Deployment version or drops its write response. Delete the owned namespace and temporary kubeconfigs after verification.
+</p>
+
+<p>
+  <code>TestReviewedRestart</code> uses <code>KUBESIFT_RESTART_INTEGRATION=1</code> and the same isolated directory. On both approved kind
+  contexts, inspect node placement and create the collision-checked <a href="../fixtures/explorer/phase-1d2.json">restart fixtures</a>. Wait
+  for the three reviewed controllers and the Recreate Deployment to settle. Add <code>-restart-reader</code> and
+  <code>-restart-writer</code> kubeconfig variants for A and B using the matching users from the manifest. Impersonate
+  <code>system:unauthenticated</code> for the writer to verify an inaccessible permission hint. Run
+  <code>go test -tags=integration ./tests/integration -run '^TestReviewedRestart$' -count=1 -v</code>. The test replaces only owned
+  controllers in the dedicated namespace and checks stale UID and version preconditions independently. Delete the owned namespace and
+  temporary kubeconfigs after verification.
+</p>
+
+<p>
+  <code>TestReviewedDeletion</code> uses <code>KUBESIFT_DELETION_INTEGRATION=1</code> and the same isolated A/B kubeconfig directory. Run
+  <code>go test -tags=integration ./tests/integration -run '^TestReviewedDeletion$' -count=1 -v</code>. The test creates and cleans up a
+  unique labeled namespace per approved context. It covers all eight kinds, controlled read and delete permission hints, late version and
+  UID races, and actual background cleanup of representative dependents. The Deployment and CronJob descendants use the fixture image
+  already available in local kind. StatefulSet fixtures use no claim templates.
+</p>
+
+<p>
+  Enable <code>TestYAMLEditing</code> with <code>KUBESIFT_EDIT_INTEGRATION=1</code> and the same isolated A/B kubeconfig directory. Run
+  <code>go test -tags=integration ./tests/integration -run '^TestYAMLEditing$' -count=1 -v</code>. The test uses the installed explorer
+  Widget API and creates its own disposable namespace and objects in each approved context. Cleanup removes those namespaces by UID.
+</p>
+
+<p>
+  Enable <code>TestWorkloadRollback</code> with <code>KUBESIFT_ROLLBACK_INTEGRATION=1</code> and the isolated A/B kubeconfig directory. Run
+  <code>go test -tags=integration ./tests/integration -run '^TestWorkloadRollback$' -count=1 -v</code>. Each approved context gets a unique
+  <code>kubesift.dev/fixture=phase1d5-validation</code> namespace. The test waits for real retained history for the three controllers,
+  verifies dry-run, stale version rejection, template acceptance and preservation of non-template settings, then removes its namespace by
+  UID. It uses zero replicas or a node selector that matches no fixture nodes; Pod convergence is not tested.
+</p>
+
+<p>
+  Enable <code>TestInteractiveSessions</code> with <code>KUBESIFT_INTERACTIVE_INTEGRATION=1</code> and the isolated A/B kubeconfig
+  directory. Run <code>go test -tags=integration ./tests/integration -run '^TestInteractiveSessions$' -count=1 -v</code>. It creates the
+  <a href="../fixtures/explorer/phase-1d6.yaml">interactive fixture Pods and Service</a> in unique labeled namespaces and removes them by
+  UID. It verifies actual exec input/resize, fixed Pod/Service TCP responses, occupied local ports and listener cleanup.
+</p>
+
+<p>
+  Enable <code>TestYAMLCreation</code> with <code>KUBESIFT_CREATE_INTEGRATION=1</code> and the isolated A/B kubeconfig directory. Run
+  <code>go test -tags=integration ./tests/integration -run '^TestYAMLCreation$' -count=1 -v</code>. It provisions one isolated namespace and
+  disposable custom API per approved context. It covers dry-run non-persistence, namespaced and cluster-scoped creation, Secret stringData,
+  late name collisions, create-only access, and denied dry-run. Cleanup uses fixture identities.
+</p>
+
+<p>
+  Enable <code>TestExistingApplyProtocol</code> and <code>TestYAMLApply</code> with <code>KUBESIFT_APPLY_INTEGRATION=1</code> and the
+  isolated A/B kubeconfig directory. Run
+  <code>go test -tags=integration ./tests/integration -run '^Test(ExistingApplyProtocol|YAMLApply)$' -count=1 -v</code>. The protocol test
+  checks real UID/version/deletion rejection even when force is set. The service test checks ownership-only changes, conflicts and explicit
+  takeover, omission, read-only denial, Secret normalization and custom/cluster-scoped objects. Both suites create their own fixtures on the
+  two approved contexts and remove them by UID. Run these sequentially with <code>TestYAMLCreation</code> because they use the same
+  task-owned fixture CRD name.
+</p>
+
+<p>
+  Enable <code>TestHelmInspection</code> with <code>KUBESIFT_HELM_INTEGRATION=1</code>, the isolated A/B kubeconfigs and the fixture
+  variables described in <a href="../fixtures/helm/README.md">the Helm chart fixture</a>. The test uses both approved contexts and reads
+  task-owned releases and denied storage variants. It verifies retained revisions and historical sections, driver isolation, exact-name
+  filtering, the current-resource link and Kubernetes List denial.
+</p>

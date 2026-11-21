@@ -1,0 +1,108 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kubesift-storage-check
+  labels:
+    kubesift.dev/fixture: phase1c3d-validation
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: kubesift-phase1c3d-static
+  labels:
+    kubesift.dev/fixture: phase1c3d-validation
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Retain
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: kubesift-phase1c3d-volume
+  labels:
+    kubesift.dev/fixture: phase1c3d-validation
+spec:
+  storageClassName: kubesift-phase1c3d-static
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  claimRef:
+    namespace: kubesift-storage-check
+    name: bound-claim
+  hostPath:
+    path: /kubesift-phase1c3d-unused
+    type: Directory
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: bound-claim
+  namespace: kubesift-storage-check
+spec:
+  storageClassName: kubesift-phase1c3d-static
+  volumeName: kubesift-phase1c3d-volume
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pending-claim
+  namespace: kubesift-storage-check
+spec:
+  storageClassName: kubesift-phase1c3d-static
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: storage-reference
+  namespace: kubesift-storage-check
+spec:
+  schedulingGates:
+    - name: kubesift.dev/never-schedule
+  containers:
+    - name: main
+      image: registry.k8s.io/pause:3.10
+      volumeMounts:
+        - name: fixture
+          mountPath: /evidence
+          readOnly: true
+  volumes:
+    - name: fixture
+      persistentVolumeClaim:
+        claimName: bound-claim
+        readOnly: true
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: fixture-storage-reader
+  namespace: kubesift-storage-check
+rules:
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: fixture-storage-reader
+  namespace: kubesift-storage-check
+subjects:
+  - kind: User
+    apiGroup: rbac.authorization.k8s.io
+    name: kubesift-phase1c3d-reader
+roleRef:
+  kind: Role
+  apiGroup: rbac.authorization.k8s.io
+  name: fixture-storage-reader

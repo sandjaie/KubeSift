@@ -101,7 +101,7 @@ func TestLocalValidation(t *testing.T) {
 		}
 	})
 	sessions.SetValidate(func(target model.Target) error { return connections.Validate(target.Connection) })
-	connections.SetCleanup(sessions.StopConnection)
+	connections.AddCleanup(sessions.StopConnection)
 	defer func() { connections.CloseAll(); sessions.Close() }()
 	service := kube.NewService(connections, sessions)
 	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)

@@ -58,15 +58,15 @@ type Manager struct {
 	gate    AuthGate
 	entries map[string]*entry
 	keys    map[string]string
-	cleanup func(model.ConnectionRef)
+	cleanup []func(model.ConnectionRef)
 }
 
 func NewManager(gate AuthGate) *Manager {
 	return &Manager{gate: gate, entries: map[string]*entry{}, keys: map[string]string{}}
 }
-func (m *Manager) SetCleanup(fn func(model.ConnectionRef)) {
+func (m *Manager) AddCleanup(fn func(model.ConnectionRef)) {
 	m.mu.Lock()
-	m.cleanup = fn
+	m.cleanup = append(m.cleanup, fn)
 	m.mu.Unlock()
 }
 func (m *Manager) Open(ctx context.Context, r config.Resolved) (model.ConnectionRef, error) {
@@ -105,8 +105,10 @@ func (m *Manager) Open(ctx context.Context, r config.Resolved) (model.Connection
 	m.entries[id] = &entry{ref, r, owned, cancel}
 	cleanup := m.cleanup
 	m.mu.Unlock()
-	if old.ID != "" && cleanup != nil {
-		cleanup(old)
+	if old.ID != "" {
+		for _, notify := range cleanup {
+			notify(old)
+		}
 	}
 	return ref, nil
 }
@@ -201,8 +203,8 @@ func (m *Manager) Close(ref model.ConnectionRef) error {
 	e.cancel()
 	cleanup := m.cleanup
 	m.mu.Unlock()
-	if cleanup != nil {
-		cleanup(ref)
+	for _, notify := range cleanup {
+		notify(ref)
 	}
 	return nil
 }
@@ -269,3 +271,21 @@ func (m *Manager) StreamConfig(ctx context.Context, ref model.ConnectionRef) (*r
 }
 
 func (m *Manager) Validate(ref model.ConnectionRef) error { _, err := m.lookup(ref); return err }
+
+// ContextName returns the trusted display name for a live generation.
+func (m *Manager) ContextName(ref model.ConnectionRef) (string, error) {
+	entry, err := m.lookup(ref)
+	if err != nil {
+		return "", err
+	}
+	return entry.resolved.Name(), nil
+}
+
+// Lifetime returns the cancellation scope of an exact connection generation.
+func (m *Manager) Lifetime(ref model.ConnectionRef) (context.Context, error) {
+	e, err := m.lookup(ref)
+	if err != nil {
+		return nil, err
+	}
+	return e.ctx, nil
+}

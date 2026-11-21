@@ -1,0 +1,162 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kubesift-access-check
+  labels:
+    kubesift.dev/fixture: phase1c3e-validation
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kubesift-access-subject
+  labels:
+    kubesift.dev/fixture: phase1c3e-validation
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: fixture-reader
+  namespace: kubesift-access-check
+automountServiceAccountToken: false
+imagePullSecrets:
+  - name: synthetic-image-reference
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: fixture-subject
+  namespace: kubesift-access-subject
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: access-reference
+  namespace: kubesift-access-check
+spec:
+  serviceAccountName: fixture-reader
+  automountServiceAccountToken: false
+  schedulingGates:
+    - name: kubesift.dev/never-schedule
+  containers:
+    - name: main
+      image: registry.k8s.io/pause:3.10
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kubesift:fixture:local
+  namespace: kubesift-access-check
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    resourceNames: ["synthetic-evidence"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    resourceNames: ["access-reference"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kubesift:fixture:local-binding
+  namespace: kubesift-access-check
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: kubesift:fixture:local
+subjects:
+  - kind: ServiceAccount
+    name: fixture-reader
+  - kind: ServiceAccount
+    name: fixture-subject
+    namespace: kubesift-access-subject
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kubesift:fixture:phase1c3e-member
+  labels:
+    kubesift.dev/fixture: phase1c3e-validation
+    kubesift.dev/phase1c3e-aggregate: owned-member
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    resourceNames: ["synthetic-evidence"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kubesift:fixture:phase1c3e-aggregate
+  labels:
+    kubesift.dev/fixture: phase1c3e-validation
+aggregationRule:
+  clusterRoleSelectors:
+    - matchLabels:
+        kubesift.dev/phase1c3e-aggregate: owned-member
+    - matchExpressions:
+        - key: kubesift.dev/phase1c3e-aggregate
+          operator: In
+          values: ["second-owned-member"]
+rules: []
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kubesift:fixture:cluster-role-binding
+  namespace: kubesift-access-check
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kubesift:fixture:phase1c3e-aggregate
+subjects:
+  - kind: ServiceAccount
+    name: fixture-subject
+    namespace: kubesift-access-subject
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kubesift:fixture:phase1c3e-cluster-binding
+  labels:
+    kubesift.dev/fixture: phase1c3e-validation
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kubesift:fixture:phase1c3e-member
+subjects:
+  - kind: ServiceAccount
+    name: fixture-subject
+    namespace: kubesift-access-subject
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kubesift:fixture:restricted
+  namespace: kubesift-access-check
+rules:
+  - apiGroups: [""]
+    resources: ["serviceaccounts"]
+    verbs: ["get", "list"]
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources: ["rolebindings"]
+    verbs: ["get", "list"]
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources: ["roles"]
+    verbs: ["list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kubesift:fixture:restricted
+  namespace: kubesift-access-check
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: kubesift:fixture:restricted
+subjects:
+  - kind: ServiceAccount
+    name: fixture-reader
+    namespace: kubesift-access-check

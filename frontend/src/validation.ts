@@ -4,7 +4,7 @@ Used by: Terminal and the explicit packaged renderer validation profile.
 Responsibilities: Exclude echoed command text from RTT timing and bound pending samples/output.
 Important: Send only a fixed synthetic printf probe to an explicit session; never replay or expose a local command runner.
 */
-import { Service } from "../bindings/github.com/sandjaie/KubeSift/internal/desktop";
+import { Service } from "../bindings/internal/desktop";
 import { encodeBytes, type SessionRef } from "./bridge";
 const ready = new Set<string>();
 let pending: { id: string; marker: string; tail: string; start: number; done: (value: number) => void } | undefined;

@@ -3,7 +3,7 @@
   <meta charset="utf-8" /><title>Explorer fixtures</title>
   <h1>Explorer fixtures</h1>
   <p>
-    inventory.json defines 26 owned objects per cluster, including the kubesift-explorer namespace and widgets.explorer.kubesift.dev CRD.
+    inventory.json defines 29 owned objects per cluster, including the kubesift-explorer namespace and widgets.explorer.kubesift.dev CRD.
     scripts/dev-clusters.sh --explorer checks collisions before applying to kind-dev-local-a/b only. It never replaces shop/billing or
     creates clusters.
   </p>
@@ -13,7 +13,36 @@
     same-pod markers are local-a and local-b. Broader fixtures do not imply product browsing coverage.
   </p>
   <p>
+    Phase 1C.2 adds init-evidence (completed init container), web-lookalike (Deployment label match without controller ownership), and
+    scaled-zero (zero desired replicas).
+  </p>
+  <p>
     The pod-reader ServiceAccount can only get/list Pods in this namespace. Short-lived token kubeconfigs belong in ignored .local storage,
     never here.
+  </p>
+  <p>
+    Phase 1C.3b uses the existing web Ingress, web and stateful Services, generated EndpointSlices and allow-fixture-network policy on both
+    clusters. The Ingress has no controller. These fixtures exercise configuration and reference identity; they supply no traffic or
+    enforcement evidence. The restricted pod-reader identity is reused without expanding its permissions.
+  </p>
+  <p>
+    Phase 1C.3c uses phase-1c3c.yaml in the separate kubesift-config-check namespace on approved kind contexts. It owns synthetic policy,
+    configuration, Pod references and a ConfigMap-only reader. The Secret contains synthetic sentinels. Remove the owned namespace after
+    verification and leave the existing explorer namespaces in place.
+  </p>
+  <p>
+    phase-1c3d.yaml creates the isolated kubesift-storage-check namespace, a nondefault StorageClass, one Retain PV, Bound and Pending
+    claims, a scheduling-gated Pod, and a PVC-only test identity. Check the namespace, class and volume names for collisions before
+    creation. Delete only these owned objects after verification; never force finalizers or create the host path.
+  </p>
+  <p>
+    phase-1c3e.yaml creates two owned namespaces, narrow synthetic RBAC and a scheduling-gated reference Pod with automount disabled. Check
+    namespace and cluster object names and the private aggregation label for collisions. Cleanup uses the fixture label and exact names;
+    never edit built-in roles.
+  </p>
+  <p>
+    phase-1c3f.json creates an isolated kubesift-availability-check namespace, a fixed-size HPA on its own Deployment, three PDB selector
+    cases, an RC and small StatefulSet and DaemonSet controllers. Check namespace ownership, remove the HPA before controllers, and use
+    ordinary foreground deletion.
   </p>
 </html>

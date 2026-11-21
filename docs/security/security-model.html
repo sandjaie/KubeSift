@@ -24,9 +24,11 @@
       ><a href="../ux/mocks/index.html">Mockups</a>
       <h2>Engineering</h2>
       <a href="../engineering/engineering.html">Playbook</a><a href="../engineering/local-development.html">Local development</a
-      ><a href="../engineering/toolchain.html">Toolchain</a>
-      <h2>Working</h2>
-      <a href="../superpowers/validation/phase-1a.html">Phase 1A validation</a>
+      ><a href="../engineering/toolchain.html">Toolchain</a><a href="../engineering/kubernetes-development.html">Kubernetes references</a>
+      <h2>Superpowers</h2>
+      <a href="../superpowers/index.html">Overview</a><a href="../superpowers/specs/index.html">Specs</a
+      ><a href="../superpowers/plans/README.html">Plans</a><a href="../superpowers/validation/index.html">Validation</a
+      ><a href="../superpowers/evidence/index.html">Evidence</a>
     </aside>
     <header>
       <a href="../index.html">KubeSift / Planning</a>
@@ -116,6 +118,79 @@
           promise confirmation for each shell command.
         </li>
       </ul>
+      <p>
+        The <a href="../superpowers/specs/2026-11-14-phase-1d1-reviewed-scaling-design.md">reviewed scaling specification</a> defines the
+        first product write boundary: fixed Deployment/StatefulSet scale endpoints, advisory permission hints, required server dry-run,
+        native UID/version-bound single-use review and no automatic retry of ambiguous writes. Generic discovery and default Secret browsing
+        remain read-only outside an explicitly reviewed editing flow. Bounded in-memory operation results are session feedback, not durable
+        audit history.
+      </p>
+      <p>
+        The <a href="../superpowers/specs/2026-11-15-phase-1d2-reviewed-restart-design.md">reviewed restart specification</a> limits restart
+        to fixed controller template annotation patches with native UID/version test conditions, mandatory dry-run and no automatic replay.
+        Scale and Restart share target locks and aggregate review/result limits. Full controller responses remain native; only bounded
+        action evidence crosses the bridge.
+      </p>
+      <p>
+        The <a href="../superpowers/specs/2026-11-15-phase-1d3-reviewed-deletion-design.md">reviewed deletion specification</a> restricts
+        deletion to eight fixed workload kinds with server dry-run, UID/version preconditions and typed confirmation. Force, unsafe store
+        deletion, finalizer removal, generic resource deletion and unsafe StatefulSet retention overrides are excluded. Scale, Restart and
+        Delete share native locks and aggregate limits; an uncertain response is never automatically retried.
+      </p>
+      <h2 id="helm-management">Helm management boundary</h2>
+      <p>
+        <a href="../superpowers/specs/2026-11-17-phase-1e2-helm-management-design.md">Phase 1E.2</a> uses Kubernetes authorization for
+        confirmed Helm actions. Preparation performs no cluster writes or hooks; review shows their potential impact and the limits of
+        dry-run evidence. Chart-source credentials are separate from cluster credentials, native, session-only and origin-scoped. Persist no
+        passwords or review payloads. Use trusted TLS, bounded chart decoding and no ambient plugins or executable credential helpers for
+        chart sources. Hooks and prior writes can survive cancellation; report outcomes honestly and do not retry mutations automatically.
+      </p>
+      <p>
+        Chart templates execute in a bundled WebAssembly build of the pinned Helm SDK engine. Each invocation has a 256 MiB linear-memory
+        maximum, operation-context termination and no filesystem, network or process capability. Native code mediates read-only lookup
+        through the captured Kubernetes transport. The 8 MiB rendered-content and stored-release checks remain separate bounds; the
+        renderer's memory cap is not a claim about total application RSS. Compiled trusted code is shared, while chart memory is discarded
+        with each invocation.
+      </p>
+      <h2 id="helm-inspection">Helm inspection boundary</h2>
+      <p>
+        Entering the <a href="../superpowers/specs/2026-11-17-phase-1e1-helm-inspection-design.md">1E.1 Helm view</a> intentionally reads
+        Helm-owned release records using existing namespace/driver permissions. This explicit flow may read Secret-backed release payloads;
+        ordinary Secret browsing remains metadata-only. Keep values, manifests, hooks and notes local and ephemeral, out of diagnostics,
+        persisted history and AI. Do not imply redaction or execute stored content. Never fall back to another storage driver after
+        Forbidden, invoke plugins or access chart repositories during inspection. SDK decoding and reads must obey app cancellation and size
+        limits.
+      </p>
+      <h2 id="interactive-sessions">Interactive session design</h2>
+      <p>
+        The <a href="../superpowers/specs/2026-11-16-phase-1d6-interactive-sessions-design.md">1D.6 specification</a> uses existing
+        Kubernetes permissions for container exec and Pod port forwarding. Start is explicit; individual terminal commands are not dry-run
+        or reviewed mutations. Bind sessions to captured connection/Pod identities and never replay commands or migrate forwards
+        automatically. Forward only TCP to loopback; payloads remain native and terminal content is bounded memory, not diagnostic history.
+        Local laptop shell execution is outside this increment.
+      </p>
+      <h2 id="workload-rollback">Workload rollback design</h2>
+      <p>
+        The <a href="../superpowers/specs/2026-11-16-phase-1d5-workload-rollback-design.md">1D.5 design</a> restores selected owned workload
+        templates through the existing conditional write and dry-run boundary. Kubernetes permissions remain authoritative. Bind parent and
+        revision-source identities to the reviewed patch, reuse shared operation locks and never replay uncertain writes. Restoring a
+        template does not restore referenced Secret/configuration values, change strategy or authorize automatic Pod deletion.
+      </p>
+      <h2 id="reviewed-yaml-editing">Reviewed YAML editing</h2>
+      <p>
+        The <a href="../superpowers/specs/2026-11-16-phase-1d4-reviewed-yaml-editing-design.md">1D.4 design</a> uses the user's existing
+        cluster permissions for editing built-in and discovered resources, including Secrets. Kubernetes RBAC and API validation are
+        authoritative; KubeSift adds no resource allowlist or extra permission approvals. The shared flow is Edit, diff/dry-run review and
+        ordinary confirmation, with UID/version conditions to prevent accidental overwrites. Secret Edit or Reveal YAML explicitly loads
+        authorized content without repeated reveal gates. Payloads remain memory-only and never enter diagnostics, history or AI context.
+      </p>
+      <p>
+        The <a href="../superpowers/specs/2026-11-16-phase-1d-completion-design.md">creation/apply specification</a> extends the approved
+        YAML permission model to advertised built-in and installed APIs. Create uses an explicit-name POST; existing-object apply binds
+        UID/version and fixed field manager, with ownership takeover only when deliberately reviewed. The same address lock spans all
+        operations. Drafts, Secret values and ownership details remain memory-only; retained results contain no manifests. An uncertain
+        write is never replayed automatically.
+      </p>
       <h2>AI availability and provider routing</h2>
       <p>
         AI investigation is available in Phase 2. Application default provider plus per-cluster overrides references profiles stored
@@ -125,6 +200,17 @@
       <p>
         Claude is the first adapter. OpenAI API, OpenRouter and other supported providers follow a provider abstraction; arbitrary API keys
         and consumer subscriptions do not imply compatible APIs or model capabilities.
+      </p>
+      <h2 id="configuration-read-boundary">Configuration read boundary</h2>
+      <p>
+        Planned <a href="../superpowers/specs/2026-11-14-phase-1c3c-configuration-design.md">Phase 1C.3c</a> permits ConfigMap inspection
+        and strictly metadata-only Secret browsing. Secret requests must not fall back to full objects, and arbitrary metadata such as
+        last-applied annotations must not cross the desktop bridge. Secret value reveal, YAML and Events are outside this increment; generic
+        readers must not bypass that boundary. The
+        <a href="../superpowers/specs/2026-11-16-phase-1d4-reviewed-yaml-editing-design.md">1D.4 design</a>
+        adds an explicit Secret reveal/edit exception, without changing default metadata-only browsing. Metadata-only requests still need
+        ordinary Secret permissions. ConfigMap content and metadata can contain sensitive text; keep captures local and ephemeral, out of
+        logs, telemetry and AI submissions.
       </p>
       <h2>Evidence and tool contracts</h2>
       <p>

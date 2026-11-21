@@ -13,12 +13,13 @@ import type { Events } from "@wailsio/runtime";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import type * as model$0 from "../../../../sandjaie/KubeSift/internal/model/models.js";
+import type * as model$0 from "../../../../../internal/model/models.js";
 
 declare module "@wailsio/runtime" {
-    namespace Events {
-        interface CustomEvents {
-            "session": model$0.Event;
-        }
+  namespace Events {
+    interface CustomEvents {
+      "metrics-visibility": boolean;
+      session: model$0.Event;
     }
+  }
 }

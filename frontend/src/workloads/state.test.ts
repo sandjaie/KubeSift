@@ -1,0 +1,533 @@
+/*
+Purpose: Protect independent workload navigation and stale-response rejection.
+Used by: Vitest.
+Responsibilities: Exercise A/B selection, generation invalidation and bounded pagination.
+Important: No native bridge or cluster is used.
+*/
+import { expect, test } from "vitest";
+import { initialWorkloads, reduceWorkloads, emptyKind, canAutoRefresh, inventorySelection } from "./state";
+
+test("A/B kinds retain selection, reject delayed responses and bound cursor history", () => {
+  let state = initialWorkloads();
+  state = reduceWorkloads(state, { type: "scope", tab: "A", scope: "a/1/default" });
+  state = reduceWorkloads(state, { type: "scope", tab: "B", scope: "b/1/default" });
+  state = reduceWorkloads(state, { type: "kind", tab: "B", kind: "Deployment" });
+  state = reduceWorkloads(state, { type: "patch", tab: "A", scope: "a/1/default", kind: "Pod", patch: { filter: "crash", epoch: 2 } });
+  state = reduceWorkloads(state, { type: "response", tab: "A", scope: "a/1/default", kind: "Pod", epoch: 1, patch: { filter: "wrong" } });
+  expect(state.A.kinds.Pod.filter).toBe("crash");
+  expect(state.B.kind).toBe("Deployment");
+  state = reduceWorkloads(state, { type: "scope", tab: "A", scope: "a/2/other" });
+  state = reduceWorkloads(state, { type: "response", tab: "A", scope: "a/1/default", kind: "Pod", epoch: 2, patch: { filter: "wrong" } });
+  expect(state.A.kinds.Pod.filter).toBe("");
+  for (let n = 0; n < 25; n++) state = reduceWorkloads(state, { type: "next", tab: "A", cursor: `page-${n}` });
+  expect(state.A.kinds.Pod.history).toHaveLength(20);
+  expect(canAutoRefresh({ ...emptyKind(), auto: true }, true)).toBe(true);
+  expect(canAutoRefresh({ ...state.A.kinds.Pod, auto: true }, true)).toBe(false);
+  expect(canAutoRefresh({ ...emptyKind(), auto: true }, false)).toBe(false);
+});
+
+test("reselecting the same resource or section preserves pending evidence", () => {
+  let s = reduceWorkloads(initialWorkloads(), { type: "scope", tab: "A", scope: "a/1/ns" });
+  const row = {
+    resource: { connection: { id: "a", generation: 1 }, apiVersion: "v1", kind: "Pod", namespace: "ns", name: "pod", uid: "uid" },
+    phase: "Running",
+    reason: "",
+    node: "",
+    ready: 1,
+    desired: 1,
+    restarts: 0,
+    available: null,
+    updated: null,
+    current: null,
+    total: null,
+    job: null,
+    cronJob: null,
+    createdAt: null,
+  };
+  s = reduceWorkloads(s, { type: "select", tab: "A", row, epoch: 1 });
+  expect(s.A.kinds.Pod.selected?.resource.uid).toBe("uid");
+  s = reduceWorkloads(s, {
+    type: "patch",
+    tab: "A",
+    scope: "a/1/ns",
+    kind: "Pod",
+    patch: { sections: { Overview: { loading: true, error: "", data: null } }, sectionEpoch: 2 },
+  });
+  s = reduceWorkloads(s, { type: "select", tab: "A", row, epoch: 3 });
+  s = reduceWorkloads(s, { type: "section", tab: "A", section: "Overview", epoch: 4 });
+  expect(s.A.kinds.Pod.sectionEpoch).toBe(2);
+  expect(s.A.kinds.Pod.sections.Overview?.loading).toBe(true);
+});
+
+test("observed Deployment zero counts remain zero while sparse status stays unknown", async () => {
+  const { deploymentCounts } = await import("./model");
+  expect(deploymentCounts({ observedGeneration: 1 })).toEqual({ updated: 0, ready: 0, available: 0, unavailable: 0 });
+  expect(deploymentCounts({})).toEqual({ updated: undefined, ready: undefined, available: undefined, unavailable: undefined });
+});
+
+test("namespace reconciliation retains workload kind and auto-refresh but invalidates evidence", () => {
+  let state = reduceWorkloads(initialWorkloads(), { type: "scope", tab: "A", scope: "old" });
+  state = reduceWorkloads(state, { type: "kind", tab: "A", kind: "Deployment" });
+  state = reduceWorkloads(state, {
+    type: "patch",
+    tab: "A",
+    scope: "old",
+    kind: "Deployment",
+    patch: { auto: true, filter: "old", epoch: 3, scroll: 50, history: ["", "next"] },
+  });
+  const next = reduceWorkloads(state, { type: "scope", tab: "A", scope: "new" });
+  expect(next.A.kind).toBe("Deployment");
+  expect(next.A.kinds.Deployment).toEqual({ ...emptyKind(), auto: true });
+  expect(
+    reduceWorkloads(next, { type: "response", tab: "A", scope: "old", kind: "Deployment", epoch: 3, patch: { error: "forbidden" } }),
+  ).toBe(next);
+  expect(reduceWorkloads(next, { type: "scope", tab: "A", scope: "new" })).toBe(next);
+});
+
+test("relationship return restores the originating section and rejects a stale scope", () => {
+  let state = reduceWorkloads(initialWorkloads(), { type: "scope", tab: "A", scope: "scope" });
+  const resource = {
+    connection: { id: "a", generation: 1 },
+    apiVersion: "apps/v1",
+    kind: "ReplicaSet",
+    namespace: "ns",
+    name: "web",
+    uid: "set",
+  };
+  const entry = { resource, section: "Pods" as const, cursor: "related-page" };
+  state = reduceWorkloads(state, { type: "navigate", tab: "A", scope: "scope", kind: "ReplicaSet", entry, history: [], epoch: 4 });
+  expect(state.A.kind).toBe("ReplicaSet");
+  expect(state.A.kinds.ReplicaSet).toMatchObject({ selected: { resource }, section: "Pods", sectionCursor: "related-page", related: true });
+  const next = reduceWorkloads(state, { type: "scope", tab: "A", scope: "other" });
+  expect(next.A).toMatchObject({ kind: "ReplicaSet", navigation: [], kinds: { ReplicaSet: { selected: null, sections: {} } } });
+  expect(reduceWorkloads(next, { type: "navigate", tab: "A", scope: "scope", kind: "ReplicaSet", entry, history: [], epoch: 4 })).toBe(
+    next,
+  );
+});
+
+test("CronJob to Job to Pod restores the originating sections and clears old scope", () => {
+  let state = reduceWorkloads(initialWorkloads(), { type: "scope", tab: "A", scope: "a" });
+  const resource = { connection: { id: "a", generation: 1 }, apiVersion: "batch/v1", namespace: "test", name: "sample" };
+  const cron = { resource: { ...resource, kind: "CronJob", uid: "cron" }, section: "Jobs", cursor: "jobs-page" } as const;
+  const job = { resource: { ...resource, kind: "Job", uid: "job" }, section: "Pods", cursor: "pods-page" } as const;
+  const pod = { resource: { ...resource, apiVersion: "v1", kind: "Pod", uid: "pod" }, section: "Overview", cursor: "" } as const;
+  state = reduceWorkloads(state, { type: "navigate", tab: "A", scope: "a", kind: "Pod", entry: pod, history: [cron, job], epoch: 1 });
+  state = reduceWorkloads(state, { type: "navigate", tab: "A", scope: "a", kind: "Job", entry: job, history: [cron], epoch: 2 });
+  expect(state.A.kinds.Job).toMatchObject({ section: "Pods", sectionCursor: "pods-page" });
+  state = reduceWorkloads(state, { type: "navigate", tab: "A", scope: "a", kind: "CronJob", entry: cron, history: [], epoch: 3 });
+  expect(state.A.kinds.CronJob).toMatchObject({ section: "Jobs", sectionCursor: "jobs-page" });
+  state = reduceWorkloads(state, { type: "scope", tab: "A", scope: "b" });
+  expect(state.A.kind).toBe("CronJob");
+  expect(state.A.kinds.CronJob.selected).toBeNull();
+  expect(state.A.navigation).toEqual([]);
+  expect(reduceWorkloads(state, { type: "navigate", tab: "A", scope: "a", kind: "Job", entry: job, history: [cron], epoch: 4 })).toBe(
+    state,
+  );
+});
+
+test("IngressClass scope ignores namespace changes but invalidates on a new connection generation", () => {
+  let state = reduceWorkloads(initialWorkloads(), { type: "scope", tab: "A", scope: "a/1/ns", clusterScope: "a/1" });
+  state = reduceWorkloads(state, { type: "kind", tab: "A", kind: "IngressClass" });
+  state = reduceWorkloads(state, { type: "patch", tab: "A", scope: "a/1", kind: "IngressClass", patch: { filter: "class", epoch: 4 } });
+  state = reduceWorkloads(state, { type: "scope", tab: "A", scope: "a/1/other", clusterScope: "a/1" });
+  expect(state.A.kinds.IngressClass.filter).toBe("class");
+  state = reduceWorkloads(state, {
+    type: "response",
+    tab: "A",
+    scope: "a/1",
+    kind: "IngressClass",
+    epoch: 4,
+    patch: { error: "class unavailable" },
+  });
+  expect(state.A.kinds.IngressClass.error).toBe("class unavailable");
+  state = reduceWorkloads(state, { type: "scope", tab: "A", scope: "a/2/other", clusterScope: "a/2" });
+  expect(state.A.kind).toBe("IngressClass");
+  expect(state.A.kinds.IngressClass).toEqual(emptyKind());
+});
+
+test("networking Back restores section, position and identity without requiring inventory membership", () => {
+  let state = reduceWorkloads(initialWorkloads(), { type: "scope", tab: "A", scope: "a" });
+  const ref = { connection: { id: "a", generation: 1 }, namespace: "ns", name: "sample", apiVersion: "v1" };
+  const ingress = { resource: { ...ref, kind: "Ingress", uid: "ing" }, section: "Overview", cursor: "" } as const;
+  const service = {
+    resource: { ...ref, kind: "Service", uid: "svc" },
+    section: "EndpointSlices",
+    cursor: "slices",
+    position: { filter: "web", history: ["", "page2"], scroll: 50, sort: "desc" },
+  } as const;
+  const slice = { resource: { ...ref, kind: "EndpointSlice", uid: "slice" }, section: "Overview", cursor: "" } as const;
+  const pod = { resource: { ...ref, kind: "Pod", uid: "pod" }, section: "Logs", cursor: "", identity: "Referenced UID verified" } as const;
+  state = reduceWorkloads(state, {
+    type: "navigate",
+    tab: "A",
+    scope: "a",
+    kind: "Pod",
+    entry: pod,
+    history: [ingress, { ...service, position: { ...service.position, history: ["", "page2"] } }, slice],
+    epoch: 1,
+  });
+  expect(state.A.kinds.Pod).toMatchObject({ section: "Logs", related: true, identity: "Referenced UID verified" });
+  state = reduceWorkloads(state, {
+    type: "navigate",
+    tab: "A",
+    scope: "a",
+    kind: "Service",
+    entry: { ...service, position: { ...service.position, history: ["", "page2"] } },
+    history: [ingress],
+    epoch: 2,
+  });
+  expect(state.A.kinds.Service).toMatchObject({
+    section: "EndpointSlices",
+    sectionCursor: "slices",
+    related: true,
+    filter: "web",
+    scroll: 50,
+    history: ["", "page2"],
+  });
+});
+
+test("selecting the current related row preserves an in-flight Overview when clearing Back", () => {
+  const resource = { connection: { id: "a", generation: 1 }, apiVersion: "v1", kind: "Service", namespace: "ns", name: "web", uid: "web" };
+  let state = reduceWorkloads(initialWorkloads(), { type: "scope", tab: "A", scope: "a" });
+  state = reduceWorkloads(state, {
+    type: "navigate",
+    tab: "A",
+    scope: "a",
+    kind: "Service",
+    entry: { resource, section: "Overview", cursor: "" },
+    history: [],
+    epoch: 1,
+  });
+  state = reduceWorkloads(state, {
+    type: "patch",
+    tab: "A",
+    scope: "a",
+    kind: "Service",
+    patch: { sections: { Overview: { loading: true, error: "", data: null } } },
+  });
+  state = reduceWorkloads(state, { type: "select", tab: "A", row: { resource }, epoch: 2 });
+  expect(state.A.kinds.Service).toMatchObject({ related: false, sectionEpoch: 1, sections: { Overview: { loading: true } } });
+});
+
+test("configuration tabs keep Secret YAML empty before explicit access and reset ConfigMap Data", async () => {
+  const { resourceSections } = await import("./model");
+  expect(resourceSections("Secret")).toEqual(["Overview", "YAML"]);
+  expect(resourceSections("Namespace")).toEqual(["Overview", "YAML"]);
+  expect(resourceSections("ConfigMap")).toEqual(["Overview", "Data", "YAML", "Events"]);
+  for (const kind of ["ResourceQuota", "LimitRange"] as const) expect(resourceSections(kind)).toEqual(["Overview", "YAML", "Events"]);
+  let state = reduceWorkloads(initialWorkloads(), { type: "scope", tab: "A", scope: "a/ns", clusterScope: "a" });
+  state = reduceWorkloads(state, { type: "kind", tab: "A", kind: "Secret" });
+  state = reduceWorkloads(state, { type: "section", tab: "A", section: "YAML", epoch: 1 });
+  expect(state.A.kinds.Secret).toMatchObject({ section: "YAML", sections: {} });
+  state = reduceWorkloads(state, { type: "patch", tab: "A", scope: "a", kind: "Namespace", patch: { filter: "namespace" } });
+  state = reduceWorkloads(state, { type: "kind", tab: "A", kind: "ConfigMap" });
+  state = reduceWorkloads(state, { type: "section", tab: "A", section: "Data", epoch: 2 });
+  state = reduceWorkloads(state, { type: "scope", tab: "A", scope: "a/other", clusterScope: "a" });
+  expect(state.A.kind).toBe("ConfigMap");
+  expect(state.A.kinds.ConfigMap).toEqual(emptyKind());
+  expect(state.A.kinds.Namespace.filter).toBe("namespace");
+  expect(
+    reduceWorkloads(state, {
+      type: "response",
+      tab: "A",
+      kind: "ConfigMap",
+      scope: "a/ns",
+      epoch: 2,
+      section: true,
+      patch: { error: "late" },
+    }),
+  ).toBe(state);
+});
+
+test("Back discards the outgoing ConfigMap capture and rejects late Data", () => {
+  const connection = { id: "a", generation: 1 };
+  const map = { connection, kind: "ConfigMap", apiVersion: "v1", namespace: "ns", name: "map", uid: "map" };
+  const pod = { connection, kind: "Pod", apiVersion: "v1", namespace: "ns", name: "pod", uid: "pod" };
+  let state = reduceWorkloads(initialWorkloads(), { type: "scope", tab: "A", scope: "a" });
+  state = reduceWorkloads(state, {
+    type: "navigate",
+    tab: "A",
+    scope: "a",
+    kind: "ConfigMap",
+    entry: { resource: map, section: "Data", cursor: "" },
+    history: [],
+    epoch: 1,
+  });
+  const sections = {
+    Data: {
+      loading: false,
+      error: "",
+      data: { resource: map, resourceVersion: "1", fetchedAt: "", job: null, objectJSON: '{"data":{"key":"synthetic"}}' },
+    },
+  };
+  state = reduceWorkloads(state, {
+    type: "response",
+    tab: "A",
+    scope: "a",
+    kind: "ConfigMap",
+    epoch: 1,
+    section: true,
+    patch: { sections },
+  });
+  state = reduceWorkloads(state, {
+    type: "navigate",
+    tab: "A",
+    scope: "a",
+    kind: "Pod",
+    entry: { resource: pod, section: "Overview", cursor: "" },
+    history: [],
+    epoch: 2,
+  });
+  expect(state.A.kinds.ConfigMap.sections.Data).toBeUndefined();
+  expect(
+    reduceWorkloads(state, { type: "response", tab: "A", scope: "a", kind: "ConfigMap", epoch: 1, section: true, patch: { sections } }),
+  ).toBe(state);
+});
+
+test("storage navigation keeps a claim outside the page and restores the saved namespace on Back", async () => {
+  const { resourceSections, isClusterScoped } = await import("./model");
+  const { storageKinds } = await import("../storage/model");
+  for (const kind of storageKinds) {
+    expect(isClusterScoped(kind)).toBe(kind !== "PersistentVolumeClaim");
+    expect(resourceSections(kind)).toEqual(kind === "PersistentVolumeClaim" ? ["Overview", "YAML", "Events"] : ["Overview", "YAML"]);
+  }
+  const connection = { id: "a", generation: 1 };
+  const volume = { connection, kind: "PersistentVolume", apiVersion: "v1", name: "disk", uid: "pv", namespace: "" };
+  const claim = { ...volume, kind: "PersistentVolumeClaim", name: "claim", uid: "pvc", namespace: "other" };
+  const original = {
+    resource: volume,
+    section: "Overview" as const,
+    cursor: "",
+    namespace: "saved",
+    position: {
+      filter: "disk",
+      sort: "asc" as const,
+      scroll: 44,
+      history: ["", "next"],
+    },
+  };
+  const detail = { resource: claim, objectJSON: "{}", resourceVersion: "8", fetchedAt: "", job: null };
+  const referenceEvidence = {
+    sourceVersion: "7",
+    targetVersion: "8",
+    identityEvidence: "uid-verified",
+    bindingEvidence: "references-agree",
+  };
+  let s = reduceWorkloads(initialWorkloads(), { type: "scope", tab: "A", scope: "saved-scope", clusterScope: "cluster" });
+  s = reduceWorkloads(s, { type: "kind", tab: "A", kind: "PersistentVolume" });
+  s = reduceWorkloads(s, {
+    type: "navigate",
+    tab: "A",
+    scope: "cluster",
+    nextScope: "other-scope",
+    kind: "PersistentVolumeClaim",
+    entry: { resource: claim, section: "Overview", cursor: "", namespace: "other", referenceEvidence },
+    detail,
+    history: [original],
+    epoch: 4,
+  });
+  expect(s.A.scope).toBe("other-scope");
+  expect(s.A.kind).toBe("PersistentVolumeClaim");
+  expect(s.A.kinds.PersistentVolumeClaim.selected?.resource).toEqual(claim);
+  expect(s.A.kinds.PersistentVolumeClaim.related).toBe(true);
+  expect(s.A.kinds.PersistentVolumeClaim.sections.Overview?.data).toBe(detail);
+  expect(s.A.kinds.PersistentVolumeClaim.referenceEvidence).toBe(referenceEvidence);
+  expect(
+    reduceWorkloads(s, {
+      type: "response",
+      tab: "A",
+      scope: "saved-scope",
+      kind: "PersistentVolumeClaim",
+      epoch: 0,
+      patch: { selected: null },
+    }),
+  ).toBe(s);
+  s = reduceWorkloads(s, {
+    type: "navigate",
+    tab: "A",
+    scope: "other-scope",
+    nextScope: "saved-scope",
+    kind: "PersistentVolume",
+    entry: original,
+    history: [],
+    epoch: 5,
+  });
+  expect(s.A.scope).toBe("saved-scope");
+  expect(s.A.kinds.PersistentVolume.selected?.resource).toEqual(volume);
+  expect(s.A.kinds.PersistentVolume.scroll).toBe(44);
+  expect(s.A.kinds.PersistentVolume.history).toEqual(["", "next"]);
+  expect(
+    reduceWorkloads(s, {
+      type: "response",
+      tab: "A",
+      scope: "other-scope",
+      kind: "PersistentVolumeClaim",
+      section: true,
+      epoch: 4,
+      patch: { error: "late" },
+    }),
+  ).toBe(s);
+});
+
+test("access control keeps scope and the validated capture through explicit cross-namespace navigation", async () => {
+  const { isClusterScoped, resourceSections } = await import("./model");
+  const { destinations } = await import("../workspace/ResourceNavigation");
+  expect(resourceSections("ClusterRole")).toEqual(["Overview", "YAML"]);
+  expect(resourceSections("ClusterRoleBinding")).toEqual(["Overview", "YAML"]);
+  for (const kind of ["ServiceAccount", "Role", "RoleBinding"]) {
+    expect(isClusterScoped(kind)).toBe(false);
+    expect(resourceSections(kind)).toEqual(["Overview", "YAML", "Events"]);
+  }
+  expect(
+    destinations
+      .find(({ group }) => group === "Workloads")
+      ?.items.slice(-2)
+      .map(([kind]) => kind),
+  ).toEqual(["ConfigMap", "Secret"]);
+  expect(resourceSections("Secret")).toEqual(["Overview", "YAML"]);
+  const connection = { id: "a", generation: 1 };
+  const binding = {
+    connection,
+    kind: "RoleBinding",
+    apiVersion: "rbac.authorization.k8s.io/v1",
+    name: "system:Fixture",
+    uid: "b",
+    namespace: "local",
+  };
+  const subject = { ...binding, kind: "ServiceAccount", apiVersion: "v1", name: "reader", uid: "s", namespace: "other" };
+  const detail = { resource: subject, resourceVersion: "8", objectJSON: "{}", fetchedAt: "", job: null };
+  const origin = {
+    resource: binding,
+    namespace: "local",
+    section: "Overview" as const,
+    cursor: "",
+    position: { filter: "bind", sort: "asc" as const, scroll: 20, history: ["", "next"] },
+  };
+  let s = reduceWorkloads(initialWorkloads(), { type: "scope", tab: "A", scope: "local", clusterScope: "cluster" });
+  s = reduceWorkloads(s, { type: "kind", tab: "A", kind: "RoleBinding" });
+  s = reduceWorkloads(s, {
+    type: "navigate",
+    tab: "A",
+    scope: "local",
+    nextScope: "other",
+    kind: "ServiceAccount",
+    history: [origin],
+    epoch: 2,
+    entry: { resource: subject, namespace: "other", section: "Overview", cursor: "" },
+    detail,
+  });
+  expect(s.A.scope).toBe("other");
+  expect(s.A.kinds.ServiceAccount.sections.Overview?.data).toBe(detail);
+  expect(s.A.kinds.ServiceAccount.related).toBe(true);
+  s = reduceWorkloads(s, {
+    type: "navigate",
+    tab: "A",
+    scope: "other",
+    nextScope: "local",
+    kind: "RoleBinding",
+    entry: origin,
+    history: [],
+    epoch: 3,
+  });
+  expect(s.A.scope).toBe("local");
+  expect(s.A.kinds.RoleBinding.filter).toBe("bind");
+  expect(s.A.kinds.RoleBinding.history).toEqual(["", "next"]);
+  expect(
+    reduceWorkloads(s, {
+      type: "response",
+      tab: "A",
+      scope: "other",
+      kind: "ServiceAccount",
+      epoch: 2,
+      section: true,
+      patch: { error: "late" },
+    }),
+  ).toBe(s);
+});
+
+test("availability destinations expose only their explicit investigation tabs", async () => {
+  const { resourceSections } = await import("./model");
+  expect(resourceSections("HorizontalPodAutoscaler")).toEqual(["Overview", "YAML", "Events"]);
+  expect(resourceSections("PodDisruptionBudget")).toEqual(["Overview", "YAML", "Events", "Selected Pods"]);
+  expect(resourceSections("ControllerRevision")).toEqual(["Overview", "YAML", "Events"]);
+  expect(resourceSections("ReplicationController")).toEqual(["Overview", "YAML", "Events", "Pods"]);
+  for (const kind of ["StatefulSet", "DaemonSet"]) expect(resourceSections(kind)).toContain("Revisions");
+  expect(resourceSections("Secret")).toEqual(["Overview", "YAML"]);
+});
+
+test("Back retains an availability association only with its validated capture", () => {
+  const resource = { kind: "Pod", apiVersion: "v1", connection: { id: "a", generation: 1 }, namespace: "test", name: "pod", uid: "pod" };
+  const referenceEvidence = { sourceVersion: "4", targetVersion: "5", identityEvidence: "uid-verified", association: "selector-match" };
+  const detail = { resource, resourceVersion: "6", objectJSON: "{}", fetchedAt: "", job: null };
+  const original = reduceWorkloads(initialWorkloads(), { type: "scope", tab: "A", scope: "a", clusterScope: "cluster" });
+  const back = {
+    type: "navigate" as const,
+    tab: "A",
+    kind: "Pod" as const,
+    scope: "a",
+    epoch: 3,
+    history: [],
+    entry: { resource, referenceEvidence, section: "Overview" as const, cursor: "" },
+  };
+  const changed = reduceWorkloads(original, { ...back, detail });
+  expect(changed.A.kinds.Pod.sections.Overview?.data).toBe(detail);
+  expect(changed.A.kinds.Pod.referenceEvidence).toBeUndefined();
+  const unchanged = reduceWorkloads(original, { ...back, detail: { ...detail, resourceVersion: "5" } });
+  expect(unchanged.A.kinds.Pod.referenceEvidence).toEqual(referenceEvidence);
+});
+
+test("catalog routes persist per connection and stale generation actions cannot restore them", () => {
+  let state = reduceWorkloads(initialWorkloads(), { type: "scope", tab: "A", scope: "a/default", clusterScope: "a/1" });
+  state = reduceWorkloads(state, { type: "scope", tab: "B", scope: "b/default", clusterScope: "b/1" });
+  const routeA = { group: "first.test", version: "v1" };
+  const routeB = { group: "other.test", version: "v2" };
+  state = reduceWorkloads(state, { type: "catalog", tab: "A", clusterScope: "a/1", route: routeA });
+  state = reduceWorkloads(state, { type: "catalog", tab: "B", clusterScope: "b/1", route: routeB });
+  state = reduceWorkloads(state, { type: "scope", tab: "A", scope: "a/other", clusterScope: "a/1" });
+  expect(state.A.catalog).toBe(routeA);
+  expect(state.B.catalog).toBe(routeB);
+  const replaced = reduceWorkloads(state, { type: "scope", tab: "A", scope: "new/default", clusterScope: "a/2" });
+  expect(replaced.A.catalog).toBeUndefined();
+  expect(reduceWorkloads(replaced, { type: "catalog", tab: "A", clusterScope: "a/1", route: routeA })).toBe(replaced);
+  expect(reduceWorkloads(replaced, { type: "close", tab: "B" }).B).toBeUndefined();
+});
+
+test("target navigation dispatched after a returning tab begins its read uses the live section epoch", async () => {
+  const { navigationSnapshot } = await import("./state");
+  let state = reduceWorkloads(initialWorkloads(), { type: "scope", tab: "A", scope: "a/default", clusterScope: "a" });
+  const beforeEffects = state.A;
+  state = reduceWorkloads(state, { type: "patch", tab: "A", scope: "a/default", kind: "Pod", patch: { sectionEpoch: 4 } });
+  const dispatched = navigationSnapshot(state.A);
+  expect(dispatched).not.toBe(navigationSnapshot(beforeEffects));
+  state = reduceWorkloads(state, {
+    type: "response",
+    tab: "A",
+    scope: "a/default",
+    kind: "Pod",
+    epoch: 4,
+    section: true,
+    patch: { sections: { Overview: { loading: false, error: "", data: null } } },
+  });
+  expect(navigationSnapshot(state.A)).toBe(dispatched);
+  state = reduceWorkloads(state, { type: "kind", tab: "A", kind: "Deployment" });
+  expect(navigationSnapshot(state.A)).not.toBe(dispatched);
+});
+
+test("inventory refresh keeps the original deletion detail until Back or explicit selection", () => {
+  const tab = "A",
+    scope = "a/1/ns",
+    kind = "Pod" as const;
+  const original = {
+    resource: { connection: { id: "a", generation: 1 }, apiVersion: "v1", kind, namespace: "ns", name: "pod", uid: "original" },
+  };
+  const replacement = { resource: { ...original.resource, uid: "replacement" } };
+  let state = reduceWorkloads(initialWorkloads(), { type: "scope", tab, scope });
+  state = reduceWorkloads(state, { type: "select", tab, row: original, epoch: 1 });
+  state = reduceWorkloads(state, { type: "patch", tab, scope, kind, patch: { retainedAfterDeletion: true } });
+  expect(inventorySelection(state.A.kinds.Pod, [])).toBe(original);
+  expect(inventorySelection(state.A.kinds.Pod, [replacement])).toBe(original);
+  state = reduceWorkloads(state, { type: "select", tab, row: null, epoch: 2 });
+  expect(inventorySelection(state.A.kinds.Pod, [replacement])).toBeNull();
+  state = reduceWorkloads(state, { type: "select", tab, row: replacement, epoch: 3 });
+  expect(inventorySelection(state.A.kinds.Pod, [replacement])).toBe(replacement);
+});

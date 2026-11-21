@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Reviewed workload operations</title>
+  </head>
+  <body>
+    <h1>Reviewed workload operations</h1>
+    <p>
+      Workload Overview opens Scale, Restart or Delete for an eligible inspected target. The dialogs share preparation cancellation, focus
+      behavior and one confirmation per token. Operation results stay available across workload navigation. Delete requires the exact
+      resource name and offers an explicit Check target after the request completes.
+    </p>
+    <p>
+      Fixed and discovered YAML sections open the same editor. The app keeps one draft across tabs, and edits and Secret reveal deliberately
+      load the selected object. Confirm uses the native review token.
+    </p>
+    <p>
+      Revisions for Deployments, StatefulSets and DaemonSets let the user select one owned source, review a template diff and server
+      dry-run, then confirm. Result feedback separates acceptance from Pod readiness and links to the original workload.
+    </p>
+    <p>
+      The inventory Create resource action prepares one named YAML object on the original connection. Confirm submits the reviewed proposal.
+      Accepted results offer Open resource using the returned UID. Unknown results can inspect the name without adopting an identity.
+    </p>
+    <p>
+      The YAML section also offers Apply configuration. It reviews the server value diff and field ownership with an explicit takeover
+      option when Kubernetes reports a conflict. Confirm sends one token; a stale or uncertain operation keeps the suspended draft. Accepted
+      results can open the original resource even without List permission.
+    </p>
+  </body>
+</html>

@@ -23,14 +23,15 @@ type Rect struct {
 	Height int `json:"height"`
 }
 type Preferences struct {
-	Version             int    `json:"version"`
-	Appearance          string `json:"appearance"`
-	Window              *Rect  `json:"window"`
-	NavigationWidth     int    `json:"navigationWidth"`
-	AIWidth             int    `json:"aiWidth"`
-	DockHeight          int    `json:"dockHeight"`
-	DetailWidthPercent  int    `json:"detailWidthPercent"`
-	DetailHeightPercent int    `json:"detailHeightPercent"`
+	HelmSources         []HelmSource `json:"helmSources,omitempty"`
+	Version             int          `json:"version"`
+	Appearance          string       `json:"appearance"`
+	Window              *Rect        `json:"window"`
+	NavigationWidth     int          `json:"navigationWidth"`
+	AIWidth             int          `json:"aiWidth"`
+	DockHeight          int          `json:"dockHeight"`
+	DetailWidthPercent  int          `json:"detailWidthPercent"`
+	DetailHeightPercent int          `json:"detailHeightPercent"`
 }
 
 func Default() Preferences {
@@ -40,6 +41,19 @@ func Default() Preferences {
 	}
 }
 func Validate(p Preferences) error {
+	if len(p.HelmSources) > 32 {
+		return errors.New("at most 32 Helm sources may be saved")
+	}
+	seen := map[string]bool{}
+	for _, source := range p.HelmSources {
+		if seen[source.ID] {
+			return errors.New("duplicate Helm source ID")
+		}
+		seen[source.ID] = true
+		if err := ValidateHelmSource(source); err != nil {
+			return err
+		}
+	}
 	if p.Version != 2 {
 		return errors.New("unsupported preferences version")
 	}
@@ -117,6 +131,9 @@ func Save(path string, p Preferences) error {
 	if err != nil {
 		return err
 	}
+	if len(data) > 65536 {
+		return errors.New("preferences exceed 64 KiB")
+	}
 	if err = os.MkdirAll(filepath.Dir(path), 0700); err != nil {
 		return err
 	}
@@ -140,8 +157,9 @@ func Save(path string, p Preferences) error {
 	return os.Rename(name, path)
 }
 
-// Work areas are primary-first. Prefer the greatest overlap, then center on primary.
-func ClampWindow(saved Rect, areas []Rect) Rect {
+// WindowWorkArea chooses the saved display by overlap, falling back to primary.
+// The saved rectangle selects a display; its size is handled separately.
+func WindowWorkArea(saved Rect, areas []Rect) Rect {
 	valid := make([]Rect, 0, len(areas))
 	for _, a := range areas {
 		if a.Width > 0 && a.Height > 0 {
@@ -160,6 +178,20 @@ func ClampWindow(saved Rect, areas []Rect) Rect {
 			overlap = n
 		}
 	}
+	return best
+}
+
+// LaunchWindowBounds centers a workspace-sized frame within the chosen logical work area.
+func LaunchWindowBounds(saved Rect, areas []Rect) Rect {
+	area := WindowWorkArea(saved, areas)
+	width, height := min(area.Width, 1600), min(area.Height, 1020)
+	return Rect{X: area.X + (area.Width-width)/2, Y: area.Y + (area.Height-height)/2, Width: width, Height: height}
+}
+
+// ClampWindow keeps normal window bounds inside the selected display.
+func ClampWindow(saved Rect, areas []Rect) Rect {
+	best := WindowWorkArea(saved, areas)
+	overlap := max(0, min(saved.X+saved.Width, best.X+best.Width)-max(saved.X, best.X)) * max(0, min(saved.Y+saved.Height, best.Y+best.Height)-max(saved.Y, best.Y))
 	saved.Width = min(max(saved.Width, 1100), best.Width)
 	saved.Height = min(max(saved.Height, 700), best.Height)
 	if overlap == 0 {
@@ -193,6 +225,17 @@ func validateObject(d *json.Decoder) error {
 		}
 		if bytes.Equal(raw, []byte("null")) && key != "window" {
 			return errors.New("null preferences field")
+		}
+		if key == "helmSources" {
+			var sources []json.RawMessage
+			if err := json.Unmarshal(raw, &sources); err != nil {
+				return err
+			}
+			for _, source := range sources {
+				if err := validateObject(json.NewDecoder(bytes.NewReader(source))); err != nil {
+					return err
+				}
+			}
 		}
 		if key == "window" && !bytes.Equal(raw, []byte("null")) {
 			if err = validateObject(json.NewDecoder(bytes.NewReader(raw))); err != nil {

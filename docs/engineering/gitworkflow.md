@@ -21,15 +21,30 @@ This planning exception does not authorize application code changes, merges to `
 ## Commits
 
 - Conventional Commits: `feat:`, `fix:`, `chore:`, `refactor:`, `docs:`, `test:`, `perf:`, `style:`, `ci:`. The branch prefix and the commit type are independent.
+- For phase implementation tasks, include the phase and task number in the subject, for example `feat: phase1c2-task1 add bounded workload inventory reads`. Use the actual phase identifier (such as `phase1c-task1` for Phase 1C task 1). When a commit contains several substantial updates, add a body with concise bullet points explaining the changes and relevant validation.
 - Git does not reject a message that breaks that style. There is no `commit-msg` hook.
 - Release notes come from commits since the last tag. `feat` → Added, `fix` → Fixed, `refactor` / `perf` / `style` → Changed, `docs` → Documentation. `chore`, `test`, and `ci` stay in the pull request commit list and stay out of the changelog body.
 
 ## Pull requests
 
+- Acceptance evidence follows [agent verification](engineering.html#agent-verification). Agent-run desktop checks satisfy the normal UI verification requirement; a duplicate manual user UAT checklist is not a merge gate. Unresolved failures, material verification gaps and explicit authorization requirements still apply.
+
 - Pull requests on [sandjaie/KubeSift](https://github.com/sandjaie/KubeSift) carry a summary and a test plan. Fill the template.
-- At the end of every completed phase, after its acceptance evidence and independent review are complete, create a pull request from the phase feature branch targeting `develop`. Include the actual checks, review resolutions and remaining limitations.
-- The maintainer has authorized squash-merging completed phase pull requests into `develop` after the exact PR head has passed applicable checks and review; delete the source branch after merge. Do not bypass failed checks or unresolved blocking findings.
-- This phase-completion rule does not authorize merging to `main`, starting the next phase, force pushes or releases.
+- When all implementation intended for a PR is complete, finish applicable automated tests and agent-run UI verification, then apply the [independent PR review gate](#independent-pr-review) once to the entire candidate. Do not trigger a review after each plan task. Resolve blocking findings, then update the owning status, plan, feature and validation documents to reflect verified implementation and outstanding limitations. Do not mark work merged until the merge is confirmed.
+- Commit and push the completed changes, then create a ready-for-review pull request from the implementation branch targeting `develop`. Include the actual checks, review resolutions and remaining limitations. If a draft PR already exists, mark it ready when these gates pass. Use a draft only for genuinely unfinished work or an explicit user request; a completed, verified implementation must not stop at a draft.
+- GitHub CI runs only for release-producing PRs targeting `main` from `release/*` or `hotfix/*`. Feature PRs targeting `develop` and push events do not trigger CI. Applicable local validation and independent review remain required for feature work.
+- The maintainer has authorized squash-merging completed implementation pull requests into `develop` after the exact PR head has passed applicable checks and review. Continue through merge without asking for another instruction or presenting a merge-choice menu. Wait for any required remote checks or reviews; never bypass protections, failed checks or unresolved blocking findings. CI intentionally not configured for a feature PR is not a missing required check. After changes to the PR head, refresh the applicable validation and review evidence before merging.
+- Verify that the PR actually merged, update any merge-dependent status, and delete the source branch only when it contains no unrelated or ongoing work. Report the PR URL, merge result and verification evidence. If blocked, name the specific failed or unrun gate and continue any work that can resolve it; do not describe a draft or merely enabled auto-merge as completion.
+- This completion rule does not authorize merging unrelated work, merging to `main`, starting the next phase, force pushes or releases. An explicit user request to stop at review or keep a PR open overrides the default.
+
+## Independent PR review
+
+- The implementing agent dispatches one fresh reviewer using [.agents/skills/kubesift-code-review/SKILL.md](../../.agents/skills/kubesift-code-review/SKILL.md). Review the complete PR across all tasks, including interactions between changes. This repository cadence overrides generic skills that prescribe per-task reviews. Explicit user requests for an earlier review still apply.
+- Supply the repository path, target branch/base SHA, merge-base SHA, committed candidate head SHA, approved specs/plans and actual validation evidence. The reviewer independently reads the diff and relevant callers in a fresh context; it does not inherit the coding conversation, edit code or operate clusters. A PR can be created after this review, provided it contains the reviewed candidate and any recorded follow-ups.
+- Return actionable findings to the implementer with stable KSF IDs, severity, location, trigger, impact, evidence and smallest correction. The implementer fixes confirmed defects, reruns affected checks and records each finding's disposition. Resolve disputed blocking findings with evidence; do not silently dismiss or defer them.
+- Use targeted follow-ups with the same reviewer for fixes and later changes, not repeated full reviews or reviews per task. Record the new head and the delta examined, including added scope or changed merge-base implications, so initial coverage plus follow-ups accounts for the final PR head. Any remaining required check, blocking finding or material review gap blocks merge.
+- Record reviewer identity, reviewed SHAs, verdict, finding resolutions and follow-up coverage in the PR template and permanent phase validation report where applicable. Keep detailed transcripts in ignored .superpowers/sdd/. Do not claim an independent review based solely on self-review or passing tests. If a fresh reviewer is unavailable, report that specific gate as blocked; self-review may help preparation but does not satisfy it.
+- After this gate and applicable checks pass, continue the ready-PR and merge workflow above without another user instruction. This is an agent workflow requirement; it does not install a GitHub review bot or replace any required GitHub approvals.
 
 ## Identity and publication
 
@@ -37,7 +52,7 @@ This planning exception does not authorize application code changes, merges to `
 - Before commits, verify repository-local author identity. Before remote operations, verify remote destination and authentication account separately.
 - Do not infer identity from the OS username or change global Git identity. Confirm an ambiguous account before remote operations.
 - The maintainer has authorized committing and pushing completed task changes by default. After appropriate verification, commit only the task’s changes and push `develop` for planning-only changes or the authorized feature branch for implementation; preserve unrelated work. Report the commit and push result.
-- This standing authorization permits completed-phase merges into `develop` only under the pull-request rule above. Other merges and releases require explicit authorization, including invocation of `release-this` as described below. Force pushes and publication outside the configured repository require separate explicit authorization.
+- This standing authorization permits completed-implementation merges into `develop` only under the pull-request rule above. Other merges and releases require explicit authorization, including invocation of `release-this` as described below. Force pushes and publication outside the configured repository require separate explicit authorization.
 - KubeSift is licensed under Apache-2.0; retain the root LICENSE and required third-party notices.
 - Signing, notarization, and the updater stay open until the release-readiness gate in the roadmap.
 

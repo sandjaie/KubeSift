@@ -6,12 +6,12 @@ Important: Keep this a behavior test; do not expand it into an exhaustive UI or 
 */
 import { it, expect, vi } from "vitest";
 import { CancellablePromise } from "@wailsio/runtime";
-import { Service } from "../bindings/github.com/sandjaie/KubeSift/internal/desktop";
+import { Service } from "../bindings/internal/desktop";
 import { terminalReady, terminalParsed, terminalSamples } from "./validation";
 import * as validation from "./validation";
 import { runProfile } from "./profile";
 import type { SessionRef, Target } from "./bridge";
-vi.mock("../bindings/github.com/sandjaie/KubeSift/internal/desktop", () => ({
+vi.mock("../bindings/internal/desktop", () => ({
   Service: {
     TerminalInput: vi.fn().mockResolvedValue(undefined),
     FixtureMarker: vi.fn().mockResolvedValue({}),

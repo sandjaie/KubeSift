@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Phase 1D.1 validation · KubeSift</title>
+    <link rel="stylesheet" href="../../assets/planning.css" />
+    <script src="../../assets/theme.js"></script>
+  </head>
+  <body>
+    <aside class="rail">
+      <a class="skip" href="#content">Skip to content</a
+      ><a class="mark" href="../../index.html"><span class="mark-name">KubeSift</span><span class="mark-sub">Planning</span></a>
+      <h2>Index</h2>
+      <a href="../../index.html">Planning index</a>
+      <h2>Product</h2>
+      <a href="../../product/requirements.html">Requirements</a><a href="../../product/feature-matrix.html">Capabilities</a>
+      <h2>Architecture</h2>
+      <a href="../../architecture/overview.html">Overview</a><a href="../../architecture/decisions.html">Decisions</a>
+      <h2>Safeguards</h2>
+      <a href="../../security/security-model.html">Security and AI</a>
+      <h2>Delivery</h2>
+      <a href="../../roadmap/roadmap.html">Roadmap</a><a href="../../ux/workflows.html">UX workflows</a
+      ><a href="../../ux/mocks/index.html">Mockups</a>
+      <h2>Engineering</h2>
+      <a href="../../engineering/engineering.html">Playbook</a><a href="../../engineering/local-development.html">Local development</a
+      ><a href="../../engineering/toolchain.html">Toolchain</a
+      ><a href="../../engineering/kubernetes-development.html">Kubernetes references</a>
+      <h2>Superpowers</h2>
+      <a href="../../superpowers/specs/2026-11-05-kubesift-design.md">Design specification</a
+      ><a href="../../superpowers/plans/README.html">Plans</a
+      ><a href="../../superpowers/validation/index.html" aria-current="page">Validation</a
+      ><a href="../../superpowers/evidence/index.html">Evidence</a>
+    </aside>
+    <header>
+      <a href="../../index.html">KubeSift / Planning</a>
+      <h1>Phase 1D.1 validation</h1>
+      <p>Reviewed workload scaling</p>
+    </header>
+    <main id="content">
+      <p>
+        Baseline <code>905daf9</code>. See the <a href="../specs/2026-11-14-phase-1d1-reviewed-scaling-design.md">specification</a> and
+        <a href="../plans/2026-11-14-phase-1d1-reviewed-scaling.md">implementation plan</a>.
+      </p>
+      <h2>Automated evidence</h2>
+      <ul>
+        <li>
+          <code>scripts/check.sh</code> passed source and documentation checks, Go tests/vet and 79 frontend tests, lint and typecheck.
+          <code>go test -race ./internal/operation ./internal/desktop ./internal/connection</code> passed. Binding generation, production
+          build and signed local package passed.
+        </li>
+        <li>
+          Loopback native tests checked invalid input, no-op, permission ambiguity and denial, preserved live version and bounded warnings,
+          admission changes, expiry, stale and revoked reviews, zero acknowledgement, concurrent duplicate and target lock, retained
+          results, single PUT on HTTP conflicts/denials/429/503, response loss, malformed success and an admitted count different from the
+          request.
+        </li>
+      </ul>
+      <h2>Real Kubernetes API evidence</h2>
+      <ul>
+        <li>
+          <code>TestReviewedScaling</code> passed on <code>kind-dev-local-a</code> and <code>kind-dev-local-b</code>. Only the owned
+          Deployment and StatefulSet in <code>kubesift-scaling-check</code> were scaled, through 1→2→1 and 1→0→1. Dry-run left the live
+          version and count unchanged. The real API rejected both stale version and independently stale UID.
+        </li>
+        <li>
+          A scoped localhost proxy advanced the owned Deployment version after the final reads, and its real API PUT conflicted. In a
+          separate run the API applied the one PUT, the proxy dropped the response, and the service retained an unknown result. A repeat
+          token retrieved the result without another PUT. A new separately reviewed operation restored the fixture.
+        </li>
+        <li>
+          The read-only test user could read parent and Scale but could not prepare. A different user reached permitted dry-run with an
+          unknown permission hint. Neither test credential could affect other workload names through the fixture scale role.
+        </li>
+      </ul>
+      <h2>Packaged desktop evidence</h2>
+      <p>
+        Arm64 app on macOS 27.0.1. Main walkthrough executable SHA-256
+        <code>aaf65106617a0e0cb9541c13b0baa365ae1ca21f71156d656b7b773633ed6eeb</code>.
+      </p>
+      <ul>
+        <li>
+          Deployment on A reviewed 1→2 and restored 2→1. Escape dismissed the pending review and returned focus to Scale. StatefulSet on B
+          displayed claim retention and disruption warnings. Confirm stayed disabled until the exact name was entered for 1→0, then a second
+          review restored 0→1.
+        </li>
+        <li>
+          After the restricted-view correction, a read-only connection displayed the dry-run denial and no Confirm button. A metadata change
+          made a prepared Deployment review stale. Open target refreshed the original UID, a fresh review was offered, and Back restored a
+          different Pod inspection when opened from there.
+        </li>
+        <li>
+          Checked light and dark appearance, keyboard focus and splitter movement to 35%, and native zoom/restore. Restored System
+          appearance. An early walkthrough accidentally appended the input digit and accepted 12 replicas on the disposable Deployment;
+          restored it to one, then verified the exact review and result counts during the retest.
+        </li>
+      </ul>
+      <p>
+        The candidate package <code>6086827e146e6484cc97bf7eeed859c604ea9b4b389ed7399f39325a6028039a</code> repeated A’s Deployment and B’s
+        StatefulSet cycles and verified that editing revokes the pending review. A namespace and tab switch left both result targets intact.
+        Open target selected the original B tab and StatefulSet.
+      </p>
+      <p>
+        Existing explorer, workload, networking, configuration/Secret metadata, storage, access-control, availability, and cluster discovery
+        integration passed on the two approved contexts.
+      </p>
+      <h2>Limits and delivery</h2>
+      <p>
+        The historical marker integration requires contexts outside the current approved pair. Its synthetic mutation tests ran with the
+        full Go suite. No PVCs were deleted. Desktop tests exercised Escape and navigation after execution. Native modal focus prevents
+        background tab/namespace interaction while reviewing.
+      </p>
+      <p>
+        Verified removal of the scaling fixture namespace on both contexts and cleaned the temporary read fixtures, isolated kubeconfigs,
+        and app source.
+      </p>
+      <h2>Independent review</h2>
+      <p>
+        Reviewer <code>scaling_pr_review</code> independently checked the complete <code>905daf9..e0b9691</code> candidate. The original
+        verdict blocked merge on two findings.
+      </p>
+      <ul>
+        <li>
+          KSF-001: Synthetic tests now independently cover parent and Scale identity failures, terminating targets, explicit and default
+          StatefulSet retention capture, and changed retention policy preventing submission. An additional test checks the four-execution
+          limit and close-after-dispatch uncertainty.
+        </li>
+        <li>
+          KSF-002: Navigation now captures the active controller’s section epoch when issuing the target read. The packaged recheck left a
+          Pod selected on A, switched to B, and opened A’s frozen Deployment target from a result. Back restored the Pod. Replacing the
+          Deployment under its original name produced a UID replacement error.
+        </li>
+      </ul>
+      <p>
+        The signed review-fix executable <code>bbc7b1a294e93cfa09bd15d5c34add8146251b37246cc3dba7ab901d6ad5dac5</code> also displayed the
+        UID rejection above an empty detail pane. Full checks, focused safety race tests and both-cluster integration passed after the
+        fixes. For repeatable real-server races, the test waits for stable fixture status and advances the annotation with a fresh value.
+      </p>
+      <p>
+        The same reviewer checked the delta through <code>a0d9418</code> and confirmed both findings resolved with no remaining blockers.
+      </p>
+      <p>
+        <a href="https://github.com/sandjaie/KubeSift/pull/15">PR #15</a> was squash-merged into <code>develop</code> as
+        <code>9005fcc</code> on 2026-11-15 Dubai time.
+      </p>
+    </main>
+  </body>
+</html>

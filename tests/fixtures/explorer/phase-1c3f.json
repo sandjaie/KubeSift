@@ -1,0 +1,296 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "Namespace",
+      "metadata": {
+        "name": "kubesift-availability-check",
+        "labels": {
+          "kubesift.dev/fixture": "phase1c3f-validation"
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ReplicationController",
+      "metadata": {
+        "name": "fixture-rc",
+        "namespace": "kubesift-availability-check"
+      },
+      "spec": {
+        "replicas": 1,
+        "selector": {
+          "kubesift.dev/availability": "rc"
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "kubesift.dev/availability": "rc"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "main",
+                "image": "registry.k8s.io/pause:3.10"
+              }
+            ],
+            "automountServiceAccountToken": false
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "fixture-scale",
+        "namespace": "kubesift-availability-check"
+      },
+      "spec": {
+        "replicas": 1,
+        "selector": {
+          "matchLabels": {
+            "kubesift.dev/availability": "scale"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "kubesift.dev/availability": "scale"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "main",
+                "image": "registry.k8s.io/pause:3.10"
+              }
+            ],
+            "automountServiceAccountToken": false
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "StatefulSet",
+      "metadata": {
+        "name": "fixture-stateful",
+        "namespace": "kubesift-availability-check"
+      },
+      "spec": {
+        "replicas": 1,
+        "serviceName": "fixture-stateful",
+        "selector": {
+          "matchLabels": {
+            "kubesift.dev/availability": "stateful"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "kubesift.dev/availability": "stateful"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "main",
+                "image": "registry.k8s.io/pause:3.10"
+              }
+            ],
+            "automountServiceAccountToken": false
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "DaemonSet",
+      "metadata": {
+        "name": "fixture-daemon",
+        "namespace": "kubesift-availability-check"
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "kubesift.dev/availability": "daemon"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "kubesift.dev/availability": "daemon"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "main",
+                "image": "registry.k8s.io/pause:3.10"
+              }
+            ],
+            "automountServiceAccountToken": false
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "policy/v1",
+      "kind": "PodDisruptionBudget",
+      "metadata": {
+        "name": "fixture-selected",
+        "namespace": "kubesift-availability-check"
+      },
+      "spec": {
+        "minAvailable": 1,
+        "selector": {
+          "matchExpressions": [
+            {
+              "key": "kubesift.dev/availability",
+              "operator": "In",
+              "values": [
+                "rc"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "apiVersion": "policy/v1",
+      "kind": "PodDisruptionBudget",
+      "metadata": {
+        "name": "fixture-unset",
+        "namespace": "kubesift-availability-check"
+      },
+      "spec": {
+        "maxUnavailable": "10%"
+      }
+    },
+    {
+      "apiVersion": "policy/v1",
+      "kind": "PodDisruptionBudget",
+      "metadata": {
+        "name": "fixture-all",
+        "namespace": "kubesift-availability-check"
+      },
+      "spec": {
+        "maxUnavailable": "10%",
+        "selector": {}
+      }
+    },
+    {
+      "apiVersion": "autoscaling/v2",
+      "kind": "HorizontalPodAutoscaler",
+      "metadata": {
+        "name": "fixture-hpa",
+        "namespace": "kubesift-availability-check"
+      },
+      "spec": {
+        "minReplicas": 1,
+        "maxReplicas": 1,
+        "scaleTargetRef": {
+          "apiVersion": "apps/v1",
+          "kind": "Deployment",
+          "name": "fixture-scale"
+        },
+        "metrics": [
+          {
+            "type": "Resource",
+            "resource": {
+              "name": "cpu",
+              "target": {
+                "type": "Utilization",
+                "averageUtilization": 80
+              }
+            }
+          }
+        ],
+        "behavior": {
+          "scaleDown": {
+            "stabilizationWindowSeconds": 180
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "fixture-reader",
+        "namespace": "kubesift-availability-check"
+      },
+      "automountServiceAccountToken": false
+    },
+    {
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "kind": "Role",
+      "metadata": {
+        "name": "fixture-reader",
+        "namespace": "kubesift-availability-check"
+      },
+      "rules": [
+        {
+          "apiGroups": [
+            "autoscaling"
+          ],
+          "resources": [
+            "horizontalpodautoscalers"
+          ],
+          "verbs": [
+            "get",
+            "list"
+          ]
+        },
+        {
+          "apiGroups": [
+            "policy"
+          ],
+          "resources": [
+            "poddisruptionbudgets"
+          ],
+          "verbs": [
+            "get",
+            "list"
+          ]
+        },
+        {
+          "apiGroups": [
+            "apps"
+          ],
+          "resources": [
+            "statefulsets"
+          ],
+          "verbs": [
+            "get",
+            "list"
+          ]
+        }
+      ]
+    },
+    {
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "kind": "RoleBinding",
+      "metadata": {
+        "name": "fixture-reader",
+        "namespace": "kubesift-availability-check"
+      },
+      "roleRef": {
+        "apiGroup": "rbac.authorization.k8s.io",
+        "kind": "Role",
+        "name": "fixture-reader"
+      },
+      "subjects": [
+        {
+          "kind": "ServiceAccount",
+          "name": "fixture-reader",
+          "namespace": "kubesift-availability-check"
+        }
+      ]
+    }
+  ]
+}

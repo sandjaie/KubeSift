@@ -1,0 +1,4 @@
+marker: one
+customResource: false
+hookMode: benign
+hookEvents: pre-install,pre-upgrade,pre-rollback,pre-delete

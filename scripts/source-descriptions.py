@@ -11,12 +11,12 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 REQUIRED = ("Purpose:", "Used by:", "Responsibilities:", "Important:")
 
-def bindings():
-    for path in (ROOT / "frontend/bindings").rglob("*.ts"):
+def bindings(root):
+    for path in root.rglob("*.ts"):
         text = path.read_text()
         if all(heading in text[:1800] for heading in REQUIRED):
             continue
-        name = path.relative_to(ROOT / "frontend/bindings").as_posix()
+        name = path.relative_to(root).as_posix()
         if path.name == "service.ts":
             purpose = "Provide typed frontend calls to the Go desktop service."
             used = "App and the frontend bridge."
@@ -56,9 +56,9 @@ def check():
     return 0
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2 or sys.argv[1] not in ("bindings", "check"):
-        raise SystemExit("usage: source-descriptions.py bindings|check")
+    if len(sys.argv) < 2 or sys.argv[1] not in ("bindings", "check") or len(sys.argv) > (3 if sys.argv[1] == "bindings" else 2):
+        raise SystemExit("usage: source-descriptions.py bindings [staging-root] | check")
     if sys.argv[1] == "bindings":
-        bindings()
+        bindings(Path(sys.argv[2]) if len(sys.argv) == 3 else ROOT / "frontend/bindings")
     else:
         raise SystemExit(check())

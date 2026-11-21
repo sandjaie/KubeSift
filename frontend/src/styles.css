@@ -304,11 +304,29 @@ summary:focus-visible {
   background: var(--panel);
 }
 .resource-nav h3 {
+  margin: 10px 0 2px;
+}
+.resource-nav h3 button {
   text-transform: uppercase;
   letter-spacing: 1.3px;
   font-size: 10px;
+  font-weight: 700;
   color: var(--muted);
-  margin: 20px 12px 8px;
+}
+.resource-nav h3 button[data-current] {
+  color: var(--accent-ink);
+}
+.nav-chevron {
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-right: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  transform: rotate(-45deg);
+  margin-inline: 3px 2px;
+}
+.resource-nav [aria-expanded="true"] > .nav-chevron {
+  transform: rotate(45deg);
 }
 .resource-nav button {
   display: flex;
@@ -374,6 +392,44 @@ summary:focus-visible {
 .filter-bar > input {
   flex: 1;
   min-width: 140px;
+}
+.inventory-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  padding: 12px 20px 0;
+}
+.inventory-pagination {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.inventory-pagination button {
+  min-height: 32px;
+  padding: 6px 10px;
+}
+.inventory-page {
+  min-width: 54px;
+  text-align: center;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.inventory-auto-refresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  white-space: nowrap;
+}
+.inventory-auto-refresh input {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--accent);
 }
 .view-state {
   display: flex;
@@ -1337,16 +1393,532 @@ textarea::placeholder {
 .pod-facts dt {
   margin: 0;
 }
-.pod-identity-disclosure {
-  margin: 12px 16px;
-  border-bottom: 1px solid var(--line);
-  padding-bottom: 12px;
+/* Workload evidence extends the existing compact panes and theme tokens. */
+.detail-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 8px 12px;
+  flex-wrap: wrap;
 }
-.pod-identity-disclosure summary {
+.detail-tabs [aria-selected="true"] {
+  font-weight: 700;
+}
+.evidence-section {
+  padding: 8px 12px;
+  overflow-wrap: anywhere;
+}
+.evidence-section pre,
+.fact-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: inherit;
+  margin: 0;
+}
+.evidence-section details {
+  margin: 8px 0;
+}
+.evidence-section h3 {
+  font-size: 13px;
+  margin: 12px 0 6px;
+}
+.yaml-view {
+  width: 100%;
+  min-height: 12rem;
+  flex: 1 1 0;
+  resize: none;
+  font-family: monospace;
+  white-space: pre;
+}
+.event-evidence {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.product-sessions {
+  flex: 0 0 auto;
+  max-height: var(--dock-height);
+  overflow: auto;
+}
+.log-text {
+  min-height: 220px;
+  margin: 10px 0 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-anchor: none;
+  height: 280px;
+  max-height: 280px;
+  overflow: auto;
+  font-family: monospace;
+}
+.log-viewer {
+  padding: 12px 0;
+  min-width: 0;
+}
+.log-open-controls,
+.log-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.log-open-controls {
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.log-open-controls select:first-child {
+  flex: 1 1 180px;
+  min-width: 0;
+  max-width: 280px;
+}
+.log-checkbox,
+.log-tail {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.log-checkbox input {
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  margin: 0;
+  accent-color: var(--accent);
+}
+.log-tail input {
+  width: 76px;
+}
+.log-toolbar button {
+  padding: 5px 8px;
+  font-size: 12px;
+}
+.log-session-name {
+  font-size: 12px;
+}
+.log-status {
+  color: var(--muted);
+  font-size: 11px;
+  margin-right: auto;
+  text-transform: capitalize;
+}
+.log-target {
+  color: var(--muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  margin: 0 0 8px;
+}
+.log-search {
+  margin-top: 10px;
+}
+.log-search summary {
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 12px;
+}
+.log-search .log-toolbar {
+  margin-top: 8px;
+}
+.log-search input {
+  flex: 1;
+  min-width: 120px;
+}
+
+.log-expanded {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: var(--bg);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+.log-expanded .log-text {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+}
+.log-text mark {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+/* Only visible log rows enter layout and the accessibility tree. */
+.log-row {
+  height: 20px;
+  line-height: 20px;
+  white-space: pre;
+  padding: 0 12px;
+}
+.log-expanded .log-text {
+  height: auto;
+}
+
+.evidence-table-wrap {
+  overflow: auto;
+  max-width: 100%;
+}
+.evidence-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+.evidence-table :is(th, td) {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--line);
+  text-align: start;
+  vertical-align: top;
+}
+.evidence-table td {
+  overflow-wrap: anywhere;
+}
+.revision-choice {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.evidence-table td details {
+  margin: 0;
+}
+.workload-overview .pod-facts {
+  margin: 6px 0;
+}
+.workload-overview .pod-facts > div {
+  padding: 4px 0;
+}
+.evidence-stats .pod-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.evidence-stats .pod-facts > div {
+  display: block;
+  min-width: 90px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+}
+
+.yaml-detail {
+  min-height: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.yaml-evidence {
+  min-height: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.yaml-evidence .yaml-source {
+  overflow: auto;
+  white-space: pre;
+  overflow-wrap: normal;
+  font-family: monospace;
+  border: 1px solid var(--line);
+  padding: 8px;
+}
+.yaml-line::before {
+  content: attr(data-line);
+  display: inline-block;
+  width: 4ch;
+  margin-right: 1ch;
+  color: var(--muted);
+  user-select: none;
+}
+.yaml-key {
+  color: var(--accent-ink);
+}
+
+.network-value {
+  overflow-wrap: anywhere;
+  white-space: normal;
+  user-select: text;
+}
+.resource-list .network-value {
+  display: inline-block;
+  min-width: 7ch;
+  max-width: 28ch;
+}
+
+.configuration-value {
+  max-height: 24rem;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
+.api-browser select {
+  max-width: 100%;
+  min-width: 0;
+}
+.catalog-back {
+  align-self: flex-start;
+  max-width: calc(100% - 40px);
+  margin: 0 20px 12px;
+  overflow-wrap: anywhere;
+}
+.catalog-pages {
+  padding: 12px 20px 0;
+}
+
+.scale-field {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0;
+}
+.scale-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.scale-result {
+  margin: 12px 0;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+
+.evidence-toolbar,
+.copy-text,
+.yaml-managed {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.evidence-toolbar,
+.copy-text {
+  flex-wrap: wrap;
+}
+.evidence-toolbar > button,
+.copy-text-button {
+  min-height: 30px;
+}
+.event-filters,
+.yaml-toolbar {
+  margin-bottom: 8px;
+}
+.event-filters button[aria-pressed="true"] {
+  background: var(--selection);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+.evidence-pagination {
+  padding: 6px 0;
+}
+.yaml-toolbar > input {
+  flex: 1 1 150px;
+  min-width: 0;
+}
+.yaml-toolbar button,
+.copy-text-button {
+  min-width: 30px;
+}
+.yaml-managed {
+  min-height: 30px;
+}
+.yaml-managed input {
+  margin: 0;
+}
+.copy-text-button {
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+}
+.copy-text-button[data-copied] {
+  color: var(--success);
+}
+.copy-text-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.yaml-note {
+  margin: 0 0 8px;
+}
+
+.resource-inspector {
+  font: 12px/1.5 var(--mono);
+  overflow-wrap: anywhere;
+}
+.resource-inspector details {
+  margin: 0;
+}
+.resource-inspector summary,
+.inspector-leaf {
+  padding-block: 3px;
+}
+.resource-inspector summary {
   cursor: pointer;
 }
-.pod-identity-disclosure dl {
+.resource-inspector summary:hover {
+  background: var(--raised);
+}
+.inspector-count {
+  margin-inline-start: 0.35em;
+  font-family: Inter, sans-serif;
+}
+.inspector-count,
+.inspector-key {
+  color: var(--muted);
+}
+.inspector-leaf {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+.inspector-leaf:has(.inspector-key) {
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: 8px;
+}
+.inspector-key {
+  margin-inline-start: 14px;
+}
+.inspector-key,
+.inspector-key-text,
+.inspector-value {
+  white-space: pre-wrap;
+}
+.resource-inspector .inspector-text {
+  max-height: 16rem;
+  overflow: auto;
+  padding: 6px 8px;
+  background: var(--bg);
+}
+.config-map-toolbar {
+  margin-bottom: 8px;
+}
+.config-map-toolbar input {
+  flex: 1 1 140px;
+  min-width: 0;
+}
+.config-map-entries {
+  list-style: none;
   padding: 0;
-  font-family: var(--mono);
-  user-select: text;
+  margin: 0;
+}
+.config-map-entries > li {
+  padding: 6px 0 8px;
+  border-bottom: 1px solid var(--line);
+}
+.config-map-entry-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+}
+.config-map-entry-heading > code {
+  font: 600 12px var(--mono);
+}
+.config-map-entry-heading > .copy-text {
+  margin-inline-start: auto;
+  justify-content: end;
+}
+.config-map-entries details {
+  margin: 2px 0 0;
+}
+.config-map-entries .configuration-value {
+  font: 12px/1.5 var(--mono);
+  padding: 4px 6px;
+  background: var(--bg);
+}
+.resource-inspector .evidence-pagination {
+  padding-inline-start: 14px;
+  font: inherit;
+}
+
+.edit-source {
+  width: 100%;
+  min-height: 16rem;
+  max-height: 55vh;
+}
+.edit-diff {
+  max-height: 38vh;
+  overflow: auto;
+}
+
+.interactive-dock {
+  height: min(var(--dock-height), 45vh);
+  padding: 0 20px 8px;
+}
+.interactive-dock:not([hidden]),
+.session-entry:not([hidden]),
+.session-entry .terminal {
+  display: flex;
+  flex-direction: column;
+}
+.session-tabs,
+.session-summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 6px 0;
+}
+.session-entry,
+.session-entry .terminal {
+  flex: 1;
+  min-height: 0;
+}
+.session-entry .terminal-surface {
+  flex: 1;
+  min-height: 72px;
+  min-width: 0;
+  background: var(--panel);
+}
+.session-start,
+.session-start label {
+  display: grid;
+  gap: 8px;
+}
+.session-start {
+  margin: 12px 0;
+}
+.session-start button {
+  justify-self: start;
+}
+
+/* Helm source controls reuse the existing settings surfaces and tokens. */
+.helm-source-fields {
+  display: grid;
+  gap: 12px;
+  margin: 16px 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.helm-source-fields label {
+  display: grid;
+  gap: 6px;
+}
+.helm-source-fields input,
+.helm-source-fields select {
+  width: 100%;
+}
+
+/* Helm action forms retain the shared modal, editor and evidence surfaces. */
+.helm-action-fields {
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--line);
+  margin: 12px 0;
+  padding: 12px;
+}
+.helm-action-fields > label {
+  display: block;
+}
+.helm-action-fields input:not([type="checkbox"]),
+.helm-action-fields select {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+}
+.helm-action-fields .edit-source {
+  width: 100%;
+  min-height: 180px;
+  max-height: 40vh;
 }

@@ -1,0 +1,708 @@
+/*
+Purpose: Own live workload navigation once at application scope.
+Used by: App, with its controller shared by the active workspace.
+Responsibilities: Cancel hidden reads, isolate epochs and fetch only the visible investigation section.
+Important: Payloads remain bounded, in memory, and independent of connection-health polling.
+*/
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import type { CreatedResourceOpening } from "../operations/api";
+import type { ConnectionRef } from "../bridge";
+import { message } from "../connections/api";
+import { readRequest, workloadAPI as api } from "./api";
+import {
+  canAutoRefresh,
+  inventorySelection,
+  captureReferenceEvidence,
+  emptyKind,
+  initialWorkloads,
+  reduceWorkloads,
+  kindScope,
+  navigationSnapshot,
+  relatedHistory,
+  type Action,
+} from "./state";
+import { inventoryNamespace, isWorkloadKind, isResourceKind, isClusterScoped, resourceSections } from "./model";
+import { isConfigurationKind, type ConfigurationPage, type NamespaceDestination } from "../configuration/model";
+import { isStorageKind, type StoragePage } from "../storage/model";
+import { isAccessControlKind, type AccessControlPage } from "../access-control/model";
+import { isAvailabilityKind, type AvailabilityPage } from "../availability/model";
+import { isClusterKind, type EventInventoryPage, type ClusterResourcePage, type CatalogIntent } from "../cluster/model";
+import { selectCatalogIntent, type CatalogSeed } from "../discovery/model";
+import type { NetworkPage } from "../networking/model";
+import type {
+  Evidence,
+  ResourceKind,
+  KindState,
+  Section,
+  WorkloadPage,
+  NavigationEntry,
+  ResourceRef,
+  ResourceDetail,
+  ReferenceEvidence,
+} from "./model";
+export function useWorkloads(
+  tabID: string,
+  connection: ConnectionRef | null,
+  namespace: string,
+  visible: boolean,
+  onNamespace: (tab: string, namespace: string) => void,
+) {
+  const [state, setState] = useState(initialWorkloads);
+  const current = useRef(state);
+  const serial = useRef(0);
+  const pendingNavigation = useRef<(() => void) | null>(null);
+  const seededOverview = useRef<ResourceDetail | undefined>(undefined);
+  const [navigationError, setNavigationError] = useState("");
+  const cancelNavigation = () => {
+    pendingNavigation.current?.();
+    pendingNavigation.current = null;
+  };
+  const commit = useCallback((a: Action) => {
+    current.current = reduceWorkloads(current.current, a);
+    setState(current.current);
+  }, []);
+  const namespaceScope = connection ? JSON.stringify([connection.id, connection.generation, namespace]) : "";
+  const clusterScope = connection ? JSON.stringify([connection.id, connection.generation]) : "";
+  const kind = state[tabID]?.kind ?? "Pod";
+  const targetNamespace = inventoryNamespace(kind, namespace);
+  const scope = isClusterScoped(kind) ? clusterScope : namespaceScope;
+  const tab = state[tabID];
+  const t = tab && kindScope(tab, kind) === scope ? tab : null;
+  const inventory = t?.kinds[kind] ?? emptyKind();
+  const cursor = inventory.history[inventory.history.length - 1] ?? "";
+  const selected = inventory.selected;
+  const section = inventory.section;
+  const patch = (value: Partial<KindState>) => commit({ type: "patch", tab: tabID, scope, kind, patch: value });
+  useLayoutEffect(() => {
+    setNavigationError("");
+    return () => {
+      cancelNavigation();
+      const old = current.current[tabID];
+      if (old?.scope === namespaceScope && old.kinds[old.kind].deletionCapture)
+        commit({ type: "patch", tab: tabID, scope: kindScope(old, old.kind), kind: old.kind, patch: { deletionCapture: undefined } });
+    };
+  }, [tabID, namespaceScope, visible, commit]);
+  useLayoutEffect(() => {
+    if (!visible || !tabID) return;
+    return () => {
+      const currentTab = current.current[tabID];
+      if (currentTab)
+        commit({
+          type: "patch",
+          tab: tabID,
+          scope: kindScope(currentTab, "ConfigMap"),
+          kind: "ConfigMap",
+          patch: { sections: { ...currentTab.kinds.ConfigMap.sections, Data: undefined }, sectionEpoch: ++serial.current },
+        });
+    };
+  }, [tabID, visible, commit]);
+  useEffect(() => {
+    if (tabID) commit({ type: "scope", tab: tabID, scope: namespaceScope, clusterScope });
+  }, [tabID, namespaceScope, clusterScope, commit]);
+  useEffect(() => {
+    if (!visible || !connection || !t || kind === "APIResources") return;
+    const epoch = ++serial.current;
+    commit({ type: "patch", tab: tabID, scope, kind, patch: { epoch, loading: true, error: "" } });
+    const request = readRequest<
+      | WorkloadPage
+      | NetworkPage
+      | ConfigurationPage
+      | StoragePage
+      | AccessControlPage
+      | AvailabilityPage
+      | ClusterResourcePage
+      | EventInventoryPage
+    >((id) => {
+      const req = { connection, namespace: targetNamespace, kind, cursor };
+      if (kind === "Event") return api.ReadEventInventory(id, req);
+      if (isClusterKind(kind)) return api.ReadClusterResources(id, req);
+      if (isWorkloadKind(kind)) return api.ReadWorkloads(id, req);
+      if (isAvailabilityKind(kind)) return api.ReadAvailability(id, req);
+      if (isStorageKind(kind)) return api.ReadStorage(id, req);
+      if (isAccessControlKind(kind)) return api.ReadAccessControl(id, req);
+      return isConfigurationKind(kind) ? api.ReadConfiguration(id, req) : api.ReadNetworking(id, req);
+    });
+    let active = true;
+    void request.promise
+      .then((page) => {
+        if (!active) return;
+        const currentKind = current.current[tabID]?.kinds[kind];
+        const old = currentKind?.selected;
+        const selected = inventorySelection(currentKind, page.items);
+        commit({
+          type: "response",
+          tab: tabID,
+          scope,
+          kind,
+          epoch,
+          patch: {
+            page,
+            selected,
+            loading: false,
+            error: "",
+            ...(selected?.resource.uid !== old?.resource.uid ? { sections: {}, sectionEpoch: ++serial.current } : {}),
+          },
+        });
+      })
+      .catch((e) => {
+        if (active) commit({ type: "response", tab: tabID, scope, kind, epoch, patch: { loading: false, error: message(e) } });
+      });
+    return () => {
+      active = false;
+      request.cancel();
+    };
+    // Scope is the stable immutable connection/namespace identity.
+  }, [tabID, scope, kind, cursor, inventory.refresh, visible, !!t, commit]);
+  useEffect(() => {
+    if (
+      !visible ||
+      !selected ||
+      section === "Logs" ||
+      (kind === "Secret" && section === "YAML") ||
+      !resourceSections(kind).includes(section)
+    )
+      return;
+    const capturedYAML = isClusterKind(kind) ? (inventory.sections.Overview?.data as ResourceDetail | undefined)?.capturedYAML : undefined;
+    if (section === "YAML" && capturedYAML) {
+      patch({ sections: { ...inventory.sections, YAML: { data: capturedYAML, error: "", loading: false } } });
+      return;
+    }
+    const epoch = ++serial.current;
+    const existing = current.current[tabID]?.kinds[kind].sections ?? {};
+    if (section === "Overview" && seededOverview.current && existing.Overview?.data === seededOverview.current) {
+      seededOverview.current = undefined;
+      return;
+    }
+    commit({
+      type: "patch",
+      tab: tabID,
+      scope,
+      kind,
+      patch: {
+        sectionEpoch: epoch,
+        sections: {
+          ...existing,
+          [section]: { loading: true, error: "", data: section === "Data" ? null : (existing[section]?.data ?? null) },
+        },
+      },
+    });
+    const resource = selected.resource;
+    const request = readRequest<Evidence>((id) => {
+      if (section === "YAML") return api.ReadResourceYAML(id, { resource });
+      if (section === "EndpointSlices") return api.ReadServiceEndpointSlices(id, { resource, cursor: inventory.sectionCursor });
+      if (section === "Events") return api.ReadResourceEvents(id, { resource, cursor: inventory.sectionCursor });
+      if (section === "ReplicaSets") return api.ReadRelatedReplicaSets(id, { resource, cursor: inventory.sectionCursor });
+      if (section === "Jobs") return api.ReadRelatedJobs(id, { resource, cursor: inventory.sectionCursor });
+      if (section === "Selected Pods") return api.ReadPDBSelectedPods(id, { resource, cursor: inventory.sectionCursor });
+      if (section === "Revisions") return api.ReadRolloutHistory(id, { resource, cursor: inventory.sectionCursor });
+      if (section === "Pods") return api.ReadRelatedPods(id, { resource, cursor: inventory.sectionCursor });
+      return api.ReadResource(id, { resource, includeConfigMapData: section === "Data" });
+    });
+    let active = true;
+    const finish = (data: Evidence | null, error: string) => {
+      if (!active) return;
+      const sections = current.current[tabID]?.kinds[kind].sections ?? {};
+      commit({
+        type: "response",
+        tab: tabID,
+        scope,
+        kind,
+        epoch,
+        section: true,
+        patch: {
+          sections: { ...sections, [section]: { data, error, loading: false } },
+          ...(section === "Overview" && !error
+            ? {
+                referenceEvidence: captureReferenceEvidence(
+                  current.current[tabID]?.kinds[kind].referenceEvidence,
+                  data as ResourceDetail | null,
+                ),
+              }
+            : {}),
+        },
+      });
+    };
+    void request.promise
+      .then((data) => finish(data, ""))
+      .catch((e) => finish(section === "Data" ? null : (existing[section]?.data ?? null), message(e)));
+    return () => {
+      active = false;
+      request.cancel();
+    };
+  }, [tabID, scope, kind, selected?.resource.uid, section, inventory.sectionCursor, inventory.sectionRefresh, visible, commit]);
+  useEffect(() => {
+    if (!canAutoRefresh(inventory, visible)) return;
+    const timer = setTimeout(() => patch({ refresh: inventory.refresh + 1 }), 15000);
+    return () => clearTimeout(timer);
+  }, [tabID, scope, kind, inventory.auto, inventory.loading, inventory.history.length, inventory.refresh, visible]);
+  const selectResource = (row: { resource: ResourceRef }) => {
+    cancelNavigation();
+    setNavigationError("");
+    commit({ type: "select", tab: tabID, row, epoch: ++serial.current });
+  };
+  const canOpen = (resource: ResourceRef, destinationNamespace = namespace): resource is ResourceRef & { kind: ResourceKind } =>
+    !!visible &&
+    !!connection &&
+    isResourceKind(resource.kind) &&
+    resource.namespace === inventoryNamespace(resource.kind, destinationNamespace) &&
+    resource.connection.id === connection.id &&
+    resource.connection.generation === connection.generation;
+  function navigationRequest<T>(read: (id: string) => Promise<T>, open: (data: T) => void) {
+    cancelNavigation();
+    setNavigationError("");
+    const active = current.current[tabID];
+    if (!active || active.kind !== kind || kindScope(active, kind) !== scope) return;
+    // Returning to a tab can start its overview read in the same effect flush.
+    const started = navigationSnapshot(active);
+    const request = readRequest(read);
+    pendingNavigation.current = request.cancel;
+    const stillCurrent = () => navigationSnapshot(current.current[tabID]) === started;
+    void request.promise
+      .then((data) => {
+        if (pendingNavigation.current !== request.cancel) return;
+        pendingNavigation.current = null;
+        if (stillCurrent()) open(data);
+      })
+      .catch((error) => {
+        if (pendingNavigation.current !== request.cancel) return;
+        pendingNavigation.current = null;
+        if (stillCurrent()) setNavigationError(message(error));
+      });
+  }
+  function show(entry: NavigationEntry, history: NavigationEntry[], detail?: ResourceDetail) {
+    const destinationNamespace = entry.namespace ?? namespace;
+    if (!canOpen(entry.resource, destinationNamespace)) return;
+    const nextScope = JSON.stringify([entry.resource.connection.id, entry.resource.connection.generation, destinationNamespace]);
+    seededOverview.current = entry.section === "Overview" ? detail : undefined;
+    commit({ type: "navigate", tab: tabID, scope, nextScope, kind: entry.resource.kind, entry, detail, history, epoch: ++serial.current });
+    if (destinationNamespace !== namespace) onNamespace(tabID, destinationNamespace);
+  }
+  function navigate(entry: NavigationEntry, history: NavigationEntry[]) {
+    if (canOpen(entry.resource, entry.namespace))
+      navigationRequest(
+        (id) => api.ReadResource(id, { resource: entry.resource }),
+        (detail) => show(entry, history, entry.referenceEvidence ? detail : undefined),
+      );
+  }
+  function openFromSelection(
+    resource: ResourceRef,
+    identity?: string,
+    resolved = false,
+    referenceEvidence?: ReferenceEvidence,
+    detail?: ResourceDetail,
+  ) {
+    const destinationNamespace =
+      referenceEvidence && (resource.kind === "PersistentVolumeClaim" || resource.kind === "ServiceAccount")
+        ? resource.namespace
+        : namespace;
+    if (!t || !selected || !canOpen(resource, destinationNamespace) || resource.uid === selected.resource.uid) return;
+    const { filter, sort, scroll, history } = inventory;
+    const entries = relatedHistory(
+      t.navigation,
+      {
+        resource: selected.resource,
+        section,
+        cursor: inventory.sectionCursor,
+        identity: inventory.identity,
+        referenceEvidence: inventory.referenceEvidence,
+        detail:
+          selected.resource.kind === "Event" && section === "Overview"
+            ? (inventory.sections.Overview?.data as ResourceDetail | undefined)
+            : undefined,
+        namespace,
+        position: { filter, sort, scroll, history },
+      },
+      resource,
+    );
+    const entry: NavigationEntry = {
+      resource,
+      section: "Overview",
+      cursor: "",
+      identity,
+      referenceEvidence,
+      namespace: destinationNamespace,
+    };
+    if (resolved) show(entry, entries, detail);
+    else navigate(entry, entries);
+  }
+  return {
+    kind,
+    ready: !!t,
+    openOperationTarget: (resource: ResourceRef, created?: CreatedResourceOpening) => {
+      if (
+        !t ||
+        !visible ||
+        !connection ||
+        resource.connection.id !== connection.id ||
+        resource.connection.generation !== connection.generation
+      )
+        return;
+      const destinationNamespace = resource.namespace || namespace;
+      const entry: NavigationEntry = { resource, section: "Overview", cursor: "", namespace: destinationNamespace };
+      const { filter, sort, scroll, history } = inventory;
+      const origin: NavigationEntry | undefined = selected
+        ? {
+            resource: selected.resource,
+            section,
+            cursor: inventory.sectionCursor,
+            namespace,
+            detail: inventory.sections.Overview?.data as ResourceDetail | undefined,
+            position: { filter, sort, scroll, history },
+          }
+        : undefined;
+      const entries = origin && origin.resource.uid !== resource.uid ? relatedHistory(t.navigation, origin, resource) : t.navigation;
+      if (!created) {
+        if (canOpen(resource, destinationNamespace))
+          navigationRequest(
+            (id) => api.ReadResource(id, { resource }),
+            (detail) => show(entry, entries, detail),
+          );
+        return;
+      }
+      navigationRequest(
+        async (id) => {
+          const { group, version, resource: plural, kind: createdKind, namespace: createdNamespace } = created.target;
+          const groups = await api.ReadAPIGroups(id, { connection, refresh: false });
+          if (!groups.groups?.some((g) => g.group === group && g.versions?.includes(version)))
+            throw new Error("The resource's API version is unavailable.");
+          const catalog = await api.ReadAPIResources(id, { connection, group, version, refresh: false });
+          const descriptor = catalog.resources?.find(
+            (d) =>
+              d.resource === plural &&
+              d.group === group &&
+              d.version === version &&
+              d.kind === createdKind &&
+              d.namespaced === !!createdNamespace,
+          );
+          if (descriptor?.mode === "dedicated" && canOpen(resource, destinationNamespace))
+            return { detail: await api.ReadResource(id, { resource }) };
+          if (!descriptor) throw new Error("The resource's API is unavailable.");
+          const hasInventory = descriptor.mode === "generic";
+          const capture = hasInventory
+            ? await api.ReadGenericDetail(id, {
+                connection,
+                handle: descriptor.handle,
+                namespace: createdNamespace,
+                name: resource.name,
+                uid: resource.uid,
+              })
+            : await (created.action === "helm"
+                ? api.ReadHelmCurrentDetail(id, created.source, resource.uid)
+                : created.action === "apply"
+                  ? api.ReadAppliedDetail(id, created.operationID)
+                  : api.ReadCreatedDetail(id, created.operationID));
+          const seed: CatalogSeed = {
+            group,
+            version,
+            descriptor,
+            capture,
+            namespace: destinationNamespace,
+            history: [""],
+            section: "Overview",
+            origin,
+            openedFromCreate: true,
+            createdDetailOperationID: hasInventory || created.action === "helm" ? undefined : created.operationID,
+            manifestDetail: !hasInventory && created.action === "helm" ? created.source : undefined,
+            detailFromApply: created.action === "apply",
+          };
+          return { seed };
+        },
+        ({ detail, seed }) => {
+          if (detail) show(entry, entries, detail);
+          if (!seed) return;
+          commit({ type: "catalog", tab: tabID, clusterScope, route: seed });
+          commit({ type: "kind", tab: tabID, kind: "APIResources", epoch: ++serial.current });
+          if (destinationNamespace !== namespace) onNamespace(tabID, destinationNamespace);
+        },
+      );
+    },
+    holdDeletionSelection: () => {
+      if (!t || !selected || !canOpen(selected.resource)) return;
+      const capture = { row: selected, submitting: true };
+      patch({ deletionCapture: capture });
+      return (recoverable: boolean) => {
+        if (current.current[tabID]?.kinds[kind].deletionCapture !== capture) return;
+        patch({ deletionCapture: recoverable ? { ...capture, submitting: false } : undefined });
+      };
+    },
+    refreshOperationTarget: (resource: ResourceRef, deletion = false) => {
+      const liveTab = current.current[tabID];
+      if (!liveTab || liveTab.kind !== kind || kindScope(liveTab, kind) !== scope) return;
+      const latest = liveTab.kinds[kind];
+      const row = latest.selected ?? (deletion ? latest.deletionCapture?.row : undefined);
+      if (
+        !t ||
+        !row ||
+        !canOpen(resource) ||
+        row.resource.uid !== resource.uid ||
+        row.resource.name !== resource.name ||
+        row.resource.apiVersion !== resource.apiVersion ||
+        kind !== resource.kind
+      )
+        return;
+      cancelNavigation();
+      patch({
+        refresh: latest.refresh + 1,
+        sectionRefresh: latest.sectionRefresh + 1,
+        ...(deletion
+          ? {
+              selected: row,
+              section: "Overview",
+              sectionCursor: "",
+              sectionEpoch: ++serial.current,
+              sections: {},
+              referenceEvidence: undefined,
+              retainedAfterDeletion: true,
+              deletionCapture: undefined,
+            }
+          : { sections: { ...latest.sections, Overview: undefined } }),
+      });
+    },
+    catalogRoute: t?.catalog,
+    setCatalogRoute: (seed: CatalogSeed | null) => commit({ type: "catalog", tab: tabID, clusterScope, route: seed ?? undefined }),
+    restoreCatalogSource: () => {
+      const entry = t?.catalog?.origin;
+      if (entry) show(entry, [], entry.detail);
+    },
+    browseCatalog: (source: ResourceDetail, intent: CatalogIntent) => {
+      if (!connection || section !== "Overview" || inventory.sections.Overview?.data !== source || inventory.sections.Overview?.loading)
+        return;
+      navigationRequest(
+        async (id) => {
+          const groups = await api.ReadAPIGroups(id, { connection, refresh: false });
+          if (!groups.groups?.some((g) => g.group === intent.group && g.versions?.includes(intent.version)))
+            throw new Error("The captured API group and version are not currently advertised.");
+          const catalog = await api.ReadAPIResources(id, { connection, group: intent.group, version: intent.version, refresh: false });
+          return selectCatalogIntent(intent, catalog);
+        },
+        (seed) => {
+          const { filter, sort, scroll, history } = inventory;
+          commit({
+            type: "catalog",
+            tab: tabID,
+            clusterScope,
+            route: {
+              ...seed,
+              origin: {
+                resource: source.resource,
+                section: "Overview",
+                cursor: "",
+                namespace,
+                detail: source,
+                position: { filter, sort, scroll, history },
+              },
+            },
+          });
+          commit({ type: "kind", tab: tabID, kind: "APIResources", epoch: ++serial.current });
+        },
+      );
+    },
+    openEventTarget: (source: ResourceDetail) => {
+      if (
+        kind !== "Event" ||
+        section !== "Overview" ||
+        inventory.sections.Overview?.data !== source ||
+        inventory.sections.Overview?.loading ||
+        !source.eventTarget
+      )
+        return;
+      navigationRequest(
+        (id) => api.ResolveEventTarget(id, { source: source.resource, sourceVersion: source.resourceVersion }),
+        ({ detail }) =>
+          openFromSelection(
+            detail.resource,
+            undefined,
+            true,
+            { identityEvidence: "uid-verified", sourceVersion: source.resourceVersion, targetVersion: detail.resourceVersion },
+            detail,
+          ),
+      );
+    },
+    inventory,
+    selection: selected,
+    activeSection: section,
+    sections: inventory.sections,
+    back: t?.navigation[t.navigation.length - 1],
+    clusterScoped: isClusterScoped(kind),
+    navigationError,
+    patch,
+    selectResource,
+    backToInventory: () => {
+      cancelNavigation();
+      setNavigationError("");
+      commit({ type: "select", tab: tabID, row: null, epoch: ++serial.current });
+    },
+    selectKind: (kind: ResourceKind) => {
+      cancelNavigation();
+      setNavigationError("");
+      commit({ type: "kind", tab: tabID, kind, epoch: ++serial.current });
+    },
+    selectSection: (section: Section) => {
+      cancelNavigation();
+      setNavigationError("");
+      commit({ type: "section", tab: tabID, section, epoch: ++serial.current });
+    },
+    refresh: () => {
+      cancelNavigation();
+      setNavigationError("");
+      patch({
+        history: [""],
+        referenceEvidence: undefined,
+        refresh: inventory.refresh + 1,
+        ...(section === "Data"
+          ? {
+              sections: { ...inventory.sections, Data: undefined },
+              sectionEpoch: ++serial.current,
+              sectionRefresh: inventory.sectionRefresh + 1,
+            }
+          : {}),
+      });
+    },
+    refreshSection: () => {
+      cancelNavigation();
+      setNavigationError("");
+      patch({
+        sectionCursor: "",
+        referenceEvidence: undefined,
+        ...(isClusterKind(kind)
+          ? {
+              sections: {
+                ...inventory.sections,
+                Overview: section === "YAML" ? undefined : inventory.sections.Overview,
+                YAML: section === "Overview" ? undefined : inventory.sections.YAML,
+              },
+            }
+          : {}),
+        sectionRefresh: inventory.sectionRefresh + 1,
+        ...(section === "Data" ? { sections: { ...inventory.sections, Data: undefined }, sectionEpoch: ++serial.current } : {}),
+      });
+    },
+    next: () => commit({ type: "next", tab: tabID, cursor: inventory.page?.page.nextCursor ?? "" }),
+    previous: () => patch({ history: inventory.history.length > 1 ? inventory.history.slice(0, -1) : inventory.history }),
+    nextSection: (cursor: string) => patch({ sectionCursor: cursor }),
+    openRelated: (resource: ResourceRef) => openFromSelection(resource),
+    openReference: (source: ResourceDetail, target: ResourceRef) => {
+      if (!selected || section !== "Overview" || selected.resource.uid !== source.resource.uid || !canOpen(target)) return;
+      navigationRequest(
+        (id) =>
+          api.ResolveNetworkReference(id, {
+            source: source.resource,
+            sourceVersion: source.resourceVersion,
+            target,
+          }),
+        (result) =>
+          openFromSelection(
+            result.resource,
+            result.identityEvidence === "uid-verified" ? "Referenced UID verified" : "Resolved by name at open time",
+            true,
+          ),
+      );
+    },
+    openStorageReference: (source: ResourceDetail, target: ResourceRef) => {
+      const destinationNamespace =
+        source.resource.kind === "PersistentVolume" && target.kind === "PersistentVolumeClaim" ? target.namespace : namespace;
+      if (
+        !selected ||
+        section !== "Overview" ||
+        selected.resource.uid !== source.resource.uid ||
+        inventory.sections.Overview?.data !== source ||
+        inventory.sections.Overview?.loading ||
+        !canOpen(target, destinationNamespace)
+      )
+        return;
+      navigationRequest(
+        (id) => api.ResolveStorageReference(id, { source: source.resource, sourceVersion: source.resourceVersion, target }),
+        ({ resource, detail, ...link }) => openFromSelection(resource, undefined, true, link, detail),
+      );
+    },
+    openAccessControlReference: (source: ResourceDetail, target: ResourceRef) => {
+      const destinationNamespace = target.kind === "ServiceAccount" ? target.namespace : namespace;
+      if (
+        !selected ||
+        section !== "Overview" ||
+        inventory.sections.Overview?.data !== source ||
+        inventory.sections.Overview?.loading ||
+        !canOpen(target, destinationNamespace)
+      )
+        return;
+      navigationRequest(
+        (id) => api.ResolveAccessControlReference(id, { source: source.resource, sourceVersion: source.resourceVersion, target }),
+        ({ resource, detail, ...evidence }) => openFromSelection(resource, undefined, true, evidence, detail),
+      );
+    },
+    openAvailabilityReference: (capture: Evidence & { sourceVersion?: string; resourceVersion?: string }, target: ResourceRef) => {
+      if (
+        !selected ||
+        !["Overview", "Selected Pods", "Revisions"].includes(section) ||
+        inventory.sections[section]?.data !== capture ||
+        inventory.sections[section]?.loading ||
+        !canOpen(target)
+      )
+        return;
+      const sourceVersion = capture.sourceVersion ?? capture.resourceVersion;
+      if (!sourceVersion) return;
+      navigationRequest(
+        (id) => api.ResolveAvailabilityReference(id, { source: selected.resource, sourceVersion, target }),
+        ({ resource, detail, ...evidence }) => openFromSelection(resource, undefined, true, evidence, detail),
+      );
+    },
+    openConfigurationReference: (source: ResourceDetail, target: ResourceRef) => {
+      if (
+        !selected ||
+        section !== "Overview" ||
+        selected.resource.uid !== source.resource.uid ||
+        source.resource.kind !== "Pod" ||
+        !canOpen(target)
+      )
+        return;
+      navigationRequest(
+        (id) => api.ResolveConfigurationReference(id, { source: source.resource, sourceVersion: source.resourceVersion, target }),
+        (result) => openFromSelection(result.resource, "Resolved by name at open time", true),
+      );
+    },
+    browseNamespace: (source: ResourceDetail, destination: NamespaceDestination) => {
+      if (
+        !selected ||
+        section !== "Overview" ||
+        source.resource.kind !== "Namespace" ||
+        selected.resource.uid !== source.resource.uid ||
+        !canOpen(source.resource)
+      )
+        return;
+      navigationRequest(
+        (id) => api.ReadResource(id, { resource: source.resource }),
+        () => {
+          const nextNamespace = source.resource.name;
+          const nextScope = JSON.stringify([source.resource.connection.id, source.resource.connection.generation, nextNamespace]);
+          commit({ type: "scope", tab: tabID, scope: nextScope, clusterScope });
+          commit({ type: "kind", tab: tabID, kind: destination });
+          onNamespace(tabID, nextNamespace);
+        },
+      );
+    },
+    openServiceSlice: (sourceVersion: string, target: ResourceRef) => {
+      if (!selected || section !== "EndpointSlices" || selected.resource.kind !== "Service" || !canOpen(target)) return;
+      navigationRequest(
+        (id) => api.ResolveNetworkReference(id, { source: selected.resource, sourceVersion, target }),
+        (result) => {
+          openFromSelection(
+            result.resource,
+            result.association === "owner-confirmed"
+              ? "Label-associated; Service owner UID matches"
+              : "Label-associated; ownership unverified",
+            true,
+          );
+        },
+      );
+    },
+    backToResource: () => {
+      const entry = t?.navigation[t.navigation.length - 1];
+      if (entry && t) {
+        if (entry.detail) show(entry, t.navigation.slice(0, -1), entry.detail);
+        else navigate(entry, t.navigation.slice(0, -1));
+      }
+    },
+    close: (tab: string) => commit({ type: "close", tab }),
+  };
+}
+export type WorkloadController = ReturnType<typeof useWorkloads>;

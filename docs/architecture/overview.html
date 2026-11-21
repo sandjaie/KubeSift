@@ -24,9 +24,11 @@
       ><a href="../ux/mocks/index.html">Mockups</a>
       <h2>Engineering</h2>
       <a href="../engineering/engineering.html">Playbook</a><a href="../engineering/local-development.html">Local development</a
-      ><a href="../engineering/toolchain.html">Toolchain</a>
-      <h2>Working</h2>
-      <a href="../superpowers/validation/phase-1a.html">Phase 1A validation</a>
+      ><a href="../engineering/toolchain.html">Toolchain</a><a href="../engineering/kubernetes-development.html">Kubernetes references</a>
+      <h2>Superpowers</h2>
+      <a href="../superpowers/index.html">Overview</a><a href="../superpowers/specs/index.html">Specs</a
+      ><a href="../superpowers/plans/README.html">Plans</a><a href="../superpowers/validation/index.html">Validation</a
+      ><a href="../superpowers/evidence/index.html">Evidence</a>
     </aside>
     <header>
       <a href="../index.html">KubeSift / Planning</a>
@@ -134,7 +136,13 @@
         reconnect after sleep; writes and commands must not replay automatically. Do not automatically retry a write with an uncertain
         outcome.
       </p>
-      <h2>Metrics</h2>
+      <h2 id="metrics">Metrics</h2>
+      <p>
+        <a href="../superpowers/specs/2026-11-19-phase-1e3-current-metrics-design.md">Phase 1E.3</a> reads discovered Metrics API v1 or
+        v1beta1 for visible Pods and Nodes through existing owned Kubernetes transport. Bounded named reads, UID checks and visible-only
+        polling keep metrics independent of inventory and connection health. Current samples remain ephemeral; the app installs no metrics
+        provider.
+      </p>
       <p>
         Current usage comes from an existing Metrics API. Display CPU units and memory bytes; percentages name their denominator (request,
         limit or node allocatable). Historical charts use a selected existing Prometheus-compatible endpoint with required series. Report
@@ -174,6 +182,31 @@
       </ul>
       <p>References informed the discussion; verify exact dependency versions and provider APIs when implementation is authorized.</p>
       <footer>2026-11-05 · Draft for review · <a href="../index.html">Planning index</a></footer>
+      <h2 id="native-helm">Native Helm integration design</h2>
+      <p>
+        <a href="../superpowers/specs/2026-11-17-phase-1e1-helm-inspection-design.md">Phase 1E.1</a> uses Helm's Go SDK inside a focused
+        native reader, with owned cluster credentials and no shipped Helm CLI requirement. A bounded request-local storage adapter preserves
+        cancellation and release-decode limits. Namespace-scoped Secret storage is default; ConfigMap storage is explicit. Pin and verify
+        SDK/client compatibility in the <a href="../superpowers/plans/2026-11-17-phase-1e1-helm-inspection.md">implementation plan</a>; no
+        cluster infrastructure or chart network access is needed for inspection. Later Helm management extends this integration under its
+        own design. Follow the
+        <a href="../engineering/toolchain.html#compatibility">Kubernetes and Helm compatibility and upgrade policy</a>
+        for dependency maintenance and tested support claims.
+      </p>
+      <h2 id="helm-management">Helm management design</h2>
+      <p>
+        <a href="../superpowers/specs/2026-11-17-phase-1e2-helm-management-design.md">Phase 1E.2</a> extends the native SDK with bounded
+        chart resolution, release-specific review tokens and owned operation workers. Keep inspection read-only. Operations retain their
+        cluster, namespace, driver and release target across navigation; report partial failures and cancellation without claiming atomicity
+        or automatic recovery. Local packages, HTTPS repositories and OCI registries resolve to native chart snapshots before confirmation.
+      </p>
+      <p>
+        Install and upgrade rendering use the pinned SDK engine in a bundled WebAssembly worker, hosted by the existing wazero dependency.
+        Fixed native adapter templates pass SDK-coalesced values and selected dependencies into the worker; original chart templates are
+        restored before release storage. The worker has bounded memory and context termination, with live lookup mediated by the captured
+        native transport. Build and check tasks compile the worker from source. Its trusted compiled code is reused within the app session;
+        each chart invocation owns separate memory. No Helm CLI or external worker process is shipped.
+      </p>
     </main>
   </body>
 </html>

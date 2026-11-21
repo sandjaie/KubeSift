@@ -24,9 +24,12 @@
       ><a href="../ux/mocks/index.html">Mockups</a>
       <h2>Engineering</h2>
       <a href="../engineering/engineering.html" aria-current="page">Playbook</a
-      ><a href="../engineering/local-development.html">Local development</a><a href="../engineering/toolchain.html">Toolchain</a>
-      <h2>Working</h2>
-      <a href="../superpowers/validation/phase-1a.html">Phase 1A validation</a>
+      ><a href="../engineering/local-development.html">Local development</a><a href="../engineering/toolchain.html">Toolchain</a
+      ><a href="../engineering/kubernetes-development.html">Kubernetes references</a>
+      <h2>Superpowers</h2>
+      <a href="../superpowers/index.html">Overview</a><a href="../superpowers/specs/index.html">Specs</a
+      ><a href="../superpowers/plans/README.html">Plans</a><a href="../superpowers/validation/index.html">Validation</a
+      ><a href="../superpowers/evidence/index.html">Evidence</a>
     </aside>
     <header>
       <a href="../index.html">KubeSift / Planning</a>
@@ -89,14 +92,15 @@ npx tsc --noEmit</code></pre>
       </p>
       <p>
         No coverage threshold. Prettier formats HTML and frontend TypeScript. Frontend lint is ESLint plus typescript-eslint recommended. Go
-        formatting is <code>gofmt</code>, because the Go toolchain owns it. CI runs on pull requests and pushes to develop, main and master;
-        feature pushes wait for a pull request to avoid duplicate runs. Superseded runs are cancelled. Code changes run the Vite production
-        bundle and then scripts/check.sh on Ubuntu. The bundle fills internal/desktop/assets/dist, which the desktop executable embeds and a
-        clean checkout does not contain. Go is compiled with CGO disabled and the purego tag so that package needs neither a macOS runner
-        nor GTK. Bindings generation stays on the local and release checks. TypeScript checking runs once through scripts/check.sh; local
-        npm run build still includes it. Changes confined to docs/, AGENTS.md and root README files run source-description and
-        documentation-link checks in the same check job. Unknown comparison bases receive the full checks. Packaging, signing, notarizing,
-        publishing, and version bumps stay in the release skill.
+        formatting is <code>gofmt</code>, because the Go toolchain owns it. CI runs only for release-producing pull requests into main from
+        release/* or hotfix/* branches. Feature pull requests into develop and all push events do not run CI; agents still run the
+        applicable local checks before publication. Superseded runs are cancelled. Code changes run the Vite production bundle and then
+        scripts/check.sh on Ubuntu. The bundle fills internal/desktop/assets/dist, which the desktop executable embeds and a clean checkout
+        does not contain. Go is compiled with CGO disabled and the purego tag so that package needs neither a macOS runner nor GTK. Bindings
+        generation stays on the local and release checks. TypeScript checking runs once through scripts/check.sh; local npm run build still
+        includes it. Changes confined to docs/, AGENTS.md and root README files run source-description and documentation-link checks in the
+        same check job. Unknown comparison bases receive the full checks. Packaging, signing, notarizing, publishing, and version bumps stay
+        in the release skill.
       </p>
 
       <h3 id="authoring-style">Authoring and formatting</h3>
@@ -142,8 +146,8 @@ npx tsc --noEmit</code></pre>
         </li>
       </ul>
       <p>
-        Once implemented, CI runs lint and the unit suites again. Skipping a hook with <code>--no-verify</code> does not skip the pipeline.
-        Use <code>--no-verify</code> only when you mean to, and say so.
+        On release-producing pull requests, CI runs lint and the unit suites again. Skipping a hook with <code>--no-verify</code> does not
+        skip the pipeline. Use <code>--no-verify</code> only when you mean to, and say so.
       </p>
       <p>
         No automated native Wails UI end-to-end suite is planned for Phase 1A. Use unit tests with injected clients/session fakes, explicit
@@ -156,7 +160,7 @@ npx tsc --noEmit</code></pre>
       <p>
         Keep tests minimal and behavior-focused: representative checks for trust boundaries, targeting, cancellation and data-loss risks.
         Avoid exhaustive UI suites, snapshots and tests that mirror implementation. Use one opt-in local integration scenario and a short
-        manual packaged-app checklist where appropriate. Add regression tests when a real defect justifies them.
+        agent-executed packaged-app verification where appropriate. Add regression tests when a real defect justifies them.
       </p>
       <ul>
         <li>
@@ -172,6 +176,25 @@ npx tsc --noEmit</code></pre>
         <li>A bug fix gets a regression test at the shared function, after every caller has been traced.</li>
       </ul>
 
+      <h3 id="agent-verification">Agent verification and acceptance</h3>
+      <p>
+        The implementing agent owns post-implementation verification: run meaningful automated checks and use desktop computer-use tools to
+        verify the affected workflows in the packaged application. Record one validation report with the tested build, environment, explicit
+        local contexts, evidence, and passed, failed or unrun checks. Label agent observations honestly; they do not mean the user
+        personally tested the application. Browser checks alone do not establish native desktop behavior.
+      </p>
+      <p>
+        Do not create or require a separate manual user UAT checklist by default, or ask the user to repeat workflows already verified by
+        the agent. Ask for user input only for subjective design decisions or specific checks the agent cannot complete; explain the
+        limitation and the precise input needed. Keep unrun or blocked checks visible and agent-owned where feasible. Failed checks and
+        material verification gaps remain unresolved until fixed, verified or explicitly accepted with their limitations.
+      </p>
+      <p>
+        This policy was requested on 13 November 2026 and supersedes duplicate manual-user-UAT requirements in earlier specs, plans, status
+        notes and checklists. Existing user checklists are optional historical records, not automatic acceptance or merge blockers. Preserve
+        their actual outcomes; never convert Not tested into Passed. Independent code review, required technical checks, release smoke tests
+        and explicit merge/release authorization rules remain in force.
+      </p>
       <h3 id="source-layout">Project layout and source descriptions</h3>
       <p>
         <code>cmd/kubesift</code> owns the executable entry point; <code>internal</code> owns Go services and the thin desktop adapter;
@@ -201,10 +224,15 @@ npx tsc --noEmit</code></pre>
       <p>
         <a href="../index.html">docs/index.html</a> is the documentation entry point. Product, architecture, security, UX, roadmap and
         engineering directories own durable project documentation. Reusable build and toolchain instructions belong in
-        <a href="toolchain.html">engineering/toolchain.html</a>.
+        <a href="toolchain.html">engineering/toolchain.html</a>. Kubernetes reader and relationship references belong in
+        <a href="kubernetes-development.html">engineering/kubernetes-development.html</a>.
       </p>
       <ul>
         <li><code>docs/superpowers/specs/</code>: approved specifications.</li>
+        <li>
+          <a href="../status.md">docs/status.md</a>: entry point to the tracked SDD checkpoint, plan checkboxes and validation reports. The
+          roadmap owns scope, order, dependencies and exit criteria only; never record implementation progress or merge/test status there.
+        </li>
         <li><code>docs/superpowers/plans/</code>: detailed execution plans.</li>
         <li><code>docs/superpowers/validation/</code>: phase acceptance reports and summarized measurements.</li>
         <li>
@@ -312,9 +340,10 @@ npx tsc --noEmit</code></pre>
         </li>
         <li>Update the owning document in the same change as the behavior. Link to it. Do not paste the requirement into a second file.</li>
         <li>
-          When source exists, every source directory has a hand-maintained
-          <code>README.html</code>, and <code>scripts</code> uses <code>README.md</code>. Update that file in the same change as an add,
-          rename, or delete. Header comments and export docstrings are the module map. Do not generate a second one.
+          When source exists, every source directory has a hand-maintained README.
+          <code>internal</code> and <code>scripts</code> use <code>README.md</code>. Other source directories use <code>README.html</code>.
+          Update that file in the same change as an add, rename, or delete. Header comments and export docstrings are the module map. Do not
+          generate a second one.
         </li>
         <li>
           A deliberate shortcut that has a known ceiling gets a
@@ -432,6 +461,12 @@ npx tsc --noEmit</code></pre>
         skill before editing. If two apply, the process skill goes first.
       </p>
 
+      <p>
+        For Kubernetes readers, relationships, status presentation and integration tests, use the
+        <a href="../../.agents/skills/kubesift-kubernetes-development/SKILL.md">KubeSift Kubernetes development skill</a> and
+        <a href="kubernetes-development.html">Kubernetes reference index</a> to find official API documentation and project decisions.
+      </p>
+
       <h3>Always on</h3>
       <div class="table-scroll">
         <table>
@@ -538,8 +573,8 @@ npx tsc --noEmit</code></pre>
             <td><code>subagent-driven-development</code></td>
             <td>Executing a plan whose tasks are independent, in this session</td>
             <td>
-              One fresh implementer sub-agent per task, a review after each task, a whole-branch review at the end. Do not stop between
-              tasks.
+              One fresh implementer sub-agent per task. Run one independent whole-PR review after implementation and verification, following
+              the repository review gate; do not add routine per-task reviews.
             </td>
           </tr>
           <tr>
@@ -572,13 +607,14 @@ npx tsc --noEmit</code></pre>
             <td><code>kubesift-code-review</code></td>
             <td>Feature or fix ready for <code>develop</code></td>
             <td>
-              Senior review of the branch against <code>develop</code>, including uncommitted work. Findings only. Another agent patches
-              them. Record each as <code>KSF-00N</code> in the pull request. Write this skill into the repo before relying on it.
+              One independent review of the complete committed PR candidate using the repository skill. Record base/head identities and KSF
+              findings; the implementer fixes them and the reviewer performs targeted follow-ups. See the
+              <a href="gitworkflow.md#independent-pr-review">PR review gate</a>.
             </td>
           </tr>
           <tr>
             <td><code>requesting-code-review</code></td>
-            <td>End of a task, end of a major feature, before merge</td>
+            <td>Complete PR implementation and verification, before merge</td>
             <td>Dispatch a reviewer sub-agent with the spec and the diff. The reviewer does not inherit the coding session.</td>
           </tr>
           <tr>
@@ -616,7 +652,10 @@ npx tsc --noEmit</code></pre>
           </tr>
         </table>
       </div>
-      <p>The reviewer does not edit. A finding is an id plus a patch another agent can apply.</p>
+      <p>
+        The reviewer reports actionable findings without editing. The implementing agent owns fixes and affected tests; the reviewer
+        rechecks the changed paths.
+      </p>
 
       <h3>Ship, and skill maintenance</h3>
       <div class="table-scroll">
@@ -629,7 +668,11 @@ npx tsc --noEmit</code></pre>
           <tr>
             <td><code>finishing-a-development-branch</code></td>
             <td>Tests pass and the branch needs a home</td>
-            <td>Verify, then offer merge, pull request, or cleanup. Execute the choice.</td>
+            <td>
+              Follow the <a href="gitworkflow.md#pull-requests">authorized completion workflow</a>: update evidence and status, publish a
+              ready PR, and merge into develop after applicable checks and independent review pass. Do not stop at a draft or ask again for
+              merge instructions. Report actual blockers; main and releases need separate authorization.
+            </td>
           </tr>
           <tr>
             <td><code>release-this</code></td>
@@ -743,7 +786,7 @@ npx tsc --noEmit</code></pre>
         <li>Review sub-agents do not modify code.</li>
         <li>An implementer sub-agent gets one task, the files, and the test command. The parent integrates.</li>
         <li>Parallelize only when tasks share no files and no state.</li>
-        <li>If a sub-agent is missing from the session, do the review in the main session with the same prompt shape. Say that you did.</li>
+        <li>If a fresh reviewer is unavailable, report the independent review gate as blocked. Self-review does not satisfy it.</li>
       </ul>
 
       <h2 id="kubesift-only">Decisions another playbook must not overwrite</h2>

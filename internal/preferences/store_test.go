@@ -112,3 +112,48 @@ func TestDetailSplitMigration(t *testing.T) {
 		t.Fatal("accepted missing v2 split")
 	}
 }
+
+func TestLaunchWorkArea(t *testing.T) {
+	primary := Rect{0, 25, 1512, 900}
+	secondary := Rect{-1920, 40, 1920, 1040}
+	for _, tc := range []struct {
+		name  string
+		saved Rect
+		areas []Rect
+		want  Rect
+	}{
+		{"small saved window fills primary", Rect{0, 25, 1440, 800}, []Rect{primary}, primary},
+		{"remember secondary display", Rect{-1700, 60, 1200, 700}, []Rect{primary, secondary}, secondary},
+		{"removed display falls back to primary", Rect{9000, 9000, 1200, 700}, []Rect{primary}, primary},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := WindowWorkArea(tc.saved, tc.areas); got != tc.want {
+				t.Fatalf("launch bounds = %+v, want entire work area %+v", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestLaunchWindowBounds(t *testing.T) {
+	laptop := Rect{0, 38, 1512, 906}
+	external := Rect{-2560, 24, 2560, 1380}
+	portrait := Rect{1512, -600, 1440, 2200}
+	for _, tc := range []struct {
+		name    string
+		saved   Rect
+		screens []Rect
+		want    Rect
+	}{
+		{"compact laptop fills its work area", Rect{}, []Rect{laptop}, laptop},
+		{"wide display opens centered", Rect{-2300, 150, 1400, 800}, []Rect{laptop, external}, Rect{-2080, 204, 1600, 1020}},
+		{"tall display is also capped", Rect{1700, -200, 1200, 800}, []Rect{laptop, portrait}, Rect{1512, -10, 1440, 1020}},
+		{"unplugged display returns to laptop", Rect{-2300, 150, 1400, 800}, []Rect{laptop}, laptop},
+		{"smaller available area always wins", Rect{}, []Rect{{50, 40, 930, 550}}, Rect{50, 40, 930, 550}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := LaunchWindowBounds(tc.saved, tc.screens); got != tc.want {
+				t.Fatalf("launch bounds = %+v, want %+v", got, tc.want)
+			}
+		})
+	}
+}
