@@ -30,7 +30,7 @@ export function ProjectsWorkspace({
   partial: boolean;
   error: string;
   refresh: () => void;
-  useProject: (p: Project, current: () => boolean) => void;
+  useProject: (p: Project, current: () => boolean, onLost: (error: string) => void) => void;
   submit: Submit;
   split: Omit<ComponentProps<typeof ResourceSplit>, "children">;
 }) {
@@ -45,8 +45,17 @@ export function ProjectsWorkspace({
     },
     [],
   );
+  const captureEpoch = epoch.current;
+  function loseCapture(error: string) {
+    if (captureEpoch !== epoch.current) return;
+    epoch.current++;
+    open(undefined);
+    select(undefined);
+    fail(error);
+  }
   async function inspect(name: string, uid = "") {
     const n = ++epoch.current;
+    open(undefined);
     select(undefined);
     fail("");
     try {
@@ -74,6 +83,7 @@ export function ProjectsWorkspace({
         </div>
         {caps.get && (
           <form
+            className="pane-heading"
             onSubmit={(e) => {
               e.preventDefault();
               void inspect(query);
@@ -89,6 +99,13 @@ export function ProjectsWorkspace({
         {partial && <p>Project list incomplete.</p>}
         {!partial && !items.length && <p>No visible Projects.</p>}
         <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Display name</th>
+              <th>Phase</th>
+            </tr>
+          </thead>
           <tbody>
             {items.map((row) => (
               <tr key={row.resource.uid}>
@@ -132,7 +149,7 @@ export function ProjectsWorkspace({
               disabled={!caps.get || p.phase !== "Active" || !!p.deletingAt}
               onClick={() => {
                 const n = epoch.current;
-                useProject(p, () => n === epoch.current);
+                useProject(p, () => n === epoch.current, loseCapture);
               }}
             >
               Use project
@@ -142,18 +159,19 @@ export function ProjectsWorkspace({
                 Delete project
               </button>
             )}
-            <Evidence
-              key={p.resource.uid}
-              project={p}
-              onLost={(e) => {
-                epoch.current++;
-                select(undefined);
-                fail(e);
-              }}
-            />
+            <Evidence key={p.resource.uid} project={p} onLost={loseCapture} />
           </>
         )}
-        {mode && <Action key={mode} mode={mode} connection={connection} project={p} close={() => open(undefined)} submit={submit} />}
+        {mode && (!(mode === "delete") || p) && (
+          <Action
+            key={mode + ":" + (p?.resource.uid ?? "")}
+            mode={mode}
+            connection={connection}
+            project={p}
+            close={() => open(undefined)}
+            submit={submit}
+          />
+        )}
       </section>
     </ResourceSplit>
   );
@@ -249,13 +267,13 @@ function Action({
     };
   }, [mode]);
   async function prepare() {
+    if (deleting && !project) return;
     setBusy(true);
     fail("");
     try {
-      const p =
-        deleting && project
-          ? await api.PrepareDelete(crypto.randomUUID(), { resource: project.resource, sourceVersion: project.version })
-          : await api.PrepareProjectRequest(crypto.randomUUID(), connection, { name, displayName: display, description });
+      const p = deleting
+        ? await api.PrepareDelete(crypto.randomUUID(), { resource: project!.resource, sourceVersion: project!.version })
+        : await api.PrepareProjectRequest(crypto.randomUUID(), connection, { name, displayName: display, description });
       if (!alive.current) {
         void (deleting ? api.RevokeDelete : api.RevokeProjectRequest)(p.token);
         return;
@@ -301,6 +319,18 @@ function Action({
             <p>
               {project.phase} · UID {project.resource.uid} · version {project.version}
             </p>
+          )}
+          {!deleting && (
+            <button
+              onClick={() => {
+                void api.RevokeProjectRequest(token.current);
+                token.current = "";
+                setReview(undefined);
+                setAck("");
+              }}
+            >
+              Edit request
+            </button>
           )}
           {typed && (
             <label>

@@ -11,8 +11,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"sync/atomic"
 	"testing"
+	"time"
 )
 
 func TestProjectsReader(t *testing.T) {
@@ -121,5 +123,75 @@ func TestProjectOnlyAccessAndNamedLookup(t *testing.T) {
 	access, e := s.MyProjectAccess(ctx, p.Resource)
 	if e != nil || access.Pods != "denied" || access.Quotas != "allowed" || access.Delete != "unknown" {
 		t.Fatal(access, e)
+	}
+}
+
+func TestProjectContinuationsAndDisconnect(t *testing.T) {
+	ctx := context.Background()
+	started := make(chan struct{})
+	s, ref := workloadServer(t, func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case projectPath:
+			if token := r.URL.Query().Get("continue"); token != "" {
+				if token != "next" {
+					t.Error(token)
+				}
+				w.WriteHeader(410)
+				fmt.Fprint(w, `{"apiVersion":"v1","kind":"Status","status":"Failure","code":410,"reason":"Expired"}`)
+				return
+			}
+			fmt.Fprint(w, `{"kind":"ProjectList","apiVersion":"project.openshift.io/v1","metadata":{"continue":"next"},"items":[{"metadata":{"name":"one","uid":"id","resourceVersion":"7"}}]}`)
+		case projectPath + "/held":
+			close(started)
+			<-r.Context().Done()
+		default:
+			t.Error(r.URL)
+			w.WriteHeader(404)
+		}
+	})
+	p, e := s.ListProjects(ctx, ref, "")
+	if e != nil || !p.Partial || p.Next == "" {
+		t.Fatal(p, e)
+	}
+	if _, e := s.ListProjects(ctx, ref, p.Next); e == nil || !strings.Contains(e.Error(), "list_changed") {
+		t.Fatal(e)
+	}
+	done := make(chan error, 1)
+	go func() { _, e := s.ReadProject(ctx, ref, "held", "id"); done <- e }()
+	<-started
+	if e := s.connections.Close(ref); e != nil {
+		t.Fatal(e)
+	}
+	select {
+	case e := <-done:
+		if e == nil {
+			t.Fatal("disconnected response accepted")
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("read not cancelled")
+	}
+}
+
+func TestProjectInvalidIdentityAndDiscovery(t *testing.T) {
+	ctx := context.Background()
+	for _, obj := range []string{
+		`{"kind":"Project","apiVersion":"project.openshift.io/v1","metadata":{"name":"wrong","uid":"one","resourceVersion":"7"}}`,
+		`{"kind":"Project","apiVersion":"project.openshift.io/v1","metadata":{"name":"team","namespace":"team","uid":"one","resourceVersion":"7"}}`,
+	} {
+		s, ref := workloadServer(t, func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, obj)
+		})
+		if _, e := s.ReadProject(ctx, ref, "team", "one"); e == nil {
+			t.Fatal("accepted mismatched Project")
+		}
+	}
+	s, ref := workloadServer(t, func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(403)
+	})
+	if _, e := s.ProjectCapabilities(ctx, ref, false); e == nil || !strings.Contains(e.Error(), "forbidden") {
+		t.Fatal("denied discovery reported absence", e)
 	}
 }

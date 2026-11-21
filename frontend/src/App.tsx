@@ -127,16 +127,20 @@ export default function App() {
     return () => window.removeEventListener("keydown", listener);
   }, []);
   const active = state.active ? state.tabs[state.active] : null;
-  const [helmDestinations, setHelmDestinations] = useState<Record<string, { mode: "helm" | "resource"; source?: string }>>({});
+  const [helmDestinations, setHelmDestinations] = useState<
+    Record<string, { mode: "helm" | "resource" | "projects"; source?: string; projectKey?: string }>
+  >({});
   const helmDestination = state.active ? helmDestinations[state.active] : undefined;
   const showingHelm = helmDestination?.mode === "helm";
   const helmNamespace = helmDestination?.source ?? active?.namespace ?? "default";
   const helmConnection = active?.view?.state === "connected" || active?.view?.state === "restricted" ? active.view.ref : undefined;
-  const projectBrowser = useProjects(helmConnection);
+  const projectBrowser = useProjects(
+    helmConnection,
+    Object.values(state.tabs).map((t) => t.view?.ref),
+  );
   const projectCaps = projectBrowser.inventory?.caps;
-  const [projectTab, setProjectTab] = useState("");
   const projectKey = JSON.stringify([state.active, helmConnection?.id, helmConnection?.generation]);
-  const showingProjects = (projectTab === projectKey || !!active?.projectUnavailable) && !!projectCaps?.projects;
+  const showingProjects = (helmDestination?.projectKey === projectKey || !!active?.projectUnavailable) && !!projectCaps?.projects;
   const navigationEpoch = useRef(0);
   useEffect(() => {
     navigationEpoch.current++;
@@ -145,15 +149,16 @@ export default function App() {
     };
   }, [page, projectKey, showingProjects, showingHelm]);
   function openProjects() {
-    setProjectTab(projectKey);
-    if (state.active) leaveHelm(state.active);
+    const tab = state.active;
+    if (tab) setHelmDestinations((old) => ({ ...old, [tab]: { mode: "projects", projectKey } }));
     setPage("workspace");
   }
-  async function useProject(name: string, uid = "", current = () => true) {
+  async function useProject(name: string, uid = "", current = () => true, onLost?: (error: string) => void) {
     if (!state.active) return;
     const epoch = ++navigationEpoch.current;
-    if (await controller.selectNamespace(state.active, name, { uid, valid: () => current() && navigationEpoch.current === epoch })) {
-      setProjectTab("");
+    if (
+      await controller.selectNamespace(state.active, name, { uid, onLost, valid: () => current() && navigationEpoch.current === epoch })
+    ) {
       leaveHelm(state.active);
       workloads.selectKind("Pod");
     }
@@ -590,6 +595,8 @@ export default function App() {
               }
               complete={projectCaps?.projects ? false : (active.view?.namespacesComplete ?? false)}
               disabled={
+                !projectBrowser.inventory ||
+                (!!projectCaps?.projects && !projectCaps.get) ||
                 clusterScoped ||
                 !active.view?.ref ||
                 active.view.state === "connecting" ||
@@ -597,7 +604,11 @@ export default function App() {
               }
               onSelect={(namespace) =>
                 projectCaps?.projects
-                  ? void useProject(namespace, projectBrowser.inventory?.items.find((p) => p.resource.name === namespace)?.resource.uid)
+                  ? void useProject(
+                      namespace,
+                      (namespace === active.namespace && !active.projectUnavailable ? active.projectUID : undefined) ??
+                        projectBrowser.inventory?.items.find((p) => p.resource.name === namespace)?.resource.uid,
+                    )
                   : void controller.selectNamespace(state.active!, namespace)
               }
             />
@@ -727,7 +738,7 @@ export default function App() {
                       partial={projectBrowser.inventory.partial}
                       error={projectBrowser.inventory.error}
                       refresh={projectBrowser.refresh}
-                      useProject={(p, current) => void useProject(p.resource.name, p.resource.uid, current)}
+                      useProject={(p, current, onLost) => void useProject(p.resource.name, p.resource.uid, current, onLost)}
                       submit={operationResults.submit}
                       split={{
                         widthPercent: preferences.detailWidthPercent,
@@ -775,12 +786,10 @@ export default function App() {
                   undefined
                 }
                 onHelm={() => {
-                  setProjectTab("");
                   const tab = state.active;
                   if (tab) setHelmDestinations((old) => ({ ...old, [tab]: { mode: "helm" } }));
                 }}
                 onResourceDestination={() => {
-                  setProjectTab("");
                   if (state.active) leaveHelm(state.active);
                 }}
                 operationResults={operationResults.results}

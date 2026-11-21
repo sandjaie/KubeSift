@@ -53,7 +53,7 @@
       </p>
       <p>
         Mounted React tests exercise explicit lookup, inspection without scope changes, typed deletion, cancellation, two tabs using the
-        same name, same-name UID binding and failed transitions. The frontend suite passed 139 tests. Wails bindings, production build and
+        same name, same-name UID binding and failed transitions. The frontend suite passed 141 tests. Wails bindings, production build and
         ad-hoc signed package were generated. The repository check and native race commands are recorded in the plan ledger.
       </p>
       <p>
@@ -62,8 +62,17 @@
         reported denied, allowed and allowed. For team-b the quota request was denied and access results were unknown. Use project and
         keyboard entry both landed on scoped Pods with the expected denial. Command search reopened Projects. Request review showed the
         captured cluster and template warning and was cancelled. Deletion review showed the original UID/version and disabled confirmation
-        until the typed name matched. Light and dark appearance were exercised and System was restored. Narrow-window verification remains
-        open.
+        until the typed name matched. Light and dark appearance were exercised and System was restored. At half screen width (1514 by 1898
+        pixels), named lookup, captured UID, Use project and Delete project remained accessible. The original window size was restored.
+      </p>
+      <h2>Independent review</h2>
+      <p>
+        Fresh reviewer <code>review</code> inspected the full diff from <code>4cc1602</code> to <code>920fcc8</code>. KSF-001 through
+        KSF-005 blocked merge. The correction serializes native namespace transitions per tab, reconciles completed transitions on their
+        original generation, invalidates stale Project evidence and deletion reviews, retains Project selector identity after failed
+        discovery, and validates AlreadyExists Status evidence against the exact requested name. Targeted tests cover all five findings.
+        Additional native cases exercise expired pagination, disconnect cancellation, generic name locks, transport loss, scoped permission
+        fallback and read-only post-delete observations.
       </p>
       <h2>Live acceptance outstanding</h2>
       <p>

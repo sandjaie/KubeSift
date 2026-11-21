@@ -116,7 +116,14 @@ func (s *CreateService) ExecuteProjectRequest(token, ack string) (OperationResul
 		return s.coordinator.finish(result), nil
 	}
 	var raw json.RawMessage
-	_, err = client.call(ctx, http.MethodPost, requestPath, false, map[string]any{"apiVersion": kube.ProjectVersion, "kind": "ProjectRequest", "metadata": map[string]string{"name": f.Name}, "displayName": f.DisplayName, "description": f.Description}, &raw)
+	body, err := json.Marshal(map[string]any{"apiVersion": kube.ProjectVersion, "kind": "ProjectRequest", "metadata": map[string]string{"name": f.Name}, "displayName": f.DisplayName, "description": f.Description})
+	if err != nil {
+		result.State = "cancelled-before-send"
+		result.Problem = &model.Problem{Code: "invalid", Message: "Could not encode the Project request"}
+		return s.coordinator.finish(result), nil
+	}
+	var conflict operationStatus
+	_, err = client.sendRequest(ctx, http.MethodPost, requestPath, false, body, "application/json", &raw, requestOptions{conflict: &conflict})
 	result.State = "unknown"
 	result.Problem = &model.Problem{Code: "uncertain", Message: "Template processing may have left partial effects. Inspect the original Project name before taking another action."}
 	if err == nil {
@@ -128,7 +135,8 @@ func (s *CreateService) ExecuteProjectRequest(token, ack string) (OperationResul
 			result.Problem = nil
 		}
 	}
-	if errors.Is(err, operationHTTPStatus(409)) {
+	d := conflict.Details
+	if errors.Is(err, operationHTTPStatus(409)) && conflict.Kind == "Status" && conflict.APIVersion == "v1" && conflict.Status == "Failure" && conflict.Reason == "AlreadyExists" && conflict.Code == 409 && d != nil && d.Name != nil && *d.Name == f.Name && d.Group != nil && *d.Group == kube.ProjectGroup && d.Kind != nil && (*d.Kind == "project" || *d.Kind == "projects") {
 		result.State = "rejected"
 		result.Problem = &model.Problem{Code: "already_exists", Message: "A Project with this name already exists"}
 	}

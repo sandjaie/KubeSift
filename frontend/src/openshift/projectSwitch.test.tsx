@@ -80,6 +80,48 @@ test("delayed verification cannot switch a different tab; a same-name selection 
     });
     expect(c.state.tabs[a.key].namespace).toBe("team");
     expect(c.state.tabs[a.key].projectUID).toBe("one");
+    let finish!: (v: ConnectionView) => void;
+    api.SetWorkloadNamespace.mockReturnValueOnce(
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+    );
+    await act(async () => {
+      switching = c.selectNamespace(a.key, "source", { uid: "one", valid: () => true });
+    });
+    await act(async () => {
+      c.commit({ type: "projectLost", key: a.key, uid: "one", epoch: c.state.tabs[a.key].epoch, error: "Old Project disappeared" });
+      c.commit({ type: "focus", key: b.key });
+      finish({ ...a.view, namespace: "source" });
+      expect(await switching).toBe(false);
+    });
+    expect(c.state.tabs[a.key].namespace).toBe("source");
+    expect(c.state.tabs[b.key].namespace).toBe("team");
+    await act(async () => c.commit({ type: "focus", key: a.key }));
+    const lost = vi.fn();
+    api.ReadProject.mockRejectedValueOnce(new Error("Project replaced"));
+    await act(async () => {
+      expect(await c.selectNamespace(a.key, "different", { uid: "different-uid", valid: () => true, onLost: lost })).toBe(false);
+    });
+    expect(lost).toHaveBeenCalledOnce();
+    expect(c.state.tabs[a.key].namespace).toBe("source");
+    expect(c.state.tabs[a.key].projectUnavailable).toBe(false);
+    api.SetWorkloadNamespace.mockImplementation(async (_ref, name) => ({ ...a.view, namespace: name }));
+    api.GetAttempt.mockImplementation(async (id) => (id === a.view.attemptId ? a.view : b.view));
+    // Helm and related-resource navigation share this namespace transition, including Back.
+    await act(async () => {
+      await c.selectNamespace(a.key, "related");
+    });
+    expect(c.state.tabs[a.key].projectUID).toBeUndefined();
+    await act(async () => {
+      await c.selectNamespace(a.key, "source");
+    });
+    expect(c.state.tabs[a.key].projectUID).toBeUndefined();
+    api.ReadProject.mockResolvedValueOnce({ ...project, phase: "Terminating" });
+    await act(async () => {
+      expect(await c.selectNamespace(a.key, "retired", { uid: "old", valid: () => true, onLost: lost })).toBe(false);
+    });
+    expect(c.state.tabs[a.key].namespace).toBe("source");
   } finally {
     await act(async () => root.unmount());
     vi.unstubAllGlobals();
