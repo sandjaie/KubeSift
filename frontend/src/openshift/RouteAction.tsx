@@ -171,7 +171,14 @@ export function RouteAction({
                   />
                 </label>
                 <label>
-                  Alternate Services (JSON array) <textarea value={alts} onChange={(e) => setAlts(e.target.value)} />
+                  Alternate Services (JSON array){" "}
+                  <textarea
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    value={alts}
+                    onChange={(e) => setAlts(e.target.value)}
+                  />
                 </label>
               </>
             )}
