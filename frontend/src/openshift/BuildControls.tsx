@@ -50,7 +50,18 @@ export function BuildControls({
       .catch((e) => {
         if (!view.signal.aborted) fail(message(e));
       });
-    return () => view.abort();
+    function closeHiddenView() {
+      if (document.hidden) {
+        view.abort();
+        setStream(false);
+      }
+    }
+    document.addEventListener("visibilitychange", closeHiddenView);
+    closeHiddenView();
+    return () => {
+      document.removeEventListener("visibilitychange", closeHiddenView);
+      view.abort();
+    };
   }, [logs.store, tab, stream, follow, item.resource, target.projectUID]);
   return (
     <>
@@ -146,7 +157,7 @@ function BuildReview({
           {p.typed && (
             <label>
               Type {p.name}
-              <input value={ack} onChange={(e) => type(e.target.value)} />
+              <input autoCapitalize="none" autoCorrect="off" spellCheck={false} value={ack} onChange={(e) => type(e.target.value)} />
             </label>
           )}
           <button

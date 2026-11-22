@@ -106,10 +106,24 @@ export function RouteAction({
             {create && (
               <>
                 <label>
-                  Name <input value={name} onChange={(e) => setName(e.target.value)} />
+                  Name{" "}
+                  <input
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                  />
                 </label>
                 <label>
-                  Host <input value={host} onChange={(e) => setHost(e.target.value)} />
+                  Host{" "}
+                  <input
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    value={host}
+                    onChange={(e) => setHost(e.target.value)}
+                  />
                 </label>
                 <label>
                   TLS{" "}
@@ -124,16 +138,37 @@ export function RouteAction({
             {!remove && (
               <>
                 <label>
-                  Path <input value={path} onChange={(e) => setPath(e.target.value)} />
+                  Path{" "}
+                  <input
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    value={path}
+                    onChange={(e) => setPath(e.target.value)}
+                  />
                 </label>
                 <label>
-                  Primary Service <input value={service} onChange={(e) => setService(e.target.value)} />
+                  Primary Service{" "}
+                  <input
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    value={service}
+                    onChange={(e) => setService(e.target.value)}
+                  />
                 </label>
                 <label>
                   Weight <input type="number" min="0" max="256" value={weight} onChange={(e) => setWeight(e.target.value)} />
                 </label>
                 <label>
-                  Target port (number or quoted name) <input value={port} onChange={(e) => setPort(e.target.value)} />
+                  Target port (number or quoted name){" "}
+                  <input
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    value={port}
+                    onChange={(e) => setPort(e.target.value)}
+                  />
                 </label>
                 <label>
                   Alternate Services (JSON array) <textarea value={alts} onChange={(e) => setAlts(e.target.value)} />
@@ -164,7 +199,8 @@ export function RouteAction({
           )}
           {preview.typed && (
             <label>
-              Type {name} <input value={ack} onChange={(e) => setAck(e.target.value)} />
+              Type {name}{" "}
+              <input autoCapitalize="none" autoCorrect="off" spellCheck={false} value={ack} onChange={(e) => setAck(e.target.value)} />
             </label>
           )}
           <button

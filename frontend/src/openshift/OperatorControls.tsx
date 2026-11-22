@@ -159,7 +159,7 @@ function OperatorReview({
               ).map(([label, val, update]) => (
                 <label key={label}>
                   {label}
-                  <input value={val} onChange={(e) => update(e.target.value)} />
+                  <input autoCapitalize="none" autoCorrect="off" spellCheck={false} value={val} onChange={(e) => update(e.target.value)} />
                 </label>
               ))}
             </fieldset>
@@ -186,7 +186,8 @@ function OperatorReview({
             namespaces and cluster-wide effects.
           </label>
           <label>
-            Type {p.name} <input value={ack} onChange={(e) => type(e.target.value)} />
+            Type {p.name}{" "}
+            <input autoCapitalize="none" autoCorrect="off" spellCheck={false} value={ack} onChange={(e) => type(e.target.value)} />
           </label>
           <button
             disabled={!impact || ack !== p.name}

@@ -138,6 +138,17 @@ test("Build logs open only on request and a pending cancel review revokes on dep
   expect(signal[3].aborted).toBe(false);
   await v.click("Close logs");
   expect(signal[3].aborted).toBe(true);
+  await v.click("Open logs");
+  const reopened = v.open.mock.calls[v.open.mock.calls.length - 1] as unknown as [unknown, string, string, AbortSignal];
+  const visibility = vi.spyOn(document, "hidden", "get").mockReturnValue(true);
+  try {
+    await act(async () => {
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    expect(reopened[3].aborted).toBe(true);
+  } finally {
+    visibility.mockRestore();
+  }
   await v.click("Cancel build");
   await v.close();
   expect(api.RevokeBuildAction).toHaveBeenCalledWith("cancel-build", "build-token");

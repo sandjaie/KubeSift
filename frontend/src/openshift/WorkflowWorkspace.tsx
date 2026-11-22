@@ -223,7 +223,8 @@ function WorkflowBrowser({
             }}
           >
             <label>
-              {desc.kind} name <input value={query} onChange={(e) => setQuery(e.target.value)} />
+              {desc.kind} name{" "}
+              <input autoCapitalize="none" autoCorrect="off" spellCheck={false} value={query} onChange={(e) => setQuery(e.target.value)} />
             </label>
             <button disabled={!query}>Look up</button>
           </form>
@@ -321,11 +322,23 @@ function WorkflowBrowser({
                   <legend>Inspect a managed instance</legend>
                   <label>
                     Instance namespace (empty for cluster scope)
-                    <input value={instanceNS} onChange={(e) => setInstanceNS(e.target.value)} />
+                    <input
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
+                      value={instanceNS}
+                      onChange={(e) => setInstanceNS(e.target.value)}
+                    />
                   </label>
                   <label>
                     Instance name
-                    <input value={instanceName} onChange={(e) => setInstanceName(e.target.value)} />
+                    <input
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
+                      value={instanceName}
+                      onChange={(e) => setInstanceName(e.target.value)}
+                    />
                   </label>
                   {(fields.Owned as { name: string; kind: string; version: string }[]).map((a) => (
                     <button key={a.name + a.version} disabled={!instanceName} onClick={() => void openInstance(a)}>
