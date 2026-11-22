@@ -177,19 +177,40 @@
         <code>119c093</code> verified hidden-view log cleanup and identified KSF-011 in the alternate Services editor. The same reviewer
         cleared it at <code>2e82dd6</code>.
       </p>
-      <h2>Live authorization and closure</h2>
+      <h2 id="office-acceptance">Deferred office-laptop acceptance · OCP 4.21</h2>
       <p>
-        Before any live operation, record the OCP context and patch, principals, private project and disposable names, permitted reads and
-        writes, Service and hostname, build source and output, operator catalog/package/channel, cluster-wide effects, and cleanup owner.
-        The Projects office arrangement covers Projects only.
+        PR #33 was squash-merged into develop as <code>cae0290</code>. Its tree matches the final reviewed head <code>a9d0bcb</code>. The
+        maintainer deferred the following live cases to an office-laptop follow-up PR. Phase 1F remains open.
       </p>
       <p>
-        On the authorized target verify the Projects restricted selector, quota/access, request and conditional deletion cases. Then follow
-        a Route to its actual Service, inspect and edit it without disturbing TLS fields, observe a started Build through logs and output,
-        rebuild and cancel separately, and exercise Classic install, plan approval, CSV observation and staged removal. Record outcomes,
-        remaining resources and cleanup for each action. Check v1 detection where served and report unavailable providers. Phase 1F remains
-        open until this combined compatibility evidence exists.
+        Before live testing, record the OCP patch, context, identities, permitted reads and writes, disposable names, approved build source
+        and output, operator catalog/package/channel and cluster-wide impact, and cleanup scope and owner.
       </p>
+      <ul>
+        <li>
+          <strong>Projects.</strong> Verify restricted browsing and named lookup, tab scope, quotas and personal access. Check write-free
+          ProjectRequest previews in both entry points, single confirmed creation, and conditional deletion. See the
+          <a href="phase-1f1.html#office-acceptance">Projects office checklist</a>.
+        </li>
+        <li>
+          <strong>Routes.</strong> Create a disposable Route for the approved Service and hostname, observe router admission, follow the
+          backend Service and return, edit a safe field while preserving TLS and other fields, and check conditional deletion.
+        </li>
+        <li>
+          <strong>Builds.</strong> Start from an approved BuildConfig, follow the returned Build through controller status, bounded logs and
+          output identity, then test rebuild and cancellation separately, including terminal races and restricted log or output access.
+        </li>
+        <li>
+          <strong>OLM Classic.</strong> Verify catalog, channel and OperatorGroup scope, create a Manual Subscription, inspect resolved
+          dependencies and cluster-wide effects, approve the InstallPlan and observe the installed CSV. Exercise a pending upgrade when
+          authorized. Remove the Subscription and eligible installed CSV in separate reviews. Record remaining CRDs, data and dependencies.
+        </li>
+        <li>
+          <strong>OLM v1 and closure.</strong> Inspect ClusterCatalog and ClusterExtension where served and record provider availability.
+          Document the combined Project-scoped journey, expected and observed outcomes, residual resources and cleanup for each operation.
+          Reconcile the roadmap compatibility exit against the live evidence before closing Phase 1F.
+        </li>
+      </ul>
     </main>
   </body>
 </html>

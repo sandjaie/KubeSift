@@ -4,9 +4,9 @@ Updated 2026-11-22. Current integration branch is `develop`.
 
 ## Phase 1F · Dedicated OpenShift workflows
 
-- [Unified specification](../../docs/superpowers/specs/2026-11-22-phase-1f-openshift-workflows-design.md) and [phase implementation plan](../../docs/superpowers/plans/2026-11-22-phase-1f-openshift-workflows.md) cover Projects, Routes, Builds, Operators and phase acceptance from develop baseline `f92b519`. Projects is merged; Routes is the first new workflow. Live Projects checks remain assigned to the separate office-laptop follow-up.
-
-- [PR #33](https://github.com/sandjaie/KubeSift/pull/33) targets develop from `feature/phase-1f-openshift-workflows` from `3d6dfeb`. [Phase validation](../../docs/superpowers/validation/phase-1f.html) records kind, synthetic Route/Build/OLM and mounted UI evidence. The signed macOS app exercised all three workflows on a controlled fixture and ordinary Namespace browsing on both kind contexts. Repository checks (147 frontend tests), targeted race, bindings, build and signature verification passed. One independent review and targeted rechecks cleared KSF-001–011 at source head `2e82dd6`. Live OCP compatibility and phase closure remain open.
+- Projects shipped in PR #32. [PR #33](https://github.com/sandjaie/KubeSift/pull/33) squash-merged Routes, Builds and Operators into develop as `cae0290`. The merge tree matches final reviewed head `a9d0bcb`.
+- Repository checks (147 frontend tests), race, bindings, build, signed package, both kind contexts and controlled desktop workflows passed. The independent reviewer cleared KSF-001–011 and verified the restricted-discovery regression.
+- **Phase 1F remains open.** The maintainer deferred live OCP 4.21 compatibility to an office-laptop follow-up PR. Resume from the [deferred checks](../../docs/superpowers/validation/phase-1f.html#office-acceptance) and [phase plan](../../docs/superpowers/plans/2026-11-22-phase-1f-openshift-workflows.md).
 
 ## Phase 1F.1 · OpenShift Projects
 
