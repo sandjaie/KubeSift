@@ -74,6 +74,13 @@
         Additional native cases exercise expired pagination, disconnect cancellation, generic name locks, transport loss, scoped permission
         fallback and read-only post-delete observations.
       </p>
+      <p>
+        The same reviewer checked <code>920fcc8..bc127c0</code> and cleared KSF-001, KSF-003 and KSF-005. The final recheck of
+        <code>bc127c0..7fbe491</code> cleared KSF-002 and KSF-004. Mounted regressions proved that a late quota failure on a list-only API
+        leaves the newly selected Project intact and that polling loss of the inspected UID clears its details and revokes its pending
+        deletion. All five findings are closed. The implementing agent reran the repository check, both kind integrations, production build,
+        macOS packaging and signature verification at 7fbe491.
+      </p>
       <h2>Live acceptance outstanding</h2>
       <p>
         No OCP context, identity, disposable name scope or cleanup authority was provided. Live acceptance requires restricted visibility
