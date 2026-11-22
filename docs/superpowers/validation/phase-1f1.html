@@ -81,13 +81,29 @@
         deletion. All five findings are closed. The implementing agent reran the repository check, both kind integrations, production build,
         macOS packaging and signature verification at 7fbe491.
       </p>
-      <h2>Live acceptance outstanding</h2>
+      <h2 id="office-acceptance">Pending office-laptop acceptance on OCP 4.21</h2>
+      <p>The maintainer deferred live testing to a separate PR. All cases below remain unrun on OpenShift.</p>
+      <ol>
+        <li>
+          With a restricted identity, list visible Projects, look up a Project by name and switch to it while Namespace list is denied.
+        </li>
+        <li>Check real namespace quotas and personal access decisions. Record allowed and forbidden results independently.</li>
+        <li>
+          Verify both request previews and cancellation send zero ProjectRequest POSTs. Confirm one disposable request, observe exactly one
+          POST and record visible project-template effects.
+        </li>
+        <li>
+          Verify delete dry-run leaves the original UID present and nonterminating. On an authorized disposable replacement, prove stale
+          preconditions reject deletion and the replacement survives.
+        </li>
+        <li>
+          Confirm deletion of the reviewed UID, observe termination or absence and record cleanup. Use a separately authorized verifier if
+          the deleting principal loses read access.
+        </li>
+      </ol>
       <p>
-        No OCP context, identity, disposable name scope or cleanup authority was provided. Live acceptance requires restricted visibility
-        and named selection without Namespace list, real quota and SSAR evidence with independent denials, a single confirmed request and
-        observable template effects, a dry-run preserving the original nonterminating UID, rejection of stale preconditions on a disposable
-        replacement, and confirmed deletion observed as termination or absence. Record the server build, identity roles and actual cleanup,
-        including a separately authorized verifier if read access is lost.
+        Before testing, record the explicit context, server build, identities, disposable names or prefix, permitted reads and writes, and
+        cleanup authority. Verify ownership and UID before each lifecycle operation.
       </p>
       <p><a href="../plans/2026-11-22-phase-1f1-openshift-projects.md">Implementation plan</a></p>
     </main>
