@@ -136,3 +136,24 @@ func TestCreatedDetailAllowsGetWithoutInventoryAndRejectsReplacement(t *testing.
 		}
 	}
 }
+
+func TestSensitiveOpenShiftCapture(t *testing.T) {
+	for _, tc := range []struct{ group, kind, plural string }{
+		{"route.openshift.io", "Route", "routes"}, {"build.openshift.io", "BuildConfig", "buildconfigs"}, {"build.openshift.io", "Build", "builds"},
+		{"operators.coreos.com", "InstallPlan", "installplans"}, {"operators.coreos.com", "ClusterServiceVersion", "clusterserviceversions"},
+	} {
+		t.Run(tc.kind, func(t *testing.T) {
+			s, ref := workloadServer(t, func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				fmt.Fprintf(w, `{"apiVersion":"%s/v1","kind":"%s","metadata":{"name":"x","namespace":"default","uid":"a","resourceVersion":"2","annotations":{"copy":"private-sentinel"}},"spec":{"tls":{"key":"private-sentinel"},"unknown":"private-sentinel"}}`, tc.group, tc.kind)
+			})
+			d, err := s.readManifestDetail(context.Background(), ManifestAddress{ref, tc.group, "v1", tc.plural, tc.kind, "default", "x"}, "a")
+			if err != nil {
+				t.Fatal(err)
+			}
+			if strings.Contains(d.ObjectJSON+d.YAML, "private-sentinel") {
+				t.Fatal("sensitive material crossed the bridge")
+			}
+		})
+	}
+}

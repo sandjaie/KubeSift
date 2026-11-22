@@ -46,6 +46,7 @@ type GenericResourceDetail struct {
 	Resource        GenericResourceRef `json:"resource"`
 	ResourceVersion string             `json:"resourceVersion"`
 	FetchedAt       time.Time          `json:"fetchedAt"`
+	Projected       bool               `json:"projected,omitempty"`
 	ObjectJSON      string             `json:"objectJSON"`
 	YAML            string             `json:"yaml"`
 }

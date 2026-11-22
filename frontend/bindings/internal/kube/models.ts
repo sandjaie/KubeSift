@@ -10,6 +10,9 @@ Important: Wails generates this glue; change Go contracts and regenerate rather 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
 import * as model$0 from "../model/models.js";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
+import * as intstr$0 from "../../k8s.io/apimachinery/pkg/util/intstr/models.js";
 
 export interface APIGroup {
   group: string;
@@ -248,6 +251,7 @@ export interface GenericResourceDetail {
   resource: GenericResourceRef;
   resourceVersion: string;
   fetchedAt: string;
+  projected?: boolean;
   objectJSON: string;
   yaml: string;
 }
@@ -343,6 +347,7 @@ export interface JobSummary {
 }
 
 export interface LogRequest {
+  projectUID?: string;
   resource: ResourceRef;
   container: string;
   previous: boolean;
@@ -398,6 +403,12 @@ export interface NetworkRow {
   resource: ResourceRef;
   createdAt: string | null;
   objectJSON: string;
+}
+
+export interface OperatorAPI {
+  name: string;
+  version: string;
+  kind: string;
 }
 
 export interface PageInfo {
@@ -620,6 +631,27 @@ export interface RolloutRevision {
   changeCause: string;
 }
 
+export interface RouteBackend {
+  kind?: string;
+  name: string;
+  weight?: number | null;
+}
+
+export interface RouteFields {
+  host?: string;
+  path?: string;
+  to: RouteBackend;
+  alternateBackends?: RouteBackend[] | null;
+  port?: { targetPort: intstr$0.IntOrString } | null;
+  tls?: { termination: string; insecureEdgeTerminationPolicy?: string; externalCertificate?: { name: string } | null } | null;
+}
+
+export interface RouteService {
+  resource: ResourceRef;
+  type: string;
+  ports: string[] | null;
+}
+
 export interface SelectedPodPage {
   sourceVersion: string;
   selectorJSON: string;
@@ -669,6 +701,41 @@ export interface StorageRow {
 export interface TerminalRequest {
   target: PodSessionTarget;
   command: string[] | null;
+}
+
+export interface WorkflowDiscovery {
+  resources: APIResourceDescriptor[] | null;
+  problems: { [_ in string]?: string } | null;
+  buildActions: { [_ in string]?: boolean } | null;
+}
+
+export interface WorkflowItem {
+  links?: WorkflowLink[] | null;
+  resource: ResourceRef;
+  version: string;
+  fields: string;
+}
+
+export interface WorkflowLink {
+  kind: string;
+  namespace: string;
+  name: string;
+  uid?: string;
+}
+
+export interface WorkflowPage {
+  items: WorkflowItem[] | null;
+  next: string;
+}
+
+export interface WorkflowQuery {
+  connection: model$0.ConnectionRef;
+  namespace: string;
+  projectUID: string;
+  kind: string;
+  name: string;
+  uid: string;
+  cursor: string;
 }
 
 export interface WorkloadPage {

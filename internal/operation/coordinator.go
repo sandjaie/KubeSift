@@ -23,22 +23,24 @@ const reviewTTL = 5 * time.Minute
 const operationDeadline = 30 * time.Second
 
 type OperationResult struct {
-	Node        *NodeProgress       `json:"node,omitempty"`
-	Action      string              `json:"action"`
-	Cluster     string              `json:"cluster"`
-	OperationID string              `json:"operationID"`
-	Resource    kube.ResourceRef    `json:"resource"`
-	StartedAt   time.Time           `json:"startedAt"`
-	FinishedAt  *time.Time          `json:"finishedAt"`
-	State       string              `json:"state"`
-	Problem     *model.Problem      `json:"problem"`
-	Scale       *ScaleResultData    `json:"scale"`
-	Restart     *RestartResultData  `json:"restart"`
-	Delete      *DeleteResultData   `json:"delete"`
-	Rollback    *RollbackResultData `json:"rollback,omitempty"`
-	Edit        *kube.EditTarget    `json:"edit,omitempty"`
-	Create      *CreateResultData   `json:"create,omitempty"`
-	Apply       *ApplyResultData    `json:"apply,omitempty"`
+	InstalledCSV  *kube.ResourceRef   `json:"installedCSV,omitempty"`
+	ReturnedBuild *kube.ResourceRef   `json:"returnedBuild,omitempty"`
+	Node          *NodeProgress       `json:"node,omitempty"`
+	Action        string              `json:"action"`
+	Cluster       string              `json:"cluster"`
+	OperationID   string              `json:"operationID"`
+	Resource      kube.ResourceRef    `json:"resource"`
+	StartedAt     time.Time           `json:"startedAt"`
+	FinishedAt    *time.Time          `json:"finishedAt"`
+	State         string              `json:"state"`
+	Problem       *model.Problem      `json:"problem"`
+	Scale         *ScaleResultData    `json:"scale"`
+	Restart       *RestartResultData  `json:"restart"`
+	Delete        *DeleteResultData   `json:"delete"`
+	Rollback      *RollbackResultData `json:"rollback,omitempty"`
+	Edit          *kube.EditTarget    `json:"edit,omitempty"`
+	Create        *CreateResultData   `json:"create,omitempty"`
+	Apply         *ApplyResultData    `json:"apply,omitempty"`
 }
 
 // operationKey shares locks across API versions of the same canonical resource.
@@ -51,6 +53,16 @@ func operationKey(result OperationResult) kube.ResourceRef {
 		key.APIVersion, key.Kind = result.Apply.Target.Group, result.Apply.Target.Resource
 	} else if result.Edit != nil {
 		key.APIVersion, key.Kind = result.Edit.Group, result.Edit.Resource
+	} else if operatorAction(result.Action) {
+		key.APIVersion = "operators.coreos.com"
+		key.Kind = map[string]string{"Subscription": "subscriptions", "InstallPlan": "installplans", "ClusterServiceVersion": "clusterserviceversions"}[key.Kind]
+	} else if buildAction(result.Action) {
+		key.APIVersion, key.Kind = "build.openshift.io", "builds"
+		if result.Resource.Kind == "BuildConfig" {
+			key.Kind = "buildconfigs"
+		}
+	} else if routeAction(result.Action) {
+		key.APIVersion, key.Kind = "route.openshift.io", "routes"
 	} else if result.Node != nil {
 		key.APIVersion, key.Kind = "", "nodes"
 	} else if _, plural := deleteTarget(result.Resource); plural != "" {

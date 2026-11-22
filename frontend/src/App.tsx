@@ -26,6 +26,7 @@ import type { HelmAction } from "./helm/managementState";
 import type { Target as HelmTarget } from "../bindings/internal/helmmanager/models";
 import type { RecordRef } from "../bindings/internal/helmreader/models";
 import { useProjects } from "./openshift/useProjects";
+import { WorkflowWorkspace, destination, type Workflow } from "./openshift/WorkflowWorkspace";
 import { ProjectsWorkspace } from "./openshift/ProjectsWorkspace";
 import { Workspace } from "./workspace/Workspace";
 import { CommandPalette } from "./workspace/CommandPalette";
@@ -128,7 +129,7 @@ export default function App() {
   }, []);
   const active = state.active ? state.tabs[state.active] : null;
   const [helmDestinations, setHelmDestinations] = useState<
-    Record<string, { mode: "helm" | "resource" | "projects"; source?: string; projectKey?: string }>
+    Record<string, { mode: "helm" | "resource" | "projects"; source?: string; projectKey?: string; workflow?: Workflow }>
   >({});
   const helmDestination = state.active ? helmDestinations[state.active] : undefined;
   const showingHelm = helmDestination?.mode === "helm";
@@ -140,14 +141,31 @@ export default function App() {
   );
   const projectCaps = projectBrowser.inventory?.caps;
   const projectKey = JSON.stringify([state.active, helmConnection?.id, helmConnection?.generation]);
-  const showingProjects = (helmDestination?.projectKey === projectKey || !!active?.projectUnavailable) && !!projectCaps?.projects;
+  const workflowResources = projectBrowser.workflows?.resources ?? [];
+  const workflowNames = [...new Set(workflowResources.map(destination))];
+  const workflow =
+    !active?.projectUnavailable &&
+    helmDestination?.projectKey === projectKey &&
+    helmDestination?.workflow &&
+    workflowNames.includes(helmDestination.workflow)
+      ? helmDestination.workflow
+      : undefined;
+  function openWorkflow(name: string) {
+    const tab = state.active;
+    if (tab && workflowNames.includes(name as Workflow))
+      setHelmDestinations((old) => ({ ...old, [tab]: { mode: "resource", projectKey, workflow: name as Workflow } }));
+    setPage("workspace");
+  }
+  const showingProjects =
+    ((helmDestination?.mode === "projects" && helmDestination?.projectKey === projectKey) || !!active?.projectUnavailable) &&
+    !!projectCaps?.projects;
   const navigationEpoch = useRef(0);
   useEffect(() => {
     navigationEpoch.current++;
     return () => {
       navigationEpoch.current++;
     };
-  }, [page, projectKey, showingProjects, showingHelm]);
+  }, [page, projectKey, showingProjects, showingHelm, workflow]);
   function openProjects() {
     const tab = state.active;
     if (tab) setHelmDestinations((old) => ({ ...old, [tab]: { mode: "projects", projectKey } }));
@@ -178,11 +196,11 @@ export default function App() {
     state.active ?? "",
     active?.projectUnavailable ? null : (active?.view?.ref ?? null),
     active?.namespace ?? "default",
-    page === "workspace" && !showingHelm && !showingProjects,
+    page === "workspace" && !showingHelm && !showingProjects && !workflow,
     (tab, namespace) => void controller.selectNamespace(tab, namespace),
     active?.projectUID,
   );
-  const clusterScoped = showingProjects || (!showingHelm && workloads.clusterScoped);
+  const clusterScoped = showingProjects || (!workflow && !showingHelm && workloads.clusterScoped);
   function leaveHelm(tab: string) {
     setHelmDestinations((old) => {
       if (!old[tab]) return old;
@@ -707,6 +725,11 @@ export default function App() {
                   {workloads.navigationError}
                 </div>
               )}
+              {Object.entries(projectBrowser.workflows?.problems ?? {}).map(([group, problem]) => (
+                <p key={group} role="alert">
+                  {group} · {problem} <button onClick={projectBrowser.refresh}>Retry discovery</button>
+                </p>
+              ))}
               {workloads.kind === "APIResources" && projectBrowser.inventory?.error && !projectCaps && (
                 <p role="alert">
                   OpenShift discovery · {projectBrowser.inventory.error}{" "}
@@ -725,22 +748,26 @@ export default function App() {
                 }
                 controller={workloads}
                 onProjects={projectCaps?.projects ? openProjects : undefined}
+                workflows={workflowNames}
+                workflow={workflow}
+                onWorkflow={openWorkflow}
                 projectsPane={
-                  showingProjects &&
-                  helmConnection &&
-                  projectBrowser.inventory &&
-                  projectCaps && (
-                    <ProjectsWorkspace
-                      key={projectKey}
-                      unavailableUID={active?.projectUnavailable ? active.projectUID : undefined}
-                      connection={helmConnection}
-                      caps={projectCaps}
-                      items={projectBrowser.inventory.items}
-                      partial={projectBrowser.inventory.partial}
-                      error={projectBrowser.inventory.error}
-                      refresh={projectBrowser.refresh}
-                      useProject={(p, current, onLost) => void useProject(p.resource.name, p.resource.uid, current, onLost)}
+                  workflow && helmConnection ? (
+                    <WorkflowWorkspace
+                      openGeneric={(d) => {
+                        leaveHelm(state.active!);
+                        workloads.selectKind("APIResources");
+                        workloads.setCatalogRoute({ group: d.group, version: d.version, descriptor: d, namespace: "" });
+                      }}
+                      results={operationResults.results}
+                      actions={projectBrowser.workflows?.buildActions ?? {}}
+                      logs={logs}
                       submit={operationResults.submit}
+                      key={JSON.stringify([projectKey, active.namespace, active.projectUID, workflow])}
+                      connection={helmConnection}
+                      namespace={active.namespace}
+                      projectUID={active.projectUID ?? ""}
+                      resources={workflowResources.filter((d) => destination(d) === workflow)}
                       split={{
                         widthPercent: preferences.detailWidthPercent,
                         heightPercent: preferences.detailHeightPercent,
@@ -748,6 +775,30 @@ export default function App() {
                         onCommit: commitSize,
                       }}
                     />
+                  ) : (
+                    showingProjects &&
+                    helmConnection &&
+                    projectBrowser.inventory &&
+                    projectCaps && (
+                      <ProjectsWorkspace
+                        key={projectKey}
+                        unavailableUID={active?.projectUnavailable ? active.projectUID : undefined}
+                        connection={helmConnection}
+                        caps={projectCaps}
+                        items={projectBrowser.inventory.items}
+                        partial={projectBrowser.inventory.partial}
+                        error={projectBrowser.inventory.error}
+                        refresh={projectBrowser.refresh}
+                        useProject={(p, current, onLost) => void useProject(p.resource.name, p.resource.uid, current, onLost)}
+                        submit={operationResults.submit}
+                        split={{
+                          widthPercent: preferences.detailWidthPercent,
+                          heightPercent: preferences.detailHeightPercent,
+                          onResize: (axis, value) => resize(axis === "x" ? "detailWidthPercent" : "detailHeightPercent", value),
+                          onCommit: commitSize,
+                        }}
+                      />
+                    )
                   )
                 }
                 helmPane={
@@ -937,6 +988,8 @@ export default function App() {
         ))}
       {palette && (
         <CommandPalette
+          workflows={workflowNames}
+          onWorkflow={openWorkflow}
           projects={projectCaps?.projects ? openProjects : undefined}
           available={false}
           onCommand={() => setPage("clusters")}

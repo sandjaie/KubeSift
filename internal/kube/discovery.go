@@ -302,6 +302,25 @@ func projectDiscovery(raw []byte, key versionKey) (APIResourceCatalog, error) {
 	seen := map[string]bool{}
 	for _, r := range document.Resources {
 		if strings.Contains(r.Name, "/") {
+			if key.group == "build.openshift.io" && key.version == "v1" && r.Namespaced != nil && *r.Namespaced {
+				verb := ""
+				switch r.Name {
+				case "builds/log":
+					if r.Kind == "BuildLog" {
+						verb = "get"
+					}
+				case "buildconfigs/instantiate", "builds/clone":
+					if r.Kind == "BuildRequest" {
+						verb = "create"
+					}
+				}
+				if verb != "" && slices.Contains(r.Verbs, verb) {
+					if out.buildActions == nil {
+						out.buildActions = map[string]bool{}
+					}
+					out.buildActions[r.Name] = true
+				}
+			}
 			continue
 		}
 		if !validVersion(r.Name) || !discoveryKind.MatchString(r.Kind) || r.Namespaced == nil || seen[r.Name] ||

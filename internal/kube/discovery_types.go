@@ -46,9 +46,10 @@ func (d APIResourceDescriptor) api() apiResource {
 }
 
 type APIResourceCatalog struct {
-	Resources []APIResourceDescriptor `json:"resources"`
-	FetchedAt time.Time               `json:"fetchedAt"`
-	Epoch     string                  `json:"epoch"`
+	buildActions map[string]bool
+	Resources    []APIResourceDescriptor `json:"resources"`
+	FetchedAt    time.Time               `json:"fetchedAt"`
+	Epoch        string                  `json:"epoch"`
 }
 type APIGroupRequest struct {
 	Connection model.ConnectionRef `json:"connection"`

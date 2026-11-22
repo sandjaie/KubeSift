@@ -52,6 +52,9 @@ export function Workspace({
   operationResults,
   projectsPane,
   onProjects,
+  workflows,
+  workflow,
+  onWorkflow,
   helmPane,
   onHelm,
   onResourceDestination,
@@ -75,6 +78,9 @@ export function Workspace({
   operationResults: OperationResult[];
   projectsPane?: ReactNode;
   onProjects?: () => void;
+  workflows?: string[];
+  workflow?: string;
+  onWorkflow?: (w: string) => void;
   helmPane?: ReactNode;
   onHelm: () => void;
   onResourceDestination: () => void;
@@ -120,11 +126,13 @@ export function Workspace({
             <div className="navigation-host">
               <ResourceNavigation
                 projects={!!onProjects}
-                kind={projectsPane ? "Project" : helmPane ? "Helm" : kind}
+                workflows={workflows}
+                kind={workflow ?? (projectsPane ? "Project" : helmPane ? "Helm" : kind)}
                 collapsedGroups={collapsedResourceGroups}
                 onToggleGroup={onToggleResourceGroup}
                 onSelect={(k) => {
-                  if (k === "Project") onProjects?.();
+                  if (workflows?.includes(k)) onWorkflow?.(k);
+                  else if (k === "Project") onProjects?.();
                   else if (k === "Helm") onHelm();
                   else if (isResourceKind(k)) {
                     onResourceDestination();

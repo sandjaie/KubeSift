@@ -46,11 +46,15 @@ func TestProjectsAbsentOnKind(t *testing.T) {
 			if err != nil || caps != (kube.ProjectCapabilities{}) {
 				t.Fatal(caps, err)
 			}
+			workflows, err := reader.WorkflowDiscovery(ctx, ref, false)
+			if err != nil || len(workflows.Resources) != 0 || len(workflows.Problems) != 0 {
+				t.Fatalf("unexpected workflow discovery %+v %v", workflows, err)
+			}
 			page, err := reader.ReadConfiguration(ctx, kube.PageRequest{Connection: ref, Kind: "Namespace"})
 			if err != nil || len(page.Items) == 0 {
 				t.Fatal("Namespace inventory unavailable", err)
 			}
-			t.Logf("Projects API absent; %d Namespaces visible", len(page.Items))
+			t.Logf("Projects, Routes, Builds and OLM absent; %d Namespaces visible", len(page.Items))
 		})
 	}
 }

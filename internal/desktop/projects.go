@@ -70,3 +70,100 @@ func (s *ExplorerService) ExecuteProjectRequest(token, ack string) (operation.Op
 func (s *ExplorerService) RevokeProjectRequest(token string) {
 	s.core.creation.RevokeProjectRequest(token)
 }
+
+func (s *ExplorerService) WorkflowDiscovery(id string, ref model.ConnectionRef, refresh bool) (kube.WorkflowDiscovery, error) {
+	ctx, done, err := s.beginWorkloadRead(id)
+	if err != nil {
+		return kube.WorkflowDiscovery{}, err
+	}
+	defer done()
+	return s.core.kube.WorkflowDiscovery(ctx, ref, refresh)
+}
+func (s *ExplorerService) ReadWorkflow(id string, q kube.WorkflowQuery) (kube.WorkflowPage, error) {
+	ctx, done, err := s.beginWorkloadRead(id)
+	if err != nil {
+		return kube.WorkflowPage{}, err
+	}
+	defer done()
+	return s.core.kube.ReadWorkflow(ctx, q)
+}
+
+func (s *ExplorerService) ReadRouteService(id string, q kube.WorkflowQuery, name string) (kube.RouteService, error) {
+	ctx, done, err := s.beginWorkloadRead(id)
+	if err != nil {
+		return kube.RouteService{}, err
+	}
+	defer done()
+	return s.core.kube.ReadRouteService(ctx, q, name)
+}
+
+func (s *ExplorerService) PrepareRoute(id string, r operation.RouteRequest) (operation.WorkflowPreview, error) {
+	ctx, done, err := s.beginWorkloadRead(id)
+	if err != nil {
+		return operation.WorkflowPreview{}, err
+	}
+	defer done()
+	env, err := s.connectionEnvironment(r.Target.Connection)
+	if err != nil {
+		return operation.WorkflowPreview{}, err
+	}
+	return s.core.creation.PrepareRoute(ctx, r, env)
+}
+func (s *ExplorerService) ExecuteRoute(action, token, ack string) (operation.OperationResult, error) {
+	return s.core.creation.ExecuteRoute(action, token, ack)
+}
+func (s *ExplorerService) RevokeRoute(action, token string) {
+	s.core.creation.RevokeRoute(action, token)
+}
+
+func (s *ExplorerService) PrepareBuildAction(id string, r operation.BuildActionRequest) (operation.WorkflowPreview, error) {
+	ctx, done, err := s.beginWorkloadRead(id)
+	if err != nil {
+		return operation.WorkflowPreview{}, err
+	}
+	defer done()
+	env, err := s.connectionEnvironment(r.Target.Connection)
+	if err != nil {
+		return operation.WorkflowPreview{}, err
+	}
+	return s.core.creation.PrepareBuildAction(ctx, r, env)
+}
+func (s *ExplorerService) ExecuteBuildAction(action, token, ack string) (operation.OperationResult, error) {
+	return s.core.creation.ExecuteBuildAction(action, token, ack)
+}
+func (s *ExplorerService) RevokeBuildAction(action, token string) {
+	s.core.creation.RevokeBuildAction(action, token)
+}
+
+func (s *ExplorerService) PrepareOperator(id string, r operation.OperatorRequest) (operation.WorkflowPreview, error) {
+	ctx, done, err := s.beginWorkloadRead(id)
+	if err != nil {
+		return operation.WorkflowPreview{}, err
+	}
+	defer done()
+	return s.core.creation.PrepareOperator(ctx, r)
+}
+func (s *ExplorerService) ExecuteOperator(action, token, ack string) (operation.OperationResult, error) {
+	return s.core.creation.ExecuteOperator(action, token, ack)
+}
+func (s *ExplorerService) RevokeOperator(action, token string) {
+	s.core.creation.RevokeOperator(action, token)
+}
+
+func (s *ExplorerService) ReadWorkflowLink(id string, q kube.WorkflowQuery, l kube.WorkflowLink) (kube.WorkflowItem, error) {
+	ctx, done, err := s.beginWorkloadRead(id)
+	if err != nil {
+		return kube.WorkflowItem{}, err
+	}
+	defer done()
+	return s.core.kube.ReadWorkflowLink(ctx, q, l)
+}
+
+func (s *ExplorerService) ReadOperatorInstance(id string, q kube.WorkflowQuery, a kube.OperatorAPI, ns, name string) (kube.WorkflowItem, error) {
+	ctx, done, err := s.beginWorkloadRead(id)
+	if err != nil {
+		return kube.WorkflowItem{}, err
+	}
+	defer done()
+	return s.core.kube.ReadOperatorInstance(ctx, q, a, ns, name)
+}

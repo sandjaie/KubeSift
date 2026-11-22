@@ -137,9 +137,10 @@ type EventPage struct {
 }
 
 type LogRequest struct {
-	Resource  ResourceRef `json:"resource"`
-	Container string      `json:"container"`
-	Previous  bool        `json:"previous"`
-	Follow    bool        `json:"follow"`
-	TailLines int64       `json:"tailLines"`
+	ProjectUID string      `json:"projectUID,omitempty"`
+	Resource   ResourceRef `json:"resource"`
+	Container  string      `json:"container"`
+	Previous   bool        `json:"previous"`
+	Follow     bool        `json:"follow"`
+	TailLines  int64       `json:"tailLines"`
 }

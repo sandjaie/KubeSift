@@ -8,11 +8,15 @@ import { commands, type CommandId } from "./commands";
 import { Modal } from "../ui/ReviewDialog";
 export function CommandPalette({
   projects,
+  workflows,
+  onWorkflow,
   available,
   onCommand,
   onClose,
 }: {
   projects?: () => void;
+  workflows?: string[];
+  onWorkflow?: (w: string) => void;
   available: boolean;
   onCommand: (id: CommandId) => void;
   onClose: () => void;
@@ -30,6 +34,17 @@ export function CommandPalette({
             Projects
           </button>
         )}
+        {workflows?.map((w) => (
+          <button
+            key={w}
+            onClick={() => {
+              onClose();
+              onWorkflow?.(w);
+            }}
+          >
+            {w}
+          </button>
+        ))}
         {commands
           .filter((c) => c.id !== "palette")
           .map((c) => (

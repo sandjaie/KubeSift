@@ -8,14 +8,34 @@ package kube
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/sandjaie/KubeSift/internal/model"
 	"github.com/sandjaie/KubeSift/internal/session"
 	"io"
 	corev1 "k8s.io/api/core/v1"
+	"strconv"
 	"time"
 )
 
 func (s *Service) validateLog(ctx context.Context, req LogRequest) error {
+	if req.Resource.Kind == "Build" {
+		r := req.Resource
+		if r.APIVersion != "build.openshift.io/v1" || r.UID == "" || r.Name == "" || req.Container != "" || req.Previous {
+			return model.Fail("invalid", "Select a captured Build for logs")
+		}
+		page, err := s.ReadWorkflow(ctx, WorkflowQuery{Connection: r.Connection, Namespace: r.Namespace, Kind: r.Kind, Name: r.Name, UID: r.UID, ProjectUID: req.ProjectUID})
+		if err != nil {
+			return err
+		}
+		var b BuildEvidence
+		if len(page.Items) != 1 || json.Unmarshal([]byte(page.Items[0].Fields), &b) != nil {
+			return model.Fail("invalid", "Invalid Build evidence")
+		}
+		if b.Phase == "New" || b.Phase == "Pending" {
+			return model.Fail("pending", "Build is pending. Request logs after it starts.")
+		}
+		return nil
+	}
 	if req.Resource.Kind != "Pod" {
 		return model.Fail("invalid", "Choose a Pod for logs")
 	}
@@ -98,7 +118,15 @@ func (s *Service) OpenPodLogs(ctx context.Context, req LogRequest) (model.Sessio
 			limit := int64(1 << 20)
 			opts.LimitBytes = &limit
 		}
-		stream, e := client.CoreV1().Pods(req.Resource.Namespace).GetLogs(req.Resource.Name, opts).Stream(streamCtx)
+		request := client.CoreV1().Pods(req.Resource.Namespace).GetLogs(req.Resource.Name, opts)
+		if req.Resource.Kind == "Build" {
+			path := "/apis/build.openshift.io/v1/namespaces/" + req.Resource.Namespace + "/builds/" + req.Resource.Name + "/log"
+			request = client.Discovery().RESTClient().Get().AbsPath(path).Param("tailLines", strconv.FormatInt(req.TailLines, 10)).Param("follow", strconv.FormatBool(req.Follow)).Param("timestamps", "true")
+			if !req.Follow {
+				request.Param("limitBytes", "1048576")
+			}
+		}
+		stream, e := request.Stream(streamCtx)
 		if e != nil {
 			return safeError(streamCtx, e)
 		}
@@ -140,6 +168,9 @@ func (s *Service) OpenPodLogs(ctx context.Context, req LogRequest) (model.Sessio
 		for {
 			count, readErr := stream.Read(buffer)
 			if count > 0 {
+				if !req.Follow && total+int64(count) > 1<<20 {
+					count = int((1 << 20) - total)
+				}
 				total += int64(count)
 				if e = w.Send("data", buffer[:count]); e != nil {
 					return e
@@ -150,7 +181,7 @@ func (s *Service) OpenPodLogs(ctx context.Context, req LogRequest) (model.Sessio
 				return e
 			default:
 			}
-			if readErr == io.EOF {
+			if readErr == io.EOF || (!req.Follow && total >= 1<<20) {
 				if req.Follow {
 					return w.Send("state", []byte("gap: Follow ended; Resume may overlap or omit logs"))
 				}
