@@ -165,7 +165,9 @@
         checks, Go tests and vet, binding normalization tests, 147 frontend tests, lint and type checking.
         <code>go test -race ./internal/kube ./internal/operation ./internal/session ./internal/desktop</code> passed.
         <code>wails3 task bindings</code>, <code>npm run build</code>, <code>wails3 task package</code> and strict macOS signature
-        verification passed. The integration tests TestProjectsAbsentOnKind and TestOpenShiftWorkflowContracts passed.
+        verification passed. The restricted-discovery fixture denied the Project and Build group-version endpoints; the same connection
+        still returned the Route descriptor and a separate Build permission problem. The integration tests TestProjectsAbsentOnKind and
+        TestOpenShiftWorkflowContracts passed.
       </p>
       <p>
         Independent reviewer <code>phase_f_review</code> (GPT-6.2 Astra) examined <code>3d6dfeb..a1e1b27</code>. The reviewer cleared

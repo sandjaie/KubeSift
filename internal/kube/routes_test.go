@@ -54,3 +54,34 @@ func TestReadRouteAndGuardService(t *testing.T) {
 		t.Fatal("replaced source opened")
 	}
 }
+
+func TestRouteDiscoveryWithRestrictedProjectsAndBuilds(t *testing.T) {
+	ctx := context.Background()
+	s, ref := workloadServer(t, func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/api":
+			fmt.Fprint(w, `{"kind":"APIVersions","versions":["v1"]}`)
+		case "/apis":
+			var groups []map[string]any
+			for _, group := range []string{"project.openshift.io", "build.openshift.io", "route.openshift.io"} {
+				groups = append(groups, map[string]any{"name": group, "versions": []map[string]string{{"groupVersion": group + "/v1", "version": "v1"}}})
+			}
+			json.NewEncoder(w).Encode(map[string]any{"kind": "APIGroupList", "groups": groups})
+		case "/apis/project.openshift.io/v1", "/apis/build.openshift.io/v1":
+			w.WriteHeader(http.StatusForbidden)
+		case "/apis/route.openshift.io/v1":
+			fmt.Fprint(w, `{"kind":"APIResourceList","groupVersion":"route.openshift.io/v1","resources":[{"name":"routes","kind":"Route","namespaced":true,"verbs":["get","list"]}]}`)
+		default:
+			t.Error(r.URL.Path)
+			w.WriteHeader(http.StatusNotFound)
+		}
+	})
+	if _, err := s.ProjectCapabilities(ctx, ref, false); err == nil || !strings.Contains(err.Error(), "forbidden") {
+		t.Fatal("expected denied Project discovery", err)
+	}
+	discovery, err := s.WorkflowDiscovery(ctx, ref, false)
+	if err != nil || len(discovery.Resources) != 1 || discovery.Resources[0].Kind != "Route" || !discovery.Resources[0].List || !strings.Contains(discovery.Problems["build.openshift.io/v1"], "forbidden") {
+		t.Fatalf("partial workflow discovery: %+v, %v", discovery, err)
+	}
+}
