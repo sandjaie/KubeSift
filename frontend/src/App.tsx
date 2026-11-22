@@ -732,6 +732,7 @@ export default function App() {
                   projectCaps && (
                     <ProjectsWorkspace
                       key={projectKey}
+                      unavailableUID={active?.projectUnavailable ? active.projectUID : undefined}
                       connection={helmConnection}
                       caps={projectCaps}
                       items={projectBrowser.inventory.items}

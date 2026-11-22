@@ -16,6 +16,7 @@ type Mode = "request-project" | "delete";
 export function ProjectsWorkspace({
   connection,
   caps,
+  unavailableUID,
   items,
   partial,
   error,
@@ -26,6 +27,7 @@ export function ProjectsWorkspace({
 }: {
   connection: ConnectionRef;
   caps: ProjectCapabilities;
+  unavailableUID?: string;
   items: Project[];
   partial: boolean;
   error: string;
@@ -52,6 +54,18 @@ export function ProjectsWorkspace({
     open(undefined);
     select(undefined);
     fail(error);
+  }
+  const [previousUnavailable, setPreviousUnavailable] = useState(unavailableUID);
+  if (previousUnavailable !== unavailableUID) {
+    setPreviousUnavailable(unavailableUID);
+    if (unavailableUID && p?.resource.uid === unavailableUID) loseCapture("Working Project is no longer available.");
+  }
+  function inspectRow(row: Project) {
+    if (caps.get) return void inspect(row.resource.name, row.resource.uid);
+    epoch.current++;
+    open(undefined);
+    fail("");
+    select(row);
   }
   async function inspect(name: string, uid = "") {
     const n = ++epoch.current;
@@ -110,9 +124,7 @@ export function ProjectsWorkspace({
             {items.map((row) => (
               <tr key={row.resource.uid}>
                 <td>
-                  <button onClick={() => (caps.get ? void inspect(row.resource.name, row.resource.uid) : select(row))}>
-                    {row.resource.name}
-                  </button>
+                  <button onClick={() => inspectRow(row)}>{row.resource.name}</button>
                 </td>
                 <td>{row.displayName}</td>
                 <td>{row.phase}</td>

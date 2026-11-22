@@ -51,13 +51,14 @@ test("explicit lookup, scope selection and revocable, typed review", async () =>
       el.dispatchEvent(new Event("input", { bubbles: true }));
     });
   };
-  try {
-    await act(async () =>
+  const render = async (unavailableUID?: string, listOnly = false) =>
+    act(async () =>
       root.render(
         <ProjectsWorkspace
           connection={connection}
-          caps={{ projects: true, list: false, get: true, request: true, checkRequest: true, delete: true }}
-          items={[]}
+          unavailableUID={unavailableUID}
+          caps={{ projects: true, list: listOnly, get: !listOnly, request: true, checkRequest: true, delete: true }}
+          items={listOnly ? [project, { ...project, resource: { ...resource, name: "team-b", uid: "second" } }] : []}
           partial
           error="List forbidden"
           refresh={vi.fn()}
@@ -67,6 +68,8 @@ test("explicit lookup, scope selection and revocable, typed review", async () =>
         />,
       ),
     );
+  try {
+    await render();
     await input(host.querySelector("input")!, "team");
     expect(api.ReadProject).not.toHaveBeenCalled();
     await act(async () => {
@@ -105,6 +108,22 @@ test("explicit lookup, scope selection and revocable, typed review", async () =>
     expect(host.querySelector(".detail-pane h2")).toBeNull();
     expect(api.RevokeDelete).toHaveBeenCalledTimes(2);
     expect(api.PrepareProjectRequest).not.toHaveBeenCalled();
+    await act(async () => {
+      host.querySelector("form")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    });
+    await click("Delete project");
+    await click("Review deletion");
+    await render("first");
+    expect(host.querySelector("dialog")).toBeNull();
+    expect(host.querySelector(".detail-pane h2")).toBeNull();
+    expect(api.RevokeDelete).toHaveBeenCalledTimes(3);
+    await render(undefined, true);
+    await click("team");
+    api.ProjectQuotas.mockReturnValueOnce(new Promise((_, reject) => (loseA = reject)));
+    await click("Read quotas");
+    await click("team-b");
+    await act(async () => loseA(new Error("project_unavailable")));
+    expect(host.querySelector(".detail-pane h2")?.textContent).toBe("team-b");
   } finally {
     await act(async () => root.unmount());
     host.remove();
