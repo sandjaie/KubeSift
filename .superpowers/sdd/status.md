@@ -2,6 +2,10 @@
 
 Updated 2026-11-22. Current integration branch is `develop`.
 
+## Phase 1F · Dedicated OpenShift workflows
+
+- [Unified specification](../../docs/superpowers/specs/2026-11-22-phase-1f-openshift-workflows-design.md) and [phase implementation plan](../../docs/superpowers/plans/2026-11-22-phase-1f-openshift-workflows.md) cover Projects, Routes, Builds, Operators and phase acceptance from develop baseline `f92b519`. Projects is merged; Routes is the first new workflow. Live Projects checks remain assigned to the separate office-laptop follow-up.
+
 ## Phase 1F.1 · OpenShift Projects
 
 - [Specification](../../docs/superpowers/specs/2026-11-22-phase-1f1-openshift-projects-design.md) and [implementation plan](../../docs/superpowers/plans/2026-11-22-phase-1f1-openshift-projects.md) prepared on develop baseline `6cd1d19`. Implementation on `feature/phase-1f1-openshift-projects` from `4cc1602`. [Validation evidence](../../docs/superpowers/validation/phase-1f1.html) covers deterministic contracts, both kind contexts and the packaged desktop. Repository checks passed with 141 frontend tests. Targeted native race, bindings, build, packaging and signature verification passed. One independent whole-PR review and two targeted follow-ups cleared KSF-001 through KSF-005 at 7fbe491. [PR #32](https://github.com/sandjaie/KubeSift/pull/32) squash-merged into develop as `b5e20c2`. Its tree matches reviewed head `cd6475e`. The maintainer deferred live OCP 4.21 checks to a separate office-laptop PR. The validation report lists each pending case.
