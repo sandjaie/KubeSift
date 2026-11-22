@@ -174,6 +174,12 @@ function OperatorReview({
             {p.cluster} / {p.namespace} / {p.name}
           </p>
           <p>{p.impact}</p>
+          {p.admitted && (
+            <>
+              <h3>Admitted Subscription</h3>
+              <pre>{p.admitted}</pre>
+            </>
+          )}
           <pre>{p.before}</pre>
           <label>
             <input type="checkbox" checked={impact} onChange={(e) => ackImpact(e.target.checked)} /> I acknowledge the reviewed target

@@ -163,6 +163,12 @@ func (s *Service) readManifestDetail(ctx context.Context, target ManifestAddress
 				return GenericResourceDetail{}, err
 			}
 			safe["spec"], safe["status"] = route.Spec, route.Status
+		} else if api.group == "olm.operatorframework.io" && (api.plural == "clusterextensions" || api.plural == "clustercatalogs") {
+			v, e := projectOLMv1(raw)
+			if e != nil {
+				return GenericResourceDetail{}, e
+			}
+			safe["spec"], safe["status"] = v.Spec, v.Status
 		}
 		raw, err = json.Marshal(safe)
 		if err != nil {
@@ -189,8 +195,12 @@ func protectedOpenShiftCapture(api apiResource) bool {
 		return api.plural == "routes"
 	case "build.openshift.io":
 		return api.plural == "builds" || api.plural == "buildconfigs"
-	case "operators.coreos.com", "packages.operators.coreos.com", "olm.operatorframework.io":
-		return true
+	case "operators.coreos.com":
+		return api.plural == "installplans" || api.plural == "clusterserviceversions" || api.plural == "catalogsources" || api.plural == "subscriptions" || api.plural == "operatorgroups"
+	case "packages.operators.coreos.com":
+		return api.plural == "packagemanifests"
+	case "olm.operatorframework.io":
+		return api.plural == "clustercatalogs" || api.plural == "clusterextensions"
 	}
 	return false
 }

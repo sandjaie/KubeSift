@@ -214,7 +214,14 @@ func (s *CreateService) PrepareRoute(ctx context.Context, r RouteRequest, enviro
 		return out, model.Fail("forbidden", "Route permission unavailable")
 	}
 	var raw json.RawMessage
-	_, err = c.send(ctx, review.Method, review.Path, true, review.Body, review.Media, &raw, nil)
+	dryBody := review.Body
+	if review.Method == http.MethodDelete {
+		dryBody, err = deleteOptions(ref, r.Version, true)
+		if err != nil {
+			return out, err
+		}
+	}
+	_, err = c.send(ctx, review.Method, review.Path, true, dryBody, review.Media, &raw, nil)
 	if err != nil {
 		return out, err
 	}
@@ -265,6 +272,16 @@ func (s *CreateService) ExecuteRoute(action, token, ack string) (OperationResult
 	if err != nil {
 		result.State = "cancelled-before-send"
 		result.Problem = &model.Problem{Code: "unavailable", Message: "Original connection or Project unavailable"}
+		return s.coordinator.finish(result), nil
+	}
+	verb := map[string]string{http.MethodPost: "create", http.MethodPatch: "patch", http.MethodDelete: "delete"}[r.Method]
+	permRef := r.Address.Ref()
+	if r.Method == http.MethodPost {
+		permRef.Name = ""
+	}
+	if permissionOf(ctx, c, permRef, "routes", verb, "") != "allowed" {
+		result.State = "cancelled-before-send"
+		result.Problem = &model.Problem{Code: "forbidden", Message: "Route permission changed. Refresh before reviewing again."}
 		return s.coordinator.finish(result), nil
 	}
 	var raw json.RawMessage

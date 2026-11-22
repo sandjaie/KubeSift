@@ -14,6 +14,8 @@ import (
 	"fmt"
 	"github.com/sandjaie/KubeSift/internal/kube"
 	"github.com/sandjaie/KubeSift/internal/model"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"net/http"
 	"reflect"
@@ -184,8 +186,13 @@ func (s *CreateService) operatorCommand(ctx context.Context, r OperatorRequest) 
 			if e != nil {
 				return cmd, e
 			}
-			if p.Fields.Approval != "Manual" || p.Fields.Approved || p.Fields.Phase != "RequiresApproval" || len(p.Fields.Steps) == 0 || len(p.Fields.CSVs) == 0 {
+			if p.Fields.ResolutionIncomplete || p.Fields.Approval != "Manual" || p.Fields.Approved || p.Fields.Phase != "RequiresApproval" || len(p.Fields.Steps) == 0 || len(p.Fields.CSVs) == 0 {
 				return cmd, model.Fail("unresolved", "A resolved unapproved manual plan is required")
+			}
+			if groups, err := s.reader.ReadAPIGroups(ctx, q.Connection, false); err != nil {
+				return cmd, err
+			} else if groups.APIsProblem != nil {
+				return cmd, groups.APIsProblem
 			}
 			resolved := map[string]bool{}
 			for _, step := range p.Fields.Steps {
@@ -285,8 +292,11 @@ func (s *CreateService) operatorCommand(ctx context.Context, r OperatorRequest) 
 				if e != nil {
 					return cmd, e
 				}
-				if v.Identity.UID == q.UID || v.Fields.Copied {
+				if v.Identity.UID == q.UID {
 					continue
+				}
+				if v.Fields.Copied {
+					return cmd, model.Fail("unverified", "Resolve the copied CSV and its source installation before removing the reviewed CSV")
 				}
 				for _, required := range append(v.Fields.Required, v.Fields.RequiredServices...) {
 					for _, owned := range append(csv.Fields.Owned, csv.Fields.OwnedServices...) {
@@ -304,7 +314,9 @@ func (s *CreateService) operatorCommand(ctx context.Context, r OperatorRequest) 
 	cmd.ref = cmd.addr.Ref()
 	cmd.ref.UID = uid
 	if cmd.method == http.MethodDelete {
-		cmd.body, err = deleteOptions(cmd.ref, rv, false)
+		orphan := metav1.DeletePropagationOrphan
+		objectUID := types.UID(cmd.ref.UID)
+		cmd.body, err = json.Marshal(metav1.DeleteOptions{TypeMeta: metav1.TypeMeta{Kind: "DeleteOptions", APIVersion: "v1"}, PropagationPolicy: &orphan, Preconditions: &metav1.Preconditions{UID: &objectUID, ResourceVersion: &rv}})
 	}
 	if err != nil {
 		return cmd, err
@@ -328,7 +340,20 @@ func (c operatorCommand) dispatch(ctx context.Context, client operationClient, d
 		return nil, model.Fail("forbidden", "Operator action permission unavailable")
 	}
 	var raw json.RawMessage
-	_, err := client.send(ctx, c.method, path, dry, c.body, c.media, &raw, nil)
+	body := c.body
+	if dry && c.method == http.MethodDelete {
+		var opts metav1.DeleteOptions
+		if json.Unmarshal(body, &opts) != nil || opts.Preconditions == nil || opts.Preconditions.ResourceVersion == nil {
+			return nil, model.Fail("invalid", "Missing deletion preconditions")
+		}
+		opts.DryRun = []string{metav1.DryRunAll}
+		var err error
+		body, err = json.Marshal(opts)
+		if err != nil {
+			return nil, err
+		}
+	}
+	_, err := client.send(ctx, c.method, path, dry, body, c.media, &raw, nil)
 	return raw, err
 }
 func (c operatorCommand) matches(raw []byte) bool {
@@ -379,6 +404,22 @@ func (s *CreateService) PrepareOperator(ctx context.Context, r OperatorRequest) 
 	p.Cluster, err = s.connections.ContextName(c.ref.Connection)
 	if err != nil {
 		return p, err
+	}
+	if r.Action == "install-operator" {
+		var admitted struct {
+			Spec struct {
+				Name            string `json:"name"`
+				Channel         string `json:"channel"`
+				Source          string `json:"source"`
+				SourceNamespace string `json:"sourceNamespace"`
+				Approval        string `json:"installPlanApproval"`
+			} `json:"spec"`
+		}
+		if json.Unmarshal(raw, &admitted) != nil {
+			return p, model.Fail("invalid", "Invalid admitted Subscription")
+		}
+		b, _ := json.MarshalIndent(admitted, "", "  ")
+		p.Admitted = string(b)
 	}
 	p.Impact = map[string]string{"install-operator": "Create a Manual Subscription. Resolution and dependency installation require a separate plan review.", "approve-plan": "Approve all listed steps, including cluster-wide dependencies. Controllers perform installation.", "remove-subscription": "Stop updates. The installed CSV and data remain. Removing an eligible CSV needs another review.", "remove-csv": "Stop reconciliation by the reviewed CSV. CRDs, custom resources and data may remain."}[r.Action]
 	p.Token, p.ExpiresAt, err = s.coordinator.save(ctx, pendingReview{result: OperationResult{Action: r.Action, Resource: c.ref, Cluster: p.Cluster, InstalledCSV: c.installed}, acknowledgement: p.Name, payload: c})

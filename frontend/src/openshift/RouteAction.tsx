@@ -28,7 +28,7 @@ export function RouteAction({
 }) {
   const create = action === "create-route",
     remove = action === "delete-route";
-  const original = item ? JSON.parse(item.fields).spec : { to: { name: "", kind: "Service" } };
+  const original = !create && item ? JSON.parse(item.fields).spec : { to: { name: "", kind: "Service" } };
   const [name, setName] = useState(create ? "" : (item?.resource.name ?? "")),
     [host, setHost] = useState(original.host ?? ""),
     [path, setPath] = useState(original.path ?? ""),

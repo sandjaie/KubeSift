@@ -32,7 +32,7 @@ export function GenericResourceDetail({
 }) {
   const r = capture.resource;
   const note = capture.projected
-    ? "Safe projection. Sensitive and unlisted fields are omitted."
+    ? "Safe projection. The full editor requests the original object and can reveal sensitive fields."
     : "Installed API objects can contain sensitive values. Check before sharing.";
   return (
     <div className="compact-pod-detail">
@@ -70,13 +70,13 @@ export function GenericResourceDetail({
           <div className="evidence-toolbar yaml-toolbar">
             <button
               onClick={onEdit}
-              disabled={capture.projected || !canPatch || loading || !onEdit}
+              disabled={!canPatch || loading || !onEdit}
               title={canPatch ? undefined : "This API does not advertise Patch"}
             >
-              Edit YAML
+              {capture.projected ? "Open full YAML editor…" : "Edit YAML"}
             </button>
-            <button onClick={onApply} disabled={capture.projected || !canPatch || loading || !onApply}>
-              Apply configuration…
+            <button onClick={onApply} disabled={!canPatch || loading || !onApply}>
+              {capture.projected ? "Open full apply editor…" : "Apply configuration…"}
             </button>
             {!canPatch && <span className="muted">This API does not advertise Patch.</span>}
             <CopyTextButton

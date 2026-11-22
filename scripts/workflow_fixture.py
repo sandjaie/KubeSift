@@ -53,6 +53,17 @@ def seed():
         steps.append({"resource":step,"resolving":"demo.v2","status":"Unknown"})
     obj(OLM,"installplans","plan",{"approval":"Manual","approved":False,"clusterServiceVersionNames":["demo.v2"]},{"phase":"RequiresApproval","plan":steps})
 
+    for reason in ("pending-bundle","resolver-failure"):
+        plan = copy.deepcopy(OBJECTS[OLM,"installplans",NS,"plan"])
+        plan["metadata"].update(name=reason,uid=reason+"-uid")
+        if reason=="pending-bundle": plan["status"]["bundleLookups"]=[{"path":"private-fixture-path"}]
+        else: plan["status"]["conditions"]=[{"type":"Resolved","status":"False","reason":"ResolverFailed"}]
+        OBJECTS[OLM,"installplans",NS,reason]=plan
+        sub=copy.deepcopy(OBJECTS[OLM,"subscriptions",NS,"demo"])
+        sub["metadata"].update(name=reason,uid=reason+"-uid")
+        sub["status"].update(installedCSV="",currentCSV="",installPlanRef={"name":reason,"uid":reason+"-uid","kind":"InstallPlan","namespace":NS})
+        OBJECTS[OLM,"subscriptions",NS,reason]=sub
+
 def groups():
     out={}
     for gv in RESOURCES:
@@ -105,6 +116,8 @@ def serve(h):
         return True
     if not current:h.status(404);return True
     if h.command=="DELETE":
+        dry = body.get("dryRun") == ["All"]
+        if gv == OLM and body.get("propagationPolicy") != "Orphan": h.status(409); return True
         if body["preconditions"]!={"uid":current["metadata"]["uid"],"resourceVersion":current["metadata"]["resourceVersion"]}:h.status(409);return True
         if not dry:del OBJECTS[key]
         h.reply(current);return True

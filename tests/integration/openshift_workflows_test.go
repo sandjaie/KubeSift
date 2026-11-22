@@ -79,6 +79,39 @@ func TestOpenShiftWorkflowContracts(t *testing.T) {
 	query := func(kind, name, uid string) kube.WorkflowQuery {
 		return kube.WorkflowQuery{Connection: ref, Namespace: "team-a", ProjectUID: "fixture-a", Kind: kind, Name: name, UID: uid}
 	}
+	route := operation.RouteRequest{Target: query("Route", "new-route", ""), Action: "create-route", Fields: kube.RouteFields{To: kube.RouteBackend{Kind: "Service", Name: "store"}}}
+	routePreview, err := ops.PrepareRoute(ctx, route, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := reader.ReadWorkflow(ctx, route.Target); err == nil {
+		t.Fatal("dry-run persisted a Route")
+	}
+	added, err := ops.ExecuteRoute(route.Action, routePreview.Token, "")
+	if err != nil || added.State != "accepted" {
+		t.Fatal(added, err)
+	}
+	route.Target.UID = added.Resource.UID
+	route.Action = "delete-route"
+	route.Version = "1"
+	routePreview, err = ops.PrepareRoute(ctx, route, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := reader.ReadWorkflow(ctx, route.Target); err != nil {
+		t.Fatal("deletion preview changed the Route", err)
+	}
+	if _, err := ops.ExecuteRoute(route.Action, routePreview.Token, ""); err == nil {
+		t.Fatal("typed name bypass")
+	}
+	routePreview, err = ops.PrepareRoute(ctx, route, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	removed, err := ops.ExecuteRoute(route.Action, routePreview.Token, "new-route")
+	if err != nil || removed.State != "accepted" {
+		t.Fatal(removed, err)
+	}
 	q := query("Subscription", "test-install", "")
 	install := operation.OperatorRequest{Action: "install-operator", Target: q, Catalog: "catalog", CatalogNamespace: "team-a", Package: "demo", Channel: "wrong"}
 	if _, err := ops.PrepareOperator(ctx, install); err == nil {
@@ -92,6 +125,9 @@ func TestOpenShiftWorkflowContracts(t *testing.T) {
 		}
 		if strings.Contains(p.Before+p.Admitted, "fixture-private-sentinel") || strings.Contains(p.Before, `"manifest":`) {
 			t.Fatal("sensitive review")
+		}
+		if r.Action == "install-operator" && (!strings.Contains(p.Admitted, `"channel": "stable"`) || !strings.Contains(p.Admitted, `"installPlanApproval": "Manual"`)) {
+			t.Fatal("selected channel omitted from admission review")
 		}
 		if !p.Typed {
 			t.Fatal("missing acknowledgement")
@@ -109,6 +145,15 @@ func TestOpenShiftWorkflowContracts(t *testing.T) {
 	run(install)
 	q = query("Subscription", "demo", "demo-uid")
 	approve := operation.OperatorRequest{Target: q, Version: "3", Action: "approve-plan"}
+	for _, reason := range []string{"pending-bundle", "resolver-failure"} {
+		invalid := approve
+		invalid.Target = query("Subscription", reason, reason+"-uid")
+		if _, e := ops.PrepareOperator(ctx, invalid); e == nil {
+			t.Fatal("approved incomplete resolution", reason)
+		}
+	}
+	// A fresh reader has no discovery cache, just as after catalog expiry.
+	ops = operation.NewCreateService(con, kube.NewService(con, sessions), co)
 	p, err := ops.PrepareOperator(ctx, approve)
 	if err != nil || !strings.Contains(p.Before, "cluster-wide") {
 		t.Fatal("missing cluster impact", err)
@@ -122,6 +167,22 @@ func TestOpenShiftWorkflowContracts(t *testing.T) {
 		t.Fatal("did not retain installed CSV identity")
 	}
 	csv := operation.OperatorRequest{Target: query("ClusterServiceVersion", "demo.v1", "demo.v1-uid"), Action: "remove-csv", Version: "3", RemovalID: res.OperationID}
+	client, e := con.Client(ref)
+	if e != nil {
+		t.Fatal(e)
+	}
+	path := "/apis/operators.coreos.com/v1alpha1/namespaces/team-a/clusterserviceversions"
+	copyBody := []byte(`{"kind":"ClusterServiceVersion","apiVersion":"operators.coreos.com/v1alpha1","metadata":{"name":"consumer-copy","namespace":"team-a","labels":{"olm.copiedFrom":"consumer-source"}}}`)
+	if e := client.Discovery().RESTClient().Post().AbsPath(path).SetHeader("Content-Type", "application/json").Body(copyBody).Do(ctx).Error(); e != nil {
+		t.Fatal(e)
+	}
+	if _, e := ops.PrepareOperator(ctx, csv); e == nil {
+		t.Fatal("copied consumer did not block unverified removal")
+	}
+	cleanup := []byte(`{"propagationPolicy":"Orphan","preconditions":{"uid":"consumer-copy-uid","resourceVersion":"1"}}`)
+	if e := client.Discovery().RESTClient().Delete().AbsPath(path+"/consumer-copy").SetHeader("Content-Type", "application/json").Body(cleanup).Do(ctx).Error(); e != nil {
+		t.Fatal(e)
+	}
 	run(csv)
 	if _, err := reader.ReadWorkflow(ctx, csv.Target); err == nil {
 		t.Fatal("removed CSV still visible")

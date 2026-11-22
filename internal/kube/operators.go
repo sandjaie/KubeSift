@@ -72,6 +72,7 @@ func (s *OperatorStep) UnmarshalJSON(raw []byte) error {
 }
 
 type OperatorEvidence struct {
+	ResolutionIncomplete            bool              `json:"resolutionIncomplete,omitempty"`
 	Catalog                         string            `json:"catalog,omitempty"`
 	CatalogNamespace                string            `json:"catalogNamespace,omitempty"`
 	Package                         string            `json:"package,omitempty"`
@@ -106,6 +107,7 @@ func projectOperator(kind string, raw []byte) (OperatorEvidence, error) {
 			CustomResourceDefinitions, APIServiceDefinitions                                  struct{ Owned, Required []OperatorAPI }
 		}
 		Status struct {
+			BundleLookups                                                                                               []json.RawMessage
 			CatalogSource, CatalogSourceNamespace, PackageName, DefaultChannel, CurrentCSV, InstalledCSV, Phase, Reason string
 			Channels                                                                                                    []OperatorChannel
 			InstallPlanRef                                                                                              *BuildReference
@@ -141,6 +143,12 @@ func projectOperator(kind string, raw []byte) (OperatorEvidence, error) {
 		out.InstalledCSV = t.InstalledCSV
 		out.CurrentCSV = t.CurrentCSV
 	case "InstallPlan":
+		out.ResolutionIncomplete = len(t.BundleLookups) > 0
+		for _, condition := range t.Conditions {
+			if condition.Type == "Resolved" && condition.Status != "True" {
+				out.ResolutionIncomplete = true
+			}
+		}
 		out.Approval = s.Approval
 		out.Approved = s.Approved
 		out.CSVs = s.ClusterServiceVersionNames

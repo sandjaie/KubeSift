@@ -20,11 +20,12 @@ import (
 func TestReviewedRoutePatch(t *testing.T) {
 	const obj = `{"apiVersion":"route.openshift.io/v1","kind":"Route","metadata":{"name":"site","namespace":"default","uid":"r1","resourceVersion":"4"},"spec":{"to":{"kind":"Service","name":"old","future":"retain"},"tls":{"termination":"edge","key":"private-sentinel"}}}`
 	dry, real := 0, 0
+	allowed := true
 	base, req := scaleServer(t, func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		switch {
 		case strings.HasSuffix(r.URL.Path, "/selfsubjectaccessreviews"):
-			fmt.Fprint(w, `{"kind":"SelfSubjectAccessReview","apiVersion":"authorization.k8s.io/v1","status":{"allowed":true}}`)
+			fmt.Fprintf(w, `{"kind":"SelfSubjectAccessReview","apiVersion":"authorization.k8s.io/v1","status":{"allowed":%t,"denied":%t}}`, allowed, !allowed)
 		case r.Method == "GET":
 			fmt.Fprint(w, obj)
 		case r.Method == "PATCH":
@@ -82,5 +83,11 @@ func TestReviewedRoutePatch(t *testing.T) {
 	_, _ = s.ExecuteRoute("edit-route", v.Token, "")
 	if real != 1 {
 		t.Fatal(real)
+	}
+	v = prepare()
+	allowed = false
+	res, e = s.ExecuteRoute("edit-route", v.Token, "")
+	if e != nil || res.State != "cancelled-before-send" || real != 1 {
+		t.Fatal("lost authority dispatched", res, e, real)
 	}
 }

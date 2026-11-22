@@ -253,7 +253,7 @@ function WorkflowBrowser({
                 </td>
                 {desc.kind === "Route" && (
                   <td>
-                    {JSON.parse(row.fields).spec.host} {JSON.parse(row.fields).spec.to.name}
+                    <RouteSummary fields={row.fields} />
                   </td>
                 )}
               </tr>
@@ -377,5 +377,29 @@ function WorkflowFacts({ fields, kind }: { fields: Record<string, unknown>; kind
       </dl>
       {kind === "Route" && <pre>{JSON.stringify(fields.status, null, 2)}</pre>}
     </div>
+  );
+}
+
+function RouteSummary({ fields }: { fields: string }) {
+  const { spec, status } = JSON.parse(fields);
+  const routers = (status.ingress ?? []) as { routerName: string; conditions?: { type: string; status: string }[] }[];
+  return (
+    <>
+      {spec.host || "Assigned host"}
+      {spec.path || "/"} · {spec.to.name} ·{" "}
+      {routers.length
+        ? routers
+            .map(
+              (r) =>
+                r.routerName +
+                " " +
+                (r.conditions
+                  ?.filter((c) => c.type === "Admitted")
+                  .map((c) => c.status)
+                  .join(", ") || "unknown"),
+            )
+            .join(" / ")
+        : "No router observation"}
+    </>
   );
 }

@@ -8,6 +8,7 @@ Important: Bridge responses are synthetic and never connected to a cluster.
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, expect, test, vi } from "vitest";
+import type { OperationResult } from "../operations/api";
 import { WorkflowWorkspace } from "./WorkflowWorkspace";
 import type { WorkflowItem, APIResourceDescriptor, WorkflowQuery } from "../../bindings/internal/kube/models";
 import type { LogSessionsController } from "../sessions/useLogSessions";
@@ -30,9 +31,14 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 const connection = { id: "origin", generation: 2 };
-async function mount(kind: string, fields: object) {
+async function mount(kind: string, fields: object, results: OperationResult[] = []) {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
-  const group = kind === "Route" ? "route.openshift.io" : kind === "Subscription" ? "operators.coreos.com" : "build.openshift.io";
+  const group =
+    kind === "Route"
+      ? "route.openshift.io"
+      : kind === "Subscription" || kind === "ClusterServiceVersion"
+        ? "operators.coreos.com"
+        : "build.openshift.io";
   const descriptor = (k: string): APIResourceDescriptor => ({
     group,
     version: "v1",
@@ -63,32 +69,35 @@ async function mount(kind: string, fields: object) {
   const submit = vi.fn(),
     host = document.body.appendChild(document.createElement("div")),
     root = createRoot(host);
-  await act(async () =>
-    root.render(
-      <WorkflowWorkspace
-        connection={connection}
-        namespace="team"
-        projectUID="project-one"
-        resources={
-          kind === "Subscription"
-            ? [
-                descriptor(kind),
-                descriptor("InstallPlan"),
-                descriptor("OperatorGroup"),
-                descriptor("PackageManifest"),
-                descriptor("CatalogSource"),
-              ]
-            : [descriptor(kind)]
-        }
-        split={{ widthPercent: 45, heightPercent: 45, onResize: vi.fn(), onCommit: vi.fn() }}
-        results={[]}
-        openGeneric={vi.fn()}
-        actions={{ "buildconfigs/instantiate": true, "builds/clone": true, "builds/log": true }}
-        logs={{ store: { open }, sessions: [] } as unknown as LogSessionsController}
-        submit={submit}
-      />,
-    ),
-  );
+  const render = async (ns = "team") =>
+    act(async () =>
+      root.render(
+        <WorkflowWorkspace
+          connection={connection}
+          key={ns}
+          namespace={ns}
+          projectUID="project-one"
+          resources={
+            kind === "Subscription"
+              ? [
+                  descriptor(kind),
+                  descriptor("InstallPlan"),
+                  descriptor("OperatorGroup"),
+                  descriptor("PackageManifest"),
+                  descriptor("CatalogSource"),
+                ]
+              : [descriptor(kind)]
+          }
+          split={{ widthPercent: 45, heightPercent: 45, onResize: vi.fn(), onCommit: vi.fn() }}
+          results={results}
+          openGeneric={vi.fn()}
+          actions={{ "buildconfigs/instantiate": true, "builds/clone": true, "builds/log": true }}
+          logs={{ store: { open }, sessions: [] } as unknown as LogSessionsController}
+          submit={submit}
+        />,
+      ),
+    );
+  await render();
   const click = async (name: string) => {
     const b = [...host.querySelectorAll("button")].find((b) => b.textContent === name);
     expect(b, name).toBeTruthy();
@@ -98,7 +107,7 @@ async function mount(kind: string, fields: object) {
     await act(async () => root.unmount());
     host.remove();
   };
-  return { host, click, close, submit, open };
+  return { host, click, close, submit, open, render, item };
 }
 test("Route lookup opens the current Service, returns to the source and revokes its reviewed deletion", async () => {
   const v = await mount("Route", { spec: { to: { name: "backend" }, alternateBackends: [] }, status: { ingress: [] } });
@@ -151,6 +160,65 @@ test("Operator plan approval shows full impact and requires explicit acknowledge
     expect(confirm?.disabled).toBe(true);
     await v.click("Cancel");
     expect(api.RevokeOperator).toHaveBeenCalledWith("approve-plan", "plan-token");
+  } finally {
+    await v.close();
+  }
+});
+
+test("Create Route starts empty after inspecting reencrypt, and table includes path and each router", async () => {
+  const v = await mount("Route", {
+    spec: { host: "existing.test", path: "/blue", tls: { termination: "reencrypt" }, to: { name: "old-service" } },
+    status: {
+      ingress: [
+        { routerName: "a", conditions: [{ type: "Admitted", status: "True" }] },
+        { routerName: "b", conditions: [{ type: "Admitted", status: "False" }] },
+      ],
+    },
+  });
+  try {
+    expect(v.host.querySelector("table")?.textContent).toContain("existing.test/blue");
+    expect(v.host.querySelector("table")?.textContent).toContain("b False");
+    await v.click("demo");
+    await v.click("Create Route");
+    expect([...v.host.querySelectorAll("dialog input")].every((i) => (i as HTMLInputElement).value === "")).toBe(true);
+    expect((v.host.querySelector("dialog select") as HTMLSelectElement).value).toBe("");
+  } finally {
+    await v.close();
+  }
+});
+test("an obsolete Project detail cannot replace a same-name selection after scope change", async () => {
+  const v = await mount("Build", { phase: "Running" });
+  try {
+    let finish!: (p: unknown) => void;
+    api.ReadWorkflow.mockImplementationOnce(() => new Promise((r) => (finish = r)));
+    await v.click("demo");
+    const other = { ...v.item, resource: { ...v.item.resource, namespace: "second", uid: "second-uid" } };
+    api.ReadWorkflow.mockResolvedValue({ items: [other], next: "" });
+    await v.render("second");
+    await v.click("demo");
+    await act(async () => finish({ items: [v.item], next: "" }));
+    expect(v.host.querySelector(".detail-pane")?.textContent).toContain("second-uid");
+    expect(v.host.querySelector(".detail-pane")?.textContent).not.toContain("· one ·");
+  } finally {
+    await v.close();
+  }
+});
+test("second-stage CSV removal requires a matching receipt and a fresh permitted review", async () => {
+  const receipt = {
+    action: "remove-subscription",
+    state: "accepted",
+    operationID: "prior",
+    installedCSV: { connection, namespace: "team", uid: "one", name: "demo" },
+  } as OperationResult;
+  const v = await mount("ClusterServiceVersion", { phase: "Succeeded" }, [receipt]);
+  try {
+    await v.click("demo");
+    await v.click("Remove installed CSV");
+    api.PrepareOperator.mockRejectedValueOnce(new Error("Dependent inventory forbidden"));
+    await v.click("Review impact");
+    expect(api.PrepareOperator.mock.calls[0][1].removalID).toBe("prior");
+    expect(v.host.querySelector("dialog")?.textContent).toContain("Dependent inventory forbidden");
+    expect(v.submit).not.toHaveBeenCalled();
   } finally {
     await v.close();
   }

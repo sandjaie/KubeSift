@@ -191,5 +191,8 @@ func workflowFields(api apiResource, raw []byte) (any, error) {
 	if api.kind == "Build" || api.kind == "BuildConfig" {
 		return projectBuild(raw)
 	}
+	if api.group == "olm.operatorframework.io" {
+		return projectOLMv1(raw)
+	}
 	return projectOperator(api.kind, raw)
 }
