@@ -125,7 +125,7 @@ test("Build logs open only on request and a pending cancel review revokes on dep
   await v.click("demo");
   expect(v.open).not.toHaveBeenCalled();
   await v.click("Open logs");
-  const signal = v.open.mock.calls.at(-1) as unknown as [unknown, string, string, AbortSignal];
+  const signal = v.open.mock.calls[v.open.mock.calls.length - 1] as unknown as [unknown, string, string, AbortSignal];
   expect(signal[3].aborted).toBe(false);
   await v.click("Close logs");
   expect(signal[3].aborted).toBe(true);

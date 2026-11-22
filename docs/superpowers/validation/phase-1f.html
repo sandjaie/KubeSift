@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OpenShift workflows validation · KubeSift</title>
+    <link rel="stylesheet" href="../../assets/planning.css" />
+    <script src="../../assets/theme.js"></script>
+  </head>
+  <body>
+    <aside class="rail">
+      <a class="skip" href="#content">Skip to content</a
+      ><a class="mark" href="../../index.html"><span class="mark-name">KubeSift</span><span class="mark-sub">Planning</span></a>
+      <h2>Index</h2>
+      <a href="../../index.html">Planning index</a>
+      <h2>Product</h2>
+      <a href="../../product/requirements.html">Requirements</a><a href="../../product/feature-matrix.html">Capabilities</a>
+      <h2>Architecture</h2>
+      <a href="../../architecture/overview.html">Overview</a><a href="../../architecture/decisions.html">Decisions</a>
+      <h2>Safeguards</h2>
+      <a href="../../security/security-model.html">Security and AI</a>
+      <h2>Delivery</h2>
+      <a href="../../roadmap/roadmap.html">Roadmap</a><a href="../../ux/workflows.html">UX workflows</a
+      ><a href="../../ux/mocks/index.html">Mockups</a>
+      <h2>Engineering</h2>
+      <a href="../../engineering/engineering.html">Playbook</a><a href="../../engineering/local-development.html">Local development</a
+      ><a href="../../engineering/toolchain.html">Toolchain</a
+      ><a href="../../engineering/kubernetes-development.html">Kubernetes references</a>
+      <h2>Superpowers</h2>
+      <a href="../../superpowers/specs/2026-11-05-kubesift-design.md">Design specification</a
+      ><a href="../../superpowers/plans/README.html">Plans</a
+      ><a href="../../superpowers/validation/index.html" aria-current="page">Validation</a
+      ><a href="../../superpowers/evidence/index.html">Evidence</a>
+    </aside>
+
+    <header>
+      <a href="index.html">KubeSift / Validation</a>
+      <h1>Phase 1F · OpenShift workflows</h1>
+    </header>
+    <main id="content">
+      <p>
+        Candidate from planning commit <code>3d6dfeb</code>. The roadmap live compatibility exit remains open. No OCP 4.21 build, router,
+        builder or OLM controller has been tested in this phase.
+      </p>
+      <h2>Environment and workflow evidence</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Workflow</th>
+            <th>Environment, API and identity</th>
+            <th>Expected and observed</th>
+            <th>Cleanup or follow-up</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Projects and ordinary Kubernetes</td>
+            <td>kind-dev-local-a and kind-dev-local-b, local fixture users</td>
+            <td>Each returned seven core Namespaces and zero Project, Route, Build or Operator descriptors.</td>
+            <td>Read-only. The <a href="phase-1f1.html#office-acceptance">Projects report</a> retains its separate office-laptop cases.</td>
+          </tr>
+          <tr>
+            <td>Route inspection and backend</td>
+            <td>Loopback route.openshift.io/v1 and core Service</td>
+            <td>
+              Conflicting router observations, zero weight, named target port and external certificate name survived projection. Embedded
+              private-key sentinel stayed out of JSON and YAML. Changing the backend invalidated the source link.
+            </td>
+            <td>Go fixture teardown.</td>
+          </tr>
+          <tr>
+            <td>Route create, edit and delete</td>
+            <td>Loopback API and mounted desktop bridge</td>
+            <td>
+              Conditional edit used server dry-run and exactly one confirmed patch. Cancellation revoked the token. The mounted delete
+              review required the typed name.
+            </td>
+            <td>Real router admission, create conflicts, edit and conditional deletion await a disposable Route.</td>
+          </tr>
+          <tr>
+            <td>Start and rebuild</td>
+            <td>Loopback build.openshift.io/v1, synthetic allowed and denied identities</td>
+            <td>
+              Preparing and revoking sent zero action POSTs. Confirming a current source sent one. Counter protection, source changes,
+              binary input, rejected and ambiguous responses were exercised. A returned Build is reported separately.
+            </td>
+            <td>No build ran. Verify approved source and output on OCP.</td>
+          </tr>
+          <tr>
+            <td>Cancel Build</td>
+            <td>Loopback build.openshift.io/v1</td>
+            <td>
+              The guarded status.cancelled patch was dry-run before execution. Stale and terminal captures failed. Duplicate confirmation
+              reused the result.
+            </td>
+            <td>Verify controller observation and terminal races on OCP.</td>
+          </tr>
+          <tr>
+            <td>Build logs and output</td>
+            <td>Bounded native log sessions and mounted bridge</td>
+            <td>
+              Mounted checks required an explicit open and aborted the session on close. Build inspection omits inline sources, webhook data
+              and environment values.
+            </td>
+            <td>Verify controller-produced logs, output identity and least-privilege errors on OCP.</td>
+          </tr>
+          <tr>
+            <td>Classic install</td>
+            <td>Synthetic package server and operators.coreos.com APIs</td>
+            <td>
+              Wrong channel was rejected. A matching catalog, package, channel and own-namespace OperatorGroup produced a Manual
+              Subscription after review.
+            </td>
+            <td>Local fixture removed. Verify real resolver behavior on an authorized disposable package.</td>
+          </tr>
+          <tr>
+            <td>Approve install or upgrade</td>
+            <td>Classic manual InstallPlan, synthetic CSV and ClusterRole</td>
+            <td>
+              Review included cluster-wide impact. Revocation, a successful guarded approval and duplicate confirmation were exercised.
+            </td>
+            <td>Verify actual dependency resolution, observed CSV installation and a real pending upgrade if authorized.</td>
+          </tr>
+          <tr>
+            <td>Remove Subscription and installed CSV</td>
+            <td>Classic synthetic Subscription with different installed and current CSVs</td>
+            <td>
+              Confirmed Subscription removal retained the installed CSV identity. A separate review removed that exact CSV after fresh scope
+              and dependency reads.
+            </td>
+            <td>Verify actual remaining CRDs, data, dependency handling and cleanup.</td>
+          </tr>
+          <tr>
+            <td>OLM v1 inspection</td>
+            <td>Synthetic olm.operatorframework.io/v1 coexisting with Classic</td>
+            <td>Discovery identifies ClusterCatalog and ClusterExtension independently. Lifecycle operations address Classic APIs.</td>
+            <td>Record actual installed providers and v1 visibility where served.</td>
+          </tr>
+        </tbody>
+      </table>
+      <h2>Packaged desktop</h2>
+      <p>
+        The ad-hoc signed macOS package built and passed strict signature verification. It launched with the synthetic TLS fixture
+        kubeconfig. macOS reported a locked graphical session and the computer-use tool could not attach to its window. The combined native
+        walkthrough, themes, narrow layout, screenshots and in-window cleanup observations remain pending.
+      </p>
+      <h2>Live authorization and closure</h2>
+      <p>
+        Before any live operation, record the OCP context and patch, principals, private project and disposable names, permitted reads and
+        writes, Service and hostname, build source and output, operator catalog/package/channel, cluster-wide effects, and cleanup owner.
+        The Projects office arrangement covers Projects only.
+      </p>
+      <p>
+        On the authorized target verify the Projects restricted selector, quota/access, request and conditional deletion cases. Then follow
+        a Route to its actual Service, inspect and edit it without disturbing TLS fields, observe a started Build through logs and output,
+        rebuild and cancel separately, and exercise Classic install, plan approval, CSV observation and staged removal. Record outcomes,
+        remaining resources and cleanup for each action. Check v1 detection where served and report unavailable providers. Phase 1F remains
+        open until this combined compatibility evidence exists.
+      </p>
+    </main>
+  </body>
+</html>
