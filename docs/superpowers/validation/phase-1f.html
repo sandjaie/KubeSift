@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OpenShift workflows validation · KubeSift</title>
+    <link rel="stylesheet" href="../../assets/planning.css" />
+    <script src="../../assets/theme.js"></script>
+  </head>
+  <body>
+    <aside class="rail">
+      <a class="skip" href="#content">Skip to content</a
+      ><a class="mark" href="../../index.html"><span class="mark-name">KubeSift</span><span class="mark-sub">Planning</span></a>
+      <h2>Index</h2>
+      <a href="../../index.html">Planning index</a>
+      <h2>Product</h2>
+      <a href="../../product/requirements.html">Requirements</a><a href="../../product/feature-matrix.html">Capabilities</a>
+      <h2>Architecture</h2>
+      <a href="../../architecture/overview.html">Overview</a><a href="../../architecture/decisions.html">Decisions</a>
+      <h2>Safeguards</h2>
+      <a href="../../security/security-model.html">Security and AI</a>
+      <h2>Delivery</h2>
+      <a href="../../roadmap/roadmap.html">Roadmap</a><a href="../../ux/workflows.html">UX workflows</a
+      ><a href="../../ux/mocks/index.html">Mockups</a>
+      <h2>Engineering</h2>
+      <a href="../../engineering/engineering.html">Playbook</a><a href="../../engineering/local-development.html">Local development</a
+      ><a href="../../engineering/toolchain.html">Toolchain</a
+      ><a href="../../engineering/kubernetes-development.html">Kubernetes references</a>
+      <h2>Superpowers</h2>
+      <a href="../../superpowers/specs/2026-11-05-kubesift-design.md">Design specification</a
+      ><a href="../../superpowers/plans/README.html">Plans</a
+      ><a href="../../superpowers/validation/index.html" aria-current="page">Validation</a
+      ><a href="../../superpowers/evidence/index.html">Evidence</a>
+    </aside>
+
+    <header>
+      <a href="index.html">KubeSift / Validation</a>
+      <h1>Phase 1F · OpenShift workflows</h1>
+    </header>
+    <main id="content">
+      <p>
+        Candidate from planning commit <code>3d6dfeb</code>. The roadmap live compatibility exit remains open. No OCP 4.21 build, router,
+        builder or OLM controller has been tested in this phase.
+      </p>
+      <h2>Environment and workflow evidence</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Workflow</th>
+            <th>Environment, API and identity</th>
+            <th>Expected and observed</th>
+            <th>Cleanup or follow-up</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Projects and ordinary Kubernetes</td>
+            <td>kind-dev-local-a and kind-dev-local-b, local fixture users</td>
+            <td>Each returned seven core Namespaces and zero Project, Route, Build or Operator descriptors.</td>
+            <td>Read-only. The <a href="phase-1f1.html#office-acceptance">Projects report</a> retains its separate office-laptop cases.</td>
+          </tr>
+          <tr>
+            <td>Route inspection and backend</td>
+            <td>Loopback route.openshift.io/v1 and core Service</td>
+            <td>
+              Conflicting router observations, zero weight, named target port and external certificate name survived projection. Embedded
+              private-key sentinel stayed out of JSON and YAML. Changing the backend invalidated the source link.
+            </td>
+            <td>Go fixture teardown.</td>
+          </tr>
+          <tr>
+            <td>Route create, edit and delete</td>
+            <td>Loopback API and mounted desktop bridge</td>
+            <td>
+              Conditional edit used server dry-run and exactly one confirmed patch. Cancellation revoked the token. The mounted delete
+              review required the typed name.
+            </td>
+            <td>Real router admission, create conflicts, edit and conditional deletion await a disposable Route.</td>
+          </tr>
+          <tr>
+            <td>Start and rebuild</td>
+            <td>Loopback build.openshift.io/v1, synthetic allowed and denied identities</td>
+            <td>
+              Preparing and revoking sent zero action POSTs. Confirming a current source sent one. Counter protection, source changes,
+              binary input, rejected and ambiguous responses were exercised. A returned Build is reported separately.
+            </td>
+            <td>No build ran. Verify approved source and output on OCP.</td>
+          </tr>
+          <tr>
+            <td>Cancel Build</td>
+            <td>Loopback build.openshift.io/v1</td>
+            <td>
+              The guarded status.cancelled patch was dry-run before execution. Stale and terminal captures failed. Duplicate confirmation
+              reused the result.
+            </td>
+            <td>Verify controller observation and terminal races on OCP.</td>
+          </tr>
+          <tr>
+            <td>Build logs and output</td>
+            <td>Bounded native log sessions and mounted bridge</td>
+            <td>
+              Mounted checks required an explicit open and aborted the session on close. Build inspection omits inline sources, webhook data
+              and environment values.
+            </td>
+            <td>Verify controller-produced logs, output identity and least-privilege errors on OCP.</td>
+          </tr>
+          <tr>
+            <td>Classic install</td>
+            <td>Synthetic package server and operators.coreos.com APIs</td>
+            <td>
+              Wrong channel was rejected. A matching catalog, package, channel and own-namespace OperatorGroup produced a Manual
+              Subscription after review.
+            </td>
+            <td>Local fixture removed. Verify real resolver behavior on an authorized disposable package.</td>
+          </tr>
+          <tr>
+            <td>Approve install or upgrade</td>
+            <td>Classic manual InstallPlan, synthetic CSV and ClusterRole</td>
+            <td>
+              Review included cluster-wide impact. Revocation, a successful guarded approval and duplicate confirmation were exercised.
+            </td>
+            <td>Verify actual dependency resolution, observed CSV installation and a real pending upgrade if authorized.</td>
+          </tr>
+          <tr>
+            <td>Remove Subscription and installed CSV</td>
+            <td>Classic synthetic Subscription with different installed and current CSVs</td>
+            <td>
+              Confirmed Subscription removal retained the installed CSV identity. A separate review removed that exact CSV after fresh scope
+              and dependency reads.
+            </td>
+            <td>Verify actual remaining CRDs, data, dependency handling and cleanup.</td>
+          </tr>
+          <tr>
+            <td>OLM v1 inspection</td>
+            <td>Synthetic olm.operatorframework.io/v1 coexisting with Classic</td>
+            <td>Discovery identifies ClusterCatalog and ClusterExtension independently. Lifecycle operations address Classic APIs.</td>
+            <td>Record actual installed providers and v1 visibility where served.</td>
+          </tr>
+        </tbody>
+      </table>
+      <h2>Packaged desktop</h2>
+      <p>
+        The signed macOS package connected to the loopback fixture with Namespace listing denied. Selecting Project team-a enabled Routes,
+        Builds and Operators. The store Route opened its Service and returned with Back. After a reviewed edit and refresh, the inventory
+        showed store.example.test/special and the detail showed version 4. The final package accepted the exact lowercase named lookup and
+        preserved quoted alternate Service JSON with zero weight through review and cancellation.
+        <a href="../evidence/phase-1f/route.jpg">Route in light appearance</a>.
+      </p>
+      <p>
+        Build start, rebuild and cancel produced separate accepted results. Opening Build logs showed the bounded viewer and closing it
+        removed the viewer. The approved fixture InstallPlan required acknowledgment of cluster-wide effects and the typed plan name.
+        Subscription removal produced a receipt for demo.v1. Removing that CSV required its own review, acknowledgment and typed name. A
+        pending bundle blocked approval. These are API responses from a fixture without controllers.
+        <a href="../evidence/phase-1f/operator-impact.jpg">Classic approval review</a>.
+      </p>
+      <p>
+        Switching between light and system dark, keyboard selection, half-width layout, refresh and reconnect were exercised. Reconnect
+        reset the Project to unverified. The Project access panel reported Pods denied and quota listing allowed. Both kind contexts showed
+        kube-system under Namespaces and omitted all OpenShift destinations. The late same-name A/B response and hidden-view stream abort
+        were checked with mounted tests. The local fixture and package exited; temporary credentials were removed.
+      </p>
+      <h2>Automated checks and independent review</h2>
+      <p>
+        KubeSift 0.4.0 development package, source <code>2e82dd6</code>. <code>scripts/check.sh</code> passed source and documentation
+        checks, Go tests and vet, binding normalization tests, 147 frontend tests, lint and type checking.
+        <code>go test -race ./internal/kube ./internal/operation ./internal/session ./internal/desktop</code> passed.
+        <code>wails3 task bindings</code>, <code>npm run build</code>, <code>wails3 task package</code> and strict macOS signature
+        verification passed. The restricted-discovery fixture denied the Project and Build group-version endpoints; the same connection
+        still returned the Route descriptor and a separate Build permission problem. The integration tests TestProjectsAbsentOnKind and
+        TestOpenShiftWorkflowContracts passed.
+      </p>
+      <p>
+        Independent reviewer <code>phase_f_review</code> (GPT-6.2 Astra) examined <code>3d6dfeb..a1e1b27</code>. The reviewer cleared
+        KSF-001–010 at <code>9ebac5f</code>: copied CSV dependencies, Subscription channel review, OLM v1 projection, unresolved plan steps,
+        orphan propagation, Route inventory, cold discovery, final permission checks, raw editor eligibility and inherited Route drafts.
+        DELETE previews carry dryRun in the DeleteOptions body together with identity preconditions. Follow-up at
+        <code>119c093</code> verified hidden-view log cleanup and identified KSF-011 in the alternate Services editor. The same reviewer
+        cleared it at <code>2e82dd6</code>.
+      </p>
+      <h2>Live authorization and closure</h2>
+      <p>
+        Before any live operation, record the OCP context and patch, principals, private project and disposable names, permitted reads and
+        writes, Service and hostname, build source and output, operator catalog/package/channel, cluster-wide effects, and cleanup owner.
+        The Projects office arrangement covers Projects only.
+      </p>
+      <p>
+        On the authorized target verify the Projects restricted selector, quota/access, request and conditional deletion cases. Then follow
+        a Route to its actual Service, inspect and edit it without disturbing TLS fields, observe a started Build through logs and output,
+        rebuild and cancel separately, and exercise Classic install, plan approval, CSV observation and staged removal. Record outcomes,
+        remaining resources and cleanup for each action. Check v1 detection where served and report unavailable providers. Phase 1F remains
+        open until this combined compatibility evidence exists.
+      </p>
+    </main>
+  </body>
+</html>

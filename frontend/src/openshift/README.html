@@ -2,15 +2,19 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>OpenShift Projects</title>
+    <title>OpenShift workflows</title>
   </head>
   <body>
     <main>
-      <h1>OpenShift Projects</h1>
+      <h1>OpenShift workflows</h1>
       <p>
         useProjects reads the active generation’s advertised verbs and visible Project inventory. ProjectsWorkspace owns inspection, quota
         and personal access sections, and the dedicated request and delete reviews. The connection controller commits verified Project
         switches to their originating tab. Native reads live in internal/kube/projects.go. Session Results retains confirmed operations.
+      </p>
+      <p>
+        WorkflowWorkspace scopes Route, Build and Operator reads to the active connection. RouteAction, BuildControls and OperatorControls
+        send confirmed native tokens to Session Results. Build logs share the bounded session store and close when their view leaves.
       </p>
     </main>
   </body>

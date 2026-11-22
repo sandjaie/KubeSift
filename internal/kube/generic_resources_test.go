@@ -136,3 +136,50 @@ func TestCreatedDetailAllowsGetWithoutInventoryAndRejectsReplacement(t *testing.
 		}
 	}
 }
+
+func TestSensitiveOpenShiftCapture(t *testing.T) {
+	for _, tc := range []struct{ group, kind, plural string }{
+		{"route.openshift.io", "Route", "routes"}, {"build.openshift.io", "BuildConfig", "buildconfigs"}, {"build.openshift.io", "Build", "builds"},
+		{"operators.coreos.com", "InstallPlan", "installplans"}, {"operators.coreos.com", "ClusterServiceVersion", "clusterserviceversions"},
+	} {
+		t.Run(tc.kind, func(t *testing.T) {
+			s, ref := workloadServer(t, func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				fmt.Fprintf(w, `{"apiVersion":"%s/v1","kind":"%s","metadata":{"name":"x","namespace":"default","uid":"a","resourceVersion":"2","annotations":{"copy":"private-sentinel"}},"spec":{"tls":{"key":"private-sentinel"},"unknown":"private-sentinel"}}`, tc.group, tc.kind)
+			})
+			d, err := s.readManifestDetail(context.Background(), ManifestAddress{ref, tc.group, "v1", tc.plural, tc.kind, "default", "x"}, "a")
+			if err != nil {
+				t.Fatal(err)
+			}
+			if strings.Contains(d.ObjectJSON+d.YAML, "private-sentinel") {
+				t.Fatal("sensitive material crossed the bridge")
+			}
+		})
+	}
+}
+
+func TestOLMv1ProjectionAndUnrelatedGenericAPI(t *testing.T) {
+	for _, tc := range []struct {
+		group, kind, plural, fields, want string
+		namespaced, restricted            bool
+	}{
+		{"olm.operatorframework.io", "ClusterExtension", "clusterextensions", `"namespace":"operators","source":{"sourceType":"Catalog","catalog":{"packageName":"demo","channels":["stable"]}},"secret":"private-sentinel"`, "stable", false, true},
+		{"olm.operatorframework.io", "ClusterCatalog", "clustercatalogs", `"source":{"sourceType":"Image","image":{"ref":"registry.test/catalog:latest"}},"secret":"private-sentinel"`, "registry.test/catalog:latest", false, true},
+		{"operators.coreos.com", "OperatorCondition", "operatorconditions", `"overrides":[{"type":"Upgradeable"}]`, "Upgradeable", true, false},
+	} {
+		t.Run(tc.kind, func(t *testing.T) {
+			ns := ""
+			if tc.namespaced {
+				ns = "team"
+			}
+			s, ref := workloadServer(t, func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				fmt.Fprintf(w, `{"apiVersion":"%s/v1","kind":%q,"metadata":{"name":"sample","namespace":%q,"uid":"one","resourceVersion":"2"},"spec":{%s}}`, tc.group, tc.kind, ns, tc.fields)
+			})
+			d, err := s.readManifestDetail(context.Background(), ManifestAddress{ref, tc.group, "v1", tc.plural, tc.kind, ns, "sample"}, "one")
+			if err != nil || d.Projected != tc.restricted || !strings.Contains(d.ObjectJSON, tc.want) || strings.Contains(d.ObjectJSON+d.YAML, "private-sentinel") {
+				t.Fatal("wrong inspection projection", err)
+			}
+		})
+	}
+}

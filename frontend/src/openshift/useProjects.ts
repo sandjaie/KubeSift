@@ -7,7 +7,7 @@ Important: Suggestions come exclusively from the current principal's Projects re
 import { useEffect, useState, useRef } from "react";
 import { api, message, type ConnectionRef } from "../connections/api";
 import { readRequest } from "../workloads/api";
-import type { Project, ProjectCapabilities } from "../../bindings/internal/kube/models";
+import type { Project, WorkflowDiscovery, ProjectCapabilities } from "../../bindings/internal/kube/models";
 
 interface Inventory {
   key: string;
@@ -26,6 +26,7 @@ export function useProjects(ref: ConnectionRef | undefined | null, live: readonl
     for (const k of confirmed.current) if (!keys.has(k)) confirmed.current.delete(k);
   }, [live]);
   const [revision, refresh] = useState(0);
+  const [discovery, setDiscovery] = useState<{ key: string; value: WorkflowDiscovery }>();
   const [state, set] = useState<Inventory>();
   useEffect(() => {
     if (!id || generation === undefined) return;
@@ -33,11 +34,29 @@ export function useProjects(ref: ConnectionRef | undefined | null, live: readonl
     let current = true;
     const base: Inventory = { key, items: [], partial: true, error: "", caps: confirmed.current.has(key) ? pendingProjects : undefined };
     set(base);
+    setDiscovery(undefined);
     let cancel = () => {};
+    let cancelWorkflow = () => {};
     async function run() {
       const probe = readRequest((i) => api.ProjectCapabilities(i, connection, revision > 0));
       cancel = probe.cancel;
-      const caps = await probe.promise;
+      // Share the completed root discovery with Projects, including restricted Project APIs.
+      let caps: ProjectCapabilities;
+      try {
+        caps = await probe.promise;
+      } finally {
+        if (current && api.WorkflowDiscovery) {
+          const workflow = readRequest((i) => api.WorkflowDiscovery(i, connection, false));
+          cancelWorkflow = workflow.cancel;
+          void workflow.promise
+            .then((value) => {
+              if (current) setDiscovery({ key, value });
+            })
+            .catch((e) => {
+              if (current) setDiscovery({ key, value: { resources: [], problems: { discovery: message(e) }, buildActions: {} } });
+            });
+        }
+      }
       if (!current) return;
       if (caps.projects) confirmed.current.add(key);
       else confirmed.current.delete(key);
@@ -66,9 +85,11 @@ export function useProjects(ref: ConnectionRef | undefined | null, live: readonl
     return () => {
       current = false;
       cancel();
+      cancelWorkflow();
     };
   }, [id, generation, key, revision]);
   return {
+    workflows: discovery?.key === key ? discovery.value : undefined,
     inventory:
       state?.key === key
         ? state

@@ -50,7 +50,29 @@ export const revokeNode = (token: string) => {
 export const executeNode = workloadAPI.ExecuteNodeAction;
 export const cancelDrain = workloadAPI.CancelDrain;
 export const executeProjectRequest = workloadAPI.ExecuteProjectRequest;
-export type OperationAction = "request-project" | "node" | "scale" | "restart" | "delete" | "edit" | "rollback" | "create" | "apply";
+export const executeOperator = workloadAPI.ExecuteOperator;
+export const executeBuildAction = workloadAPI.ExecuteBuildAction;
+export const executeRoute = workloadAPI.ExecuteRoute;
+export type OperationAction =
+  | "install-operator"
+  | "approve-plan"
+  | "remove-subscription"
+  | "remove-csv"
+  | "start-build"
+  | "rebuild"
+  | "cancel-build"
+  | "create-route"
+  | "edit-route"
+  | "delete-route"
+  | "request-project"
+  | "node"
+  | "scale"
+  | "restart"
+  | "delete"
+  | "edit"
+  | "rollback"
+  | "create"
+  | "apply";
 export const prepareScale = (request: ScaleRequest) => readRequest((id) => workloadAPI.PrepareScale(id, request));
 export const executeScale = workloadAPI.ExecuteScale;
 export const listScaleResults = workloadAPI.ListScaleResults;

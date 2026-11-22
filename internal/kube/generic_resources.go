@@ -11,6 +11,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"strings"
 	"time"
 	"unicode"
@@ -152,11 +153,33 @@ func (s *Service) readManifestDetail(ctx context.Context, target ManifestAddress
 	if string(item.Metadata.UID) != uid {
 		return GenericResourceDetail{}, model.Fail("resource_replaced", "Resource replaced; select again")
 	}
+	projected := protectedOpenShiftCapture(api)
+	if projected {
+		meta := item.Metadata
+		safe := map[string]any{"apiVersion": api.apiVersion(), "kind": api.kind, "metadata": map[string]string{"name": meta.Name, "namespace": meta.Namespace, "uid": string(meta.UID), "resourceVersion": meta.ResourceVersion}}
+		if api.group == "route.openshift.io" && api.plural == "routes" {
+			route, err := ProjectRoute(raw)
+			if err != nil {
+				return GenericResourceDetail{}, err
+			}
+			safe["spec"], safe["status"] = route.Spec, route.Status
+		} else if api.group == "olm.operatorframework.io" && (api.plural == "clusterextensions" || api.plural == "clustercatalogs") {
+			v, e := projectOLMv1(raw)
+			if e != nil {
+				return GenericResourceDetail{}, e
+			}
+			safe["spec"], safe["status"] = v.Spec, v.Status
+		}
+		raw, err = json.Marshal(safe)
+		if err != nil {
+			return GenericResourceDetail{}, model.Fail("invalid", "Cannot project resource capture")
+		}
+	}
 	rendered, err := exactYAML(raw)
 	if err != nil {
 		return GenericResourceDetail{}, err
 	}
-	out := GenericResourceDetail{Resource: genericRef(target.Connection, api, item.Metadata), ResourceVersion: item.Metadata.ResourceVersion, FetchedAt: time.Now().UTC(), ObjectJSON: string(raw), YAML: rendered}
+	out := GenericResourceDetail{Resource: genericRef(target.Connection, api, item.Metadata), ResourceVersion: item.Metadata.ResourceVersion, FetchedAt: time.Now().UTC(), Projected: projected, ObjectJSON: string(raw), YAML: rendered}
 	if err := checkPayload(out); err != nil {
 		return GenericResourceDetail{}, err
 	}
@@ -166,6 +189,21 @@ func (s *Service) readManifestDetail(ctx context.Context, target ManifestAddress
 	return out, nil
 }
 
+func protectedOpenShiftCapture(api apiResource) bool {
+	switch api.group {
+	case "route.openshift.io":
+		return api.plural == "routes"
+	case "build.openshift.io":
+		return api.plural == "builds" || api.plural == "buildconfigs"
+	case "operators.coreos.com":
+		return api.plural == "installplans" || api.plural == "clusterserviceversions" || api.plural == "catalogsources" || api.plural == "subscriptions" || api.plural == "operatorgroups"
+	case "packages.operators.coreos.com":
+		return api.plural == "packagemanifests"
+	case "olm.operatorframework.io":
+		return api.plural == "clustercatalogs" || api.plural == "clusterextensions"
+	}
+	return false
+}
 func exactYAML(raw []byte) (string, error) {
 	// Decode into syntax nodes, so numbers retain their lexical form.
 	var document yaml.Node

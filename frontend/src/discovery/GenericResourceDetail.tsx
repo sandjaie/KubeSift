@@ -31,6 +31,9 @@ export function GenericResourceDetail({
   loading: boolean;
 }) {
   const r = capture.resource;
+  const note = capture.projected
+    ? "Safe projection. The full editor requests the original object and can reveal sensitive fields."
+    : "Installed API objects can contain sensitive values. Check before sharing.";
   return (
     <div className="compact-pod-detail">
       <button onClick={onBack}>← Back to inventory</button>
@@ -58,7 +61,7 @@ export function GenericResourceDetail({
             <Field label="Resource version">{capture.resourceVersion || "Unknown"}</Field>
           </dl>
           <Disclosure label="Captured object JSON">
-            <p className="muted yaml-note">Installed API objects can contain sensitive values. Check before sharing.</p>
+            <p className="muted yaml-note">{note}</p>
             <textarea aria-label="Read-only captured JSON" className="yaml-view" readOnly spellCheck={false} value={capture.objectJSON} />
           </Disclosure>
         </div>
@@ -70,10 +73,10 @@ export function GenericResourceDetail({
               disabled={!canPatch || loading || !onEdit}
               title={canPatch ? undefined : "This API does not advertise Patch"}
             >
-              Edit YAML
+              {capture.projected ? "Open full YAML editor…" : "Edit YAML"}
             </button>
             <button onClick={onApply} disabled={!canPatch || loading || !onApply}>
-              Apply configuration…
+              {capture.projected ? "Open full apply editor…" : "Apply configuration…"}
             </button>
             {!canPatch && <span className="muted">This API does not advertise Patch.</span>}
             <CopyTextButton
@@ -82,7 +85,7 @@ export function GenericResourceDetail({
               key={JSON.stringify([r.uid, capture.fetchedAt])}
               text={capture.yaml}
             />
-            <span className="muted">Installed API objects can contain sensitive values. Check before sharing.</span>
+            <span className="muted">{note}</span>
           </div>
           <textarea aria-label="Read-only server YAML" className="yaml-view" readOnly spellCheck={false} wrap="off" value={capture.yaml} />
         </div>

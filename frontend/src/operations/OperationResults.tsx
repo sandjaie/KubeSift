@@ -11,6 +11,9 @@ import { isResourceKind, type ResourceRef } from "../workloads/model";
 import {
   executeNode,
   executeProjectRequest,
+  executeRoute,
+  executeBuildAction,
+  executeOperator,
   cancelDrain,
   getOperationResult,
   checkDeleteTarget,
@@ -33,6 +36,18 @@ import {
 import { rollbackAcceptedText } from "./rollbackState";
 
 const submissions = {
+  "install-operator": (t: string, ack: string) => executeOperator("install-operator", t, ack),
+  "approve-plan": (t: string, ack: string) => executeOperator("approve-plan", t, ack),
+  "remove-subscription": (t: string, ack: string) => executeOperator("remove-subscription", t, ack),
+  "remove-csv": (t: string, ack: string) => executeOperator("remove-csv", t, ack),
+
+  "start-build": (t: string, ack: string) => executeBuildAction("start-build", t, ack),
+  rebuild: (t: string, ack: string) => executeBuildAction("rebuild", t, ack),
+  "cancel-build": (t: string, ack: string) => executeBuildAction("cancel-build", t, ack),
+
+  "create-route": (t: string, a: string) => executeRoute("create-route", t, a),
+  "edit-route": (t: string, a: string) => executeRoute("edit-route", t, a),
+  "delete-route": (t: string, a: string) => executeRoute("delete-route", t, a),
   node: executeNode,
   "request-project": executeProjectRequest,
   apply: executeApply,
@@ -45,6 +60,9 @@ const submissions = {
 };
 const actionLabel: Record<string, string> = {
   "request-project": "Request project",
+  "create-route": "Create Route",
+  "edit-route": "Edit Route",
+  "delete-route": "Delete Route",
   apply: "Apply configuration",
   create: "Create resource",
   delete: "Delete",
@@ -218,6 +236,17 @@ export function OperationResults({
             <p>
               Field manager: <code>{row.apply.manager}</code>
               {row.apply.force ? " · Takeover requested" : ""}.
+            </p>
+          )}
+          {row.installedCSV && (
+            <p>
+              Installed CSV {row.installedCSV.name} · {row.installedCSV.uid}. Its removal needs a separate review.
+            </p>
+          )}
+          {row.returnedBuild && (
+            <p>
+              Returned Build {row.returnedBuild.namespace}/{row.returnedBuild.name} · UID {row.returnedBuild.uid}. Refresh Builds to observe
+              its phase.
             </p>
           )}
           {row.problem?.message && <p>{row.problem.message}</p>}

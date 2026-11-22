@@ -250,18 +250,26 @@ func TestPodLogs(t *testing.T) {
 		name                       string
 		follow, previous, replaced bool
 	}{
-		{"snapshot", false, false, false}, {"previous", false, true, false}, {"follow gap", true, false, false}, {"replacement", false, false, true},
+		{"snapshot", false, false, false}, {"previous", false, true, false}, {"follow gap", true, false, false}, {"replacement", false, false, true}, {"build snapshot", false, false, false}, {"build follow", true, false, false}, {"build replacement", false, false, true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			isBuild := strings.HasPrefix(tc.name, "build")
+			container := "main"
+			if isBuild {
+				container = ""
+			}
 			var opened atomic.Bool
 			s, ref := workloadServer(t, func(w http.ResponseWriter, r *http.Request) {
 				if strings.HasSuffix(r.URL.Path, "/log") {
 					q := r.URL.Query()
-					if q.Get("container") != "main" || q.Get("timestamps") != "true" || q.Get("tailLines") != "200" || (q.Get("follow") == "true") != tc.follow || (q.Get("previous") == "true") != tc.previous {
+					if q.Get("container") != container || q.Get("timestamps") != "true" || q.Get("tailLines") != "200" || (q.Get("follow") == "true") != tc.follow || (q.Get("previous") == "true") != tc.previous {
 						t.Error("incorrect log options", q)
 					}
 					if !tc.follow && q.Get("limitBytes") != "1048576" {
 						t.Error("snapshot byte cap missing")
+					}
+					if isBuild && r.URL.Path != "/apis/build.openshift.io/v1/namespaces/default/builds/sample/log" {
+						t.Error("wrong Build log endpoint")
 					}
 					opened.Store(true)
 					fmt.Fprint(w, "fixture log\n")
@@ -272,11 +280,20 @@ func TestPodLogs(t *testing.T) {
 				if tc.replaced && opened.Load() {
 					uid = "replacement"
 				}
+				if isBuild {
+					fmt.Fprintf(w, `{"apiVersion":"build.openshift.io/v1","kind":"Build","metadata":{"name":"sample","namespace":"default","uid":%q,"resourceVersion":"1"},"status":{"phase":"Running"}}`, uid)
+					return
+				}
 				fmt.Fprintf(w, `{"apiVersion":"v1","kind":"Pod","metadata":{"name":"sample","namespace":"default","uid":%q},"spec":{"containers":[{"name":"main","image":"synthetic"}]}}`, uid)
 			})
 			events := make(chan model.Event, 32)
 			s.sessions = session.NewManager(func(e model.Event) { events <- e })
 			req := LogRequest{Resource: ResourceRef{Connection: ref, Kind: "Pod", APIVersion: "v1", Namespace: "default", Name: "sample", UID: "pod"}, Container: "main", Previous: tc.previous, Follow: tc.follow}
+			if isBuild {
+				req.Container = ""
+				req.Resource.Kind = "Build"
+				req.Resource.APIVersion = "build.openshift.io/v1"
+			}
 			stream, err := s.OpenPodLogs(context.Background(), req)
 			if err != nil {
 				t.Fatal(err)

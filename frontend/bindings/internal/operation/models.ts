@@ -32,6 +32,8 @@ export interface ApplyDraft {
  * ApplyExecution is returned to the submitting editor only, never from history.
  */
 export interface ApplyExecution {
+  installedCSV?: kube$0.ResourceRef | null;
+  returnedBuild?: kube$0.ResourceRef | null;
   node?: NodeProgress | null;
   action: string;
   cluster: string;
@@ -82,6 +84,12 @@ export interface ApplyReview {
   ownershipIncomplete: boolean;
   ownershipTruncated: boolean;
   force: boolean;
+}
+
+export interface BuildActionRequest {
+  target: kube$0.WorkflowQuery;
+  version: string;
+  action: string;
 }
 
 export interface CreateDraft {
@@ -238,6 +246,8 @@ export interface NodeRequest {
 }
 
 export interface OperationResult {
+  installedCSV?: kube$0.ResourceRef | null;
+  returnedBuild?: kube$0.ResourceRef | null;
   node?: NodeProgress | null;
   action: string;
   cluster: string;
@@ -254,6 +264,17 @@ export interface OperationResult {
   edit?: kube$0.EditTarget | null;
   create?: CreateResultData | null;
   apply?: ApplyResultData | null;
+}
+
+export interface OperatorRequest {
+  action: string;
+  target: kube$0.WorkflowQuery;
+  version: string;
+  catalogNamespace: string;
+  catalog: string;
+  package: string;
+  channel: string;
+  removalID: string;
 }
 
 export interface Preview {
@@ -348,6 +369,13 @@ export interface RollbackResultData {
   revision: string;
 }
 
+export interface RouteRequest {
+  target: kube$0.WorkflowQuery;
+  version: string;
+  action: string;
+  fields: kube$0.RouteFields;
+}
+
 export interface ScaleImpact {
   direction: string;
   whenScaled: string;
@@ -392,4 +420,17 @@ export interface ScaleResultData {
   before: number;
   requested: number;
   reported: number | null;
+}
+
+export interface WorkflowPreview {
+  cluster: string;
+  name: string;
+  namespace: string;
+  action: string;
+  before: string;
+  admitted: string;
+  impact: string;
+  typed: boolean;
+  token: string;
+  expiresAt: string;
 }

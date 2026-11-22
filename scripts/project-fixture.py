@@ -38,13 +38,21 @@ class Handler(BaseHTTPRequestHandler):
                            "reason": {403: "Forbidden", 404: "NotFound", 409: "Conflict"}.get(code, ""),
                            "status": "Success" if code == 200 else "Failure"}, code)
 
+    workflows = None
+
+    def do_PATCH(self):
+        if not self.workflows or not self.workflows.serve(self):
+            self.status(405)
+
     def do_GET(self):
+        if self.workflows and self.workflows.serve(self):
+            return
         path = urlsplit(self.path).path
         if path == "/api":
             return self.reply({"kind": "APIVersions", "versions": ["v1"]})
         if path == "/apis":
             return self.reply({"kind": "APIGroupList", "groups": [
-                {"name": "project.openshift.io", "versions": [{"version": "v1", "groupVersion": VERSION}]}]})
+                {"name": "project.openshift.io", "versions": [{"version": "v1", "groupVersion": VERSION}]}] + (self.workflows.groups() if self.workflows else [])})
         if path == ROOT:
             return self.reply({"kind": "APIResourceList", "groupVersion": VERSION, "resources": [
                 {"kind": "Project", "name": "projects", "namespaced": False, "verbs": ["list", "get", "delete"]},
@@ -82,6 +90,8 @@ class Handler(BaseHTTPRequestHandler):
         return json.loads(raw)
 
     def do_POST(self):
+        if self.workflows and self.workflows.serve(self):
+            return
         path = urlsplit(self.path).path
         body = self.body()
         if path.endswith("/selfsubjectaccessreviews"):
@@ -100,6 +110,8 @@ class Handler(BaseHTTPRequestHandler):
         return self.status(403)
 
     def do_DELETE(self):
+        if self.workflows and self.workflows.serve(self):
+            return
         path = urlsplit(self.path).path
         name = path.rsplit("/", 1)[-1]
         if path != ROOT + "/projects/" + name or name not in NAMES:
@@ -114,7 +126,13 @@ class Handler(BaseHTTPRequestHandler):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("directory", type=Path)
-    directory = parser.parse_args().directory
+    parser.add_argument("--workflows", action="store_true")
+    args = parser.parse_args()
+    directory = args.directory
+    if args.workflows:
+        import workflow_fixture
+        workflow_fixture.seed()
+        Handler.workflows = workflow_fixture
     server = HTTPServer(("127.0.0.1", 0), Handler)
     cert, key = directory / "tls.crt", directory / "tls.key"
     subprocess.run(["openssl", "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-days", "1",
