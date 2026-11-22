@@ -6,7 +6,7 @@ Updated 2026-11-22. Current integration branch is `develop`.
 
 - [Unified specification](../../docs/superpowers/specs/2026-11-22-phase-1f-openshift-workflows-design.md) and [phase implementation plan](../../docs/superpowers/plans/2026-11-22-phase-1f-openshift-workflows.md) cover Projects, Routes, Builds, Operators and phase acceptance from develop baseline `f92b519`. Projects is merged; Routes is the first new workflow. Live Projects checks remain assigned to the separate office-laptop follow-up.
 
-- Implementation candidate on `feature/phase-1f-openshift-workflows` from `3d6dfeb`. [Phase validation](../../docs/superpowers/validation/phase-1f.html) records kind, synthetic Route/Build/OLM and mounted UI evidence. The packaged app launched, but the graphical session was locked. Native desktop acceptance, live OCP compatibility and phase closure remain open.
+- Implementation candidate on `feature/phase-1f-openshift-workflows` from `3d6dfeb`. [Phase validation](../../docs/superpowers/validation/phase-1f.html) records kind, synthetic Route/Build/OLM and mounted UI evidence. The signed macOS app exercised all three workflows on a controlled fixture and ordinary Namespace browsing on both kind contexts. Repository checks (147 frontend tests), targeted race, bindings, build and signature verification passed. One independent review and targeted rechecks cleared KSF-001–011 at source head `2e82dd6`. Live OCP compatibility and phase closure remain open.
 
 ## Phase 1F.1 · OpenShift Projects
 
