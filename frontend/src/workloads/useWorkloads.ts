@@ -46,6 +46,7 @@ export function useWorkloads(
   namespace: string,
   visible: boolean,
   onNamespace: (tab: string, namespace: string) => void,
+  projectUID?: string,
 ) {
   const [state, setState] = useState(initialWorkloads);
   const current = useRef(state);
@@ -61,7 +62,9 @@ export function useWorkloads(
     current.current = reduceWorkloads(current.current, a);
     setState(current.current);
   }, []);
-  const namespaceScope = connection ? JSON.stringify([connection.id, connection.generation, namespace]) : "";
+  const namespaceScope = connection
+    ? JSON.stringify([connection.id, connection.generation, namespace, ...(projectUID ? [projectUID] : [])])
+    : "";
   const clusterScope = connection ? JSON.stringify([connection.id, connection.generation]) : "";
   const kind = state[tabID]?.kind ?? "Pod";
   const targetNamespace = inventoryNamespace(kind, namespace);
@@ -272,7 +275,10 @@ export function useWorkloads(
   function show(entry: NavigationEntry, history: NavigationEntry[], detail?: ResourceDetail) {
     const destinationNamespace = entry.namespace ?? namespace;
     if (!canOpen(entry.resource, destinationNamespace)) return;
-    const nextScope = JSON.stringify([entry.resource.connection.id, entry.resource.connection.generation, destinationNamespace]);
+    const nextScope =
+      destinationNamespace === namespace
+        ? namespaceScope
+        : JSON.stringify([entry.resource.connection.id, entry.resource.connection.generation, destinationNamespace]);
     seededOverview.current = entry.section === "Overview" ? detail : undefined;
     commit({ type: "navigate", tab: tabID, scope, nextScope, kind: entry.resource.kind, entry, detail, history, epoch: ++serial.current });
     if (destinationNamespace !== namespace) onNamespace(tabID, destinationNamespace);

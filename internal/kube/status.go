@@ -83,7 +83,20 @@ func (s *Service) ProbeAccess(ctx context.Context, ref model.ConnectionRef, ns, 
 	if e != nil {
 		return AccessResult{}, e
 	}
+	if probe == "projects" {
+		_, err := s.ListProjects(ctx, ref, "")
+		return AccessResult{Probe: "projects", Namespace: ns, AuthorizedRead: err == nil}, err
+	}
 	r := checkClient(ctx, client, ns, probe)
+	if probe == "" && r.Problem != nil && r.Problem.Code == "forbidden" {
+		if caps, err := s.ProjectCapabilities(ctx, ref, false); err == nil && caps.List {
+			if _, err := s.ListProjects(ctx, ref, ""); err == nil {
+				r.Problem = nil
+				r.AuthorizedRead = true
+				r.Probe = "projects"
+			}
+		}
+	}
 	if r.Problem != nil {
 		return r, r.Problem
 	}

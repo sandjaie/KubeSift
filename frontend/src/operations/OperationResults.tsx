@@ -10,6 +10,7 @@ import { Modal } from "../ui/ReviewDialog";
 import { isResourceKind, type ResourceRef } from "../workloads/model";
 import {
   executeNode,
+  executeProjectRequest,
   cancelDrain,
   getOperationResult,
   checkDeleteTarget,
@@ -33,6 +34,7 @@ import { rollbackAcceptedText } from "./rollbackState";
 
 const submissions = {
   node: executeNode,
+  "request-project": executeProjectRequest,
   apply: executeApply,
   create: executeCreate,
   delete: executeDelete,
@@ -42,6 +44,7 @@ const submissions = {
   scale: executeScale,
 };
 const actionLabel: Record<string, string> = {
+  "request-project": "Request project",
   apply: "Apply configuration",
   create: "Create resource",
   delete: "Delete",
@@ -205,6 +208,11 @@ export function OperationResults({
               {row.state === "accepted" && <p>Kubernetes accepted deletion. The workload and its dependents may still be present.</p>}
             </>
           )}
+          {row.action === "request-project" && row.resource.uid && (
+            <p>
+              Returned Project UID {row.resource.uid} · version {row.create?.resourceVersion}
+            </p>
+          )}
           {row.create && row.state === "accepted" && <p>Kubernetes created this resource. Opening it requires read permission.</p>}
           {row.apply && (
             <p>
@@ -214,7 +222,11 @@ export function OperationResults({
           )}
           {row.problem?.message && <p>{row.problem.message}</p>}
           <time dateTime={row.finishedAt ?? row.startedAt}>{new Date(row.finishedAt ?? row.startedAt).toLocaleTimeString()}</time>{" "}
-          {row.delete ? (
+          {row.action === "request-project" ? (
+            (row.state === "accepted" || row.state === "unknown") && (
+              <TargetCheck create operationID={row.operationID} canCheck={canOpen(row.resource)} />
+            )
+          ) : row.delete ? (
             row.finishedAt && <TargetCheck operationID={row.operationID} canCheck={canOpen(row.resource)} />
           ) : row.create && row.state !== "accepted" ? (
             row.finishedAt &&
@@ -245,14 +257,17 @@ export function OperationResults({
 }
 
 const observationText: Record<string, string> = {
-  present: "The original workload is present.",
-  terminating: "The original workload is terminating.",
-  absent: "The original workload is absent. Dependents may still be present.",
+  forbidden: "Access denied. The original target could still exist.",
+  present: "The original resource is present.",
+  terminating: "The original resource is terminating.",
+  absent: "The original resource is absent. Dependents may still be present.",
   replaced: "An object with a different UID now uses this name.",
   unavailable: "Target status is unavailable.",
 };
 
 const createObservationText: Record<string, string> = {
+  verified: "The named Project matches the UID returned at submission.",
+  replaced: "A different UID now uses this name.",
   present: "An object currently uses this name. Its presence does not establish what this create request did.",
   absent: "No object currently uses this name. The create outcome remains unknown.",
   unavailable: "The name could not be inspected. The create outcome remains unknown.",

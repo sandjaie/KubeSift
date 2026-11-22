@@ -60,6 +60,9 @@ func operationKey(result OperationResult) kube.ResourceRef {
 		}
 		key.APIVersion, key.Kind = group, plural
 	}
+	if key.Namespace == "" && ((key.APIVersion == kube.ProjectGroup && (key.Kind == "projects" || key.Kind == "projectrequests")) || (key.APIVersion == kube.ProjectVersion && key.Kind == "Project")) {
+		key.APIVersion, key.Kind = "", "namespaces"
+	}
 	return key
 }
 

@@ -43,6 +43,8 @@ func (s *DeleteService) CheckDeleteTarget(ctx context.Context, operationID strin
 	switch {
 	case errors.Is(err, operationHTTPStatus(http.StatusNotFound)) && objectNotFound(missing, ref.Name, group, plural):
 		obs.State = "absent"
+	case ref.Kind == "Project" && errors.Is(err, operationHTTPStatus(403)):
+		obs.State = "forbidden"
 	case err != nil || object.Kind != ref.Kind || object.APIVersion != ref.APIVersion ||
 		object.Metadata.Name != ref.Name || object.Metadata.Namespace != ref.Namespace ||
 		object.Metadata.UID == "" || len(object.Metadata.UID) > 128 || object.Metadata.Version == "" || len(object.Metadata.Version) > 128:

@@ -6,7 +6,10 @@ Important: Confirm accepts only a native token and acknowledgement.
 */
 package desktop
 
-import "github.com/sandjaie/KubeSift/internal/operation"
+import (
+	"github.com/sandjaie/KubeSift/internal/model"
+	"github.com/sandjaie/KubeSift/internal/operation"
+)
 
 func (s *ExplorerService) PrepareNodeAction(id string, req operation.NodeRequest) (operation.NodePreview, error) {
 	ctx, done, e := s.beginWorkloadRead(id)
@@ -14,13 +17,20 @@ func (s *ExplorerService) PrepareNodeAction(id string, req operation.NodeRequest
 		return operation.NodePreview{}, e
 	}
 	defer done()
-	view, e := s.GetConnection(req.Resource.Connection)
+	env, e := s.connectionEnvironment(req.Resource.Connection)
 	if e != nil {
 		return operation.NodePreview{}, e
 	}
+	return s.core.coordinator.PrepareNodeAction(ctx, req, env)
+}
+func (s *ExplorerService) connectionEnvironment(ref model.ConnectionRef) (string, error) {
+	view, e := s.GetConnection(ref)
+	if e != nil {
+		return "", e
+	}
 	sources, e := s.ListSources()
 	if e != nil {
-		return operation.NodePreview{}, e
+		return "", e
 	}
 	env := ""
 	for _, src := range sources {
@@ -32,7 +42,7 @@ func (s *ExplorerService) PrepareNodeAction(id string, req operation.NodeRequest
 			}
 		}
 	}
-	return s.core.coordinator.PrepareNodeAction(ctx, req, env)
+	return env, nil
 }
 func (s *ExplorerService) ExecuteNodeAction(token, ack string) (operation.OperationResult, error) {
 	return s.core.coordinator.ExecuteNodeAction(token, ack)

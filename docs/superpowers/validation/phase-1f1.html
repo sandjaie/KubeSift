@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OpenShift Projects validation · KubeSift</title>
+    <link rel="stylesheet" href="../../assets/planning.css" />
+    <script src="../../assets/theme.js"></script>
+  </head>
+  <body>
+    <aside class="rail">
+      <a class="skip" href="#content">Skip to content</a
+      ><a class="mark" href="../../index.html"><span class="mark-name">KubeSift</span><span class="mark-sub">Planning</span></a>
+      <h2>Index</h2>
+      <a href="../../index.html">Planning index</a>
+      <h2>Product</h2>
+      <a href="../../product/requirements.html">Requirements</a><a href="../../product/feature-matrix.html">Capabilities</a>
+      <h2>Architecture</h2>
+      <a href="../../architecture/overview.html">Overview</a><a href="../../architecture/decisions.html">Decisions</a>
+      <h2>Safeguards</h2>
+      <a href="../../security/security-model.html">Security and AI</a>
+      <h2>Delivery</h2>
+      <a href="../../roadmap/roadmap.html">Roadmap</a><a href="../../ux/workflows.html">UX workflows</a
+      ><a href="../../ux/mocks/index.html">Mockups</a>
+      <h2>Engineering</h2>
+      <a href="../../engineering/engineering.html">Playbook</a><a href="../../engineering/local-development.html">Local development</a
+      ><a href="../../engineering/toolchain.html">Toolchain</a
+      ><a href="../../engineering/kubernetes-development.html">Kubernetes references</a>
+      <h2>Superpowers</h2>
+      <a href="../../superpowers/specs/2026-11-05-kubesift-design.md">Design specification</a
+      ><a href="../../superpowers/plans/README.html">Plans</a
+      ><a href="../../superpowers/validation/index.html" aria-current="page">Validation</a
+      ><a href="../../superpowers/evidence/index.html">Evidence</a>
+    </aside>
+
+    <header>
+      <a href="index.html">KubeSift / Validation</a>
+      <h1>Phase 1F.1 · OpenShift Projects</h1>
+    </header>
+    <main id="content">
+      <p>Feature branch based on planning commit <code>4cc1602</code>. OCP 4.21 acceptance remains open.</p>
+      <h2>Native and desktop evidence</h2>
+      <p>
+        Each approved kind API server returned seven core Namespaces and no OpenShift Projects capability. The opt-in integration read
+        through the production service with explicit kind-dev-local-a and kind-dev-local-b connections.
+      </p>
+      <p>
+        Loopback tests cover empty, 130-item and 501-item responses, list denial with named GET, mismatched UIDs, exact quota quantities and
+        independently scoped personal access. Before the generic YAML guard, preparing a ProjectRequest sent one POST. The corrected
+        regression requires zero. Dedicated request tests cover revoked and production-labelled tokens, duplicate confirmation, 403, 409 and
+        500 responses and named readback. Conditional deletion tests inspect the UID and version in both DELETE bodies, typed
+        acknowledgement and version drift before execution.
+      </p>
+      <p>
+        Mounted React tests exercise explicit lookup, inspection without scope changes, typed deletion, cancellation, two tabs using the
+        same name, same-name UID binding and failed transitions. The frontend suite passed 141 tests. Wails bindings, production build and
+        ad-hoc signed package were generated. The repository check and native race commands are recorded in the plan ledger.
+      </p>
+      <p>
+        The packaged macOS app connected to the TLS loopback fixture with Namespace and Pod lists denied. The Project header labelled the
+        configured namespace unverified. Named lookup showed team-a and its UID. Quotas showed two Pods used of twelve. Personal checks
+        reported denied, allowed and allowed. For team-b the quota request was denied and access results were unknown. Use project and
+        keyboard entry both landed on scoped Pods with the expected denial. Command search reopened Projects. Request review showed the
+        captured cluster and template warning and was cancelled. Deletion review showed the original UID/version and disabled confirmation
+        until the typed name matched. Light and dark appearance were exercised and System was restored. At half screen width (1514 by 1898
+        pixels), named lookup, captured UID, Use project and Delete project remained accessible. The original window size was restored.
+      </p>
+      <h2>Independent review</h2>
+      <p>
+        Fresh reviewer <code>review</code> inspected the full diff from <code>4cc1602</code> to <code>920fcc8</code>. KSF-001 through
+        KSF-005 blocked merge. The correction serializes native namespace transitions per tab, reconciles completed transitions on their
+        original generation, invalidates stale Project evidence and deletion reviews, retains Project selector identity after failed
+        discovery, and validates AlreadyExists Status evidence against the exact requested name. Targeted tests cover all five findings.
+        Additional native cases exercise expired pagination, disconnect cancellation, generic name locks, transport loss, scoped permission
+        fallback and read-only post-delete observations.
+      </p>
+      <p>
+        The same reviewer checked <code>920fcc8..bc127c0</code> and cleared KSF-001, KSF-003 and KSF-005. The final recheck of
+        <code>bc127c0..7fbe491</code> cleared KSF-002 and KSF-004. Mounted regressions proved that a late quota failure on a list-only API
+        leaves the newly selected Project intact and that polling loss of the inspected UID clears its details and revokes its pending
+        deletion. All five findings are closed. The implementing agent reran the repository check, both kind integrations, production build,
+        macOS packaging and signature verification at 7fbe491.
+      </p>
+      <h2 id="office-acceptance">Pending office-laptop acceptance on OCP 4.21</h2>
+      <p>The maintainer deferred live testing to a separate PR. All cases below remain unrun on OpenShift.</p>
+      <ol>
+        <li>
+          With a restricted identity, list visible Projects, look up a Project by name and switch to it while Namespace list is denied.
+        </li>
+        <li>Check real namespace quotas and personal access decisions. Record allowed and forbidden results independently.</li>
+        <li>
+          Verify both request previews and cancellation send zero ProjectRequest POSTs. Confirm one disposable request, observe exactly one
+          POST and record visible project-template effects.
+        </li>
+        <li>
+          Verify delete dry-run leaves the original UID present and nonterminating. On an authorized disposable replacement, prove stale
+          preconditions reject deletion and the replacement survives.
+        </li>
+        <li>
+          Confirm deletion of the reviewed UID, observe termination or absence and record cleanup. Use a separately authorized verifier if
+          the deleting principal loses read access.
+        </li>
+      </ol>
+      <p>
+        Before testing, record the explicit context, server build, identities, disposable names or prefix, permitted reads and writes, and
+        cleanup authority. Verify ownership and UID before each lifecycle operation.
+      </p>
+      <p><a href="../plans/2026-11-22-phase-1f1-openshift-projects.md">Implementation plan</a></p>
+    </main>
+  </body>
+</html>

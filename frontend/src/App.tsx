@@ -25,6 +25,8 @@ import { HelmOperationResults, useHelmOperationResults } from "./helm/HelmOperat
 import type { HelmAction } from "./helm/managementState";
 import type { Target as HelmTarget } from "../bindings/internal/helmmanager/models";
 import type { RecordRef } from "../bindings/internal/helmreader/models";
+import { useProjects } from "./openshift/useProjects";
+import { ProjectsWorkspace } from "./openshift/ProjectsWorkspace";
 import { Workspace } from "./workspace/Workspace";
 import { CommandPalette } from "./workspace/CommandPalette";
 import { commandForKey } from "./workspace/commands";
@@ -125,14 +127,45 @@ export default function App() {
     return () => window.removeEventListener("keydown", listener);
   }, []);
   const active = state.active ? state.tabs[state.active] : null;
-  const [helmDestinations, setHelmDestinations] = useState<Record<string, { mode: "helm" | "resource"; source?: string }>>({});
+  const [helmDestinations, setHelmDestinations] = useState<
+    Record<string, { mode: "helm" | "resource" | "projects"; source?: string; projectKey?: string }>
+  >({});
   const helmDestination = state.active ? helmDestinations[state.active] : undefined;
   const showingHelm = helmDestination?.mode === "helm";
   const helmNamespace = helmDestination?.source ?? active?.namespace ?? "default";
   const helmConnection = active?.view?.state === "connected" || active?.view?.state === "restricted" ? active.view.ref : undefined;
+  const projectBrowser = useProjects(
+    helmConnection,
+    Object.values(state.tabs).map((t) => t.view?.ref),
+  );
+  const projectCaps = projectBrowser.inventory?.caps;
+  const projectKey = JSON.stringify([state.active, helmConnection?.id, helmConnection?.generation]);
+  const showingProjects = (helmDestination?.projectKey === projectKey || !!active?.projectUnavailable) && !!projectCaps?.projects;
+  const navigationEpoch = useRef(0);
+  useEffect(() => {
+    navigationEpoch.current++;
+    return () => {
+      navigationEpoch.current++;
+    };
+  }, [page, projectKey, showingProjects, showingHelm]);
+  function openProjects() {
+    const tab = state.active;
+    if (tab) setHelmDestinations((old) => ({ ...old, [tab]: { mode: "projects", projectKey } }));
+    setPage("workspace");
+  }
+  async function useProject(name: string, uid = "", current = () => true, onLost?: (error: string) => void) {
+    if (!state.active) return;
+    const epoch = ++navigationEpoch.current;
+    if (
+      await controller.selectNamespace(state.active, name, { uid, onLost, valid: () => current() && navigationEpoch.current === epoch })
+    ) {
+      leaveHelm(state.active);
+      workloads.selectKind("Pod");
+    }
+  }
   const helm = useHelm(
     state.active ?? "",
-    helmConnection ?? undefined,
+    active?.projectUnavailable ? undefined : (helmConnection ?? undefined),
     helmNamespace,
     showingHelm && page === "workspace" && active?.namespace === helmNamespace,
   );
@@ -143,12 +176,13 @@ export default function App() {
   }, [showingHelm, helmDestination?.source, active?.namespace, state.active]);
   const workloads = useWorkloads(
     state.active ?? "",
-    active?.view?.ref ?? null,
+    active?.projectUnavailable ? null : (active?.view?.ref ?? null),
     active?.namespace ?? "default",
-    page === "workspace" && !showingHelm,
+    page === "workspace" && !showingHelm && !showingProjects,
     (tab, namespace) => void controller.selectNamespace(tab, namespace),
+    active?.projectUID,
   );
-  const clusterScoped = !showingHelm && workloads.clusterScoped;
+  const clusterScoped = showingProjects || (!showingHelm && workloads.clusterScoped);
   function leaveHelm(tab: string) {
     setHelmDestinations((old) => {
       if (!old[tab]) return old;
@@ -166,6 +200,22 @@ export default function App() {
     origin?.view?.state === "connected" || origin?.view?.state === "restricted" ? (origin.view.ref ?? undefined) : undefined;
   const operationResults = useOperationResults((result) => {
     if (result.state !== "accepted" && !(result.action === "node" && result.state !== "executing")) return;
+    if (result.resource.kind === "Project") {
+      if (result.action === "delete") {
+        for (const [key, t] of Object.entries(state.tabs))
+          if (t.projectUID === result.resource.uid && sameConnection(result.resource.connection, t.view?.ref)) {
+            controller.commit({
+              type: "projectLost",
+              key,
+              uid: result.resource.uid,
+              epoch: t.epoch,
+              error: "Project deletion accepted. Select a Project to continue.",
+            });
+          }
+      }
+      if (sameConnection(result.resource.connection, helmConnection)) projectBrowser.refresh();
+      return;
+    }
     workloads.refreshOperationTarget(result.resource, result.action === "delete");
   });
   function resumeEditor() {
@@ -536,15 +586,31 @@ export default function App() {
             <NamespaceControl
               key={state.active}
               namespace={active.namespace}
-              names={active.view?.namespaces ?? []}
-              complete={active.view?.namespacesComplete ?? false}
+              project={projectCaps?.projects}
+              verified={!!active.projectUID && !active.projectUnavailable}
+              names={
+                projectCaps?.projects
+                  ? (projectBrowser.inventory?.items.map((p) => p.resource.name) ?? [])
+                  : (active.view?.namespaces ?? [])
+              }
+              complete={projectCaps?.projects ? false : (active.view?.namespacesComplete ?? false)}
               disabled={
+                !projectBrowser.inventory ||
+                (!!projectCaps?.projects && !projectCaps.get) ||
                 clusterScoped ||
                 !active.view?.ref ||
                 active.view.state === "connecting" ||
                 (!!active.view.problem && active.view.problem.code !== "forbidden")
               }
-              onSelect={(namespace) => void controller.selectNamespace(state.active!, namespace)}
+              onSelect={(namespace) =>
+                projectCaps?.projects
+                  ? void useProject(
+                      namespace,
+                      (namespace === active.namespace && !active.projectUnavailable ? active.projectUID : undefined) ??
+                        projectBrowser.inventory?.items.find((p) => p.resource.name === namespace)?.resource.uid,
+                    )
+                  : void controller.selectNamespace(state.active!, namespace)
+              }
             />
             <span className="spacer" />
             <ConnectionControls
@@ -641,6 +707,12 @@ export default function App() {
                   {workloads.navigationError}
                 </div>
               )}
+              {workloads.kind === "APIResources" && projectBrowser.inventory?.error && !projectCaps && (
+                <p role="alert">
+                  OpenShift discovery · {projectBrowser.inventory.error}{" "}
+                  <button onClick={projectBrowser.refresh}>Retry Project discovery</button>
+                </p>
+              )}
               <Workspace
                 key={state.active}
                 tab={active}
@@ -652,6 +724,32 @@ export default function App() {
                   )
                 }
                 controller={workloads}
+                onProjects={projectCaps?.projects ? openProjects : undefined}
+                projectsPane={
+                  showingProjects &&
+                  helmConnection &&
+                  projectBrowser.inventory &&
+                  projectCaps && (
+                    <ProjectsWorkspace
+                      key={projectKey}
+                      unavailableUID={active?.projectUnavailable ? active.projectUID : undefined}
+                      connection={helmConnection}
+                      caps={projectCaps}
+                      items={projectBrowser.inventory.items}
+                      partial={projectBrowser.inventory.partial}
+                      error={projectBrowser.inventory.error}
+                      refresh={projectBrowser.refresh}
+                      useProject={(p, current, onLost) => void useProject(p.resource.name, p.resource.uid, current, onLost)}
+                      submit={operationResults.submit}
+                      split={{
+                        widthPercent: preferences.detailWidthPercent,
+                        heightPercent: preferences.detailHeightPercent,
+                        onResize: (axis, value) => resize(axis === "x" ? "detailWidthPercent" : "detailHeightPercent", value),
+                        onCommit: commitSize,
+                      }}
+                    />
+                  )
+                }
                 helmPane={
                   (showingHelm && (
                     <HelmWorkspace
@@ -837,7 +935,14 @@ export default function App() {
             </button>
           </div>
         ))}
-      {palette && <CommandPalette available={false} onCommand={() => setPage("clusters")} onClose={() => setPalette(false)} />}
+      {palette && (
+        <CommandPalette
+          projects={projectCaps?.projects ? openProjects : undefined}
+          available={false}
+          onCommand={() => setPage("clusters")}
+          onClose={() => setPalette(false)}
+        />
+      )}
     </div>
   );
 }

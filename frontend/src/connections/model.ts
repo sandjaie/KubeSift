@@ -10,6 +10,8 @@ export interface ConnectionTab {
   request: number;
   attemptId: string;
   epoch: number;
+  projectUID?: string;
+  projectUnavailable?: boolean;
   namespace: string;
   filter: string;
   selected: string | null;

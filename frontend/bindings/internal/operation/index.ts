@@ -35,6 +35,8 @@ export type {
   NodeRequest,
   OperationResult,
   Preview,
+  ProjectFields,
+  ProjectRequestPreview,
   RestartImpact,
   RestartPreview,
   RestartRequest,

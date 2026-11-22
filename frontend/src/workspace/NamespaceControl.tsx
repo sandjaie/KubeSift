@@ -8,12 +8,16 @@ import { useEffect, useId, useRef, useState } from "react";
 import { namespaceOptions } from "./namespaceOptions";
 
 export function NamespaceControl({
+  project,
+  verified,
   namespace,
   names,
   complete,
   disabled,
   onSelect,
 }: {
+  project?: boolean;
+  verified?: boolean;
   namespace: string;
   names: string[];
   complete: boolean;
@@ -28,7 +32,8 @@ export function NamespaceControl({
   const search = useRef<HTMLInputElement>(null);
   const list = useRef<HTMLDivElement>(null);
   const id = useId();
-  const options = namespaceOptions(query, names, complete, namespace);
+  const options = namespaceOptions(query, names, complete, project ? "" : namespace);
+  const label = project ? "Project" : "Namespace";
   const active = Math.min(highlight, Math.max(0, options.length - 1));
   const expanded = open && !disabled;
 
@@ -52,7 +57,7 @@ export function NamespaceControl({
   function choose(value: string) {
     setOpen(false);
     trigger.current?.focus();
-    if (value !== namespace) onSelect(value);
+    if (project || value !== namespace) onSelect(value);
   }
   return (
     <div
@@ -62,11 +67,11 @@ export function NamespaceControl({
         if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
       }}
     >
-      <span id={`${id}-label`}>Namespace</span>
+      <span id={`${id}-label`}>{label}</span>
       <button
         ref={trigger}
         className="namespace-trigger"
-        aria-label={`Namespace: ${namespace}`}
+        aria-label={`${label}: ${namespace}`}
         aria-haspopup="listbox"
         aria-expanded={expanded}
         aria-controls={expanded ? `${id}-options` : undefined}
@@ -85,7 +90,10 @@ export function NamespaceControl({
           }
         }}
       >
-        <span>{namespace}</span>
+        <span>
+          {namespace}
+          {project && !verified ? " (unverified)" : ""}
+        </span>
         <span aria-hidden="true">⌄</span>
       </button>
       {expanded && (
@@ -97,12 +105,12 @@ export function NamespaceControl({
             autoComplete="off"
             ref={search}
             role="combobox"
-            aria-label="Search namespaces"
+            aria-label={project ? "Search projects" : "Search namespaces"}
             aria-expanded="true"
             aria-controls={`${id}-options`}
             aria-autocomplete="list"
             aria-activedescendant={options.length ? `${id}-option-${active}` : undefined}
-            placeholder="Search namespaces…"
+            placeholder={project ? "Search projects…" : "Search namespaces…"}
             value={query}
             onChange={(event) => {
               setQuery(event.target.value);
@@ -141,8 +149,14 @@ export function NamespaceControl({
               </div>
             ))}
           </div>
-          {!options.length && <p role="status">No matching namespaces.</p>}
-          <p>{complete ? "Type to filter namespaces" : "Discovery incomplete — type a namespace to use it."}</p>
+          {!options.length && <p role="status">No matching {project ? "projects" : "namespaces"}.</p>}
+          <p>
+            {project
+              ? "Choose a visible Project or look up its name."
+              : complete
+                ? "Type to filter namespaces"
+                : "Discovery incomplete — type a namespace to use it."}
+          </p>
         </div>
       )}
     </div>

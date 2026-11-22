@@ -103,6 +103,9 @@ func (s *CreateService) PrepareCreate(ctx context.Context, req CreateRequest) (C
 	if err != nil {
 		return CreatePreview{}, err
 	}
+	if target.Group == kube.ProjectGroup && target.Resource == "projectrequests" {
+		return CreatePreview{}, model.Fail("unsupported", "Use Request project to review a self-service request without submitting it")
+	}
 	if err = normalizeSecretEdit(kube.EditTarget{Group: target.Group, Version: target.Version, Resource: target.Resource}, object); err != nil {
 		return CreatePreview{}, err
 	}

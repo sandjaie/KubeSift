@@ -314,7 +314,7 @@ func projectDiscovery(raw []byte, key versionKey) (APIResourceCatalog, error) {
 				return APIResourceCatalog{}, invalidDiscovery()
 			}
 		}
-		d := APIResourceDescriptor{Group: key.group, Version: key.version, Resource: r.Name, Kind: r.Kind, Namespaced: *r.Namespaced, List: slices.Contains(r.Verbs, "list"), Get: slices.Contains(r.Verbs, "get"), Patch: slices.Contains(r.Verbs, "patch"), Create: slices.Contains(r.Verbs, "create")}
+		d := APIResourceDescriptor{Group: key.group, Version: key.version, Resource: r.Name, Kind: r.Kind, Namespaced: *r.Namespaced, List: slices.Contains(r.Verbs, "list"), Get: slices.Contains(r.Verbs, "get"), Patch: slices.Contains(r.Verbs, "patch"), Create: slices.Contains(r.Verbs, "create"), Delete: slices.Contains(r.Verbs, "delete")}
 		d.detailReadable = d.Get && !slices.Contains(r.Verbs, "connect") && d.Resource != "proxy" && d.Resource != "connect"
 		known, protected := dedicatedAPIs[[2]string{d.Group, d.Resource}]
 		switch {

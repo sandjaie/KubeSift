@@ -49,7 +49,8 @@ export const revokeNode = (token: string) => {
 };
 export const executeNode = workloadAPI.ExecuteNodeAction;
 export const cancelDrain = workloadAPI.CancelDrain;
-export type OperationAction = "node" | "scale" | "restart" | "delete" | "edit" | "rollback" | "create" | "apply";
+export const executeProjectRequest = workloadAPI.ExecuteProjectRequest;
+export type OperationAction = "request-project" | "node" | "scale" | "restart" | "delete" | "edit" | "rollback" | "create" | "apply";
 export const prepareScale = (request: ScaleRequest) => readRequest((id) => workloadAPI.PrepareScale(id, request));
 export const executeScale = workloadAPI.ExecuteScale;
 export const listScaleResults = workloadAPI.ListScaleResults;

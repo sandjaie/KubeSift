@@ -165,6 +165,7 @@ test("a retained generic view applies the accepted edit when discovery becomes r
     get: true,
     patch: true,
     create: true,
+    delete: false,
   };
   const resource = { ...target, group: descriptor.group, resource: descriptor.resource, kind: descriptor.kind };
   const capture = { resource, resourceVersion: "7", fetchedAt: "2026-11-16T05:00:00Z", objectJSON: "{}", yaml: "spec: before" };
@@ -327,6 +328,7 @@ test("the accepted apply detail refreshes by operation ID when discovery does no
     get: true,
     patch: true,
     create: true,
+    delete: false,
   };
   const resource = {
     ...target,

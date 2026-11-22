@@ -102,6 +102,10 @@
           not replace normal controls.
         </li>
         <li>
+          OpenShift ProjectRequest review uses read-only permission evidence. Only confirmation submits the self-service request. Project
+          deletion requires a server dry-run, typed name and UID/version preconditions.
+        </li>
+        <li>
           Drain uses eviction semantics and respects disruption budgets by default. Never silently force-delete, bypass PDBs or discard
           local data; define exceptional options separately.
         </li>

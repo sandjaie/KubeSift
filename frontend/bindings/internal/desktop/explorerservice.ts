@@ -128,6 +128,10 @@ export function ExecuteNodeAction(token: string, ack: string): $CancellablePromi
   return $Call.ByID(322149129, token, ack);
 }
 
+export function ExecuteProjectRequest(token: string, ack: string): $CancellablePromise<operation$0.OperationResult> {
+  return $Call.ByID(2328593753, token, ack);
+}
+
 export function ExecuteRestart(token: string, acknowledgement: string): $CancellablePromise<operation$0.OperationResult> {
   return $Call.ByID(346194450, token, acknowledgement);
 }
@@ -188,12 +192,20 @@ export function ListOperationResults(): $CancellablePromise<operation$0.Operatio
   return $Call.ByID(4120304269);
 }
 
+export function ListProjects(id: string, ref: model$0.ConnectionRef, cursor: string): $CancellablePromise<kube$0.ProjectPage> {
+  return $Call.ByID(4069036014, id, ref, cursor);
+}
+
 export function ListScaleResults(): $CancellablePromise<operation$0.ScaleResult[] | null> {
   return $Call.ByID(3526813900);
 }
 
 export function ListSources(): $CancellablePromise<sources$0.SourceResult[] | null> {
   return $Call.ByID(3320858230);
+}
+
+export function MyProjectAccess(id: string, r: kube$0.ResourceRef): $CancellablePromise<kube$0.ProjectAccess> {
+  return $Call.ByID(935177373, id, r);
 }
 
 export function OpenApply(id: string, target: kube$0.EditTarget): $CancellablePromise<operation$0.ApplyDraft> {
@@ -271,6 +283,14 @@ export function PrepareNodeAction(id: string, req: operation$0.NodeRequest): $Ca
   return $Call.ByID(1087383469, id, req);
 }
 
+export function PrepareProjectRequest(
+  id: string,
+  ref: model$0.ConnectionRef,
+  f: operation$0.ProjectFields,
+): $CancellablePromise<operation$0.ProjectRequestPreview> {
+  return $Call.ByID(4125648093, id, ref, f);
+}
+
 export function PrepareRestart(id: string, req: operation$0.RestartRequest): $CancellablePromise<operation$0.RestartPreview> {
   return $Call.ByID(1109198430, id, req);
 }
@@ -281,6 +301,18 @@ export function PrepareRollback(id: string, req: operation$0.RollbackRequest): $
 
 export function PrepareScale(id: string, req: operation$0.ScaleRequest): $CancellablePromise<operation$0.ScalePreview> {
   return $Call.ByID(841288983, id, req);
+}
+
+export function ProjectCapabilities(
+  id: string,
+  ref: model$0.ConnectionRef,
+  refresh: boolean,
+): $CancellablePromise<kube$0.ProjectCapabilities> {
+  return $Call.ByID(2871240995, id, ref, refresh);
+}
+
+export function ProjectQuotas(id: string, r: kube$0.ResourceRef, cursor: string): $CancellablePromise<kube$0.ProjectQuotaPage> {
+  return $Call.ByID(1714698812, id, r, cursor);
 }
 
 export function ReadAPIGroups(id: string, req: kube$0.APIGroupRequest): $CancellablePromise<kube$0.APIGroupCatalog> {
@@ -382,6 +414,10 @@ export function ReadPDBSelectedPods(id: string, req: kube$0.RelatedRequest): $Ca
 
 export function ReadPods(ref: model$0.ConnectionRef, $namespace: string): $CancellablePromise<explorer$0.ConnectionView> {
   return $Call.ByID(4095964600, ref, $namespace);
+}
+
+export function ReadProject(id: string, ref: model$0.ConnectionRef, name: string, uid: string): $CancellablePromise<kube$0.Project> {
+  return $Call.ByID(2553994581, id, ref, name, uid);
 }
 
 export function ReadRelatedJobs(id: string, req: kube$0.RelatedRequest): $CancellablePromise<kube$0.RelatedJobPage> {
@@ -512,6 +548,10 @@ export function RevokeHelper(fp: string): $CancellablePromise<void> {
 
 export function RevokeNodeReview(token: string): $CancellablePromise<void> {
   return $Call.ByID(2705877094, token);
+}
+
+export function RevokeProjectRequest(token: string): $CancellablePromise<void> {
+  return $Call.ByID(1920761196, token);
 }
 
 export function RevokeRestart(token: string): $CancellablePromise<void> {
