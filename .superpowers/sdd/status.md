@@ -2,6 +2,10 @@
 
 Updated 2026-11-23. Current integration branch is `develop`.
 
+## Phase 1G · macOS release readiness planning
+
+- [Design](../../docs/superpowers/specs/2026-11-23-phase-1g-release-readiness-design.md) and [execution plan](../../docs/superpowers/plans/2026-11-23-phase-1g-release-readiness.md) prepared. Developer ID signing and notarization are planned on the maintainer’s personal Mac. Execution, downloaded-app acceptance and release authorization remain pending.
+
 ## Phase 1F · Dedicated OpenShift workflows
 
 - Projects shipped in PR #32. [PR #33](https://github.com/sandjaie/KubeSift/pull/33) squash-merged Routes, Builds and Operators into develop as `cae0290`. The merge tree matches final reviewed head `a9d0bcb`.
