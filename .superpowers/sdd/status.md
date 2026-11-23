@@ -1,16 +1,17 @@
 # KubeSift resumable status
 
-Updated 2026-11-22. Current integration branch is `develop`.
+Updated 2026-11-23. Current integration branch is `develop`.
 
 ## Phase 1F · Dedicated OpenShift workflows
 
 - Projects shipped in PR #32. [PR #33](https://github.com/sandjaie/KubeSift/pull/33) squash-merged Routes, Builds and Operators into develop as `cae0290`. The merge tree matches final reviewed head `a9d0bcb`.
 - Repository checks (147 frontend tests), race, bindings, build, signed package, both kind contexts and controlled desktop workflows passed. The independent reviewer cleared KSF-001–011 and verified the restricted-discovery regression.
-- **Phase 1F remains open.** The maintainer deferred live OCP 4.21 compatibility to an office-laptop follow-up PR. Resume from the [deferred checks](../../docs/superpowers/validation/phase-1f.html#office-acceptance) and [phase plan](../../docs/superpowers/plans/2026-11-22-phase-1f-openshift-workflows.md).
+- **Phase 1F remains open.** The [23 November office run](../../docs/superpowers/validation/phase-1f.html#live-2026-11-23) observed Kubernetes `v1.35.6`. RBAC blocked verification of the OpenShift release. Scoped desktop Projects, Route and Build inventory, and OLM discovery ran. Classic PackageManifest list and lookup failed, and v1 object access was denied. Route, Build and Operator lifecycle cases remain unverified. The run created no cluster resources, left no cleanup UIDs and removed the temporary kubeconfig. Resume from the [phase plan](../../docs/superpowers/plans/2026-11-22-phase-1f-openshift-workflows.md).
 
 ## Phase 1F.1 · OpenShift Projects
 
-- [Specification](../../docs/superpowers/specs/2026-11-22-phase-1f1-openshift-projects-design.md) and [implementation plan](../../docs/superpowers/plans/2026-11-22-phase-1f1-openshift-projects.md) prepared on develop baseline `6cd1d19`. Implementation on `feature/phase-1f1-openshift-projects` from `4cc1602`. [Validation evidence](../../docs/superpowers/validation/phase-1f1.html) covers deterministic contracts, both kind contexts and the packaged desktop. Repository checks passed with 141 frontend tests. Targeted native race, bindings, build, packaging and signature verification passed. One independent whole-PR review and two targeted follow-ups cleared KSF-001 through KSF-005 at 7fbe491. [PR #32](https://github.com/sandjaie/KubeSift/pull/32) squash-merged into develop as `b5e20c2`. Its tree matches reviewed head `cd6475e`. The maintainer deferred live OCP 4.21 checks to a separate office-laptop PR. The validation report lists each pending case.
+- [Specification](../../docs/superpowers/specs/2026-11-22-phase-1f1-openshift-projects-design.md) and [implementation plan](../../docs/superpowers/plans/2026-11-22-phase-1f1-openshift-projects.md) prepared on develop baseline `6cd1d19`. Implementation on `feature/phase-1f1-openshift-projects` from `4cc1602`. [Validation evidence](../../docs/superpowers/validation/phase-1f1.html) covers deterministic contracts, both kind contexts and the packaged desktop. Repository checks passed with 141 frontend tests. Targeted native race, bindings, build, packaging and signature verification passed. One independent whole-PR review and two targeted follow-ups cleared KSF-001 through KSF-005 at 7fbe491. [PR #32](https://github.com/sandjaie/KubeSift/pull/32) squash-merged into develop as `b5e20c2`. Its tree matches reviewed head `cd6475e`.
+- [Live Projects results](../../docs/superpowers/validation/phase-1f1.html#live-2026-11-23) verified restricted discovery, exact lookup and selection, and the empty quota state. Access checks were partial, dedicated request review was denied, and generic YAML review redirected correctly. Project creation and deletion were skipped under the authorized scope.
 
 ## Phase 1E.5 · Node administration
 

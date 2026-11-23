@@ -81,8 +81,8 @@
         deletion. All five findings are closed. The implementing agent reran the repository check, both kind integrations, production build,
         macOS packaging and signature verification at 7fbe491.
       </p>
-      <h2 id="office-acceptance">Pending office-laptop acceptance on OCP 4.21</h2>
-      <p>The maintainer deferred live testing to a separate PR. All cases below remain unrun on OpenShift.</p>
+      <h2 id="office-acceptance">Office-laptop checklist · OCP 4.21 baseline</h2>
+      <p>The maintainer deferred live testing to an office follow-up. The scoped run below records the cases exercised so far.</p>
       <ol>
         <li>
           With a restricted identity, list visible Projects, look up a Project by name and switch to it while Namespace list is denied.
@@ -105,6 +105,32 @@
         Before testing, record the explicit context, server build, identities, disposable names or prefix, permitted reads and writes, and
         cleanup authority. Verify ownership and UID before each lifecycle operation.
       </p>
+      <h3 id="live-2026-11-23">23 November 2026 · Scoped Projects results</h3>
+      <p>
+        The signed desktop ran against the authorized context and Active Project. The server reported Kubernetes <code>v1.35.6</code> and
+        denied OpenShift release reads. See the <a href="phase-1f.html#live-2026-11-23">shared environment and cleanup results</a>.
+      </p>
+      <ul>
+        <li>
+          <strong>Passed.</strong> The CLI confirmed that Namespace listing was denied and Project listing was allowed. The desktop
+          displayed the restricted Project list, found the authorized Project by exact name, and opened its scoped Pods workspace using Use
+          project. Cross-tab switching was skipped under the single-context, single-Project scope.
+        </li>
+        <li>
+          <strong>Partial.</strong> The app returned no visible namespace quotas, matching the empty API inventory. My access showed Allowed
+          for Pod and quota lists, matching authorization checks. It showed Unknown for Project deletion while the cluster-scoped CLI
+          authorization check returned No. Quota quantities and an explicit denied result in the app remain unverified.
+        </li>
+        <li>
+          <strong>Passed in part.</strong> Generic YAML review redirected ProjectRequest to the dedicated form and the YAML was discarded.
+          The dedicated review reported self-service permission denied, matching the CLI check, and closed via Cancel. Neither entry point
+          reached confirmation. Authorized preview and a live request-count assertion were unverified.
+        </li>
+        <li>
+          <strong>Skipped.</strong> Project creation, template effects, delete dry-run, replacement races and confirmed deletion were
+          outside the authorized scope. The original Project remained Active on the final read and the run created no Project resources.
+        </li>
+      </ul>
       <p><a href="../plans/2026-11-22-phase-1f1-openshift-projects.md">Implementation plan</a></p>
     </main>
   </body>

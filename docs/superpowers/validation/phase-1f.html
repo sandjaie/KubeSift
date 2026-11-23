@@ -39,8 +39,8 @@
     </header>
     <main id="content">
       <p>
-        Candidate from planning commit <code>3d6dfeb</code>. The roadmap live compatibility exit remains open. No OCP 4.21 build, router,
-        builder or OLM controller has been tested in this phase.
+        Candidate from planning commit <code>3d6dfeb</code>. The local baseline is followed by the
+        <a href="#live-2026-11-23">23 November office run</a>. The roadmap live compatibility exit remains open.
       </p>
       <h2>Environment and workflow evidence</h2>
       <table>
@@ -211,6 +211,83 @@
           Reconcile the roadmap compatibility exit against the live evidence before closing Phase 1F.
         </li>
       </ul>
+      <h3 id="live-2026-11-23">23 November 2026 · Scoped office run</h3>
+      <p>
+        Read-only preflight verified the requested kubeconfig context, the authenticated identity, the Active Project and Kubernetes API
+        server <code>v1.35.6</code>. Direct reads of OpenShift ClusterVersion and other release status resources returned Forbidden, so the
+        OpenShift patch remains unknown. Kubernetes 1.35 is consistent with OpenShift 4.22 and differs from the 1.34 base for the planned
+        4.21 acceptance. This is an inference from the
+        <a href="https://docs.redhat.com/en/documentation/openshift_container_platform/4.21/html/release_notes/ocp-4-21-release-notes"
+          >4.21</a
+        >
+        and
+        <a href="https://docs.redhat.com/en/documentation/openshift_container_platform/4.22/html/release_notes/ocp-4-22-release-notes"
+          >4.22</a
+        >
+        release notes.
+      </p>
+      <p>
+        The macOS package built from develop <code>76f85fb</code> and passed strict signature verification. The first desktop selection
+        opened another kubeconfig entry pointing to the same API endpoint and Project. That tab was closed before checklist actions. The app
+        was relaunched with a private single-context kubeconfig scoped to the authorized Project. The walkthrough verified the connection
+        and Project before opening each workspace.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Case</th>
+            <th>Live outcome</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Projects</td>
+            <td>
+              Restricted browsing, named lookup, use of the selected Project and empty quota read passed. Personal access and request review
+              had mixed results. See the <a href="phase-1f1.html#live-2026-11-23">Projects run</a>.
+            </td>
+          </tr>
+          <tr>
+            <td>Routes</td>
+            <td>
+              The scoped inventory opened and the API confirmed zero Routes. Create Route captured the Project and closed via Cancel before
+              review. Create, router admission, backend and Back, edit and conditional deletion remain unverified. This run kept Route
+              testing read-only because the OpenShift release could not be verified against the acceptance baseline.
+            </td>
+          </tr>
+          <tr>
+            <td>Builds</td>
+            <td>
+              The packaged BuildConfig and Build views opened in the selected Project. Both inventories were empty. Authorization checks
+              allowed list and Build-log access. Start, returned Build, status, logs, output, rebuild, cancel and race cases were skipped
+              because the run had no approved disposable build source and output.
+            </td>
+          </tr>
+          <tr>
+            <td>OLM Classic</td>
+            <td>
+              The app discovered Classic, displayed CSV rows, and opened empty CatalogSource, OperatorGroup, Subscription and InstallPlan
+              inventories. PackageManifest listing failed with <code>capacity: Server exceeded page size</code>. The API returned more than
+              100 items for a limit of 100 without a continuation token. Named lookup failed with
+              <code>invalid: Server returned an invalid resource identity</code>. A direct read returned channel and catalog reference
+              metadata with an empty UID. Catalog and channel inspection through the app remains failed. Install, upgrade, approval and
+              removal were skipped because their effects could extend beyond the Project or affect pre-existing resources.
+            </td>
+          </tr>
+          <tr>
+            <td>OLM v1</td>
+            <td>
+              Discovery passed for ClusterCatalog and ClusterExtension. Both packaged views displayed Forbidden and the read-only
+              authorization checks denied list access. Object inspection was blocked by RBAC.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        No persisted cluster resources were created, changed or deleted. The cleanup ledger had zero UIDs. Follow-up reads confirmed the
+        Project remained Active and the Route, BuildConfig, Build, OperatorGroup, Subscription and InstallPlan inventories remained empty.
+        The desktop disconnected and exited, and the private temporary kubeconfig was removed. Phase 1F remains open.
+      </p>
     </main>
   </body>
 </html>
